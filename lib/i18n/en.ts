@@ -164,6 +164,7 @@ const en = {
   "messages.empty": "No messages yet",
   "messages.emptyDesc": "Start a conversation with an expert.",
   "messages.discoverCategories": "Discover categories",
+  "messages.bookingAlerts": "Booking notifications",
 
   // Projects
   "projects.title": "My Projects",

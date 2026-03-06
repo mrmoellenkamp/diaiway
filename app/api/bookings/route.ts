@@ -180,6 +180,21 @@ export async function POST(req: Request) {
       console.error("[Ionos SMTP] Failed to send booking request email:", emailErr)
     }
 
+    // Notification für Takumi (zeitgleich mit E-Mail)
+    if (expert.userId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: expert.userId,
+            type: "booking_request",
+            bookingId: booking.id,
+            title: "Neue Buchungsanfrage",
+            body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          },
+        })
+      } catch { /* notification errors must not block */ }
+    }
+
     return NextResponse.json({
       success: true,
       bookingId: booking.id,
