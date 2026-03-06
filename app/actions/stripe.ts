@@ -1,0 +1,84 @@
+"use server"
+
+import { stripe } from "@/lib/stripe"
+import { prisma } from "@/lib/db"
+
+export interface SessionCheckoutParams {
+  bookingId: string
+  takumiName: string
+  duration: number // in minutes
+  priceInCents: number
+}
+
+/** Create a Stripe Checkout Session for a video session payment. */
+export async function startSessionCheckout(params: SessionCheckoutParams) {
+  const { bookingId, takumiName, duration, priceInCents } = params
+
+  if (!bookingId || !priceInCents) {
+    throw new Error("Missing required parameters for checkout")
+  }
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  if (!booking) throw new Error("Booking not found")
+  if (booking.paymentStatus === "paid") throw new Error("Session already paid")
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: "embedded",
+    redirect_on_completion: "never",
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `Video-Session mit ${takumiName}`,
+            description: `${duration} Minuten Beratung`,
+          },
+          unit_amount: priceInCents,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    metadata: { bookingId, type: "session_payment" },
+  })
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { stripeSessionId: session.id, paymentStatus: "pending" },
+  })
+
+  return { clientSecret: session.client_secret, sessionId: session.id }
+}
+
+/** Verify payment status for a booking (client-side polling). */
+export async function verifySessionPayment(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { paymentStatus: true, paidAt: true, paidAmount: true },
+  })
+  if (!booking) return { status: "error", message: "Booking not found" }
+
+  return {
+    status: booking.paymentStatus,
+    paidAt: booking.paidAt,
+    paidAmount: booking.paidAmount,
+  }
+}
+
+/** Manual confirmation (called by webhook or after successful checkout). */
+export async function confirmSessionPayment(
+  stripeSessionId: string,
+  paymentIntentId: string,
+  amountPaid: number
+) {
+  const booking = await prisma.booking.updateMany({
+    where: { stripeSessionId },
+    data: {
+      paymentStatus: "paid",
+      stripePaymentIntentId: paymentIntentId,
+      paidAt: new Date(),
+      paidAmount: amountPaid,
+    },
+  })
+  return booking
+}
