@@ -65,7 +65,14 @@ function WeeklySlotsEditor({
   slots: Slots
   onChange: (s: Slots) => void
 }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+
+  const DAY_NAMES = locale === "en"
+    ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    : locale === "es"
+      ? ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+      : ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+
   const addSlot = (day: number) =>
     onChange({ ...slots, [day]: [...(slots[day] || []), { start: "09:00", end: "17:00" }] })
 
