@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -168,7 +169,15 @@ function WeeklySlotsEditor({
 
 export default function AvailabilityPage() {
   const { data: session, status: authStatus } = useSession()
+  const router = useRouter()
   const { t, locale } = useI18n()
+
+  const userRole = (session?.user as { role?: string })?.role
+  useEffect(() => {
+    if (authStatus === "authenticated" && userRole !== "takumi" && userRole !== "admin") {
+      router.replace("/home")
+    }
+  }, [authStatus, userRole, router])
 
   const DAY_NAMES = locale === "en"
     ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

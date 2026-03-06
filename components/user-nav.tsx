@@ -100,13 +100,15 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           <User className="size-4 text-muted-foreground" />
           {t("nav.myProfile")}
         </Link>
-        <Link
-          href="/dashboard/availability"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-        >
-          <CalendarClock className="size-4 text-muted-foreground" />
-          {t("nav.myAvailability")}
-        </Link>
+        {(userRole === "takumi" || userRole === "admin") && (
+          <Link
+            href="/dashboard/availability"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
+          >
+            <CalendarClock className="size-4 text-muted-foreground" />
+            {t("nav.myAvailability")}
+          </Link>
+        )}
         {userRole === "admin" && (
           <Link
             href="/admin"
@@ -158,12 +160,14 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             {t("nav.myProfile")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/availability" className="flex items-center gap-2">
-            <CalendarClock className="size-4" />
-            {t("nav.myAvailability")}
-          </Link>
-        </DropdownMenuItem>
+        {(userRole === "takumi" || userRole === "admin") && (
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/availability" className="flex items-center gap-2">
+              <CalendarClock className="size-4" />
+              {t("nav.myAvailability")}
+            </Link>
+          </DropdownMenuItem>
+        )}
         {userRole === "admin" && (
           <DropdownMenuItem asChild>
             <Link href="/admin" className="flex items-center gap-2">

@@ -15,6 +15,16 @@ export default authMiddleware((req) => {
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
+  // Availability dashboard — only takumi and admin
+  if (pathname.startsWith("/dashboard/availability")) {
+    if (!isLoggedIn)
+      return NextResponse.redirect(
+        new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
+      )
+    if (role !== "takumi" && role !== "admin")
+      return NextResponse.redirect(new URL("/home", req.url))
+  }
+
   // Protected app pages — any logged-in user
   const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/messages"]
   for (const prefix of protectedPrefixes) {
