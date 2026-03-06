@@ -87,6 +87,10 @@ model Expert {
   matchRate       Int      @default(0)
   // Social media links stored as JSON: { instagram, tiktok, facebook, youtube, linkedin, x, website }
   socialLinks     Json     @default("{}")
+  // Cancellation policy: { freeHours: number, feePercent: number }
+  // freeHours = free cancellation up to X hours before session
+  // feePercent = % of booking fee retained if cancelled after free window (0–100)
+  cancelPolicy    Json     @default("{\"freeHours\":24,\"feePercent\":0}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -127,6 +131,11 @@ model Booking {
   stripePaymentIntentId String?
   paidAt                DateTime?
   paidAmount            Int?          // EUR cents
+
+  // Cancellation
+  cancelledBy     String?    // "user" | "expert"
+  cancelFeeAmount Int?       // EUR cents retained (only if fee applies)
+  cancelledAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

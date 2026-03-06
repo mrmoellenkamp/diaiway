@@ -36,6 +36,7 @@ export async function GET() {
         imageUrl: e.imageUrl,
         matchRate: e.matchRate,
         socialLinks: e.socialLinks ?? {},
+        cancelPolicy: e.cancelPolicy ?? { freeHours: 24, feePercent: 0 },
       }))
     )
   } catch (err: unknown) {

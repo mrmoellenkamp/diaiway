@@ -1,5 +1,10 @@
 export type UserRole = "shugyo" | "takumi"
 
+export interface CancelPolicy {
+  freeHours: number   // free cancellation up to X hours before session
+  feePercent: number  // % of booking fee retained after free window (0–100)
+}
+
 export interface SocialLinks {
   instagram?: string
   tiktok?: string
@@ -41,6 +46,7 @@ export interface Takumi {
   joinedDate: string
   imageUrl?: string
   socialLinks?: SocialLinks
+  cancelPolicy?: CancelPolicy
 }
 
 export interface Category {
@@ -90,6 +96,19 @@ export interface BookingRecord {
   takumiName: string
   takumiEmail: string
   takumiId: string
+  // Cancellation
+  cancelledBy?: string
+  cancelFeeAmount?: number
+  cancelledAt?: string
+  cancelPreview?: {
+    isFree: boolean
+    hoursUntilSession: number
+    freeHours: number
+    feePercent: number
+    feeAmount: number
+    refundAmount: number
+  }
+  _id?: string  // legacy alias
 }
 
 export interface Session {

@@ -34,6 +34,7 @@ export async function GET() {
       portfolio: expert.portfolio,
       imageUrl: expert.imageUrl,
       socialLinks: expert.socialLinks ?? {},
+      cancelPolicy: expert.cancelPolicy ?? { freeHours: 24, feePercent: 0 },
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
@@ -71,6 +72,7 @@ export async function PUT(req: Request) {
     if (body.responseTime !== undefined)    data.responseTime    = body.responseTime
     if (body.imageUrl !== undefined)        data.imageUrl        = body.imageUrl
     if (body.socialLinks !== undefined)     data.socialLinks     = body.socialLinks
+    if (body.cancelPolicy !== undefined)    data.cancelPolicy    = body.cancelPolicy
 
     const expert = await prisma.expert.upsert({
       where: { userId: session.user.id },
