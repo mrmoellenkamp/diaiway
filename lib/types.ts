@@ -1,5 +1,15 @@
 export type UserRole = "shugyo" | "takumi"
 
+export interface SocialLinks {
+  instagram?: string
+  tiktok?: string
+  facebook?: string
+  youtube?: string
+  linkedin?: string
+  x?: string
+  website?: string
+}
+
 export interface User {
   id: string
   name: string
@@ -29,6 +39,8 @@ export interface Takumi {
   verified: boolean
   portfolio: string[]
   joinedDate: string
+  imageUrl?: string
+  socialLinks?: SocialLinks
 }
 
 export interface Category {

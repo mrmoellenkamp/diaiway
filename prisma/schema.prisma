@@ -85,6 +85,8 @@ model Expert {
   joinedDate      String
   imageUrl        String   @default("")
   matchRate       Int      @default(0)
+  // Social media links stored as JSON: { instagram, tiktok, facebook, youtube, linkedin, x, website }
+  socialLinks     Json     @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
