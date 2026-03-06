@@ -78,6 +78,13 @@ export async function PUT(req: Request) {
       where: { userId: session.user.id },
       update: data,
       create: {
+        // Required fields with safe fallbacks for first-save
+        categorySlug:    (data.categorySlug    as string)  || "dienstleistungen",
+        categoryName:    (data.categoryName    as string)  || "Dienstleistungen",
+        subcategory:     (data.subcategory     as string)  || "",
+        bio:             (data.bio             as string)  || "",
+        pricePerSession: (data.pricePerSession as number)  || 0,
+        email:           "",
         ...data,
         rating: 0,
         reviewCount: 0,
