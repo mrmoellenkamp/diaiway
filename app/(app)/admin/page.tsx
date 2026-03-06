@@ -22,6 +22,7 @@ import {
   UserPlus,
   BarChart3,
 } from "lucide-react"
+import { ImageUpload } from "@/components/image-upload"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -139,12 +140,12 @@ export default function AdminPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Database className="size-4 text-primary" />
-                MongoDB Datenbank
+                Datenbank
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Schreibe die Test-Experten in die MongoDB Atlas Datenbank. Bestehende Daten werden dabei uberschrieben.
+                Schreibe die Test-Experten in die PostgreSQL-Datenbank. Bestehende Seed-Experten werden dabei überschrieben.
               </p>
               <div className="flex gap-2">
                 <Button
@@ -258,28 +259,25 @@ export default function AdminPage() {
                     className="rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="price" className="text-xs">Preis / 30 Min</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      min={1}
-                      value={form.pricePerSession}
-                      onChange={(e) => setForm({ ...form, pricePerSession: e.target.value })}
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="image" className="text-xs">Bild-URL (optional)</Label>
-                    <Input
-                      id="image"
-                      placeholder="https://..."
-                      value={form.imageUrl}
-                      onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                      className="h-9 text-sm"
-                    />
-                  </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="price" className="text-xs">Preis / 30 Min (€)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min={1}
+                    value={form.pricePerSession}
+                    onChange={(e) => setForm({ ...form, pricePerSession: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs">Profilbild (optional)</Label>
+                  <ImageUpload
+                    value={form.imageUrl}
+                    onChange={(url) => setForm({ ...form, imageUrl: url })}
+                    folder="experts"
+                    variant="card"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
