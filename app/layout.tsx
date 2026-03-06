@@ -7,6 +7,7 @@ import { I18nProvider } from '@/lib/i18n'
 import { SessionProvider } from '@/components/session-provider'
 import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
+import { GlobalFooter } from '@/components/global-footer'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -62,6 +63,7 @@ export default function RootLayout({
             <AppProvider>
               <GlobalNavigation />
               {children}
+              <GlobalFooter />
               <AiMentorFab />
             </AppProvider>
           </I18nProvider>

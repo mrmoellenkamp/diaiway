@@ -22,6 +22,11 @@ const de = {
   "common.active": "Aktiv",
   "common.saving": "Wird gespeichert...",
 
+  // Global Footer
+  "footer.privacy": "Datenschutz",
+  "footer.helpSupport": "Hilfe & Support",
+  "footer.imprint": "Impressum",
+
   // Nav
   "nav.login": "Anmelden",
   "nav.register": "Kostenlos registrieren",
