@@ -35,6 +35,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          appRole: user.appRole,
+          status: (user as { status?: string }).status ?? "active",
           image: user.image || "",
         }
       },
@@ -52,20 +54,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
-        token.role = (user as { role?: string }).role || "user"
-        token.id = user.id
+        token.role    = (user as { role?: string }).role    || "user"
+        token.appRole = (user as { appRole?: string }).appRole || "shugyo"
+        token.status  = (user as { status?: string }).status  || "active"
+        token.id      = user.id
       }
       if (trigger === "update" && updateData) {
-        if (updateData.name) token.name = updateData.name
-        if (updateData.image) token.picture = updateData.image
+        if (updateData.name)    token.name    = updateData.name
+        if (updateData.image)   token.picture = updateData.image
+        if (updateData.appRole) token.appRole = updateData.appRole
+        if (updateData.status)  token.status  = updateData.status
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role = token.role as string
-        ;(session.user as { id?: string }).id = token.id as string
-        if (token.name) session.user.name = token.name as string
+        (session.user as { role?: string }).role       = token.role    as string
+        ;(session.user as { appRole?: string }).appRole = token.appRole as string
+        ;(session.user as { status?: string }).status   = token.status  as string
+        ;(session.user as { id?: string }).id           = token.id      as string
+        if (token.name)    session.user.name  = token.name    as string
         if (token.picture) session.user.image = token.picture as string
       }
       return session

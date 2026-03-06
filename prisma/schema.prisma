@@ -22,6 +22,11 @@ enum AppRole {
   takumi
 }
 
+enum UserStatus {
+  active
+  paused
+}
+
 enum BookingStatus {
   pending
   confirmed
@@ -42,18 +47,19 @@ enum PaymentStatus {
 // ─── Models ────────────────────────────────────────────────────────────────
 
 model User {
-  id               String    @id @default(cuid())
+  id               String     @id @default(cuid())
   name             String
-  email            String    @unique
+  email            String     @unique
   password         String
-  role             UserRole  @default(user)
-  appRole          AppRole   @default(shugyo)
-  image            String    @default("")
-  favorites        String[]  // array of Expert IDs
+  role             UserRole   @default(user)
+  appRole          AppRole    @default(shugyo)
+  status           UserStatus @default(active)
+  image            String     @default("")
+  favorites        String[]   // array of Expert IDs
   resetToken       String?
   resetTokenExpiry DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Relations
   expert       Expert?

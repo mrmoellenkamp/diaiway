@@ -5,7 +5,19 @@ export default authMiddleware((req) => {
   const { pathname } = req.nextUrl
   const token = req.auth
   const isLoggedIn = !!token?.user
-  const role = (token?.user as { role?: string })?.role || "user"
+  const role   = (token?.user as { role?: string })?.role   || "user"
+  const status = (token?.user as { status?: string })?.status || "active"
+
+  // Paused accounts — block all app routes except /paused and auth routes
+  if (
+    isLoggedIn &&
+    status === "paused" &&
+    !pathname.startsWith("/paused") &&
+    !pathname.startsWith("/api/auth") &&
+    !pathname.startsWith("/api/user/account")
+  ) {
+    return NextResponse.redirect(new URL("/paused", req.url))
+  }
 
   // Admin pages — only role: "admin"
   if (pathname.startsWith("/admin")) {

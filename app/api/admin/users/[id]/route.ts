@@ -13,17 +13,50 @@ export async function PATCH(
 
   const { id } = await params
   const body = await req.json()
-  const { role, appRole, name } = body
+  const { role, appRole, name, status } = body
 
   const updated = await prisma.user.update({
     where: { id },
     data: {
-      ...(role ? { role } : {}),
+      ...(role    ? { role }    : {}),
       ...(appRole ? { appRole } : {}),
-      ...(name ? { name } : {}),
+      ...(name    ? { name }    : {}),
+      ...(status  ? { status }  : {}),
     },
-    select: { id: true, name: true, email: true, role: true, appRole: true },
+    select: { id: true, name: true, email: true, role: true, appRole: true, status: true },
   })
+
+  // ── Sync Expert record on appRole change ──────────────────────────────────
+  if (appRole === "takumi") {
+    // Create a placeholder Expert if none exists — data is preserved if one already exists
+    const existing = await prisma.expert.findUnique({ where: { userId: id } })
+    if (!existing) {
+      await prisma.expert.create({
+        data: {
+          userId:          id,
+          name:            updated.name,
+          avatar:          updated.name.charAt(0).toUpperCase(),
+          email:           "",
+          categorySlug:    "dienstleistungen",
+          categoryName:    "Dienstleistungen",
+          subcategory:     "",
+          bio:             "",
+          pricePerSession: 0,
+          rating:          0,
+          reviewCount:     0,
+          sessionCount:    0,
+          isLive:          false,
+          isPro:           false,
+          verified:        false,
+          portfolio:       [],
+          joinedDate:      new Date().toISOString().slice(0, 10),
+          matchRate:       0,
+        },
+      })
+    }
+    // If expert exists already, leave all their data intact
+  }
+  // When switching back to shugyo: Expert record is intentionally kept (data preserved)
 
   return NextResponse.json(updated)
 }
@@ -44,6 +77,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Kann den eigenen Account nicht löschen" }, { status: 400 })
   }
 
-  await prisma.user.delete({ where: { id } })
+  // GDPR-compliant: anonymize booking records, then delete user
+  await prisma.$transaction([
+    prisma.booking.updateMany({
+      where: { userId: id },
+      data: { userName: "[Gelöschter Nutzer]", userEmail: "deleted@deleted" },
+    }),
+    prisma.review.deleteMany({ where: { userId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ])
+
   return NextResponse.json({ ok: true })
 }

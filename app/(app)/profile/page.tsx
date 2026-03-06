@@ -30,7 +30,21 @@ import {
   Loader2,
   Check,
   X,
+  PauseCircle,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
@@ -75,6 +89,125 @@ function MenuItem({
     >
       {inner}
     </button>
+  )
+}
+
+function AccountManagement() {
+  const [pausing, setPausing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handlePause() {
+    setPausing(true)
+    try {
+      const res = await fetch("/api/user/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "pause" }),
+      })
+      if (res.ok) {
+        toast.success("Konto pausiert.")
+        window.location.href = "/paused"
+      } else {
+        toast.error("Fehler beim Pausieren.")
+      }
+    } finally {
+      setPausing(false)
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/user/account", { method: "DELETE" })
+      if (res.ok) {
+        toast.success("Konto gelöscht.")
+        await signOut({ callbackUrl: "/" })
+      } else {
+        toast.error("Fehler beim Löschen.")
+      }
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-border/40 pt-4 mt-2">
+      <p className="text-[11px] text-muted-foreground text-center font-medium uppercase tracking-wide">
+        Konto-Verwaltung
+      </p>
+
+      {/* Pause */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" className="w-full gap-2 text-sm text-muted-foreground">
+            <PauseCircle className="size-4" />
+            Konto pausieren
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <PauseCircle className="size-5 text-yellow-500" />
+              Konto pausieren?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Dein Konto wird vorübergehend deaktiviert. Du kannst dich weiterhin einloggen
+              und dein Konto jederzeit reaktivieren. Alle deine Daten bleiben erhalten.
+              {" "}Als Takumi wirst du sofort als offline markiert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePause}
+              disabled={pausing}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+            >
+              {pausing ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+              Jetzt pausieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full gap-2 text-xs text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5"
+          >
+            <Trash2 className="size-3.5" />
+            Konto dauerhaft löschen
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="size-5" />
+              Konto unwiderruflich löschen?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              <strong>Diese Aktion kann nicht rückgängig gemacht werden.</strong>
+              {" "}Alle persönlichen Daten (Profil, Bilder, Experten-Profil, Verfügbarkeit, Bewertungen)
+              werden gemäß DSGVO dauerhaft gelöscht. Buchungshistorie wird aus steuerrechtlichen
+              Gründen (§ 147 AO) anonymisiert aufbewahrt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+              Ja, Konto löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
 
@@ -466,6 +599,9 @@ export default function ProfilePage() {
             <LogOut className="size-4" />
             {t("nav.logout")}
           </Button>
+
+          {/* Account management */}
+          <AccountManagement />
           </>
           )}
       </div>
