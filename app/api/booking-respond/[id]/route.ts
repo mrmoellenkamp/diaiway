@@ -73,6 +73,24 @@ export async function POST(
       })
     } catch { /* email errors must not block the response */ }
 
+    // Notification für Shugyo (zeitgleich mit E-Mail)
+    try {
+      const title = action === "confirmed" ? "Buchung bestätigt" : "Buchung abgelehnt"
+      const body =
+        action === "confirmed"
+          ? `${booking.expertName} hat deine Buchung am ${booking.date} (${booking.startTime}–${booking.endTime}) bestätigt.`
+          : `${booking.expertName} hat deine Buchungsanfrage am ${booking.date} leider abgelehnt.`
+      await prisma.notification.create({
+        data: {
+          userId: booking.userId,
+          type: action === "confirmed" ? "booking_confirmed" : "booking_declined",
+          bookingId: booking.id,
+          title,
+          body,
+        },
+      })
+    } catch { /* notification errors must not block */ }
+
     return NextResponse.json({ ok: true, status: action })
   }
 
@@ -126,6 +144,19 @@ export async function POST(
       console.error("[email] Rückfrage senden fehlgeschlagen:", err)
       return NextResponse.json({ error: "E-Mail konnte nicht gesendet werden." }, { status: 500 })
     }
+
+    // Notification für Shugyo (zeitgleich mit E-Mail)
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: booking.userId,
+          type: "booking_question",
+          bookingId: booking.id,
+          title: "Rückfrage zu deiner Buchung",
+          body: `${booking.expertName} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`,
+        },
+      })
+    } catch { /* notification errors must not block */ }
 
     return NextResponse.json({ ok: true })
   }

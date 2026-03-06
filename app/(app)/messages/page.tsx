@@ -1,21 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useApp } from "@/lib/app-context"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Send, MessageSquare } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
 
+interface NotificationItem {
+  id: string
+  type: string
+  bookingId: string | null
+  title: string
+  body: string
+  read: boolean
+  createdAt: string
+}
+
 export default function MessagesPage() {
-  const { dmThreads, sendDirectMessage, totalUnread } = useApp()
+  const { dmThreads, sendDirectMessage, totalUnread, refreshNotificationCount } = useApp()
   const { t } = useI18n()
   const [activeThread, setActiveThread] = useState<string | null>(null)
   const [input, setInput] = useState("")
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data?.notifications && setNotifications(data.notifications))
+      .catch(() => {})
+  }, [])
 
   const thread = dmThreads.find((t) => t.takumiId === activeThread)
 
@@ -102,10 +121,56 @@ export default function MessagesPage() {
     )
   }
 
+  const unreadNotifications = notifications.filter((n) => !n.read)
+  const markAsRead = (ids: string[]) => {
+    fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    })
+      .then((r) => {
+        if (r.ok) {
+          setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)))
+          refreshNotificationCount?.()
+        }
+      })
+      .catch(() => {})
+  }
+
+  const NotificationIcon = ({ type }: { type: string }) => {
+    if (type === "booking_request") return <Calendar className="size-4" />
+    if (type === "booking_confirmed") return <CheckCircle2 className="size-4 text-green-600" />
+    if (type === "booking_declined") return <XCircle className="size-4 text-destructive" />
+    if (type === "booking_question") return <MessageCircle className="size-4" />
+    return <Bell className="size-4" />
+  }
+
   // Thread list view
   return (
     <PageContainer>
-      {dmThreads.length === 0 ? (
+      {unreadNotifications.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-foreground">{t("messages.bookingAlerts")}</h3>
+          {unreadNotifications.slice(0, 10).map((n) => (
+            <Alert
+              key={n.id}
+              className={cn(
+                "cursor-pointer transition-colors hover:bg-muted/50",
+                !n.read && "border-accent/50 bg-accent/5"
+              )}
+              onClick={() => {
+                markAsRead([n.id])
+                if (n.bookingId) window.location.href = `/sessions`
+              }}
+            >
+              <NotificationIcon type={n.type} />
+              <AlertTitle>{n.title}</AlertTitle>
+              <AlertDescription>{n.body}</AlertDescription>
+            </Alert>
+          ))}
+        </div>
+      )}
+      {dmThreads.length === 0 && unreadNotifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
           <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
             <MessageSquare className="size-7 text-primary" />
@@ -118,7 +183,7 @@ export default function MessagesPage() {
             <Link href="/categories">{t("messages.discoverCategories")}</Link>
           </Button>
         </div>
-      ) : (
+      ) : dmThreads.length === 0 ? null : (
         <div className="flex flex-col gap-1">
           {dmThreads.map((t) => {
             const lastMsg = t.messages[t.messages.length - 1]

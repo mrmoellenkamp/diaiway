@@ -26,6 +26,8 @@ interface AppContextType {
   dmThreads: DirectThread[]
   sendDirectMessage: (takumiId: string, takumiName: string, takumiAvatar: string, subcategory: string, text: string) => void
   totalUnread: number
+  notificationCount: number
+  refreshNotificationCount: (() => void) | undefined
   // Expert search state (for proactive AI flow)
   isSearchingExperts: boolean
   setIsSearchingExperts: (v: boolean) => void
@@ -85,8 +87,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingMentorMessage, setPendingMentorMessage] = useState<string | null>(null)
   const [viewingTakumiId, setViewingTakumiId] = useState<string | null>(null)
   const [dmThreads, setDmThreads] = useState<DirectThread[]>([])
+  const [notificationCount, setNotificationCount] = useState(0)
   const [isSearchingExperts, setIsSearchingExperts] = useState(false)
   const [searchResults, setSearchResults] = useState<string[] | null>(null)
+
+  function refreshNotificationCount() {
+    if (sessionStatus !== "authenticated" || !session?.user) return
+    fetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data && setNotificationCount(data.unreadCount ?? 0))
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && session?.user) refreshNotificationCount()
+  }, [sessionStatus, session?.user])
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -149,7 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const totalUnread = dmThreads.reduce((sum, t) => sum + t.unread, 0)
+  const totalUnread = dmThreads.reduce((sum, t) => sum + t.unread, 0) + notificationCount
 
   return (
     <AppContext.Provider
@@ -173,6 +188,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dmThreads,
         sendDirectMessage,
         totalUnread,
+        notificationCount,
+        refreshNotificationCount,
         isSearchingExperts,
         setIsSearchingExperts,
         searchResults,
