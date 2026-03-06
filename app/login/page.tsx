@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,9 +27,9 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/profile"
+  // Only use callbackUrl if explicitly set (user was redirected from a protected page)
+  const explicitCallback = searchParams.get("callbackUrl")
   const { setIsLoggedIn } = useApp()
   const { t } = useI18n()
 
@@ -60,7 +60,6 @@ function LoginContent() {
         email: email.toLowerCase().trim(),
         password,
         redirect: false,
-        callbackUrl,
       })
 
       if (result?.error) {
@@ -75,8 +74,27 @@ function LoginContent() {
         setIsLoading(false)
       } else {
         setIsLoggedIn(true)
-        // Full page navigation so middleware sees the fresh session cookie
-        window.location.href = callbackUrl
+
+        // If user was sent here from a protected page, honour that redirect
+        if (explicitCallback) {
+          window.location.href = explicitCallback
+          return
+        }
+
+        // Otherwise route by role — fetch fresh session to read appRole & role
+        const sessionRes = await fetch("/api/auth/session")
+        const sessionData = await sessionRes.json()
+        const role    = sessionData?.user?.role    ?? "user"
+        const appRole = sessionData?.user?.appRole ?? "shugyo"
+
+        if (role === "admin") {
+          window.location.href = "/admin"
+        } else if (appRole === "takumi") {
+          window.location.href = "/profile"
+        } else {
+          // Shugyo → categories
+          window.location.href = "/categories"
+        }
       }
     } catch {
       setError(t("login.errorNetwork"))
