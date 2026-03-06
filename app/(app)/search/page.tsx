@@ -7,9 +7,11 @@ import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
 import { categories } from "@/lib/categories"
 import { useTakumis } from "@/hooks/use-takumis"
+import { useI18n } from "@/lib/i18n"
 import { Search as SearchIcon } from "lucide-react"
 
 function SearchContent() {
+  const { t } = useI18n()
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get("q") || ""
   const [query, setQuery] = useState(initialQuery)
@@ -17,11 +19,11 @@ function SearchContent() {
 
   const results = query.length > 1
     ? takumis.filter(
-        (t) =>
-          t.name.toLowerCase().includes(query.toLowerCase()) ||
-          t.categoryName.toLowerCase().includes(query.toLowerCase()) ||
-          t.subcategory.toLowerCase().includes(query.toLowerCase()) ||
-          t.bio.toLowerCase().includes(query.toLowerCase())
+        (tk) =>
+          tk.name.toLowerCase().includes(query.toLowerCase()) ||
+          tk.categoryName.toLowerCase().includes(query.toLowerCase()) ||
+          tk.subcategory.toLowerCase().includes(query.toLowerCase()) ||
+          tk.bio.toLowerCase().includes(query.toLowerCase())
       )
     : []
 
@@ -38,7 +40,7 @@ function SearchContent() {
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Experten, Kategorien, Themen..."
+          placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="h-11 rounded-xl pl-10"
@@ -50,7 +52,9 @@ function SearchContent() {
         <div className="flex flex-col gap-4">
           {catResults.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">KATEGORIEN</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                {t("search.categoriesLabel")}
+              </p>
               <div className="flex flex-col gap-2">
                 {catResults.map((c) => (
                   <div key={c.slug} className="rounded-xl border border-border/60 bg-card p-3 text-sm">
@@ -63,15 +67,15 @@ function SearchContent() {
 
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              {results.length} EXPERTEN
+              {t("search.expertsLabel").replace("{count}", String(results.length))}
             </p>
             <div className="flex flex-col gap-3">
-              {results.map((t) => (
-                <TakumiCard key={t.id} takumi={t} />
+              {results.map((tk) => (
+                <TakumiCard key={tk.id} takumi={tk} />
               ))}
               {results.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-8">
-                  Keine Ergebnisse fur &ldquo;{query}&rdquo;
+                  {t("search.noResults").replace("{query}", query)}
                 </p>
               )}
             </div>
@@ -83,7 +87,7 @@ function SearchContent() {
         <div className="py-12 text-center">
           <p className="font-jp text-3xl text-muted-foreground/30 mb-2">探</p>
           <p className="text-sm text-muted-foreground">
-            Suche nach Experten oder Themen
+            {t("search.hint")}
           </p>
         </div>
       )}

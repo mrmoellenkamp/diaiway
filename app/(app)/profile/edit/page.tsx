@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useApp } from "@/lib/app-context"
+import { useI18n } from "@/lib/i18n"
 import { categories } from "@/lib/categories"
 import { toast } from "sonner"
 import {
@@ -34,15 +35,12 @@ import {
   Upload,
 } from "lucide-react"
 
-// -- Availability types --
 interface TimeSlot { start: string; end: string }
 type Slots = Record<number, TimeSlot[]>
 const EMPTY_SLOTS: Slots = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
-const DAY_NAMES = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
-const DAY_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 
 interface Booking {
-  _id: string
+  id: string
   userName: string
   date: string
   startTime: string
@@ -55,6 +53,7 @@ export default function EditProfilePage() {
   const router = useRouter()
   const { data: session, update: updateSession } = useSession()
   const { role, setRole } = useApp()
+  const { t, locale } = useI18n()
   const isTakumi = role === "takumi"
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -98,7 +97,17 @@ export default function EditProfilePage() {
     ? name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
 
-  // Load base profile
+  const DAY_NAMES = locale === "en"
+    ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    : locale === "es"
+      ? ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+      : ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+  const DAY_SHORT = locale === "en"
+    ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+    : locale === "es"
+      ? ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
+      : ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+
   useEffect(() => {
     async function load() {
       try {
@@ -115,7 +124,6 @@ export default function EditProfilePage() {
     else setLoadingProfile(false)
   }, [session])
 
-  // Load takumi profile
   useEffect(() => {
     async function load() {
       try {
@@ -147,7 +155,6 @@ export default function EditProfilePage() {
     else setLoadingTakumi(false)
   }, [session])
 
-  // Load availability
   useEffect(() => {
     if (!session?.user?.id) { setLoadingSlots(false); return }
     fetch(`/api/availability?takumiId=${session.user.id}`)
@@ -157,7 +164,6 @@ export default function EditProfilePage() {
       .finally(() => setLoadingSlots(false))
   }, [session])
 
-  // Load bookings
   useEffect(() => {
     if (!session?.user?.id) { setLoadingBookings(false); return }
     fetch("/api/bookings")
@@ -167,18 +173,17 @@ export default function EditProfilePage() {
       .finally(() => setLoadingBookings(false))
   }, [session])
 
-  // -- Image upload --
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Nur JPG, PNG, WebP und GIF erlaubt.")
+      toast.error(t("editProfile.fileTypeError"))
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Maximale Dateigroesse: 5 MB.")
+      toast.error(t("editProfile.fileSizeError"))
       return
     }
 
@@ -191,12 +196,12 @@ export default function EditProfilePage() {
       const data = await res.json()
       if (res.ok && data.url) {
         setImage(data.url)
-        toast.success("Bild hochgeladen!")
+        toast.success(t("editProfile.uploadSuccess"))
       } else {
-        toast.error(data.error || "Upload fehlgeschlagen.")
+        toast.error(data.error || t("editProfile.uploadError"))
       }
     } catch {
-      toast.error("Netzwerkfehler beim Upload.")
+      toast.error(t("editProfile.uploadNetworkError"))
     } finally {
       setUploading(false)
     }
@@ -208,11 +213,11 @@ export default function EditProfilePage() {
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Nur JPG, PNG, WebP und GIF erlaubt.")
+      toast.error(t("editProfile.fileTypeError"))
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Maximale Dateigroesse: 5 MB.")
+      toast.error(t("editProfile.fileSizeError"))
       return
     }
 
@@ -225,18 +230,17 @@ export default function EditProfilePage() {
       const data = await res.json()
       if (res.ok && data.url) {
         setTakumiImageUrl(data.url)
-        toast.success("Experten-Bild hochgeladen!")
+        toast.success(t("editProfile.expertUploadSuccess"))
       } else {
-        toast.error(data.error || "Upload fehlgeschlagen.")
+        toast.error(data.error || t("editProfile.uploadError"))
       }
     } catch {
-      toast.error("Netzwerkfehler beim Upload.")
+      toast.error(t("editProfile.uploadNetworkError"))
     } finally {
       setUploading(false)
     }
   }
 
-  // -- Availability helpers --
   const handleAddSlot = useCallback((day: number) => {
     setSlots((prev) => ({
       ...prev,
@@ -267,10 +271,10 @@ export default function EditProfilePage() {
         body: JSON.stringify({ slots }),
       })
       const data = await res.json()
-      if (res.ok) toast.success("Verfuegbarkeit gespeichert!")
+      if (res.ok) toast.success(t("editProfile.availabilitySaved"))
       else toast.error(data.error)
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setSavingSlots(false)
     }
@@ -285,21 +289,19 @@ export default function EditProfilePage() {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(action === "confirmed" ? "Buchung bestaetigt!" : "Buchung abgelehnt.")
-        setBookings((prev) => prev.map((b) => b._id === bookingId ? { ...b, status: action } : b))
+        toast.success(action === "confirmed" ? t("editProfile.bookingConfirmed") : t("editProfile.bookingDeclined"))
+        setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: action } : b))
       } else {
         toast.error(data.error)
       }
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     }
   }
 
-  // -- Save profile --
   async function handleSave() {
     setSaving(true)
     try {
-      // 1. Save base profile
       const profilePayload: Record<string, string> = {}
       if (name.trim()) profilePayload.name = name.trim()
       if (image !== undefined) profilePayload.image = image
@@ -312,7 +314,7 @@ export default function EditProfilePage() {
         })
         if (!profileRes.ok) {
           const data = await profileRes.json()
-          toast.error(data.error || "Fehler beim Speichern.")
+          toast.error(data.error || t("editProfile.saveError"))
           setSaving(false)
           return
         }
@@ -321,7 +323,6 @@ export default function EditProfilePage() {
         }
       }
 
-      // 2. If Takumi mode, save takumi profile
       if (isTakumi) {
         const takumiRes = await fetch("/api/user/takumi-profile", {
           method: "PUT",
@@ -348,17 +349,17 @@ export default function EditProfilePage() {
         })
         if (!takumiRes.ok) {
           const data = await takumiRes.json()
-          toast.error(data.error || "Fehler beim Speichern des Experten-Profils.")
+          toast.error(data.error || t("editProfile.expertSaveError"))
           setSaving(false)
           return
         }
         setTakumiExists(true)
       }
 
-      toast.success("Profil gespeichert!")
+      toast.success(t("editProfile.saveSuccess"))
       router.push("/profile")
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setSaving(false)
     }
@@ -375,7 +376,7 @@ export default function EditProfilePage() {
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
             <ArrowLeft className="size-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Profil bearbeiten</h1>
+          <h1 className="text-lg font-semibold">{t("editProfile.title")}</h1>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -388,7 +389,7 @@ export default function EditProfilePage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <User className="size-4 text-primary" />
-                  Persoenliche Daten
+                  {t("editProfile.personalData")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
@@ -397,12 +398,7 @@ export default function EditProfilePage() {
                   <div className="relative">
                     {image ? (
                       <div className="relative size-24 overflow-hidden rounded-full border-4 border-primary/10">
-                        <Image
-                          src={image}
-                          alt="Profilbild"
-                          fill
-                          className="object-cover"
-                        />
+                        <Image src={image} alt={t("editProfile.personalData")} fill className="object-cover" />
                       </div>
                     ) : (
                       <Avatar className="size-24 border-4 border-primary/10">
@@ -431,18 +427,16 @@ export default function EditProfilePage() {
                       className="hidden"
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Klicke auf das Kamera-Symbol zum Hochladen (max. 5 MB)
-                  </p>
+                  <p className="text-[10px] text-muted-foreground">{t("editProfile.uploadHint")}</p>
                 </div>
 
                 {/* Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Name</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("register.name")}</label>
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Dein Name"
+                    placeholder={t("editProfile.namePlaceholder")}
                   />
                 </div>
               </CardContent>
@@ -452,10 +446,8 @@ export default function EditProfilePage() {
             <Card className="border-border/60">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium text-foreground">Takumi-Modus</span>
-                  <span className="text-xs text-muted-foreground">
-                    Aktivieren, um als Experte sichtbar zu sein
-                  </span>
+                  <span className="text-sm font-medium text-foreground">{t("editProfile.takumiMode")}</span>
+                  <span className="text-xs text-muted-foreground">{t("editProfile.takumiModeDesc")}</span>
                 </div>
                 <Switch
                   checked={isTakumi}
@@ -471,10 +463,10 @@ export default function EditProfilePage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <Briefcase className="size-4 text-accent" />
-                      Experten-Profil
+                      {t("editProfile.expertProfile")}
                       {takumiExists && (
                         <Badge variant="outline" className="ml-auto text-[10px] border-primary/30 bg-primary/5 text-primary">
-                          Aktiv
+                          {t("common.active")}
                         </Badge>
                       )}
                     </CardTitle>
@@ -482,16 +474,11 @@ export default function EditProfilePage() {
                   <CardContent className="flex flex-col gap-4">
                     {/* Takumi Image Upload */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">Experten-Bild</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t("editProfile.expertImage")}</label>
                       <div className="flex items-center gap-3">
                         {takumiImageUrl ? (
                           <div className="relative size-16 overflow-hidden rounded-lg border border-border">
-                            <Image
-                              src={takumiImageUrl}
-                              alt="Experten-Bild"
-                              fill
-                              className="object-cover"
-                            />
+                            <Image src={takumiImageUrl} alt={t("editProfile.expertImage")} fill className="object-cover" />
                           </div>
                         ) : (
                           <div className="flex size-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted/50">
@@ -508,10 +495,10 @@ export default function EditProfilePage() {
                             />
                             <span className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
                               <Camera className="size-3.5" />
-                              {takumiImageUrl ? "Bild aendern" : "Bild hochladen"}
+                              {takumiImageUrl ? t("editProfile.changeImage") : t("editProfile.uploadImage")}
                             </span>
                           </label>
-                          <p className="text-[10px] text-muted-foreground">Optional. JPG, PNG, WebP (max. 5 MB)</p>
+                          <p className="text-[10px] text-muted-foreground">{t("editProfile.imageHint")}</p>
                         </div>
                       </div>
                     </div>
@@ -519,7 +506,7 @@ export default function EditProfilePage() {
                     {/* Category */}
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <Tag className="size-3" /> Kategorie
+                        <Tag className="size-3" /> {t("editProfile.category")}
                       </label>
                       <div className="relative">
                         <select
@@ -530,7 +517,7 @@ export default function EditProfilePage() {
                           }}
                           className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         >
-                          <option value="">Kategorie waehlen...</option>
+                          <option value="">{t("editProfile.categoryPlaceholder")}</option>
                           {categories.map((c) => (
                             <option key={c.slug} value={c.slug}>{c.name}</option>
                           ))}
@@ -543,7 +530,7 @@ export default function EditProfilePage() {
                     {selectedCategory && (
                       <div className="flex flex-col gap-1.5">
                         <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Tag className="size-3" /> Fachbereich
+                          <Tag className="size-3" /> {t("editProfile.subcategory")}
                         </label>
                         <div className="relative">
                           <select
@@ -551,7 +538,7 @@ export default function EditProfilePage() {
                             onChange={(e) => setSubcategory(e.target.value)}
                             className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                           >
-                            <option value="">Fachbereich waehlen...</option>
+                            <option value="">{t("editProfile.subcategoryPlaceholder")}</option>
                             {selectedCategory.subcategories.map((sub) => (
                               <option key={sub} value={sub}>{sub}</option>
                             ))}
@@ -564,21 +551,23 @@ export default function EditProfilePage() {
                     {/* Bio */}
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <FileText className="size-3" /> Beschreibung
+                        <FileText className="size-3" /> {t("editProfile.description")}
                       </label>
                       <textarea
                         value={bio}
                         onChange={(e) => setBio(e.target.value.slice(0, 500))}
                         className="min-h-[100px] w-full resize-none rounded-md border border-input bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="Beschreibe deine Expertise, Erfahrung und was Kunden bei dir erwartet..."
+                        placeholder={t("editProfile.descriptionPlaceholder")}
                       />
-                      <p className="text-[10px] text-muted-foreground">{bio.length}/500 Zeichen</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("editProfile.descriptionCount").replace("{count}", String(bio.length))}
+                      </p>
                     </div>
 
                     {/* Price */}
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <DollarSign className="size-3" /> Preis pro Session (EUR)
+                        <DollarSign className="size-3" /> {t("editProfile.price")}
                       </label>
                       <Input
                         type="number"
@@ -586,23 +575,23 @@ export default function EditProfilePage() {
                         step="1"
                         value={pricePerSession}
                         onChange={(e) => setPricePerSession(e.target.value)}
-                        placeholder="z.B. 45 (optional)"
+                        placeholder={t("editProfile.pricePlaceholder")}
                       />
                     </div>
 
                     {/* Response Time */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">Antwortzeit</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t("editProfile.responseTime")}</label>
                       <div className="relative">
                         <select
                           value={responseTime}
                           onChange={(e) => setResponseTime(e.target.value)}
                           className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         >
-                          <option value="< 5 Min">{"< 5 Minuten"}</option>
-                          <option value="< 15 Min">{"< 15 Minuten"}</option>
-                          <option value="< 30 Min">{"< 30 Minuten"}</option>
-                          <option value="< 1 Std">{"< 1 Stunde"}</option>
+                          <option value="< 5 Min">{"< 5 Min"}</option>
+                          <option value="< 15 Min">{"< 15 Min"}</option>
+                          <option value="< 30 Min">{"< 30 Min"}</option>
+                          <option value="< 1 Std">{"< 1 h"}</option>
                         </select>
                         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       </div>
@@ -618,11 +607,9 @@ export default function EditProfilePage() {
                         <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                       </svg>
-                      Social Media
+                      {t("editProfile.socialMedia")}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Benutzername oder vollständige URL — wird auf deinem Profil angezeigt
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("editProfile.socialMediaDesc")}</p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
                     {[
@@ -719,12 +706,14 @@ export default function EditProfilePage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="flex items-center gap-2 text-sm">
                         <AlertCircle className="size-4 text-amber-600" />
-                        {pendingBookings.length} offene Anfrage{pendingBookings.length > 1 ? "n" : ""}
+                        {pendingBookings.length === 1
+                          ? t("editProfile.pendingRequests").replace("{count}", String(pendingBookings.length))
+                          : t("editProfile.pendingRequestsPlural").replace("{count}", String(pendingBookings.length))}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
                       {pendingBookings.map((b) => (
-                        <div key={b._id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-card p-3">
+                        <div key={b.id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-card p-3">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-sm font-medium text-foreground">{b.userName}</span>
                             <span className="text-xs text-muted-foreground">
@@ -735,17 +724,17 @@ export default function EditProfilePage() {
                             <Button
                               size="sm"
                               className="h-7 gap-1 bg-primary text-xs font-semibold text-primary-foreground"
-                              onClick={() => handleBookingAction(b._id, b.statusToken, "confirmed")}
+                              onClick={() => handleBookingAction(b.id, b.statusToken, "confirmed")}
                             >
-                              <CheckCircle className="size-3" /> Ja
+                              <CheckCircle className="size-3" /> {t("common.yes")}
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-7 gap-1 border-destructive/30 text-xs font-semibold text-destructive"
-                              onClick={() => handleBookingAction(b._id, b.statusToken, "declined")}
+                              onClick={() => handleBookingAction(b.id, b.statusToken, "declined")}
                             >
-                              <XCircle className="size-3" /> Nein
+                              <XCircle className="size-3" /> {t("common.no")}
                             </Button>
                           </div>
                         </div>
@@ -760,18 +749,18 @@ export default function EditProfilePage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="flex items-center gap-2 text-sm">
                         <Calendar className="size-4 text-primary" />
-                        Bestaetigte Termine ({confirmedBookings.length})
+                        {t("editProfile.confirmedAppointments").replace("{count}", String(confirmedBookings.length))}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-1.5">
                       {confirmedBookings.map((b) => (
-                        <div key={b._id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                        <div key={b.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-foreground">{b.userName}</span>
                             <span className="text-[11px] text-muted-foreground">{b.date} / {b.startTime}-{b.endTime}</span>
                           </div>
                           <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/5 text-primary">
-                            Bestaetigt
+                            {t("editProfile.confirmed")}
                           </Badge>
                         </div>
                       ))}
@@ -784,7 +773,7 @@ export default function EditProfilePage() {
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <Clock className="size-4 text-primary" />
-                      Woechentliche Verfuegbarkeit
+                      {t("editProfile.weeklyAvailability")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
@@ -807,11 +796,11 @@ export default function EditProfilePage() {
                                 className="h-7 gap-1 text-xs text-primary"
                                 onClick={() => handleAddSlot(day)}
                               >
-                                <Plus className="size-3" /> Slot
+                                <Plus className="size-3" /> {t("editProfile.slot")}
                               </Button>
                             </div>
                             {(slots[day] || []).length === 0 ? (
-                              <p className="pl-7 text-xs italic text-muted-foreground">Nicht verfuegbar</p>
+                              <p className="pl-7 text-xs italic text-muted-foreground">{t("editProfile.notAvailable")}</p>
                             ) : (
                               (slots[day] || []).map((slot, idx) => (
                                 <div key={idx} className="flex items-center gap-2 pl-7">
@@ -821,7 +810,7 @@ export default function EditProfilePage() {
                                     onChange={(e) => handleSlotChange(day, idx, "start", e.target.value)}
                                     className="h-8 w-28 text-xs"
                                   />
-                                  <span className="text-xs text-muted-foreground">bis</span>
+                                  <span className="text-xs text-muted-foreground">{t("editProfile.to")}</span>
                                   <Input
                                     type="time"
                                     value={slot.end}
@@ -850,9 +839,9 @@ export default function EditProfilePage() {
                           className="mt-1 w-full gap-2 rounded-xl font-medium"
                         >
                           {savingSlots ? (
-                            <><Loader2 className="size-4 animate-spin" /> Wird gespeichert...</>
+                            <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
                           ) : (
-                            <><Clock className="size-4" /> Verfuegbarkeit speichern</>
+                            <><Clock className="size-4" /> {t("editProfile.saveAvailability")}</>
                           )}
                         </Button>
                       </>
@@ -869,15 +858,15 @@ export default function EditProfilePage() {
               className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
             >
               {saving ? (
-                <><Loader2 className="size-4 animate-spin" /> Wird gespeichert...</>
+                <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
               ) : (
-                <><Save className="size-4" /> Profil speichern</>
+                <><Save className="size-4" /> {t("editProfile.saveProfile")}</>
               )}
             </Button>
 
             {isTakumi && !takumiExists && (
               <p className="text-center text-xs text-muted-foreground">
-                Beim Speichern wird dein Experten-Profil erstellt und du bist fuer Kunden sichtbar.
+                {t("editProfile.createExpertHint")}
               </p>
             )}
           </>

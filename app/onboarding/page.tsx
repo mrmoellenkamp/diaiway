@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useApp } from "@/lib/app-context"
+import { useI18n } from "@/lib/i18n"
 import { categories } from "@/lib/categories"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -14,6 +15,7 @@ import { ArrowRight, ArrowLeft, Camera, Check } from "lucide-react"
 export default function OnboardingPage() {
   const router = useRouter()
   const { role } = useApp()
+  const { t } = useI18n()
   const [step, setStep] = useState(0)
   const [selectedCats, setSelectedCats] = useState<string[]>([])
   const [bio, setBio] = useState("")
@@ -30,7 +32,7 @@ export default function OnboardingPage() {
   const next = () => {
     if (step < totalSteps - 1) setStep(step + 1)
     else {
-      toast.success("Profil erstellt! Willkommen bei diAiway.")
+      toast.success(t("onboarding.profileCreated"))
       router.push("/home")
     }
   }
@@ -51,7 +53,7 @@ export default function OnboardingPage() {
             {step + 1} / {totalSteps}
           </span>
           <button onClick={() => router.push("/home")} className="text-xs text-muted-foreground hover:text-foreground">
-            Uberspringen
+            {t("onboarding.skip")}
           </button>
         </div>
         <div className="h-1 w-full rounded-full bg-muted">
@@ -71,12 +73,10 @@ export default function OnboardingPage() {
                 {isTakumi ? "匠" : "修行"}
               </p>
               <h1 className="text-2xl font-bold text-foreground">
-                {isTakumi ? "Werde ein Takumi" : "Willkommen, Shugyo"}
+                {isTakumi ? t("onboarding.becomeTakumi") : t("onboarding.welcomeShugyo")}
               </h1>
               <p className="text-sm text-muted-foreground text-center">
-                {isTakumi
-                  ? "Teile dein Wissen mit der Welt"
-                  : "Lade ein Profilbild hoch"}
+                {isTakumi ? t("onboarding.shareKnowledge") : t("onboarding.uploadAvatar")}
               </p>
             </div>
             <button
@@ -85,7 +85,7 @@ export default function OnboardingPage() {
             >
               <Camera className="size-8 text-muted-foreground" />
             </button>
-            <p className="text-xs text-muted-foreground">Tippe zum Hochladen</p>
+            <p className="text-xs text-muted-foreground">{t("onboarding.tapToUpload")}</p>
           </div>
         )}
 
@@ -94,12 +94,10 @@ export default function OnboardingPage() {
           <div className="flex flex-1 flex-col gap-6 pt-4">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-foreground">
-                {isTakumi ? "Dein Fachgebiet" : "Deine Interessen"}
+                {isTakumi ? t("onboarding.expertise") : t("onboarding.interests")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {isTakumi
-                  ? "Wahle die Kategorie, in der du Experte bist"
-                  : "Wahle Bereiche, die dich interessieren"}
+                {isTakumi ? t("onboarding.expertiseDesc") : t("onboarding.interestsDesc")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -131,9 +129,9 @@ export default function OnboardingPage() {
         {step === 2 && !isTakumi && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
             <p className="font-jp text-5xl text-accent/60">道</p>
-            <h2 className="text-2xl font-bold text-foreground">Alles bereit!</h2>
+            <h2 className="text-2xl font-bold text-foreground">{t("onboarding.allReady")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Dein Weg beginnt jetzt. Entdecke Experten, starte Sessions und erhalte jetzt individuelle Unterstützung.
+              {t("onboarding.allReadyDesc")}
             </p>
           </div>
         )}
@@ -141,9 +139,9 @@ export default function OnboardingPage() {
         {step === 2 && isTakumi && (
           <div className="flex flex-1 flex-col gap-6 pt-4">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold text-foreground">Uber dich</h2>
+              <h2 className="text-xl font-bold text-foreground">{t("onboarding.aboutYou")}</h2>
               <p className="text-sm text-muted-foreground">
-                Beschreibe deine Expertise und Erfahrung
+                {t("onboarding.aboutDesc")}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -151,14 +149,14 @@ export default function OnboardingPage() {
               <textarea
                 id="bio"
                 rows={4}
-                placeholder="Erzahle potenziellen Kunden von deiner Erfahrung..."
+                placeholder={t("onboarding.bioPlaceholder")}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 className="w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none resize-none"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="price">Preis pro Session (30 Min)</Label>
+              <Label htmlFor="price">{t("onboarding.price")}</Label>
               <Input
                 id="price"
                 type="number"
@@ -173,9 +171,9 @@ export default function OnboardingPage() {
         {step === 3 && isTakumi && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
             <p className="font-jp text-5xl text-accent/60">匠</p>
-            <h2 className="text-2xl font-bold text-foreground">Du bist ein Takumi!</h2>
+            <h2 className="text-2xl font-bold text-foreground">{t("onboarding.youAreTakumi")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Dein Profil ist bereit. Geh live, teile dein Wissen und werde belohnt.
+              {t("onboarding.youAreTakumiDesc")}
             </p>
           </div>
         )}
@@ -187,7 +185,7 @@ export default function OnboardingPage() {
           onClick={next}
           className="h-12 w-full rounded-xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          {step === totalSteps - 1 ? "Los geht's" : "Weiter"}
+          {step === totalSteps - 1 ? t("onboarding.done") : t("onboarding.next")}
           <ArrowRight className="ml-1 size-4" />
         </Button>
       </div>

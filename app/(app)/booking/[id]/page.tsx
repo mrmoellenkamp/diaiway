@@ -8,31 +8,31 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { ReviewStars } from "@/components/review-stars"
 import { BookingCalendar } from "@/components/booking-calendar"
 import { PageContainer } from "@/components/page-container"
 import { useTakumis } from "@/hooks/use-takumis"
+import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import { toast } from "sonner"
 import {
-  ArrowLeft, CheckCircle, Shield, CreditCard, Clock, Video, Info, Loader2, Calendar,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar,
 } from "lucide-react"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { t } = useI18n()
   const router = useRouter()
   const { data: session } = useSession()
   const { takumis, isLoading: isTakumisLoading } = useTakumis()
-  const takumi = takumis.find((t) => t.id === id)
+  const takumi = takumis.find((tk) => tk.id === id)
 
-  // Show loading state while fetching takumis
   if (isTakumisLoading) {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <div className="size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Lade Experten-Profil...</p>
+          <p className="text-sm text-muted-foreground">{t("booking.loading")}</p>
         </div>
       </PageContainer>
     )
@@ -55,11 +55,11 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   async function handleBook(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedDate || !selectedStart) {
-      toast.error("Bitte waehle einen Termin aus.")
+      toast.error(t("booking.selectAppointmentError"))
       return
     }
     if (!session?.user) {
-      toast.error("Bitte zuerst anmelden.")
+      toast.error(t("booking.loginRequired"))
       router.push("/login?callbackUrl=" + encodeURIComponent(`/booking/${id}`))
       return
     }
@@ -79,17 +79,16 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(data.message || "Buchung erfolgreich erstellt!")
+        toast.success(data.message || t("booking.bookButton").replace("{price}", String(takumi.pricePerSession)))
         router.push("/sessions")
       } else {
-        // User-friendly error messages
         const errorMsg = data.error?.includes("validation")
-          ? "Das Expertenprofil ist unvollstaendig. Bitte waehle einen anderen Termin oder Experten."
-          : data.error || "Buchung fehlgeschlagen. Bitte versuche es erneut."
+          ? t("booking.incompleteProfile")
+          : data.error || t("booking.networkError")
         toast.error(errorMsg)
       }
     } catch {
-      toast.error("Netzwerkfehler. Bitte pruefe deine Verbindung.")
+      toast.error(t("booking.networkError"))
     } finally {
       setIsBooking(false)
     }
@@ -105,7 +104,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               <ArrowLeft className="size-5" />
             </Link>
           </Button>
-          <h1 className="text-lg font-bold text-foreground">Buchung</h1>
+          <h1 className="text-lg font-bold text-foreground">{t("booking.title")}</h1>
         </div>
 
         {/* Takumi Summary */}
@@ -127,45 +126,45 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
         {/* Service Details */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">Session-Details</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("booking.sessionDetails")}</h2>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Video className="size-4" /> Live-Video-Session
+                <Video className="size-4" /> {t("booking.liveVideoSession")}
               </span>
-              <span className="text-foreground">30 Minuten</span>
+              <span className="text-foreground">30 Min</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="size-4" /> Kostenlose Probezeit
+                <Clock className="size-4" /> {t("booking.freeTrialTime")}
               </span>
-              <span className="font-medium text-accent">5 Min gratis</span>
+              <span className="font-medium text-accent">{t("booking.freeMinutes")}</span>
             </div>
           </div>
         </div>
 
         {/* Price Breakdown */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">Preisaufstellung</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("booking.priceBreakdown")}</h2>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">5 Min Probezeit</span>
-              <span className="text-accent font-medium">Kostenlos</span>
+              <span className="text-muted-foreground">{t("booking.trialMinutes")}</span>
+              <span className="text-accent font-medium">{t("booking.free")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">30 Min Session</span>
+              <span className="text-muted-foreground">{t("booking.sessionMinutes")}</span>
               <span className="text-foreground">{takumi.pricePerSession}&euro;</span>
             </div>
             <div className="h-px bg-border" />
             <div className="flex items-center justify-between font-semibold">
-              <span className="text-foreground">Maximal</span>
+              <span className="text-foreground">{t("booking.maximum")}</span>
               <span className="text-foreground">{takumi.pricePerSession}&euro;</span>
             </div>
           </div>
           <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3">
             <Info className="size-4 shrink-0 text-accent mt-0.5" />
             <p className="text-xs text-accent leading-relaxed">
-              Dein Geld wird erst nach deiner Freigabe belastet. Du kannst nach der Probezeit jederzeit abbrechen.
+              {t("booking.escrowNotice")}
             </p>
           </div>
         </div>
@@ -173,7 +172,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         {/* Date & Time Selection */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Calendar className="size-4 text-primary" /> Termin waehlen
+            <Calendar className="size-4 text-primary" /> {t("booking.chooseAppointment")}
           </h2>
           <BookingCalendar
             takumiId={id}
@@ -189,10 +188,14 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             <Calendar className="size-4 text-primary shrink-0" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-foreground">
-                {selectedDate.split("-").reverse().join(".")} um {selectedStart} Uhr
+                {t("booking.selectedSlot")
+                  .replace("{date}", selectedDate.split("-").reverse().join("."))
+                  .replace("{time}", selectedStart)}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {selectedStart} - {selectedEnd} (30 Min)
+                {t("booking.selectedSlotRange")
+                  .replace("{start}", selectedStart)
+                  .replace("{end}", selectedEnd)}
               </span>
             </div>
           </div>
@@ -201,12 +204,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         {/* Note + Book */}
         <form onSubmit={handleBook} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="note" className="text-xs">Nachricht an den Experten (optional)</Label>
+            <Label htmlFor="note" className="text-xs">{t("booking.noteLabel")}</Label>
             <Input
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Beschreibe kurz dein Anliegen..."
+              placeholder={t("booking.notePlaceholder")}
               className="h-11 rounded-xl"
             />
           </div>
@@ -215,9 +218,9 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           <div className="flex items-start gap-2 rounded-xl bg-muted p-3">
             <Shield className="size-4 shrink-0 text-primary mt-0.5" />
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-foreground">Stornierungsbedingungen</span>
+              <span className="text-xs font-medium text-foreground">{t("booking.cancellationTitle")}</span>
               <p className="text-[10px] text-muted-foreground leading-relaxed">
-                Kostenlose Stornierung bis zum Beginn der Session. Wahrend der 5-Min-Probezeit kannst du jederzeit ohne Kosten abbrechen.
+                {t("booking.cancellationDesc")}
               </p>
             </div>
           </div>
@@ -228,9 +231,9 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             className="h-14 w-full rounded-xl bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90 shadow-lg disabled:opacity-50"
           >
             {isBooking ? (
-              <><Loader2 className="size-4 animate-spin mr-2" /> Wird gebucht...</>
+              <><Loader2 className="size-4 animate-spin mr-2" /> {t("booking.bookingInProgress")}</>
             ) : (
-              <>Verbindlich buchen &middot; {takumi.pricePerSession}&euro;</>
+              <>{t("booking.bookButton").replace("{price}", String(takumi.pricePerSession))}</>
             )}
           </Button>
         </form>
