@@ -2,55 +2,65 @@ import { NextResponse } from "next/server"
 import crypto from "crypto"
 import { prisma } from "@/lib/db"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
+// Generic success message — never reveals whether an email exists
+const SUCCESS_MSG = "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
+
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req)
     const { email } = await req.json()
+
     if (!email) {
-      return NextResponse.json(
-        { error: "Bitte eine E-Mail-Adresse eingeben." },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Bitte eine E-Mail-Adresse eingeben." }, { status: 400 })
     }
 
+    // ── Rate limiting ─────────────────────────────────────────────────────────
+    // 3 requests per IP per hour
+    const rlIp = rateLimit(`forgot:ip:${ip}`, { limit: 3, windowSec: 3600 })
+    if (!rlIp.success) {
+      // Return fake success to not reveal rate limit to attackers
+      return NextResponse.json({ success: true, message: SUCCESS_MSG })
+    }
+    // 2 requests per email per hour
+    const rlEmail = rateLimit(`forgot:email:${email.toLowerCase().trim()}`, { limit: 2, windowSec: 3600 })
+    if (!rlEmail.success) {
+      return NextResponse.json({ success: true, message: SUCCESS_MSG })
+    }
+
+    // ── Look up user (anti-enumeration: always return 200) ────────────────────
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
     })
 
-    // Always return success to prevent email enumeration
-    if (!user) {
-      return NextResponse.json({
-        success: true,
-        message: "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.",
+    if (user) {
+      const rawToken = crypto.randomBytes(32).toString("hex")
+      const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex")
+      const expiry = new Date(Date.now() + 60 * 60 * 1_000) // 1 hour
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken: hashedToken, resetTokenExpiry: expiry },
       })
+
+      const baseUrl =
+        process.env.NEXTAUTH_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+
+      try {
+        await sendPasswordResetEmail(user.email, user.name, `${baseUrl}/reset-password/${rawToken}`)
+      } catch (emailErr) {
+        console.error("[diAiway] forgot-password email error:", emailErr)
+      }
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex")
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
-    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex")
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { resetToken: hashedToken, resetTokenExpiry },
-    })
-
-    const baseUrl =
-      process.env.NEXTAUTH_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-
-    await sendPasswordResetEmail(user.email, user.name, `${baseUrl}/reset-password/${resetToken}`)
-
-    return NextResponse.json({
-      success: true,
-      message: "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.",
-    })
+    // Always return the same message to prevent email enumeration
+    return NextResponse.json({ success: true, message: SUCCESS_MSG })
   } catch (err: unknown) {
     console.error("[diAiway] forgot-password error:", err)
-    return NextResponse.json(
-      { error: "Fehler beim Senden der E-Mail. Bitte versuche es spaeter erneut." },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Interner Fehler." }, { status: 500 })
   }
 }

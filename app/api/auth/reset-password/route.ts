@@ -2,11 +2,21 @@ import { NextResponse } from "next/server"
 import crypto from "crypto"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
+/** Minimum password requirements (must match client-side validation) */
+function validatePassword(pw: string): string | null {
+  if (pw.length < 8) return "Das Passwort muss mindestens 8 Zeichen lang sein."
+  if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw))
+    return "Das Passwort muss mindestens eine Zahl oder ein Sonderzeichen enthalten."
+  return null
+}
+
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req)
     const { token, password } = await req.json()
 
     if (!token || !password) {
@@ -15,15 +25,24 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
-    if (password.length < 6) {
+
+    // ── Rate limiting: 5 attempts per IP per 30 min ────────────────────────
+    const rl = rateLimit(`reset:ip:${ip}`, { limit: 5, windowSec: 1800 })
+    if (!rl.success) {
       return NextResponse.json(
-        { error: "Das Passwort muss mindestens 6 Zeichen lang sein." },
-        { status: 400 }
+        { error: `Zu viele Versuche. Bitte warte ${rl.retryAfterSec} Sekunden.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
       )
     }
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
+    // ── Validate password strength ─────────────────────────────────────────
+    const pwError = validatePassword(password)
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 })
+    }
 
+    // ── Verify token ───────────────────────────────────────────────────────
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
     const user = await prisma.user.findFirst({
       where: {
         resetToken: hashedToken,
@@ -32,12 +51,15 @@ export async function POST(req: Request) {
     })
 
     if (!user) {
+      // Constant-time response to prevent timing attacks on token validity
+      await bcrypt.hash("dummy", 4)
       return NextResponse.json(
         { error: "Der Link ist ungueltig oder abgelaufen. Bitte fordere einen neuen an." },
         { status: 400 }
       )
     }
 
+    // ── Update password and invalidate token ───────────────────────────────
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -53,9 +75,6 @@ export async function POST(req: Request) {
     })
   } catch (err: unknown) {
     console.error("[diAiway] reset-password error:", err)
-    return NextResponse.json(
-      { error: "Fehler beim Zuruecksetzen. Bitte versuche es erneut." },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Interner Fehler." }, { status: 500 })
   }
 }
