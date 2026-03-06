@@ -339,6 +339,7 @@ const es = {
   "booking.bookButton": "Reservar · {price}€",
   "booking.bookingInProgress": "Reservando...",
   "booking.selectAppointmentError": "Por favor selecciona una cita.",
+  "booking.pastSlotError": "Este horario está en el pasado y no puede reservarse.",
   "booking.loginRequired": "Por favor inicia sesión primero.",
   "booking.networkError": "Error de red. Por favor verifica tu conexión.",
   "booking.incompleteProfile": "El perfil del experto está incompleto. Elige otro horario o experto.",

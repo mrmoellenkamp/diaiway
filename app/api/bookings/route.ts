@@ -91,6 +91,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
     }
 
+    // Reject bookings in the past
+    const slotDateTime = new Date(`${date}T${startTime}`)
+    if (slotDateTime <= new Date()) {
+      return NextResponse.json({ error: "Buchungen in der Vergangenheit sind nicht möglich." }, { status: 400 })
+    }
+
     // Load expert
     const expert = await prisma.expert.findUnique({ where: { id: takumiId } })
     if (!expert) {

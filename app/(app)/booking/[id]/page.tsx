@@ -47,6 +47,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [isBooking, setIsBooking] = useState(false)
 
   function handleTimeSelect(date: string, start: string, end: string) {
+    // Guard: never allow selecting a slot in the past
+    const slotDateTime = new Date(`${date}T${start}`)
+    if (slotDateTime <= new Date()) {
+      toast.error(t("booking.pastSlotError"))
+      return
+    }
     setSelectedDate(date)
     setSelectedStart(start)
     setSelectedEnd(end)
@@ -56,6 +62,15 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     e.preventDefault()
     if (!selectedDate || !selectedStart) {
       toast.error(t("booking.selectAppointmentError"))
+      return
+    }
+    // Double-check at submit time — slot may have become past while form was open
+    const slotDateTime = new Date(`${selectedDate}T${selectedStart}`)
+    if (slotDateTime <= new Date()) {
+      toast.error(t("booking.pastSlotError"))
+      setSelectedDate("")
+      setSelectedStart("")
+      setSelectedEnd("")
       return
     }
     if (!session?.user) {

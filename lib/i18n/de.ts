@@ -342,6 +342,7 @@ const de = {
   "booking.bookButton": "Verbindlich buchen · {price}€",
   "booking.bookingInProgress": "Wird gebucht...",
   "booking.selectAppointmentError": "Bitte wähle einen Termin aus.",
+  "booking.pastSlotError": "Dieser Termin liegt in der Vergangenheit und kann nicht gebucht werden.",
   "booking.loginRequired": "Bitte zuerst anmelden.",
   "booking.networkError": "Netzwerkfehler. Bitte prüfe deine Verbindung.",
   "booking.incompleteProfile": "Das Expertenprofil ist unvollständig. Bitte wähle einen anderen Termin oder Experten.",
