@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -12,9 +12,70 @@ import { useApp } from "@/lib/app-context"
 import { toast } from "sonner"
 import type { UserRole } from "@/lib/types"
 import { Suspense } from "react"
-import { ArrowLeft, Loader2, UserPlus } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/language-switcher"
+
+// ─── Password strength ──────────────────────────────────────────────────────
+
+type Strength = 0 | 1 | 2 | 3 | 4
+
+function calcStrength(pw: string): Strength {
+  if (!pw) return 0
+  let score = 0
+  if (pw.length >= 8)  score++
+  if (pw.length >= 12) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  // Map 0-5 → 0-4
+  return Math.min(4, score) as Strength
+}
+
+const STRENGTH_LABELS: Record<Strength, string> = {
+  0: "",
+  1: "Schwach",
+  2: "Mittel",
+  3: "Gut",
+  4: "Stark",
+}
+const STRENGTH_COLORS: Record<Strength, string> = {
+  0: "bg-muted",
+  1: "bg-destructive",
+  2: "bg-amber",
+  3: "bg-yellow-400",
+  4: "bg-green-500",
+}
+
+function PasswordStrengthBar({ password }: { password: string }) {
+  const strength = calcStrength(password)
+  if (!password) return null
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4].map((level) => (
+          <div
+            key={level}
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+              level <= strength ? STRENGTH_COLORS[strength] : "bg-muted"
+            }`}
+          />
+        ))}
+      </div>
+      {strength > 0 && (
+        <p className={`text-[11px] font-medium ${
+          strength <= 1 ? "text-destructive" :
+          strength === 2 ? "text-amber" :
+          strength === 3 ? "text-yellow-500" : "text-green-600"
+        }`}>
+          {STRENGTH_LABELS[strength]}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ─── Form ───────────────────────────────────────────────────────────────────
 
 function RegisterForm() {
   const router = useRouter()
@@ -26,9 +87,15 @@ function RegisterForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(presetRole)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  // Honeypot ref — bots fill this, humans don't
+  const honeypotRef = useRef<HTMLInputElement>(null)
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -38,18 +105,25 @@ function RegisterForm() {
       toast.error(t("register.selectRole"))
       return
     }
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       setError(t("register.errorEmpty"))
       return
     }
-    if (password.length < 6) {
-      setError(t("register.errorPassword"))
+    if (password.length < 8) {
+      setError(t("register.errorPasswordLength"))
+      return
+    }
+    if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      setError(t("register.errorPasswordWeak"))
+      return
+    }
+    if (password !== confirmPassword) {
+      setError(t("register.errorPasswordMismatch"))
       return
     }
 
     setIsLoading(true)
     try {
-      // 1. Register user in MongoDB
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,17 +131,19 @@ function RegisterForm() {
           name: name.trim(),
           email: email.toLowerCase().trim(),
           password,
+          // Honeypot value — empty for real users
+          _hp: honeypotRef.current?.value ?? "",
         }),
       })
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Registrierung fehlgeschlagen.")
+        setError(data.error || t("register.errorNetwork"))
         setIsLoading(false)
         return
       }
 
-      // 2. Auto-login after registration
+      // Auto-login after registration
       const signInResult = await signIn("credentials", {
         email: email.toLowerCase().trim(),
         password,
@@ -84,7 +160,6 @@ function RegisterForm() {
       setRole(selectedRole)
       setIsLoggedIn(true)
       toast.success(t("register.success"))
-      // Full page navigation so middleware sees the fresh session cookie
       window.location.href = "/profile"
     } catch {
       setError(t("register.errorNetwork"))
@@ -105,7 +180,19 @@ function RegisterForm() {
 
       <RoleSelector selected={selectedRole} onSelect={setSelectedRole} />
 
-      <form onSubmit={handleRegister} className="flex flex-col gap-4">
+      <form onSubmit={handleRegister} className="flex flex-col gap-4" noValidate>
+        {/* Honeypot — visually hidden, keyboard-unreachable */}
+        <input
+          ref={honeypotRef}
+          name="_hp"
+          type="text"
+          tabIndex={-1}
+          aria-hidden="true"
+          autoComplete="off"
+          style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+        />
+
+        {/* Name */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="name">{t("register.name")}</Label>
           <Input
@@ -118,6 +205,8 @@ function RegisterForm() {
             required
           />
         </div>
+
+        {/* E-Mail */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="reg-email">{t("register.email")}</Label>
           <Input
@@ -131,18 +220,66 @@ function RegisterForm() {
             required
           />
         </div>
+
+        {/* Password */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="reg-password">{t("register.password")}</Label>
-          <Input
-            id="reg-password"
-            type="password"
-            placeholder={t("register.passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-12 rounded-xl"
-            autoComplete="new-password"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="reg-password"
+              type={showPassword ? "text" : "password"}
+              placeholder={t("register.passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 rounded-xl pr-11"
+              autoComplete="new-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          <PasswordStrengthBar password={password} />
+          <p className="text-[11px] text-muted-foreground">{t("register.passwordHint")}</p>
+        </div>
+
+        {/* Confirm Password */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="reg-confirm">{t("register.confirmPassword")}</Label>
+          <div className="relative">
+            <Input
+              id="reg-confirm"
+              type={showConfirm ? "text" : "password"}
+              placeholder={t("register.confirmPasswordPlaceholder")}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`h-12 rounded-xl pr-11 ${
+                confirmPassword && confirmPassword !== password
+                  ? "border-destructive focus-visible:ring-destructive/30"
+                  : ""
+              }`}
+              autoComplete="new-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={showConfirm ? "Passwort verbergen" : "Passwort anzeigen"}
+              tabIndex={-1}
+            >
+              {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          {confirmPassword && confirmPassword !== password && (
+            <p className="text-[11px] text-destructive">{t("register.errorPasswordMismatch")}</p>
+          )}
         </div>
 
         {error && (
@@ -159,12 +296,12 @@ function RegisterForm() {
           {isLoading ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-                {t("register.submitting")}
-              </>
-            ) : (
-              <>
-                <UserPlus className="size-4" />
-                {t("register.submit")}
+              {t("register.submitting")}
+            </>
+          ) : (
+            <>
+              <UserPlus className="size-4" />
+              {t("register.submit")}
             </>
           )}
         </Button>

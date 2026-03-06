@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useRef, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -8,14 +8,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useApp } from "@/lib/app-context"
-import { toast } from "sonner"
-import { ArrowLeft, Loader2, LogIn } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Loader2, LogIn } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="size-6 animate-spin text-primary" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   )
@@ -32,10 +37,17 @@ function LoginContent() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Honeypot — filled by bots, empty for real users
+  const honeypotRef = useRef<HTMLInputElement>(null)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError("")
+
+    // Silently abort if honeypot is filled
+    if (honeypotRef.current?.value) return
 
     if (!email || !password) {
       setError(t("login.errorEmpty"))
@@ -52,12 +64,18 @@ function LoginContent() {
       })
 
       if (result?.error) {
-        setError(t("login.errorInvalid"))
+        // Parse rate-limit error thrown from lib/auth.ts
+        if (result.error.includes("TOO_MANY_ATTEMPTS")) {
+          const sec = result.error.split(":")[1]
+          const min = Math.ceil(Number(sec) / 60)
+          setError(t("login.tooManyAttempts").replace("{min}", String(min)))
+        } else {
+          setError(t("login.errorInvalid"))
+        }
         setIsLoading(false)
       } else {
-        // signIn succeeded -- cookie is now set.
-        // Use full page navigation so the middleware sees the fresh cookie.
         setIsLoggedIn(true)
+        // Full page navigation so middleware sees the fresh session cookie
         window.location.href = callbackUrl
       }
     } catch {
@@ -98,7 +116,19 @@ function LoginContent() {
           <p className="text-sm text-muted-foreground">{t("login.subtitle")}</p>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form onSubmit={handleLogin} className="flex flex-col gap-4" noValidate>
+          {/* Honeypot — visually hidden, keyboard-unreachable */}
+          <input
+            ref={honeypotRef}
+            name="_hp"
+            type="text"
+            tabIndex={-1}
+            aria-hidden="true"
+            autoComplete="off"
+            style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+          />
+
+          {/* E-Mail */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">{t("login.email")}</Label>
             <Input
@@ -113,18 +143,31 @@ function LoginContent() {
               required
             />
           </div>
+
+          {/* Password */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">{t("login.password")}</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder={t("login.passwordPlaceholder")}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 rounded-xl"
-              autoComplete="current-password"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder={t("login.passwordPlaceholder")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 rounded-xl pr-11"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end">

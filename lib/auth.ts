@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
+import { rateLimit } from "@/lib/rate-limit"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -14,16 +15,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: (credentials.email as string).toLowerCase().trim() },
-        })
+        const email = (credentials.email as string).toLowerCase().trim()
 
+        // Rate limit: 10 failed attempts per email per 15 min
+        const rl = rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
+        if (!rl.success) {
+          // Throw so NextAuth surfaces the error to the client
+          throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } })
         if (!user) return null
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
+        const isValid = await bcrypt.compare(credentials.password as string, user.password)
         if (!isValid) return null
 
         return {
@@ -36,8 +40,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt" },
+
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,   // refresh token once per day
+  },
+
   pages: { signIn: "/login" },
+
   callbacks: {
     async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
