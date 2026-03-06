@@ -111,7 +111,8 @@ export interface DailyVideoCallProps {
   initials: string
 }
 
-export function DailyVideoCall({
+// eslint-disable-next-line react/display-name
+export default function DailyVideoCall({
   roomUrl,
   isCameraOff,
   takumiName,
