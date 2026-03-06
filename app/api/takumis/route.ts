@@ -35,6 +35,7 @@ export async function GET() {
         joinedDate: e.joinedDate,
         imageUrl: e.imageUrl,
         matchRate: e.matchRate,
+        socialLinks: e.socialLinks ?? {},
       }))
     )
   } catch (err: unknown) {
