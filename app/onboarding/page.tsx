@@ -1,0 +1,196 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useApp } from "@/lib/app-context"
+import { categories } from "@/lib/categories"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import { ArrowRight, ArrowLeft, Camera, Check } from "lucide-react"
+
+export default function OnboardingPage() {
+  const router = useRouter()
+  const { role } = useApp()
+  const [step, setStep] = useState(0)
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const [bio, setBio] = useState("")
+
+  const isTakumi = role === "takumi"
+  const totalSteps = isTakumi ? 4 : 3
+
+  const toggleCat = (slug: string) => {
+    setSelectedCats((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    )
+  }
+
+  const next = () => {
+    if (step < totalSteps - 1) setStep(step + 1)
+    else {
+      toast.success("Profil erstellt! Willkommen bei diAiway.")
+      router.push("/home")
+    }
+  }
+
+  const back = () => {
+    if (step > 0) setStep(step - 1)
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Progress */}
+      <div className="sticky top-0 z-10 bg-background px-6 pt-6 pb-4">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={back} disabled={step === 0} className="text-muted-foreground disabled:opacity-0">
+            <ArrowLeft className="size-5" />
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {step + 1} / {totalSteps}
+          </span>
+          <button onClick={() => router.push("/home")} className="text-xs text-muted-foreground hover:text-foreground">
+            Uberspringen
+          </button>
+        </div>
+        <div className="h-1 w-full rounded-full bg-muted">
+          <div
+            className="h-1 rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col px-6 pb-8">
+        {/* Step 0: Avatar */}
+        {step === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-jp text-4xl text-primary/30">
+                {isTakumi ? "匠" : "修行"}
+              </p>
+              <h1 className="text-2xl font-bold text-foreground">
+                {isTakumi ? "Werde ein Takumi" : "Willkommen, Shugyo"}
+              </h1>
+              <p className="text-sm text-muted-foreground text-center">
+                {isTakumi
+                  ? "Teile dein Wissen mit der Welt"
+                  : "Lade ein Profilbild hoch"}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="flex size-28 items-center justify-center rounded-full border-2 border-dashed border-border bg-muted/50 transition-colors hover:border-primary/30 hover:bg-primary/5"
+            >
+              <Camera className="size-8 text-muted-foreground" />
+            </button>
+            <p className="text-xs text-muted-foreground">Tippe zum Hochladen</p>
+          </div>
+        )}
+
+        {/* Step 1: Interests / Category */}
+        {step === 1 && (
+          <div className="flex flex-1 flex-col gap-6 pt-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-bold text-foreground">
+                {isTakumi ? "Dein Fachgebiet" : "Deine Interessen"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isTakumi
+                  ? "Wahle die Kategorie, in der du Experte bist"
+                  : "Wahle Bereiche, die dich interessieren"}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {categories.map((cat) => {
+                const selected = selectedCats.includes(cat.slug)
+                return (
+                  <button
+                    key={cat.slug}
+                    onClick={() => toggleCat(cat.slug)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all text-sm",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    )}
+                  >
+                    {selected && <Check className="size-4 shrink-0 text-primary" />}
+                    <span className={cn("text-xs", selected ? "font-medium text-primary" : "text-foreground")}>
+                      {cat.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Bio (Takumi) or Welcome (Shugyo) */}
+        {step === 2 && !isTakumi && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+            <p className="font-jp text-5xl text-accent/60">道</p>
+            <h2 className="text-2xl font-bold text-foreground">Alles bereit!</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              Dein Weg beginnt jetzt. Entdecke Experten, starte Sessions und erhalte jetzt individuelle Unterstützung.
+            </p>
+          </div>
+        )}
+
+        {step === 2 && isTakumi && (
+          <div className="flex flex-1 flex-col gap-6 pt-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-bold text-foreground">Uber dich</h2>
+              <p className="text-sm text-muted-foreground">
+                Beschreibe deine Expertise und Erfahrung
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="bio">Bio</Label>
+              <textarea
+                id="bio"
+                rows={4}
+                placeholder="Erzahle potenziellen Kunden von deiner Erfahrung..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none resize-none"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="price">Preis pro Session (30 Min)</Label>
+              <Input
+                id="price"
+                type="number"
+                placeholder="29"
+                className="h-12 rounded-xl"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Welcome (Takumi) */}
+        {step === 3 && isTakumi && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+            <p className="font-jp text-5xl text-accent/60">匠</p>
+            <h2 className="text-2xl font-bold text-foreground">Du bist ein Takumi!</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              Dein Profil ist bereit. Geh live, teile dein Wissen und werde belohnt.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="sticky bottom-0 bg-background px-6 pb-8 pt-4 border-t border-border">
+        <Button
+          onClick={next}
+          className="h-12 w-full rounded-xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          {step === totalSteps - 1 ? "Los geht's" : "Weiter"}
+          <ArrowRight className="ml-1 size-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}

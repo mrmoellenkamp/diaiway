@@ -1,0 +1,12 @@
+{
+  "name": "diAiway - Dein Meister wartet",
+  "short_name": "diAiway",
+  "description": "Expert-on-Demand Marketplace. Finde deinen Takumi und lose jedes Problem per Live-Video.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#064e3b",
+  "orientation": "portrait",
+  "categories": ["lifestyle", "education", "business"],
+  "lang": "de"
+}

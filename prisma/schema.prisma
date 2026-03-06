@@ -1,0 +1,158 @@
+// Prisma Schema — diAiway
+// Provider: PostgreSQL (Neon / Supabase / Railway etc.)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  user
+  admin
+}
+
+enum AppRole {
+  shugyo
+  takumi
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  active
+  completed
+  declined
+  cancelled
+}
+
+enum PaymentStatus {
+  unpaid
+  pending
+  paid
+  refunded
+  failed
+}
+
+// ─── Models ────────────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  role             UserRole  @default(user)
+  appRole          AppRole   @default(shugyo)
+  image            String    @default("")
+  favorites        String[]  // array of Expert IDs
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  expert       Expert?
+  bookings     Booking[]    @relation("UserBookings")
+  availability Availability?
+}
+
+model Expert {
+  id              String   @id @default(cuid())
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name            String
+  email           String   @default("")
+  avatar          String
+  categorySlug    String
+  categoryName    String
+  subcategory     String
+  bio             String
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  sessionCount    Int      @default(0)
+  responseTime    String   @default("< 5 Min")
+  pricePerSession Int      // EUR
+  isLive          Boolean  @default(false)
+  isPro           Boolean  @default(false)
+  verified        Boolean  @default(false)
+  portfolio       String[]
+  joinedDate      String
+  imageUrl        String   @default("")
+  matchRate       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Booking {
+  id                    String        @id @default(cuid())
+  expertId              String
+  expert                Expert        @relation(fields: [expertId], references: [id])
+  expertName            String
+  expertEmail           String        @default("")
+  userId                String
+  user                  User          @relation("UserBookings", fields: [userId], references: [id])
+  userName              String
+  userEmail             String
+
+  date                  String        // YYYY-MM-DD
+  startTime             String        // HH:mm
+  endTime               String        // HH:mm
+  status                BookingStatus @default(pending)
+  price                 Int           // EUR
+  note                  String        @default("")
+  statusToken           String        @unique
+
+  // Video session
+  dailyRoomUrl          String        @default("")
+  sessionStartedAt      DateTime?
+  sessionEndedAt        DateTime?
+  sessionDuration       Int?          // minutes
+  trialUsed             Boolean       @default(false)
+
+  // Payment
+  paymentStatus         PaymentStatus @default(unpaid)
+  stripeSessionId       String?
+  stripePaymentIntentId String?
+  paidAt                DateTime?
+  paidAmount            Int?          // EUR cents
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expertId, date, status])
+  @@index([userId])
+  @@index([statusToken])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  userId    String
+  rating    Float
+  text      String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([expertId])
+}
+
+model Availability {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // JSON fields: WeeklySlots, IWeeklyRule[], IDateException[]
+  slots       Json     @default("{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}")
+  yearlyRules Json     @default("[]")
+  exceptions  Json     @default("[]")
+  updatedAt   DateTime @updatedAt
+}
