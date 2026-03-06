@@ -1,12 +1,19 @@
 import nodemailer from "nodemailer"
 
+// Support both naming conventions (Vercel env pull uses EMAIL_SERVER_*, legacy uses SMTP_*)
+const smtpHost     = process.env.EMAIL_SERVER_HOST     || process.env.SMTP_HOST     || ""
+const smtpPort     = Number(process.env.EMAIL_SERVER_PORT || process.env.SMTP_PORT) || 587
+const smtpUser     = process.env.EMAIL_SERVER_USER     || process.env.SMTP_USER     || ""
+const smtpPassword = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASSWORD || ""
+const smtpFrom     = process.env.EMAIL_FROM            || process.env.SMTP_FROM     || smtpUser
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
+  host: smtpHost,
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    user: smtpUser,
+    pass: smtpPassword,
   },
 })
 
@@ -105,7 +112,7 @@ export async function sendPasswordResetEmail(
 </html>`
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    from: smtpFrom,
     to,
     subject: "diAiway - Passwort zuruecksetzen",
     html,
@@ -164,7 +171,7 @@ export async function sendBookingRequestEmail(opts: {
       ${btn(opts.declineUrl, "Ablehnen", "#dc2626")}
     </div>`
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    from: smtpFrom,
     to: opts.to,
     subject: `diAiway - Neue Buchungsanfrage von ${opts.userName}`,
     html: emailWrapper("Neue Buchungsanfrage", body),
@@ -202,7 +209,7 @@ export async function sendBookingStatusEmail(opts: {
       </td></tr>
     </table>`
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    from: smtpFrom,
     to: opts.to,
     subject: `diAiway - Buchung ${statusLabel}`,
     html: emailWrapper(title, body),

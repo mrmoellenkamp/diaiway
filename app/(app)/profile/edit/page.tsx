@@ -169,6 +169,7 @@ export default function EditProfilePage() {
     try {
       const formData = new FormData()
       formData.append("file", file)
+      formData.append("folder", "profiles")
       const res = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await res.json()
       if (res.ok && data.url) {
@@ -202,6 +203,7 @@ export default function EditProfilePage() {
     try {
       const formData = new FormData()
       formData.append("file", file)
+      formData.append("folder", "experts")
       const res = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await res.json()
       if (res.ok && data.url) {
