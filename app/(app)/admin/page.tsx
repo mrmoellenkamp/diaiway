@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import {
   ArrowLeft,
   Users,
@@ -27,6 +27,7 @@ import { ImageUpload } from "@/components/image-upload"
 export default function AdminPage() {
   const router = useRouter()
   const { data: session } = useSession()
+  const categories = useCategories()
 
   // Middleware already blocks non-admin users, this is a UI safeguard
   const adminName = session?.user?.name || "Admin"
