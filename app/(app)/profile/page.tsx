@@ -20,15 +20,12 @@ import {
   Calendar,
   CreditCard,
   Settings,
-  HelpCircle,
   LogOut,
   ChevronRight,
-  Shield,
   Edit3,
   Radio,
   Wallet,
   BarChart3,
-  FileText,
   Heart,
   Loader2,
   Check,
@@ -447,8 +444,6 @@ export default function ProfilePage() {
                 <MenuItem icon={BarChart3} label={t("profile.statistics")} />
               )}
               <MenuItem icon={Settings} label={t("common.settings")} />
-              <MenuItem icon={Shield} label={t("profile.privacy")} href="/legal/datenschutz" />
-              <MenuItem icon={HelpCircle} label={t("profile.helpSupport")} />
             </CardContent>
           </Card>
 
