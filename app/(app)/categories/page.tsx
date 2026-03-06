@@ -2,11 +2,12 @@
 
 import { PageContainer } from "@/components/page-container"
 import { CategoryCardLarge } from "@/components/category-card"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { useI18n } from "@/lib/i18n"
 
 export default function CategoriesPage() {
   const { t } = useI18n()
+  const categories = useCategories()
   return (
     <PageContainer>
       <div className="flex flex-col gap-4">

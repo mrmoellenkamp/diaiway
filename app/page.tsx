@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { MentorChat } from "@/components/mentor-chat"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
@@ -17,6 +17,7 @@ export default function LandingPage() {
   const { data: session } = useSession()
   const isLoggedIn = !!session?.user
   const { takumis } = useTakumis()
+  const categories = useCategories()
   const liveTakumis = takumis.filter((t) => t.isLive)
   const { t } = useI18n()
 

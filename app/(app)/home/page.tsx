@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { TakumiCard, TakumiCardCompact } from "@/components/takumi-card"
 import { CategoryCard } from "@/components/category-card"
 import { PageContainer } from "@/components/page-container"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useApp } from "@/lib/app-context"
 import { Search, ArrowRight, Sparkles } from "lucide-react"
@@ -15,6 +15,7 @@ import { useI18n } from "@/lib/i18n"
 export default function HomePage() {
   const { userName } = useApp()
   const { t } = useI18n()
+  const categories = useCategories()
   const { takumis, isEmpty } = useTakumis()
   const liveTakumis = takumis.filter((t) => t.isLive)
   const recommendedTakumis = takumis.filter((t) => t.rating >= 4.8)

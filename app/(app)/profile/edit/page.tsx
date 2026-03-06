@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { toast } from "sonner"
 import {
   ArrowLeft,
@@ -55,6 +55,7 @@ export default function EditProfilePage() {
   const { data: session, update: updateSession } = useSession()
   const { role, setRole } = useApp()
   const { t, locale } = useI18n()
+  const categories = useCategories()
   const isTakumi = role === "takumi"
   const fileInputRef = useRef<HTMLInputElement>(null)
 

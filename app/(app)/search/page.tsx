@@ -5,13 +5,14 @@ import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { Search as SearchIcon } from "lucide-react"
 
 function SearchContent() {
   const { t } = useI18n()
+  const categories = useCategories()
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get("q") || ""
   const [query, setQuery] = useState(initialQuery)

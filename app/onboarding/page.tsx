@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ArrowRight, ArrowLeft, Camera, Check } from "lucide-react"
@@ -16,6 +16,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { role } = useApp()
   const { t } = useI18n()
+  const categories = useCategories()
   const [step, setStep] = useState(0)
   const [selectedCats, setSelectedCats] = useState<string[]>([])
   const [bio, setBio] = useState("")

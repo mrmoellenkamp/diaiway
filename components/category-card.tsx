@@ -1,9 +1,12 @@
+"use client"
+
 import Link from "next/link"
 import {
   Smartphone, Home, Car, Shirt, Baby, PawPrint, Music,
   Palette, Briefcase, GraduationCap, Wrench,
 } from "lucide-react"
 import type { Category } from "@/lib/types"
+import { useI18n } from "@/lib/i18n"
 
 const iconMap: Record<string, React.ElementType> = {
   Smartphone, Home, Car, Shirt, Baby, PawPrint, Music,
@@ -11,6 +14,7 @@ const iconMap: Record<string, React.ElementType> = {
 }
 
 export function CategoryCard({ category }: { category: Category }) {
+  const { t } = useI18n()
   const Icon = iconMap[category.icon] || Briefcase
 
   return (
@@ -27,7 +31,7 @@ export function CategoryCard({ category }: { category: Category }) {
             {category.name}
           </span>
           <span className="text-[10px] text-muted-foreground">
-            {category.subcategories.length} Bereiche
+            {category.subcategories.length} {t("cat.areas")}
           </span>
         </div>
       </div>
@@ -36,6 +40,7 @@ export function CategoryCard({ category }: { category: Category }) {
 }
 
 export function CategoryCardLarge({ category }: { category: Category }) {
+  const { t } = useI18n()
   const Icon = iconMap[category.icon] || Briefcase
 
   return (
@@ -51,7 +56,7 @@ export function CategoryCardLarge({ category }: { category: Category }) {
           <span className="font-semibold text-foreground">{category.name}</span>
           <span className="text-xs text-muted-foreground">{category.description}</span>
           <span className="text-[10px] text-muted-foreground">
-            {category.subcategories.length} Bereiche
+            {category.subcategories.length} {t("cat.areas")}
           </span>
         </div>
       </div>

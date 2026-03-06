@@ -5,7 +5,7 @@ import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { ArrowLeft } from "lucide-react"
@@ -15,6 +15,7 @@ import { notFound } from "next/navigation"
 export default function CategoryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const { t } = useI18n()
+  const categories = useCategories()
   const category = categories.find((c) => c.slug === slug)
   if (!category) notFound()
 
