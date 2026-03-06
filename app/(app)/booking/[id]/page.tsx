@@ -214,16 +214,33 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             />
           </div>
 
-          {/* Cancellation Policy */}
-          <div className="flex items-start gap-2 rounded-xl bg-muted p-3">
-            <Shield className="size-4 shrink-0 text-primary mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-foreground">{t("booking.cancellationTitle")}</span>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
-                {t("booking.cancellationDesc")}
-              </p>
-            </div>
-          </div>
+          {/* Cancellation Policy – dynamic based on expert's settings */}
+          {(() => {
+            const cp = takumi.cancelPolicy
+            const freeHours = cp?.freeHours ?? 24
+            const feePercent = cp?.feePercent ?? 0
+            let policyText = ""
+            if (freeHours === 0 && feePercent === 0) {
+              policyText = t("booking.cancelPolicyFreeAlways")
+            } else if (freeHours === 0 && feePercent > 0) {
+              policyText = t("booking.cancelPolicyNoFree").replace("{percent}", String(feePercent))
+            } else if (feePercent === 0) {
+              policyText = t("booking.cancelPolicyFreeWindow").replace("{h}", String(freeHours))
+            } else {
+              policyText = t("booking.cancelPolicyFull")
+                .replace("{h}", String(freeHours))
+                .replace("{percent}", String(feePercent))
+            }
+            return (
+              <div className="flex items-start gap-2 rounded-xl bg-muted p-3">
+                <Shield className="size-4 shrink-0 text-primary mt-0.5" />
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-foreground">{t("booking.cancellationTitle")}</span>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">{policyText}</p>
+                </div>
+              </div>
+            )
+          })()}
 
           <Button
             type="submit"

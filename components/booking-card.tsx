@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,8 +18,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Video, Clock, Calendar, Phone, X, Loader2 } from "lucide-react"
+import { Video, Clock, Calendar, Phone, X, Loader2, AlertTriangle, CheckCircle2, UserX } from "lucide-react"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import type { BookingRecord } from "@/lib/types"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -39,6 +41,19 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+function formatCents(cents: number): string {
+  return `€${(cents / 100).toFixed(2).replace(".", ",")}`
+}
+
+interface CancelPreview {
+  isFree: boolean
+  hoursUntilSession: number
+  freeHours: number
+  feePercent: number
+  feeAmount: number
+  refundAmount: number
+}
+
 export function BookingCard({
   booking,
   onCancelled,
@@ -46,50 +61,81 @@ export function BookingCard({
   booking: BookingRecord
   onCancelled?: () => void
 }) {
+  const { t } = useI18n()
+  const { data: session } = useSession()
   const [isCancelling, setIsCancelling] = useState(false)
+  const [cancelPreview, setCancelPreview] = useState<CancelPreview | null>(null)
+  const [isExpertCancelling, setIsExpertCancelling] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   const status = statusConfig[booking.status] || statusConfig.pending
   const isLive = booking.status === "active"
   const canJoin = booking.status === "confirmed" || booking.status === "active"
   const canCancel = ["pending", "confirmed", "active"].includes(booking.status)
+  const bookingId = booking.id || booking._id || ""
+
+  // When dialog opens, fetch real-time cancel fee preview
+  useEffect(() => {
+    if (!dialogOpen || !canCancel || !bookingId) return
+    fetch(`/api/bookings/${bookingId}`, { method: "DELETE" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.preview) setCancelPreview(data.preview)
+        if (data.isExpertCancelling !== undefined) setIsExpertCancelling(data.isExpertCancelling)
+      })
+      .catch(() => {/* silent – we'll show generic message */})
+  }, [dialogOpen, canCancel, bookingId])
 
   async function handleCancel() {
     setIsCancelling(true)
     try {
-      const res = await fetch(`/api/bookings/${booking._id}`, {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel" }),
       })
       const data = await res.json()
       if (res.ok) {
-        const msg = data.refund?.refunded
-          ? "Buchung storniert. Rueckerstattung wird bearbeitet."
-          : "Buchung storniert."
+        let msg = t("booking.cancelled")
+        if (data.refund?.refunded) {
+          if (data.refund.partial && data.feeAmount > 0) {
+            msg = t("booking.cancelledPartialRefund")
+              .replace("{fee}", formatCents(data.feeAmount))
+              .replace("{refund}", formatCents(data.refundAmount))
+          } else {
+            msg = t("booking.cancelledFullRefund")
+          }
+        }
         toast.success(msg)
         onCancelled?.()
       } else {
-        toast.error(data.error || "Stornierung fehlgeschlagen.")
+        toast.error(data.error || t("booking.cancelFailed"))
       }
     } catch {
-      toast.error("Netzwerkfehler bei Stornierung.")
+      toast.error(t("common.networkError"))
     } finally {
       setIsCancelling(false)
+      setDialogOpen(false)
     }
   }
+
+  // Determine the current user role in this booking
+  const currentUserId = session?.user?.id
+  const isExpertView = booking.userId !== currentUserId
 
   return (
     <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="size-12 shrink-0 border-2 border-primary/10">
           <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-            {getInitials(booking.takumiName)}
+            {getInitials(isExpertView ? booking.userName : booking.takumiName)}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2">
             <span className="truncate font-semibold text-foreground">
-              {booking.takumiName}
+              {isExpertView ? booking.userName : booking.takumiName}
             </span>
             <Badge variant="outline" className={`shrink-0 text-[10px] ${status.className}`}>
               {isLive && (
@@ -99,7 +145,7 @@ export function BookingCard({
             </Badge>
           </div>
 
-          {booking.takumiSubcategory && (
+          {!isExpertView && booking.takumiSubcategory && (
             <p className="text-xs text-muted-foreground">{booking.takumiSubcategory}</p>
           )}
 
@@ -123,10 +169,25 @@ export function BookingCard({
             )}
           </div>
 
+          {/* Cancellation info for already-cancelled bookings */}
+          {booking.status === "cancelled" && booking.cancelledBy && (
+            <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive">
+              <UserX className="size-3 shrink-0" />
+              <span>
+                {booking.cancelledBy === "expert"
+                  ? t("booking.cancelledByExpert")
+                  : t("booking.cancelledByUser")}
+                {booking.cancelFeeAmount && booking.cancelFeeAmount > 0
+                  ? ` · ${t("booking.feeRetained").replace("{fee}", formatCents(booking.cancelFeeAmount))}`
+                  : ""}
+              </span>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="mt-2 flex gap-2">
             {canJoin && (
-              <Link href={`/session/${booking._id}`} className="flex-1">
+              <Link href={`/session/${bookingId}`} className="flex-1">
                 <Button
                   size="sm"
                   className={
@@ -136,12 +197,12 @@ export function BookingCard({
                   }
                 >
                   <Phone className="mr-1.5 size-3.5" />
-                  {isLive ? "Beitreten" : "Starten"}
+                  {isLive ? t("booking.join") : t("booking.start")}
                 </Button>
               </Link>
             )}
             {canCancel && (
-              <AlertDialog>
+              <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button
                     size="sm"
@@ -154,30 +215,95 @@ export function BookingCard({
                     ) : (
                       <X className="size-3.5" />
                     )}
-                    <span className="ml-1 hidden sm:inline">Stornieren</span>
+                    <span className="ml-1 hidden sm:inline">{t("booking.cancel")}</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Buchung stornieren?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Moechtest du die Buchung mit {booking.takumiName} am{" "}
-                      {new Date(booking.date + "T00:00:00").toLocaleDateString("de-DE")} wirklich
-                      stornieren?
-                      {booking.paymentStatus === "paid" && (
-                        <span className="mt-2 block text-sm font-medium text-foreground">
-                          Der bezahlte Betrag wird automatisch zurueckerstattet.
-                        </span>
-                      )}
+                    <AlertDialogTitle>{t("booking.cancelTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3">
+                        <p>
+                          {t("booking.cancelConfirm")
+                            .replace("{name}", isExpertView ? booking.userName : booking.takumiName)
+                            .replace("{date}", new Date(booking.date + "T00:00:00").toLocaleDateString("de-DE"))}
+                        </p>
+
+                        {/* Fee preview panel */}
+                        {cancelPreview && !isExpertCancelling ? (
+                          cancelPreview.isFree ? (
+                            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                              <div className="space-y-0.5">
+                                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                                  {t("booking.cancelFree")}
+                                </p>
+                                <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                                  {t("booking.cancelFreeDesc")
+                                    .replace("{hours}", String(Math.round(cancelPreview.hoursUntilSession)))}
+                                </p>
+                                {booking.paymentStatus === "paid" && (
+                                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                                    {t("booking.fullRefund").replace(
+                                      "{amount}",
+                                      formatCents(cancelPreview.refundAmount)
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                              <div className="space-y-0.5">
+                                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                                  {t("booking.cancelFeeApplies")}
+                                </p>
+                                <p className="text-xs text-amber-700 dark:text-amber-400">
+                                  {t("booking.cancelFeeDesc")
+                                    .replace("{percent}", String(cancelPreview.feePercent))
+                                    .replace("{freeHours}", String(cancelPreview.freeHours))}
+                                </p>
+                                {booking.paymentStatus === "paid" && (
+                                  <div className="mt-1.5 space-y-0.5 border-t border-amber-200 pt-1.5 dark:border-amber-800">
+                                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                                      {t("booking.feeBreakdown")
+                                        .replace("{fee}", formatCents(cancelPreview.feeAmount))
+                                        .replace("{refund}", formatCents(cancelPreview.refundAmount))}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        ) : isExpertCancelling ? (
+                          <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            <div>
+                              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                                {t("booking.expertCancelFree")}
+                              </p>
+                              {booking.paymentStatus === "paid" && cancelPreview && (
+                                <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                                  {t("booking.fullRefund").replace(
+                                    "{amount}",
+                                    formatCents(cancelPreview.refundAmount)
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogCancel>{t("common.abort")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleCancel}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Ja, stornieren
+                      {t("booking.confirmCancel")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

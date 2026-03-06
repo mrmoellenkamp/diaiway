@@ -33,6 +33,7 @@ import {
   AlertCircle,
   Calendar,
   Upload,
+  ShieldCheck,
 } from "lucide-react"
 
 interface TimeSlot { start: string; end: string }
@@ -73,6 +74,10 @@ export default function EditProfilePage() {
   const [takumiImageUrl, setTakumiImageUrl] = useState("")
   const [takumiExists, setTakumiExists] = useState(false)
   const [loadingTakumi, setLoadingTakumi] = useState(true)
+
+  // Cancellation policy
+  const [cancelFreeHours, setCancelFreeHours] = useState(24)
+  const [cancelFeePercent, setCancelFeePercent] = useState(0)
 
   // Social links
   const [socialInstagram, setSocialInstagram] = useState("")
@@ -138,6 +143,9 @@ export default function EditProfilePage() {
             setPricePerSession(String(data.pricePerSession || ""))
             setResponseTime(data.responseTime || "< 5 Min")
             setTakumiImageUrl(data.imageUrl || "")
+            const cp = data.cancelPolicy || {}
+            setCancelFreeHours(typeof cp.freeHours === "number" ? cp.freeHours : 24)
+            setCancelFeePercent(typeof cp.feePercent === "number" ? cp.feePercent : 0)
             const sl = data.socialLinks || {}
             setSocialInstagram(sl.instagram || "")
             setSocialTiktok(sl.tiktok || "")
@@ -336,6 +344,10 @@ export default function EditProfilePage() {
             pricePerSession: pricePerSession ? Number(pricePerSession) : undefined,
             responseTime,
             imageUrl: takumiImageUrl || undefined,
+            cancelPolicy: {
+              freeHours: cancelFreeHours,
+              feePercent: cancelFeePercent,
+            },
             socialLinks: {
               instagram: socialInstagram.trim() || undefined,
               tiktok:    socialTiktok.trim()    || undefined,
@@ -697,6 +709,77 @@ export default function EditProfilePage() {
                         </div>
                       </div>
                     ))}
+                  </CardContent>
+                </Card>
+
+                {/* ===== Cancellation Policy ===== */}
+                <Card className="border-border/60">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <ShieldCheck className="size-4 text-primary" />
+                      {t("editProfile.cancelPolicy")}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">{t("editProfile.cancelPolicyDesc")}</p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    {/* Free cancellation window */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("editProfile.cancelFreeHours")}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[0, 12, 24, 48, 72].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => setCancelFreeHours(h)}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                              cancelFreeHours === h
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                            }`}
+                          >
+                            {h === 0
+                              ? t("editProfile.cancelNeverFree")
+                              : t("editProfile.cancelHours").replace("{h}", String(h))}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Fee percentage */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("editProfile.cancelFeePercent")}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[0, 25, 50, 75, 100].map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setCancelFeePercent(p)}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                              cancelFeePercent === p
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                            }`}
+                          >
+                            {p === 0 ? t("editProfile.cancelNoFee") : `${p}%`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Policy summary */}
+                    <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                      {cancelFreeHours === 0
+                        ? t("editProfile.cancelSummaryNoFree").replace("{percent}", String(cancelFeePercent))
+                        : cancelFeePercent === 0
+                          ? t("editProfile.cancelSummaryFreeOnly").replace("{h}", String(cancelFreeHours))
+                          : t("editProfile.cancelSummaryFull")
+                              .replace("{h}", String(cancelFreeHours))
+                              .replace("{percent}", String(cancelFeePercent))}
+                    </div>
                   </CardContent>
                 </Card>
 
