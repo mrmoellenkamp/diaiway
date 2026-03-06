@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -23,24 +22,8 @@ import {
   Star,
   Loader2,
 } from "lucide-react"
+import { DailyVideoCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
-
-/**
- * DailyVideoCall is loaded exclusively client-side.
- * This prevents @daily-co from touching `window` during Next.js SSR/build,
- * which would otherwise cause "window is not defined" on Vercel.
- */
-const DailyVideoCall = dynamic(
-  () => import("@/components/daily-video-call").then((m) => m.DailyVideoCall),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
-        <Loader2 className="size-10 animate-spin text-primary-foreground/60" />
-      </div>
-    ),
-  }
-)
 
 type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
 
