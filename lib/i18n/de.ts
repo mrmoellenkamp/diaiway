@@ -26,7 +26,7 @@ const de = {
   "nav.expertsOverview": "Experten-Uebersicht",
 
   // Landing
-  "landing.heroTitle": "Dein Projekt in den besten Haenden",
+  "landing.heroTitle": "Dein Hund in den besten Haenden",
   "landing.heroDesc": "Echte Experten. Live per Video. Von Gemuese\u00ADgarten bis zum Oldtimer -- in 5 Minuten kostenlos testen.",
   "landing.findExpert": "Experte finden",
   "landing.discoverCategories": "Kategorien entdecken",
