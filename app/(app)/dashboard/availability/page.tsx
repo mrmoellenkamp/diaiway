@@ -453,298 +453,377 @@ export default function AvailabilityPage() {
 
             {/* ── Tab: Month Calendar + Day Detail ──────────────────────── */}
             <TabsContent value="calendar">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+              <div className="flex flex-col gap-3">
 
-                {/* Calendar grid */}
-                <Card className="flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="size-4 text-primary" />
-                        Kalenderübersicht
+                {/* ── Calendar card ──────────────────────────────────────── */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+
+                    {/* Month navigation header */}
+                    <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 rounded-full"
+                        onClick={prevMonth}
+                      >
+                        <ChevronLeft className="size-5" />
+                      </Button>
+                      <div className="text-center">
+                        <p className="text-base font-bold leading-tight text-foreground">
+                          {MONTH_NAMES[viewMonth]}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{viewYear}</p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="size-7" onClick={prevMonth}>
-                          <ChevronLeft className="size-4" />
-                        </Button>
-                        <span className="min-w-[130px] text-center text-xs font-semibold">
-                          {MONTH_NAMES[viewMonth]} {viewYear}
-                        </span>
-                        <Button variant="ghost" size="icon" className="size-7" onClick={nextMonth}>
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Day headers — week starts Monday */}
-                    <div className="mb-1 grid grid-cols-7 gap-1 text-center">
-                      {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
-                        <span key={d} className="py-1 text-[10px] font-medium text-muted-foreground">
-                          {d}
-                        </span>
-                      ))}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 rounded-full"
+                        onClick={nextMonth}
+                      >
+                        <ChevronRight className="size-5" />
+                      </Button>
                     </div>
 
-                    {/* Day cells */}
-                    <div className="grid grid-cols-7 gap-1">
-                      {calendarDays.map((day, i) => {
-                        if (day === null) return <div key={`e-${i}`} className="size-10" />
-                        const { dateStr, isPast, isToday, exception, resolved, dayBookings } = getDayInfo(day)
-                        const isSelected  = dateStr === selectedDate
-                        const isAvailable = resolved.length > 0
+                    <div className="p-3">
+                      {/* Day headers */}
+                      <div className="mb-1 grid grid-cols-7">
+                        {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d, i) => (
+                          <div key={d} className="flex items-center justify-center py-1.5">
+                            <span className={`text-[11px] font-semibold ${i >= 5 ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
+                              {d}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
 
-                        return (
-                          <button
-                            key={day}
-                            onClick={() => !isPast && setSelectedDate(dateStr === selectedDate ? "" : dateStr)}
-                            disabled={isPast}
-                            className={[
-                              "relative flex flex-col items-center justify-center size-10 rounded-xl text-xs font-medium transition-all",
-                              isSelected  ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40" : "",
-                              isToday && !isSelected ? "ring-2 ring-primary/40 font-bold text-primary" : "",
-                              !isSelected && !isPast ? "hover:bg-muted cursor-pointer" : "",
-                              isPast ? "cursor-default text-muted-foreground/25" : "text-foreground",
-                            ].join(" ")}
-                          >
-                            <span>{day}</span>
+                      {/* Day cells */}
+                      <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden bg-border/20">
+                        {calendarDays.map((day, i) => {
+                          if (day === null) return (
+                            <div key={`e-${i}`} className="bg-background h-12" />
+                          )
+                          const { dateStr, isPast, isToday, exception, resolved, dayBookings } = getDayInfo(day)
+                          const isSelected  = dateStr === selectedDate
+                          const isAvailable = resolved.length > 0
+                          const isWeekend   = new Date(dateStr + "T00:00:00").getDay() === 0 ||
+                                              new Date(dateStr + "T00:00:00").getDay() === 6
 
-                            {/* Status dot */}
-                            {!isPast && (
+                          // Background color by state (only future days)
+                          let cellBg = "bg-background"
+                          if (!isPast && !isSelected) {
+                            if      (exception?.type === "unavailable") cellBg = "bg-red-50 dark:bg-red-950/25"
+                            else if (exception?.type === "custom")      cellBg = "bg-amber-50 dark:bg-amber-950/25"
+                            else if (isAvailable)                        cellBg = "bg-emerald-50/70 dark:bg-emerald-950/20"
+                            else if (isWeekend)                          cellBg = "bg-muted/30"
+                          }
+
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => !isPast && setSelectedDate(dateStr === selectedDate ? "" : dateStr)}
+                              disabled={isPast}
+                              className={[
+                                "relative flex h-12 flex-col items-center justify-center gap-0.5 transition-all select-none",
+                                cellBg,
+                                isSelected
+                                  ? "!bg-primary text-primary-foreground z-10 shadow-lg"
+                                  : "",
+                                !isSelected && !isPast
+                                  ? "hover:brightness-95 dark:hover:brightness-110 cursor-pointer active:scale-95"
+                                  : "",
+                                isPast ? "cursor-default" : "",
+                              ].join(" ")}
+                            >
+                              {/* Day number */}
                               <span
                                 className={[
-                                  "absolute bottom-0.5 left-1/2 -translate-x-1/2 size-1 rounded-full",
-                                  exception?.type === "unavailable" ? "bg-destructive"  : "",
-                                  exception?.type === "custom"      ? "bg-amber-500"    : "",
-                                  !exception && isAvailable          ? "bg-green-500"   : "",
+                                  "text-sm font-semibold leading-none",
+                                  isSelected   ? "text-primary-foreground" : "",
+                                  isToday && !isSelected ? "text-primary" : "",
+                                  isPast && !isSelected  ? "text-muted-foreground/30" : "",
+                                  !isPast && !isSelected && !isToday ? "text-foreground" : "",
                                 ].join(" ")}
-                              />
-                            )}
-
-                            {/* Booking count badge */}
-                            {!isSelected && dayBookings.length > 0 && (
-                              <span className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-accent text-[7px] font-bold text-accent-foreground">
-                                {dayBookings.length}
+                              >
+                                {day}
                               </span>
-                            )}
-                          </button>
-                        )
-                      })}
+
+                              {/* Today ring */}
+                              {isToday && !isSelected && (
+                                <span className="absolute inset-1 rounded-md ring-2 ring-primary/50 pointer-events-none" />
+                              )}
+
+                              {/* Booking count pill */}
+                              {!isSelected && dayBookings.length > 0 && (
+                                <span className="text-[9px] font-bold leading-none text-primary/70">
+                                  {dayBookings.length}×
+                                </span>
+                              )}
+
+                              {/* Exception stripe */}
+                              {!isSelected && !isPast && exception?.type === "unavailable" && (
+                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-destructive/60" />
+                              )}
+                              {!isSelected && !isPast && exception?.type === "custom" && (
+                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-amber-500/70" />
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
 
                     {/* Legend */}
-                    <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <span className="size-1.5 rounded-full bg-green-500" /> Verfügbar
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/40 px-4 py-2.5">
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="h-3 w-3 rounded-sm border border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60" />
+                        Verfügbar
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="size-1.5 rounded-full bg-destructive" /> Nicht verfügbar
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="h-3 w-3 rounded-sm border border-red-200 bg-red-100 dark:border-red-800 dark:bg-red-950/60" />
+                        Gesperrt
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="size-1.5 rounded-full bg-amber-500" /> Sonderzeit
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="h-3 w-3 rounded-sm border border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60" />
+                        Sonderzeit
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="size-1.5 rounded-full bg-accent" /> Buchung
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="text-[10px] font-bold text-primary">2×</span>
+                        Buchungen
                       </span>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Day detail panel */}
+                {/* ── Day detail panel (below calendar) ─────────────────── */}
                 {selectedDate && selectedInfo ? (
-                  <Card className="lg:w-72">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between text-sm">
-                        <span>
-                          {DAY_NAMES[new Date(selectedDate + "T00:00:00").getDay()]},{" "}
-                          {formatDisplay(selectedDate)}
-                        </span>
-                        <Badge variant="outline" className="text-[10px]">
-                          KW {getISOWeek(new Date(selectedDate + "T00:00:00"))}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-
-                      {/* Availability status */}
-                      <div
-                        className={[
-                          "flex items-start gap-2 rounded-lg p-2.5 text-xs",
-                          selectedInfo.exception?.type === "unavailable"
-                            ? "bg-destructive/10 text-destructive"
-                            : selectedInfo.exception?.type === "custom"
-                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                              : selectedInfo.resolved.length > 0
-                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                                : "bg-muted text-muted-foreground",
-                        ].join(" ")}
-                      >
-                        <Info className="mt-0.5 size-3.5 shrink-0" />
-                        <span>
-                          {selectedInfo.exception?.type === "unavailable"
-                            ? `Nicht verfügbar: ${selectedInfo.exception.reason}`
-                            : selectedInfo.exception?.type === "custom"
-                              ? `Sonderzeit: ${selectedInfo.exception.reason}`
-                              : selectedInfo.source === "rule"
-                                ? "Überschrieben durch Saison-Regel"
-                                : selectedInfo.resolved.length > 0
-                                  ? "Aus Standard-Wochenplan"
-                                  : "Kein Standardplan für diesen Wochentag"}
-                        </span>
-                      </div>
-
-                      {/* Resolved time slots */}
-                      {selectedInfo.resolved.length > 0 && (
+                  <Card className="border-primary/30 bg-gradient-to-b from-primary/[0.03] to-transparent">
+                    <CardHeader className="pb-0 pt-4">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Verfügbare Zeiten
+                          <h3 className="text-base font-bold text-foreground">
+                            {DAY_NAMES[new Date(selectedDate + "T00:00:00").getDay()]},{" "}
+                            {formatDisplay(selectedDate)}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            KW {getISOWeek(new Date(selectedDate + "T00:00:00"))} · {MONTH_NAMES[new Date(selectedDate + "T00:00:00").getMonth()]} {new Date(selectedDate + "T00:00:00").getFullYear()}
                           </p>
+                        </div>
+                        <button
+                          onClick={() => setSelectedDate("")}
+                          className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <XCircle className="size-4" />
+                        </button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
+
+                        {/* Left column: Status + Times */}
+                        <div className="flex flex-col gap-3">
+                          {/* Status banner */}
+                          <div
+                            className={[
+                              "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium",
+                              selectedInfo.exception?.type === "unavailable"
+                                ? "bg-destructive/10 text-destructive"
+                                : selectedInfo.exception?.type === "custom"
+                                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                                  : selectedInfo.resolved.length > 0
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    : "bg-muted text-muted-foreground",
+                            ].join(" ")}
+                          >
+                            <Info className="size-4 shrink-0" />
+                            <span className="text-xs">
+                              {selectedInfo.exception?.type === "unavailable"
+                                ? `Nicht verfügbar: ${selectedInfo.exception.reason}`
+                                : selectedInfo.exception?.type === "custom"
+                                  ? `Sonderzeit: ${selectedInfo.exception.reason}`
+                                  : selectedInfo.source === "rule"
+                                    ? "Überschrieben durch Saison-Regel"
+                                    : selectedInfo.resolved.length > 0
+                                      ? "Verfügbar nach Standard-Wochenplan"
+                                      : "Kein Standardplan für diesen Wochentag"}
+                            </span>
+                          </div>
+
+                          {/* Time slots */}
                           {(selectedInfo.exception?.type === "custom"
                             ? selectedInfo.exception.slots || []
                             : selectedInfo.resolved
-                          ).map((s, i) => (
-                            <div key={i} className="flex items-center gap-1.5 text-xs">
-                              <Clock className="size-3 text-primary" />
-                              <span>{s.start} – {s.end}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Bookings on this day */}
-                      {selectedInfo.dayBookings.length > 0 && (
-                        <div>
-                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Buchungen ({selectedInfo.dayBookings.length})
-                          </p>
-                          <div className="flex flex-col gap-1.5">
-                            {selectedInfo.dayBookings.map((b) => (
-                              <div
-                                key={b.id}
-                                className="flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <p className="truncate text-[11px] font-medium">{b.userName}</p>
-                                  <p className="text-[10px] text-muted-foreground">{b.startTime}–{b.endTime}</p>
+                          ).length > 0 && (
+                            <div className="flex flex-col gap-1.5">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Zeiten
+                              </p>
+                              {(selectedInfo.exception?.type === "custom"
+                                ? selectedInfo.exception.slots || []
+                                : selectedInfo.resolved
+                              ).map((s, i) => (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm"
+                                >
+                                  <Clock className="size-3.5 text-primary shrink-0" />
+                                  <span className="font-medium tabular-nums">{s.start}</span>
+                                  <span className="text-muted-foreground">–</span>
+                                  <span className="font-medium tabular-nums">{s.end}</span>
                                 </div>
-                                <Badge
-                                  variant="outline"
-                                  className={`shrink-0 text-[9px] ${
-                                    b.status === "confirmed"
-                                      ? "border-green-500/30 bg-green-500/10 text-green-600"
-                                      : b.status === "pending"
-                                        ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-                                        : "border-border bg-muted"
-                                  }`}
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Bookings */}
+                          {selectedInfo.dayBookings.length > 0 && (
+                            <div className="flex flex-col gap-1.5">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Buchungen
+                              </p>
+                              {selectedInfo.dayBookings.map((b) => (
+                                <div
+                                  key={b.id}
+                                  className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2"
                                 >
-                                  {b.status === "confirmed" ? "Bestätigt" : b.status === "pending" ? "Anfrage" : b.status}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Exception actions */}
-                      <div className="flex flex-col gap-2 border-t border-border/60 pt-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          Ausnahme für diesen Tag
-                        </p>
-
-                        {selectedInfo.exception ? (
-                          <div className="flex flex-col gap-2">
-                            {/* Edit custom slots inline */}
-                            {selectedInfo.exception.type === "custom" && (
-                              <div className="flex flex-col gap-1.5">
-                                {(selectedInfo.exception.slots || []).map((slot, idx) => (
-                                  <div key={idx} className="flex items-center gap-1">
-                                    <input
-                                      type="time"
-                                      step="900"
-                                      value={slot.start}
-                                      onChange={(e) => {
-                                        const s = [...(selectedInfo.exception!.slots || [])]
-                                        s[idx] = { ...slot, start: e.target.value }
-                                        updateException(selectedDate, { slots: s })
-                                      }}
-                                      className="h-7 w-24 rounded-md border border-input bg-background px-1.5 text-[11px]"
-                                    />
-                                    <span className="text-[10px]">–</span>
-                                    <input
-                                      type="time"
-                                      step="900"
-                                      value={slot.end}
-                                      onChange={(e) => {
-                                        const s = [...(selectedInfo.exception!.slots || [])]
-                                        s[idx] = { ...slot, end: e.target.value }
-                                        updateException(selectedDate, { slots: s })
-                                      }}
-                                      className="h-7 w-24 rounded-md border border-input bg-background px-1.5 text-[11px]"
-                                    />
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="size-6"
-                                      onClick={() => {
-                                        const s = (selectedInfo.exception!.slots || []).filter((_, i) => i !== idx)
-                                        updateException(selectedDate, { slots: s })
-                                      }}
-                                    >
-                                      <Trash2 className="size-3 text-destructive/60" />
-                                    </Button>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate text-xs font-semibold">{b.userName}</p>
+                                    <p className="text-[11px] text-muted-foreground tabular-nums">
+                                      {b.startTime} – {b.endTime}
+                                    </p>
                                   </div>
-                                ))}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-xs text-primary"
-                                  onClick={() => {
-                                    const s = [...(selectedInfo.exception!.slots || []), { start: "09:00", end: "17:00" }]
-                                    updateException(selectedDate, { slots: s })
-                                  }}
-                                >
-                                  <Plus className="size-3 mr-1" /> Zeitblock
-                                </Button>
-                              </div>
-                            )}
+                                  <Badge
+                                    variant="outline"
+                                    className={`shrink-0 text-[10px] ${
+                                      b.status === "confirmed"
+                                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                                        : b.status === "pending"
+                                          ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                                          : "border-border bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {b.status === "confirmed" ? "Bestätigt" : b.status === "pending" ? "Anfrage" : b.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full h-8 text-xs border-destructive/30 text-destructive"
-                              onClick={() => removeException(selectedDate)}
-                            >
-                              <Trash2 className="size-3 mr-1" /> Ausnahme entfernen
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-1.5">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-full text-xs border-destructive/30 text-destructive"
-                              onClick={() => addException("unavailable")}
-                            >
-                              <CalendarX2 className="size-3 mr-1" /> Nicht verfügbar markieren
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-full text-xs border-amber-500/40 text-amber-700 dark:text-amber-400"
-                              onClick={() => addException("custom")}
-                            >
-                              <Plus className="size-3 mr-1" /> Sonderzeiten festlegen
-                            </Button>
-                          </div>
-                        )}
+                        {/* Right column: Exception controls */}
+                        <div className="flex flex-col gap-3 sm:border-l sm:border-border/40 sm:pl-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Ausnahme für diesen Tag
+                          </p>
+
+                          {selectedInfo.exception ? (
+                            <div className="flex flex-col gap-2.5">
+                              {/* Edit reason */}
+                              <Input
+                                value={selectedInfo.exception.reason}
+                                onChange={(e) => updateException(selectedDate, { reason: e.target.value })}
+                                placeholder="Grund (z.B. Urlaub, Feiertag)"
+                                className="h-8 text-xs"
+                              />
+
+                              {/* Edit custom time slots */}
+                              {selectedInfo.exception.type === "custom" && (
+                                <div className="flex flex-col gap-2">
+                                  {(selectedInfo.exception.slots || []).map((slot, idx) => (
+                                    <div key={idx} className="flex items-center gap-1.5">
+                                      <input
+                                        type="time"
+                                        step="900"
+                                        value={slot.start}
+                                        onChange={(e) => {
+                                          const s = [...(selectedInfo.exception!.slots || [])]
+                                          s[idx] = { ...slot, start: e.target.value }
+                                          updateException(selectedDate, { slots: s })
+                                        }}
+                                        className="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                      />
+                                      <span className="text-xs text-muted-foreground">–</span>
+                                      <input
+                                        type="time"
+                                        step="900"
+                                        value={slot.end}
+                                        onChange={(e) => {
+                                          const s = [...(selectedInfo.exception!.slots || [])]
+                                          s[idx] = { ...slot, end: e.target.value }
+                                          updateException(selectedDate, { slots: s })
+                                        }}
+                                        className="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                      />
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="size-7 shrink-0 text-destructive/60 hover:text-destructive"
+                                        onClick={() => {
+                                          const s = (selectedInfo.exception!.slots || []).filter((_, i) => i !== idx)
+                                          updateException(selectedDate, { slots: s })
+                                        }}
+                                      >
+                                        <Trash2 className="size-3.5" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 gap-1 text-xs text-primary"
+                                    onClick={() => {
+                                      const s = [...(selectedInfo.exception!.slots || []), { start: "09:00", end: "17:00" }]
+                                      updateException(selectedDate, { slots: s })
+                                    }}
+                                  >
+                                    <Plus className="size-3" /> Zeitblock hinzufügen
+                                  </Button>
+                                </div>
+                              )}
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-full gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                                onClick={() => removeException(selectedDate)}
+                              >
+                                <Trash2 className="size-3.5" /> Ausnahme entfernen
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              <p className="text-[11px] text-muted-foreground">
+                                Überschreibe die Standard-Verfügbarkeit für diesen einzelnen Tag.
+                              </p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/5"
+                                onClick={() => addException("unavailable")}
+                              >
+                                <CalendarX2 className="size-4" />
+                                Als nicht verfügbar markieren
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-full gap-2 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/5"
+                                onClick={() => addException("custom")}
+                              >
+                                <Clock className="size-4" />
+                                Abweichende Zeiten festlegen
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="hidden lg:flex lg:w-72 items-center justify-center rounded-xl border border-dashed border-border/60 p-8 text-center">
+                  <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-8 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Calendar className="size-8 opacity-30" />
-                      <p className="text-xs">Tag auswählen um Details zu sehen</p>
+                      <Calendar className="size-7 opacity-25" />
+                      <p className="text-xs">Klicke auf einen Tag um Details zu bearbeiten</p>
                     </div>
                   </div>
                 )}
