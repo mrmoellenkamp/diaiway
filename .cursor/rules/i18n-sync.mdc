@@ -1,0 +1,32 @@
+---
+description: i18n sync rule – German is the master language, en.ts and es.ts must always be kept in sync
+globs: lib/i18n/*.ts
+alwaysApply: false
+---
+
+# i18n – Deutsch ist Mastersprache
+
+`lib/i18n/de.ts` ist die einzige Quelle der Wahrheit für alle Übersetzungskeys.
+
+## Regeln
+
+1. **Neue Keys** → immer zuerst in `de.ts` hinzufügen, dann sofort denselben Key in `en.ts` und `es.ts` mit passendem Text ergänzen.
+2. **Geänderte Keys** → Schlüsselname oder Wert in `de.ts` geändert? Dasselbe muss in `en.ts` und `es.ts` gespiegelt werden.
+3. **Gelöschte Keys** → aus allen drei Dateien entfernen.
+4. **Feste Begriffe** → `Shugyo` und `Takumi` werden in keiner Sprache übersetzt oder verändert.
+5. **Key-Parität** → alle drei Dateien müssen jederzeit dieselbe Menge an Keys haben. Fehlende Keys sind ein Fehler.
+
+## Workflow bei jeder Änderung
+
+```
+de.ts  →  en.ts  →  es.ts
+(Master)   (sync)    (sync)
+```
+
+Wenn du `de.ts` bearbeitest, bearbeite in derselben Antwort auch `en.ts` und `es.ts`.
+
+## Nicht übersetzen
+
+- `Shugyo` (Nutzerolle)
+- `Takumi` (Expertenrolle)
+- Markennamen: `diAiway`, `Vercel`, `Prisma`, `Daily.co`
