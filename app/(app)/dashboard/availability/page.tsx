@@ -26,15 +26,11 @@ import {
   type IDateException,
   type IAvailabilityData,
 } from "@/lib/availability-utils"
+import { useI18n } from "@/lib/i18n"
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const DAY_NAMES  = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
 const ORDERED_DAYS = [1, 2, 3, 4, 5, 6, 0]
-const MONTH_NAMES = [
-  "Januar", "Februar", "März", "April", "Mai", "Juni",
-  "Juli", "August", "September", "Oktober", "November", "Dezember",
-]
 
 type Slots = Record<number, ITimeSlot[]>
 const EMPTY_SLOTS: Slots = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
@@ -69,6 +65,7 @@ function WeeklySlotsEditor({
   slots: Slots
   onChange: (s: Slots) => void
 }) {
+  const { t } = useI18n()
   const addSlot = (day: number) =>
     onChange({ ...slots, [day]: [...(slots[day] || []), { start: "09:00", end: "17:00" }] })
 
@@ -114,10 +111,10 @@ function WeeklySlotsEditor({
                   className="h-7 gap-1 text-xs text-primary"
                   onClick={() => addSlot(day)}
                 >
-                  <Plus className="size-3" /> Zeitblock
+                  <Plus className="size-3" /> {t("avail.timeBlock")}
                 </Button>
               ) : (
-                <span className="text-xs italic text-muted-foreground">Nicht verfügbar</span>
+                <span className="text-xs italic text-muted-foreground">{t("avail.notAvailable")}</span>
               )}
             </div>
 
@@ -164,6 +161,25 @@ function WeeklySlotsEditor({
 
 export default function AvailabilityPage() {
   const { data: session, status: authStatus } = useSession()
+  const { t, locale } = useI18n()
+
+  const DAY_NAMES = locale === "en"
+    ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    : locale === "es"
+      ? ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+      : ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+
+  const DAY_SHORT_HEADER = locale === "en"
+    ? ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    : locale === "es"
+      ? ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"]
+      : ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+
+  const MONTH_NAMES = locale === "en"
+    ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    : locale === "es"
+      ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+      : ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
 
   const [slots, setSlots] = useState<Slots>(EMPTY_SLOTS)
   const [yearlyRules, setYearlyRules] = useState<IWeeklyRule[]>([])
@@ -216,7 +232,7 @@ export default function AvailabilityPage() {
         body: JSON.stringify({ slots, yearlyRules, exceptions }),
       })
       const data = await res.json()
-      if (res.ok) toast.success(data.message || "Verfügbarkeit gespeichert!")
+      if (res.ok) toast.success(data.message || t("avail.saved"))
       else toast.error(data.error)
     } catch {
       toast.error("Netzwerkfehler.")
@@ -239,7 +255,7 @@ export default function AvailabilityPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(action === "confirmed" ? "Buchung bestätigt!" : "Buchung abgelehnt.")
+        toast.success(action === "confirmed" ? t("avail.bookingConfirmed") : t("avail.bookingDeclined"))
         setBookings((prev) =>
           prev.map((b) => (b.id === bookingId ? { ...b, status: action } : b))
         )
@@ -318,19 +334,19 @@ export default function AvailabilityPage() {
   function addException(type: "unavailable" | "custom") {
     if (!selectedDate) return
     if (exceptions.find((e) => e.date === selectedDate)) {
-      toast.error("Für diesen Tag gibt es bereits eine Ausnahme.")
+      toast.error(locale === "en" ? "There is already an exception for this day." : locale === "es" ? "Ya existe una excepción para este día." : "Für diesen Tag gibt es bereits eine Ausnahme.")
       return
     }
     const base: IDateException = {
       date:   selectedDate,
-      reason: type === "unavailable" ? "Nicht verfügbar" : "Sonderöffnung",
+      reason: type === "unavailable" ? t("avail.dayUnavailable") : t("avail.dayCustom"),
       type,
       slots:  type === "custom"
         ? (selectedInfo?.resolved.length ? selectedInfo.resolved : [{ start: "09:00", end: "17:00" }])
         : [],
     }
     setExceptions((prev) => [...prev, base])
-    toast.success("Ausnahme hinzugefügt — vergiss nicht zu speichern!")
+    toast.success(locale === "en" ? "Exception added — don't forget to save!" : locale === "es" ? "Excepción añadida — ¡no olvides guardar!" : "Ausnahme hinzugefügt — vergiss nicht zu speichern!")
   }
 
   function removeException(date: string) {
@@ -368,9 +384,9 @@ export default function AvailabilityPage() {
               <Link href="/profile"><ArrowLeft className="size-5" /></Link>
             </Button>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Arbeitszeiten verwalten</h1>
+              <h1 className="text-lg font-bold text-foreground">{t("avail.title")}</h1>
               <p className="text-xs text-muted-foreground">
-                Verfügbarkeit · Regeln · Buchungskalender
+                {t("avail.tabWeekly")} · {t("avail.tabSeasonal")} · {t("avail.tabCalendar")}
               </p>
             </div>
           </div>
@@ -381,7 +397,7 @@ export default function AvailabilityPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-400">
                   <AlertCircle className="size-4" />
-                  {pendingBookings.length} offene Buchungsanfrage{pendingBookings.length > 1 ? "n" : ""}
+                  {pendingBookings.length === 1 ? t("avail.pendingRequests") : t("avail.pendingRequests") + "n"} ({pendingBookings.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
@@ -402,7 +418,7 @@ export default function AvailabilityPage() {
                         className="h-7 gap-1 text-xs"
                         onClick={() => handleBookingAction(b.id, b.statusToken, "confirmed")}
                       >
-                        <CheckCircle className="size-3" /> Annehmen
+                        <CheckCircle className="size-3" /> {t("common.yes")}
                       </Button>
                       <Button
                         size="sm"
@@ -410,7 +426,7 @@ export default function AvailabilityPage() {
                         className="h-7 gap-1 text-xs border-destructive/30 text-destructive"
                         onClick={() => handleBookingAction(b.id, b.statusToken, "declined")}
                       >
-                        <XCircle className="size-3" /> Ablehnen
+                        <XCircle className="size-3" /> {t("common.no")}
                       </Button>
                     </div>
                   </div>
@@ -423,13 +439,13 @@ export default function AvailabilityPage() {
           <Tabs defaultValue="schedule" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="schedule" className="gap-1 text-xs">
-                <Clock className="size-3" /> Wochenplan
+                <Clock className="size-3" /> {t("avail.tabWeekly")}
               </TabsTrigger>
               <TabsTrigger value="calendar" className="gap-1 text-xs">
-                <Calendar className="size-3" /> Kalender
+                <Calendar className="size-3" /> {t("avail.tabCalendar")}
               </TabsTrigger>
               <TabsTrigger value="rules" className="gap-1 text-xs">
-                <CalendarDays className="size-3" /> Regeln
+                <CalendarDays className="size-3" /> {t("avail.tabSeasonal")}
               </TabsTrigger>
             </TabsList>
 
@@ -439,10 +455,10 @@ export default function AvailabilityPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
                     <Clock className="size-4 text-primary" />
-                    Standard-Wochenplan
+                    {t("avail.tabWeekly")}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    Gilt für alle Wochen ohne spezielle Regel. Zeiten in 15-Minuten-Intervallen.
+                    {t("avail.weeklyHint")}
                   </p>
                 </CardHeader>
                 <CardContent className="pt-0">
@@ -488,7 +504,7 @@ export default function AvailabilityPage() {
                     <div className="p-3">
                       {/* Day headers */}
                       <div className="mb-1 grid grid-cols-7">
-                        {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d, i) => (
+                        {DAY_SHORT_HEADER.map((d, i) => (
                           <div key={d} className="flex items-center justify-center py-1.5">
                             <span className={`text-[11px] font-semibold ${i >= 5 ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
                               {d}
@@ -577,19 +593,19 @@ export default function AvailabilityPage() {
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/40 px-4 py-2.5">
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="h-3 w-3 rounded-sm border border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60" />
-                        Verfügbar
+                        {t("avail.legendAvailable")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="h-3 w-3 rounded-sm border border-red-200 bg-red-100 dark:border-red-800 dark:bg-red-950/60" />
-                        Gesperrt
+                        {t("avail.legendUnavailable")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="h-3 w-3 rounded-sm border border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60" />
-                        Sonderzeit
+                        {t("avail.legendCustom")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="text-[10px] font-bold text-primary">2×</span>
-                        Buchungen
+                        {t("avail.legendBooking")}
                       </span>
                     </div>
                   </CardContent>
@@ -606,7 +622,7 @@ export default function AvailabilityPage() {
                             {formatDisplay(selectedDate)}
                           </h3>
                           <p className="mt-0.5 text-xs text-muted-foreground">
-                            KW {getISOWeek(new Date(selectedDate + "T00:00:00"))} · {MONTH_NAMES[new Date(selectedDate + "T00:00:00").getMonth()]} {new Date(selectedDate + "T00:00:00").getFullYear()}
+                            {t("avail.weekPrefix")} {getISOWeek(new Date(selectedDate + "T00:00:00"))} · {MONTH_NAMES[new Date(selectedDate + "T00:00:00").getMonth()]} {new Date(selectedDate + "T00:00:00").getFullYear()}
                           </p>
                         </div>
                         <button
@@ -638,14 +654,14 @@ export default function AvailabilityPage() {
                             <Info className="size-4 shrink-0" />
                             <span className="text-xs">
                               {selectedInfo.exception?.type === "unavailable"
-                                ? `Nicht verfügbar: ${selectedInfo.exception.reason}`
+                                ? `${t("avail.dayUnavailable")}: ${selectedInfo.exception.reason}`
                                 : selectedInfo.exception?.type === "custom"
-                                  ? `Sonderzeit: ${selectedInfo.exception.reason}`
+                                  ? `${t("avail.dayCustom")}: ${selectedInfo.exception.reason}`
                                   : selectedInfo.source === "rule"
-                                    ? "Überschrieben durch Saison-Regel"
+                                    ? (locale === "en" ? "Overridden by seasonal rule" : locale === "es" ? "Anulado por regla estacional" : "Überschrieben durch Saison-Regel")
                                     : selectedInfo.resolved.length > 0
-                                      ? "Verfügbar nach Standard-Wochenplan"
-                                      : "Kein Standardplan für diesen Wochentag"}
+                                      ? (locale === "en" ? "Available by default schedule" : locale === "es" ? "Disponible según horario estándar" : "Verfügbar nach Standard-Wochenplan")
+                                      : (locale === "en" ? "No schedule for this weekday" : locale === "es" ? "Sin horario para este día" : "Kein Standardplan für diesen Wochentag")}
                             </span>
                           </div>
 
@@ -656,7 +672,7 @@ export default function AvailabilityPage() {
                           ).length > 0 && (
                             <div className="flex flex-col gap-1.5">
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                Zeiten
+                                {t("avail.timeSlots")}
                               </p>
                               {(selectedInfo.exception?.type === "custom"
                                 ? selectedInfo.exception.slots || []
@@ -679,7 +695,7 @@ export default function AvailabilityPage() {
                           {selectedInfo.dayBookings.length > 0 && (
                             <div className="flex flex-col gap-1.5">
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                Buchungen
+                                {t("avail.legendBooking")}
                               </p>
                               {selectedInfo.dayBookings.map((b) => (
                                 <div
@@ -702,7 +718,7 @@ export default function AvailabilityPage() {
                                           : "border-border bg-muted text-muted-foreground"
                                     }`}
                                   >
-                                    {b.status === "confirmed" ? "Bestätigt" : b.status === "pending" ? "Anfrage" : b.status}
+                                    {b.status === "confirmed" ? t("avail.confirmed") : b.status === "pending" ? t("avail.pending") : b.status}
                                   </Badge>
                                 </div>
                               ))}
@@ -713,7 +729,7 @@ export default function AvailabilityPage() {
                         {/* Right column: Exception controls */}
                         <div className="flex flex-col gap-3 sm:border-l sm:border-border/40 sm:pl-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Ausnahme für diesen Tag
+                            {locale === "en" ? "Exception for this day" : locale === "es" ? "Excepción para este día" : "Ausnahme für diesen Tag"}
                           </p>
 
                           {selectedInfo.exception ? (
@@ -722,7 +738,7 @@ export default function AvailabilityPage() {
                               <Input
                                 value={selectedInfo.exception.reason}
                                 onChange={(e) => updateException(selectedDate, { reason: e.target.value })}
-                                placeholder="Grund (z.B. Urlaub, Feiertag)"
+                                placeholder={locale === "en" ? "Reason (e.g. Holiday)" : locale === "es" ? "Motivo (ej. Vacaciones)" : "Grund (z.B. Urlaub, Feiertag)"}
                                 className="h-8 text-xs"
                               />
 
@@ -776,7 +792,7 @@ export default function AvailabilityPage() {
                                       updateException(selectedDate, { slots: s })
                                     }}
                                   >
-                                    <Plus className="size-3" /> Zeitblock hinzufügen
+                                    <Plus className="size-3" /> {t("avail.addTimeSlot")}
                                   </Button>
                                 </div>
                               )}
@@ -787,13 +803,13 @@ export default function AvailabilityPage() {
                                 className="h-8 w-full gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
                                 onClick={() => removeException(selectedDate)}
                               >
-                                <Trash2 className="size-3.5" /> Ausnahme entfernen
+                                <Trash2 className="size-3.5" /> {t("avail.exceptionRemove")}
                               </Button>
                             </div>
                           ) : (
                             <div className="flex flex-col gap-2">
                               <p className="text-[11px] text-muted-foreground">
-                                Überschreibe die Standard-Verfügbarkeit für diesen einzelnen Tag.
+                                {locale === "en" ? "Override the default availability for this single day." : locale === "es" ? "Anula la disponibilidad estándar para este día." : "Überschreibe die Standard-Verfügbarkeit für diesen einzelnen Tag."}
                               </p>
                               <Button
                                 size="sm"
@@ -802,7 +818,7 @@ export default function AvailabilityPage() {
                                 onClick={() => addException("unavailable")}
                               >
                                 <CalendarX2 className="size-4" />
-                                Als nicht verfügbar markieren
+                                {t("avail.exceptionUnavailable")}
                               </Button>
                               <Button
                                 size="sm"
@@ -811,7 +827,7 @@ export default function AvailabilityPage() {
                                 onClick={() => addException("custom")}
                               >
                                 <Clock className="size-4" />
-                                Abweichende Zeiten festlegen
+                                {t("avail.exceptionCustom")}
                               </Button>
                             </div>
                           )}
@@ -823,7 +839,7 @@ export default function AvailabilityPage() {
                   <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-8 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Calendar className="size-7 opacity-25" />
-                      <p className="text-xs">Klicke auf einen Tag um Details zu bearbeiten</p>
+                      <p className="text-xs">{locale === "en" ? "Click a day to edit details" : locale === "es" ? "Haz clic en un día para editar detalles" : "Klicke auf einen Tag um Details zu bearbeiten"}</p>
                     </div>
                   </div>
                 )}
@@ -836,16 +852,16 @@ export default function AvailabilityPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm">
                     <CalendarDays className="size-4 text-primary" />
-                    Saisonale Regeln
+                    {t("avail.tabSeasonal")}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    Überschreibe den Wochenplan für bestimmte Kalenderwochen (z.B. Sommerferien, Nebensaison).
+                    {locale === "en" ? "Override the weekly schedule for specific calendar weeks (e.g. summer holidays, off-season)." : locale === "es" ? "Anula el horario semanal para semanas específicas (ej. vacaciones de verano, temporada baja)." : "Überschreibe den Wochenplan für bestimmte Kalenderwochen (z.B. Sommerferien, Nebensaison)."}
                   </p>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                   {yearlyRules.length === 0 && !showNewRule && (
                     <p className="py-4 text-center text-xs italic text-muted-foreground">
-                      Keine saisonalen Regeln definiert
+                      {t("avail.noRules")}
                     </p>
                   )}
 
@@ -855,7 +871,7 @@ export default function AvailabilityPage() {
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-[10px]">{rule.name}</Badge>
                           <span className="text-[10px] text-muted-foreground">
-                            KW {rule.startWeek}–{rule.endWeek}
+                            {t("avail.weekPrefix")} {rule.startWeek}–{rule.endWeek}
                             {rule.year ? ` (${rule.year})` : ""}
                           </span>
                         </div>
@@ -881,23 +897,23 @@ export default function AvailabilityPage() {
 
                   {showNewRule ? (
                     <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-3">
-                      <h4 className="mb-3 text-xs font-semibold">Neue Regel erstellen</h4>
+                      <h4 className="mb-3 text-xs font-semibold">{t("avail.addRule")}</h4>
                       <div className="flex flex-col gap-2.5">
                         <Input
-                          placeholder="Name (z.B. Sommerferien, Nebensaison)"
+                          placeholder={t("avail.ruleNamePlaceholder")}
                           value={newRule.name}
                           onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
                           className="h-8 text-xs"
                         />
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs text-muted-foreground">KW</span>
+                          <span className="text-xs text-muted-foreground">{t("avail.weekFrom")}</span>
                           <Input
                             type="number" min={1} max={53}
                             value={newRule.startWeek}
                             onChange={(e) => setNewRule({ ...newRule, startWeek: Number(e.target.value) })}
                             className="h-8 w-16 text-xs"
                           />
-                          <span className="text-xs text-muted-foreground">bis KW</span>
+                          <span className="text-xs text-muted-foreground">{t("avail.weekTo")}</span>
                           <Input
                             type="number" min={1} max={53}
                             value={newRule.endWeek}
@@ -906,7 +922,7 @@ export default function AvailabilityPage() {
                           />
                           <Input
                             type="number" min={2024} max={2050}
-                            placeholder="Jahr (opt.)"
+                            placeholder={locale === "en" ? "Year (opt.)" : locale === "es" ? "Año (opc.)" : "Jahr (opt.)"}
                             value={newRule.year ?? ""}
                             onChange={(e) =>
                               setNewRule({
@@ -926,14 +942,14 @@ export default function AvailabilityPage() {
                             size="sm"
                             className="h-8 flex-1 text-xs"
                             onClick={() => {
-                              if (!newRule.name) { toast.error("Bitte Namen eingeben."); return }
+                              if (!newRule.name) { toast.error(locale === "en" ? "Please enter a name." : locale === "es" ? "Por favor ingresa un nombre." : "Bitte Namen eingeben."); return }
                               setYearlyRules([...yearlyRules, { ...newRule }])
                               setNewRule({ name: "", startWeek: 1, endWeek: 52, slots: { ...EMPTY_WEEKLY_SLOTS } })
                               setShowNewRule(false)
-                              toast.success("Regel hinzugefügt!")
+                              toast.success(locale === "en" ? "Rule added!" : locale === "es" ? "¡Regla añadida!" : "Regel hinzugefügt!")
                             }}
                           >
-                            <Plus className="mr-1 size-3" /> Hinzufügen
+                            <Plus className="mr-1 size-3" /> {t("avail.addRule")}
                           </Button>
                           <Button
                             size="sm"
@@ -941,7 +957,7 @@ export default function AvailabilityPage() {
                             className="h-8 text-xs"
                             onClick={() => setShowNewRule(false)}
                           >
-                            Abbrechen
+                            {t("common.cancel")}
                           </Button>
                         </div>
                       </div>
@@ -952,7 +968,7 @@ export default function AvailabilityPage() {
                       className="w-full gap-2 border-dashed"
                       onClick={() => setShowNewRule(true)}
                     >
-                      <Plus className="size-4" /> Neue Regel erstellen
+                      <Plus className="size-4" /> {t("avail.addRule")}
                     </Button>
                   )}
                 </CardContent>
@@ -966,7 +982,7 @@ export default function AvailabilityPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Calendar className="size-4 text-primary" />
-                  Nächste bestätigte Termine
+                    {t("avail.confirmedAppointments")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-1.5">
@@ -982,7 +998,7 @@ export default function AvailabilityPage() {
                       </p>
                     </div>
                     <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/5 text-primary">
-                      Bestätigt
+                      {t("avail.confirmed")}
                     </Badge>
                   </div>
                 ))}
@@ -997,9 +1013,9 @@ export default function AvailabilityPage() {
             className="w-full gap-2 rounded-xl bg-primary font-semibold shadow-md shadow-primary/20"
           >
             {saving ? (
-              <><Loader2 className="size-4 animate-spin" /> Wird gespeichert...</>
+              <><Loader2 className="size-4 animate-spin" /> {t("avail.saving")}</>
             ) : (
-              <><Save className="size-4" /> Alle Änderungen speichern</>
+              <><Save className="size-4" /> {t("avail.saveAll")}</>
             )}
           </Button>
 

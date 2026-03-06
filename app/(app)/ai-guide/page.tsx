@@ -3,23 +3,23 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
 import { useTakumis } from "@/hooks/use-takumis"
+import { useI18n } from "@/lib/i18n"
 import { Camera, Image as ImageIcon, Send, Sparkles } from "lucide-react"
 import type { AiMessage } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
 export default function AiGuidePage() {
+  const { t } = useI18n()
   const { takumis, isEmpty } = useTakumis()
   const [messages, setMessages] = useState<AiMessage[]>([
     {
       id: "welcome",
       role: "assistant",
-      content:
-        "Konichiwa! Ich bin dein diAiway-Guide. Beschreibe dein Problem oder lade ein Foto hoch -- ich finde den passenden Experten fuer dich!",
+      content: t("aiGuide.welcome"),
     },
   ])
   const [input, setInput] = useState("")
@@ -30,20 +30,19 @@ export default function AiGuidePage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
   }, [messages])
 
-  /** Dynamically match takumis by keyword against category/subcategory/bio */
   function findMatchingTakumis(text: string) {
     if (isEmpty || takumis.length === 0) return []
     const lower = text.toLowerCase()
     const keywords = lower.split(/\s+/).filter((w) => w.length > 2)
 
-    const scored = takumis.map((t) => {
-      const haystack = `${t.categoryName} ${t.subcategory} ${t.bio} ${t.name}`.toLowerCase()
+    const scored = takumis.map((tk) => {
+      const haystack = `${tk.categoryName} ${tk.subcategory} ${tk.bio} ${tk.name}`.toLowerCase()
       let score = 0
       for (const kw of keywords) {
         if (haystack.includes(kw)) score += 1
       }
-      if (t.isLive) score += 0.5
-      return { takumi: t, score }
+      if (tk.isLive) score += 0.5
+      return { takumi: tk, score }
     })
 
     return scored
@@ -57,21 +56,20 @@ export default function AiGuidePage() {
     const matches = findMatchingTakumis(userText)
     if (matches.length > 0) {
       return {
-        text: `Ich habe ${matches.length} passende Experten fuer dich gefunden:`,
+        text: t("aiGuide.foundExperts").replace("{count}", String(matches.length)),
         takumiIds: matches.map((m) => m.id),
       }
     }
     if (isEmpty) {
       return {
-        text: "Aktuell sind noch keine Experten registriert. Schau bald wieder vorbei!",
+        text: t("aiGuide.noExpertsYet"),
         takumiIds: [],
       }
     }
-    // Fallback: show top-rated takumis
     const topRated = [...takumis].sort((a, b) => b.rating - a.rating).slice(0, 3)
     return {
-      text: "Ich konnte kein genaues Match finden, aber hier sind unsere besten Experten:",
-      takumiIds: topRated.map((t) => t.id),
+      text: t("aiGuide.noExactMatch"),
+      takumiIds: topRated.map((tk) => tk.id),
     }
   }
 
@@ -90,9 +88,9 @@ export default function AiGuidePage() {
         role: "assistant",
         content: response.text,
         suggestions: response.takumiIds.map((id) => {
-          const t = takumis.find((tk) => tk.id === id)
-          return t
-            ? { takumiId: id, name: t.name, match: Math.round(70 + Math.random() * 25), reason: t.subcategory }
+          const tk = takumis.find((t) => t.id === id)
+          return tk
+            ? { takumiId: id, name: tk.name, match: Math.round(70 + Math.random() * 25), reason: tk.subcategory }
             : null
         }).filter(Boolean) as AiMessage["suggestions"],
       }
@@ -105,17 +103,17 @@ export default function AiGuidePage() {
     const userMsg: AiMessage = {
       id: `u${Date.now()}`,
       role: "user",
-      content: "Ich habe ein Foto hochgeladen",
+      content: t("aiGuide.photoUploaded"),
       image: "photo",
     }
     setMessages((prev) => [...prev, userMsg])
     setIsTyping(true)
 
     const response = isEmpty
-      ? { text: "Aktuell sind noch keine Experten registriert. Schau bald wieder vorbei!", takumiIds: [] as string[] }
+      ? { text: t("aiGuide.noExpertsYet"), takumiIds: [] as string[] }
       : {
-          text: "Ich sehe dein Foto! Hier sind die besten Experten dafuer:",
-          takumiIds: takumis.filter((t) => t.isLive).slice(0, 2).map((t) => t.id),
+          text: t("aiGuide.seeYourPhoto"),
+          takumiIds: takumis.filter((tk) => tk.isLive).slice(0, 2).map((tk) => tk.id),
         }
 
     setTimeout(() => {
@@ -124,14 +122,21 @@ export default function AiGuidePage() {
         role: "assistant",
         content: response.text,
         suggestions: response.takumiIds.map((id) => {
-          const t = takumis.find((tk) => tk.id === id)
-          return t ? { takumiId: id, name: t.name, match: 92, reason: t.subcategory } : null
+          const tk = takumis.find((t) => t.id === id)
+          return tk ? { takumiId: id, name: tk.name, match: 92, reason: tk.subcategory } : null
         }).filter(Boolean) as AiMessage["suggestions"],
       }
       setMessages((prev) => [...prev, aiMsg])
       setIsTyping(false)
     }, 1200)
   }
+
+  const quickSuggestions = [
+    t("aiGuide.quickSuggestion1"),
+    t("aiGuide.quickSuggestion2"),
+    t("aiGuide.quickSuggestion3"),
+    t("aiGuide.quickSuggestion4"),
+  ]
 
   return (
     <div className="flex h-[calc(100vh-7.5rem)] flex-col">
@@ -171,9 +176,9 @@ export default function AiGuidePage() {
                 {msg.suggestions && msg.suggestions.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {msg.suggestions.map((s) => {
-                      const t = takumis.find((tk) => tk.id === s.takumiId)
-                      if (!t) return null
-                      return <TakumiCard key={s.takumiId} takumi={t} />
+                      const tk = takumis.find((t) => t.id === s.takumiId)
+                      if (!tk) return null
+                      return <TakumiCard key={s.takumiId} takumi={tk} />
                     })}
                   </div>
                 )}
@@ -196,15 +201,14 @@ export default function AiGuidePage() {
             </div>
           )}
 
-          {/* Empty state when no takumis exist */}
           {isEmpty && messages.length <= 1 && (
             <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-border/60 bg-card p-6 text-center">
               <p className="font-jp text-2xl text-muted-foreground/30">匠</p>
               <p className="text-sm text-muted-foreground">
-                Noch keine Experten registriert. Der AI-Guide kann Empfehlungen geben, sobald Experten verfuegbar sind.
+                {t("aiGuide.noExpertsRegistered")}
               </p>
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs">
-                <Link href="/categories">Kategorien ansehen</Link>
+                <Link href="/categories">{t("aiGuide.viewCategories")}</Link>
               </Button>
             </div>
           )}
@@ -214,7 +218,7 @@ export default function AiGuidePage() {
       {/* Quick Suggestions */}
       <div className="border-t border-border bg-card px-4 py-2">
         <div className="mx-auto max-w-lg flex gap-2 overflow-x-auto scrollbar-none">
-          {["Mein Handy ist kaputt", "Pflanze stirbt", "Auto macht Gerausche", "Steuerfrage"].map((q) => (
+          {quickSuggestions.map((q) => (
             <button
               key={q}
               onClick={() => setInput(q)}
@@ -239,7 +243,7 @@ export default function AiGuidePage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Beschreibe dein Problem..."
+            placeholder={t("aiGuide.inputPlaceholder")}
             className="h-10 rounded-full"
           />
           <Button

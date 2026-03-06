@@ -11,6 +11,7 @@ import { ReviewStars } from "@/components/review-stars"
 import { PageContainer } from "@/components/page-container"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useApp } from "@/lib/app-context"
+import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
   ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail,
@@ -56,7 +57,6 @@ const SOCIAL_CONFIG: {
   },
 ]
 
-/** Normalize a social input (username or full URL) to a full URL */
 function toUrl(value: string, base: string): string {
   if (!value) return ""
   const v = value.trim().replace(/^@/, "")
@@ -91,8 +91,9 @@ function SocialBar({ links }: { links: SocialLinks }) {
 
 export default function TakumiProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { t } = useI18n()
   const { takumis } = useTakumis()
-  const takumi = takumis.find((t) => t.id === id)
+  const takumi = takumis.find((tk) => tk.id === id)
   if (!takumi) notFound()
 
   const { openMentorWithTakumi, sendDirectMessage } = useApp()
@@ -112,12 +113,13 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   function handleDirectMessage() {
     setIsDmSending(true)
     setTimeout(() => {
+      const firstName = takumi.name.split(" ")[0]
       sendDirectMessage(
         takumi.id,
         takumi.name,
         takumi.avatar,
         takumi.subcategory,
-        `Hallo ${takumi.name.split(" ")[0]}, ich habe dein Profil gesehen und wurde gerne mit dir uber mein Projekt sprechen.`
+        t("takumiPage.dmGreeting").replace("{name}", firstName)
       )
       setIsDmSending(false)
       setDmSent(true)
@@ -168,9 +170,9 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Sessions", value: takumi.sessionCount.toString(), icon: Video },
-              { label: "Bewertung", value: takumi.rating.toString(), icon: Star },
-              { label: "Antwortzeit", value: takumi.responseTime, icon: Clock },
+              { label: t("takumiPage.sessions"), value: takumi.sessionCount.toString(), icon: Video },
+              { label: t("takumiPage.rating"), value: takumi.rating.toString(), icon: Star },
+              { label: t("takumiPage.responseTime"), value: takumi.responseTime, icon: Clock },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center gap-1 rounded-xl border border-border/60 bg-card p-3">
                 <stat.icon className="size-4 text-primary" />
@@ -182,28 +184,30 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
           {/* Bio */}
           <div className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Über mich</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t("takumiPage.aboutMe")}</h2>
             <p className="text-sm leading-relaxed text-muted-foreground">{takumi.bio}</p>
           </div>
 
           {/* Social Media Links */}
           {takumi.socialLinks && Object.values(takumi.socialLinks).some(Boolean) && (
             <div className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-foreground">Social Media</h2>
+              <h2 className="text-sm font-semibold text-foreground">{t("takumiPage.socialMedia")}</h2>
               <SocialBar links={takumi.socialLinks} />
             </div>
           )}
 
           {/* Portfolio Placeholder */}
           <div className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Portfolio</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t("takumiPage.portfolio")}</h2>
             <div className="grid grid-cols-3 gap-2">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
                   className="aspect-square rounded-xl bg-muted flex items-center justify-center"
                 >
-                  <span className="text-xs text-muted-foreground">Bild {i}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("takumiPage.portfolioItem").replace("{n}", String(i))}
+                  </span>
                 </div>
               ))}
             </div>
@@ -211,7 +215,6 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
-            {/* AI Mentor Contact */}
             <Button
               onClick={handleContact}
               disabled={isContacting}
@@ -220,16 +223,15 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               {isContacting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Chat wird vorbereitet...
+                  {t("takumiPage.preparingChat")}
                 </>
               ) : (
                 <>
                   <Send className="size-4" />
-                  Jetzt Nachricht schreiben
+                  {t("takumiPage.contactChat")}
                 </>
               )}
             </Button>
-            {/* Direct Message to Expert */}
             <Button
               onClick={handleDirectMessage}
               disabled={isDmSending || dmSent}
@@ -239,17 +241,17 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               {dmSent ? (
                 <>
                   <CheckCircle className="size-4 text-accent" />
-                  Nachricht gesendet!
+                  {t("takumiPage.messageSent")}
                 </>
               ) : isDmSending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Wird gesendet...
+                  {t("takumiPage.sending")}
                 </>
               ) : (
                 <>
                   <Mail className="size-4" />
-                  Direkt-Nachricht an {takumi.name.split(" ")[0]}
+                  {t("takumiPage.directMessage").replace("{name}", takumi.name.split(" ")[0])}
                 </>
               )}
             </Button>
@@ -260,16 +262,18 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             {takumi.verified && (
               <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5">
                 <CheckCircle className="size-3 text-accent" />
-                <span className="text-xs text-accent font-medium">Verifiziert</span>
+                <span className="text-xs text-accent font-medium">{t("takumiPage.verified")}</span>
               </div>
             )}
             <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
               <Shield className="size-3 text-primary" />
-              <span className="text-xs text-primary font-medium">Geld-zuruck-Garantie</span>
+              <span className="text-xs text-primary font-medium">{t("takumiPage.moneyBackGuarantee")}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-amber/10 px-3 py-1.5">
               <MessageSquare className="size-3 text-amber" />
-              <span className="text-xs font-medium" style={{ color: "var(--amber)" }}>5 Min gratis</span>
+              <span className="text-xs font-medium" style={{ color: "var(--amber)" }}>
+                {t("takumiPage.freeMinutes")}
+              </span>
             </div>
           </div>
 
@@ -277,7 +281,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">
-                Bewertungen ({takumi.reviewCount})
+                {t("takumiPage.reviews").replace("{count}", String(takumi.reviewCount))}
               </h2>
               <div className="flex items-center gap-1">
                 <ReviewStars rating={takumi.rating} />
@@ -287,7 +291,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
               <p className="font-jp text-2xl text-muted-foreground/30 mb-1">評</p>
               <p className="text-xs text-muted-foreground">
-                Bewertungen werden nach abgeschlossenen Sessions hier angezeigt.
+                {t("takumiPage.reviewsEmpty")}
               </p>
             </div>
           </div>
@@ -299,13 +303,13 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         <div className="mx-auto flex max-w-lg items-center justify-between">
           <div className="flex flex-col">
             <span className="text-lg font-bold text-foreground">{takumi.pricePerSession}&euro;</span>
-            <span className="text-[10px] text-muted-foreground">pro 30 Min &middot; 5 Min gratis</span>
+            <span className="text-[10px] text-muted-foreground">{t("takumiPage.priceInfo")}</span>
           </div>
           <Button
             asChild
             className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
           >
-            <Link href={`/booking/${takumi.id}`}>Jetzt buchen</Link>
+            <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
           </Button>
         </div>
       </div>

@@ -7,17 +7,19 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { categories } from "@/lib/categories"
 import { useTakumis } from "@/hooks/use-takumis"
+import { useI18n } from "@/lib/i18n"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
 export default function CategoryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
+  const { t } = useI18n()
   const category = categories.find((c) => c.slug === slug)
   if (!category) notFound()
 
   const { takumis } = useTakumis()
-  const categoryTakumis = takumis.filter((t) => t.categorySlug === slug)
+  const categoryTakumis = takumis.filter((tk) => tk.categorySlug === slug)
 
   return (
     <PageContainer>
@@ -45,19 +47,19 @@ export default function CategoryDetailPage({ params }: { params: Promise<{ slug:
         <div>
           <p className="text-sm text-muted-foreground mb-3">
             {categoryTakumis.length > 0
-              ? `${categoryTakumis.length} Experten gefunden`
-              : `${category.takumiCount} Experten in dieser Kategorie`}
+              ? t("categoryDetail.expertsFound").replace("{count}", String(categoryTakumis.length))
+              : t("categoryDetail.expertsInCategory").replace("{count}", String(category.takumiCount))}
           </p>
           <div className="flex flex-col gap-3">
             {categoryTakumis.length > 0 ? (
-              categoryTakumis.map((t) => (
-                <TakumiCard key={t.id} takumi={t} />
+              categoryTakumis.map((tk) => (
+                <TakumiCard key={tk.id} takumi={tk} />
               ))
             ) : (
               <div className="rounded-xl border border-border/60 bg-card p-8 text-center">
                 <p className="font-jp text-3xl text-muted-foreground/30 mb-2">匠</p>
                 <p className="text-sm text-muted-foreground">
-                  Experten werden geladen...
+                  {t("categoryDetail.loading")}
                 </p>
               </div>
             )}
