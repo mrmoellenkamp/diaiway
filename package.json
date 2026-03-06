@@ -15,6 +15,8 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.0",
     "@auth/prisma-adapter": "^2.7.2",
+    "@daily-co/daily-js": "^0.87.0",
+    "@daily-co/daily-react": "^0.24.0",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.5.0",
     "@radix-ui/react-accordion": "1.2.12",

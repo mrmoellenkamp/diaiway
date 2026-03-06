@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +16,7 @@ import {
   VideoOff,
   PhoneOff,
   AlertTriangle,
+  User,
   ArrowLeft,
   Clock,
   Shield,
@@ -22,6 +24,23 @@ import {
   Loader2,
 } from "lucide-react"
 import type { BookingRecord } from "@/lib/types"
+
+/**
+ * DailyVideoCall is loaded exclusively client-side.
+ * This prevents @daily-co from touching `window` during Next.js SSR/build,
+ * which would otherwise cause "window is not defined" on Vercel.
+ */
+const DailyVideoCall = dynamic(
+  () => import("@/components/daily-video-call").then((m) => m.DailyVideoCall),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
+        <Loader2 className="size-10 animate-spin text-primary-foreground/60" />
+      </div>
+    ),
+  }
+)
 
 type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
 
@@ -43,29 +62,19 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const dailyRoomUrl = `https://diaiway.daily.co/${bookingId}`
   const [booking, setBooking] = useState<BookingRecord | null>(null)
   const [phase, setPhase] = useState<Phase>("loading")
-  const [timer, setTimer] = useState(300) // 5 min trial
+  const [timer, setTimer] = useState(300)
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
+  const [isInCall, setIsInCall] = useState(false)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
     const sec = s % 60
     return `${m}:${sec.toString().padStart(2, "0")}`
   }, [])
-
-  // Build iframe URL with mute/camera params
-  const iframeUrl = useCallback(() => {
-    const params = new URLSearchParams({
-      embed: "true",
-      iframeStyle: "fullscreen",
-      ...(isMuted ? { startAudioOff: "true" } : {}),
-      ...(isCameraOff ? { startVideoOff: "true" } : {}),
-    })
-    return `${dailyRoomUrl}?${params}`
-  }, [dailyRoomUrl, isMuted, isCameraOff])
 
   // Load booking
   useEffect(() => {
@@ -82,12 +91,15 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         if (data.booking.status === "active") {
           setPhase("paid")
           setTimer(1800)
+          setIsInCall(true)
         } else if (data.booking.status === "confirmed") {
           setPhase("pre-call")
         } else if (data.booking.status === "completed") {
           setPhase("rating")
         } else {
-          setErrorMsg(`Buchung hat Status "${data.booking.status}" und kann nicht gestartet werden.`)
+          setErrorMsg(
+            `Buchung hat Status "${data.booking.status}" und kann nicht gestartet werden.`
+          )
           setPhase("error")
         }
       } catch {
@@ -98,7 +110,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     load()
   }, [bookingId])
 
-  // Trial countdown
+  // Trial / paid countdown
   useEffect(() => {
     if (phase !== "trial" && phase !== "paid") return
     if (timer <= 0) {
@@ -133,6 +145,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     if (result) {
       setPhase("trial")
       setTimer(300)
+      setIsInCall(true)
       toast.success("Session gestartet!")
     }
   }
@@ -145,6 +158,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const handleEndCall = async () => {
     await patchBooking("end-session")
+    setIsInCall(false)
     setPhase("rating")
     toast.info("Sitzung beendet.")
   }
@@ -154,7 +168,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     router.push("/sessions")
   }
 
-  // ─── Loading ───────────────────────────────────────────────────────────────
+  // ─── Loading ─────────────────────────────────────────────────────────────
 
   if (!booking) {
     if (phase === "error") {
@@ -177,7 +191,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const initials = getInitials(booking.takumiName)
 
-  // ─── Pre-call ──────────────────────────────────────────────────────────────
+  // ─── Pre-call ─────────────────────────────────────────────────────────────
 
   if (phase === "pre-call") {
     return (
@@ -232,12 +246,14 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </CardContent>
           </Card>
 
-          {/* Mic / Camera toggles before joining */}
+          {/* Mic / Camera toggles */}
           <div className="flex gap-4">
             <button
               onClick={() => setIsMuted(!isMuted)}
               className={`flex size-12 items-center justify-center rounded-full border transition-colors ${
-                isMuted ? "border-destructive bg-destructive/10 text-destructive" : "border-border bg-card text-muted-foreground"
+                isMuted
+                  ? "border-destructive bg-destructive/10 text-destructive"
+                  : "border-border bg-card text-muted-foreground"
               }`}
               aria-label={isMuted ? "Mikrofon einschalten" : "Mikrofon ausschalten"}
             >
@@ -246,7 +262,9 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <button
               onClick={() => setIsCameraOff(!isCameraOff)}
               className={`flex size-12 items-center justify-center rounded-full border transition-colors ${
-                isCameraOff ? "border-destructive bg-destructive/10 text-destructive" : "border-border bg-card text-muted-foreground"
+                isCameraOff
+                  ? "border-destructive bg-destructive/10 text-destructive"
+                  : "border-border bg-card text-muted-foreground"
               }`}
               aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
             >
@@ -271,7 +289,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     )
   }
 
-  // ─── Rating ────────────────────────────────────────────────────────────────
+  // ─── Rating ──────────────────────────────────────────────────────────────
 
   if (phase === "rating") {
     return (
@@ -338,7 +356,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     )
   }
 
-  // ─── Error ─────────────────────────────────────────────────────────────────
+  // ─── Error ───────────────────────────────────────────────────────────────
 
   if (phase === "error") {
     return (
@@ -352,18 +370,41 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     )
   }
 
-  // ─── Active call (trial / paid) — iframe embed ─────────────────────────────
+  // ─── Active call (trial / paid) ───────────────────────────────────────────
 
   return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* Daily.co iframe — full-screen embed */}
-        <iframe
-          src={iframeUrl()}
-          allow="camera; microphone; fullscreen; display-capture; autoplay"
-          className="absolute inset-0 size-full border-0"
-          title={`Video-Session mit ${booking.takumiName}`}
-        />
+        {/* DailyVideoCall loaded client-only via dynamic import (ssr: false) */}
+        {isInCall && (
+          <DailyVideoCall
+            roomUrl={dailyRoomUrl}
+            isCameraOff={isCameraOff}
+            takumiName={booking.takumiName}
+            initials={initials}
+          />
+        )}
+
+        {/* Fallback while Daily is not yet in call */}
+        {!isInCall && (
+          <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex size-28 items-center justify-center rounded-full border-4 border-white/20 bg-white/10">
+                <User className="size-12 text-primary-foreground/30" />
+              </div>
+              <p className="text-lg font-semibold text-primary-foreground">{booking.takumiName}</p>
+              <Badge
+                className={
+                  phase === "trial"
+                    ? "border-accent/50 bg-accent/20 text-accent"
+                    : "border-amber/50 bg-amber/20 text-amber"
+                }
+              >
+                {phase === "trial" ? "Kostenlose Probe" : "Bezahlte Session"}
+              </Badge>
+            </div>
+          </div>
+        )}
 
         {/* Timer overlay */}
         <div className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">
@@ -389,19 +430,56 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           </div>
         </div>
 
-        {/* End call button */}
-        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-          <button
-            onClick={handleEndCall}
-            className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
-            aria-label="Anruf beenden"
-          >
-            <PhoneOff className="size-6 text-destructive-foreground" />
-          </button>
+        {/* Controls */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent pb-8 pt-12">
+          <div className="mx-auto flex max-w-xs items-center justify-around">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
+                isMuted ? "bg-destructive" : "bg-white/20"
+              }`}
+              aria-label={isMuted ? "Stummschaltung aufheben" : "Stummschalten"}
+            >
+              {isMuted ? (
+                <MicOff className="size-5 text-destructive-foreground" />
+              ) : (
+                <Mic className="size-5 text-primary-foreground" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setIsCameraOff(!isCameraOff)}
+              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
+                isCameraOff ? "bg-destructive" : "bg-white/20"
+              }`}
+              aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
+            >
+              {isCameraOff ? (
+                <VideoOff className="size-5 text-destructive-foreground" />
+              ) : (
+                <Video className="size-5 text-primary-foreground" />
+              )}
+            </button>
+
+            <button
+              onClick={handleEndCall}
+              className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
+              aria-label="Anruf beenden"
+            >
+              <PhoneOff className="size-6 text-destructive-foreground" />
+            </button>
+
+            <button
+              onClick={() => toast.info("Meldung gesendet")}
+              className="flex size-12 items-center justify-center rounded-full bg-white/20"
+              aria-label="Problem melden"
+            >
+              <AlertTriangle className="size-5 text-primary-foreground" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Handshake overlay with Stripe checkout */}
       <HandshakeOverlay
         isOpen={phase === "handshake"}
         bookingId={bookingId}
