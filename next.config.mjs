@@ -6,9 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Tells Next.js to transpile these ESM-only packages for the client bundle.
-  // The actual SSR protection comes from VideoConfig.tsx (dynamic + ssr:false).
-  transpilePackages: ["@daily-co/daily-js", "@daily-co/daily-react"],
+  // Needed so Next.js correctly handles the ESM bundles of daily-co packages.
+  // SSR protection is handled via VideoConfig.tsx (dynamic + ssr:false).
+  transpilePackages: ["@daily-co/daily-js", "@daily-co/daily-react", "jotai"],
 }
 
 export default nextConfig

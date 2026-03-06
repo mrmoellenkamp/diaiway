@@ -1,21 +1,16 @@
 /**
- * VideoConfig — Client-only barrier for @daily-co packages.
+ * VideoConfig — einziger Einstiegspunkt für @daily-co-Pakete.
  *
- * This is the SINGLE authoritative place where Daily.co is referenced.
- * The dynamic import with { ssr: false } guarantees that no @daily-co code
- * ever reaches the Next.js server renderer or Vercel build worker.
- *
- * Import from here — never import directly from @daily-co anywhere else.
+ * next/dynamic mit { ssr: false } stellt sicher, dass kein @daily-co-Code
+ * den Next.js-Server-Renderer oder den Vercel-Build-Worker berührt.
+ * Alle anderen Dateien importieren von hier — nie direkt von @daily-co.
  */
 import dynamic from "next/dynamic"
 import { Loader2 } from "lucide-react"
 import type { DailyVideoCallProps } from "@/components/daily-video-call"
 
 export const DailyVideoCall = dynamic<DailyVideoCallProps>(
-  () =>
-    import("@/components/daily-video-call").then((mod) => ({
-      default: mod.DailyVideoCall,
-    })),
+  () => import("@/components/daily-video-call"),
   {
     ssr: false,
     loading: () => (
