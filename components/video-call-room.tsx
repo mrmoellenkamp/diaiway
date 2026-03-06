@@ -2,14 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import {
-  DailyProvider,
-  useDaily,
-  useParticipantIds,
-  useVideoTrack,
-  useAudioTrack,
-  DailyVideo,
-} from "@daily-co/daily-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -23,7 +15,6 @@ import {
   VideoOff,
   PhoneOff,
   AlertTriangle,
-  User,
   ArrowLeft,
   Clock,
   Shield,
@@ -47,79 +38,6 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-// Internal component that uses Daily hooks (must be inside DailyProvider)
-function DailyVideoTile({ sessionId, isLocal }: { sessionId: string; isLocal?: boolean }) {
-  const videoTrack = useVideoTrack(sessionId)
-  const audioTrack = useAudioTrack(sessionId)
-
-  return (
-    <div className={`relative overflow-hidden ${isLocal ? "size-32 rounded-2xl" : "size-full"}`}>
-      {videoTrack?.state === "playable" ? (
-        <DailyVideo
-          sessionId={sessionId}
-          type="video"
-          className="size-full object-cover"
-          mirror={isLocal}
-        />
-      ) : (
-        <div className="flex size-full items-center justify-center bg-stone-800">
-          <User className="size-12 text-primary-foreground/30" />
-        </div>
-      )}
-      {!isLocal && audioTrack?.state === "playable" && (
-        <DailyVideo sessionId={sessionId} type="audio" />
-      )}
-    </div>
-  )
-}
-
-// Component to render remote participants
-function RemoteParticipants({ takumiName, initials }: { takumiName: string; initials: string }) {
-  const participantIds = useParticipantIds({ filter: "remote" })
-
-  if (participantIds.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <Avatar className="size-28 border-4 border-white/20">
-          <AvatarFallback className="bg-white/10 text-3xl font-bold text-primary-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <p className="text-lg font-semibold text-primary-foreground">{takumiName}</p>
-        <p className="text-sm text-primary-foreground/60">Warte auf Verbindung...</p>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {participantIds.map((id) => (
-        <DailyVideoTile key={id} sessionId={id} />
-      ))}
-    </>
-  )
-}
-
-// Component to render local participant
-function LocalParticipant({ isCameraOff }: { isCameraOff: boolean }) {
-  const daily = useDaily()
-  const localSessionId = daily?.participants()?.local?.session_id
-
-  if (!localSessionId) {
-    return (
-      <div className="flex size-full items-center justify-center bg-stone-800">
-        {isCameraOff ? (
-          <VideoOff className="size-8 text-primary-foreground/40" />
-        ) : (
-          <User className="size-12 text-primary-foreground/30" />
-        )}
-      </div>
-    )
-  }
-
-  return <DailyVideoTile sessionId={localSessionId} isLocal />
-}
-
 export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const router = useRouter()
   const dailyRoomUrl = `https://diaiway.daily.co/${bookingId}`
@@ -131,7 +49,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
-  const [isInCall, setIsInCall] = useState(false)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -139,7 +56,18 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     return `${m}:${sec.toString().padStart(2, "0")}`
   }, [])
 
-  // Load booking from API
+  // Build iframe URL with mute/camera params
+  const iframeUrl = useCallback(() => {
+    const params = new URLSearchParams({
+      embed: "true",
+      iframeStyle: "fullscreen",
+      ...(isMuted ? { startAudioOff: "true" } : {}),
+      ...(isCameraOff ? { startVideoOff: "true" } : {}),
+    })
+    return `${dailyRoomUrl}?${params}`
+  }, [dailyRoomUrl, isMuted, isCameraOff])
+
+  // Load booking
   useEffect(() => {
     async function load() {
       try {
@@ -151,7 +79,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           return
         }
         setBooking(data.booking)
-        // If already active, skip pre-call
         if (data.booking.status === "active") {
           setPhase("paid")
           setTimer(1800)
@@ -171,20 +98,17 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     load()
   }, [bookingId])
 
-  // Timer countdown
+  // Trial countdown
   useEffect(() => {
     if (phase !== "trial" && phase !== "paid") return
     if (timer <= 0) {
-      if (phase === "trial") {
-        setPhase("handshake")
-      }
+      if (phase === "trial") setPhase("handshake")
       return
     }
     const interval = setInterval(() => setTimer((t) => t - 1), 1000)
     return () => clearInterval(interval)
   }, [phase, timer])
 
-  // PATCH helper
   async function patchBooking(action: string) {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
@@ -209,14 +133,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     if (result) {
       setPhase("trial")
       setTimer(300)
-      setIsInCall(true)
       toast.success("Session gestartet!")
     }
   }
 
   const handlePaymentSuccess = () => {
     setPhase("paid")
-    setTimer(1800) // 30 min paid session
+    setTimer(1800)
     toast.success("Zahlung erfolgreich! Session laeuft weiter.")
   }
 
@@ -231,8 +154,9 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     router.push("/sessions")
   }
 
+  // ─── Loading ───────────────────────────────────────────────────────────────
+
   if (!booking) {
-    // Loading or error
     if (phase === "error") {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
@@ -253,7 +177,8 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const initials = getInitials(booking.takumiName)
 
-  // Pre-call screen
+  // ─── Pre-call ──────────────────────────────────────────────────────────────
+
   if (phase === "pre-call") {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -264,6 +189,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </Button>
             <h1 className="text-lg font-semibold text-foreground">Session starten</h1>
           </div>
+
           <Avatar className="size-24 border-4 border-primary/10">
             <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
               {initials}
@@ -276,7 +202,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               <p className="text-sm text-muted-foreground">{booking.takumiSubcategory}</p>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
-              {booking.date} | {booking.startTime} - {booking.endTime}
+              {booking.date} | {booking.startTime} – {booking.endTime}
             </p>
           </div>
 
@@ -306,6 +232,28 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </CardContent>
           </Card>
 
+          {/* Mic / Camera toggles before joining */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`flex size-12 items-center justify-center rounded-full border transition-colors ${
+                isMuted ? "border-destructive bg-destructive/10 text-destructive" : "border-border bg-card text-muted-foreground"
+              }`}
+              aria-label={isMuted ? "Mikrofon einschalten" : "Mikrofon ausschalten"}
+            >
+              {isMuted ? <MicOff className="size-5" /> : <Mic className="size-5" />}
+            </button>
+            <button
+              onClick={() => setIsCameraOff(!isCameraOff)}
+              className={`flex size-12 items-center justify-center rounded-full border transition-colors ${
+                isCameraOff ? "border-destructive bg-destructive/10 text-destructive" : "border-border bg-card text-muted-foreground"
+              }`}
+              aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
+            >
+              {isCameraOff ? <VideoOff className="size-5" /> : <Video className="size-5" />}
+            </button>
+          </div>
+
           <Button
             onClick={handleStartTrial}
             className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90"
@@ -315,14 +263,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Video-Raum: <code className="rounded bg-muted px-1 py-0.5 text-[10px]">{dailyRoomUrl}</code>
+            Video-Raum:{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-[10px]">{dailyRoomUrl}</code>
           </p>
         </div>
       </div>
     )
   }
 
-  // Rating screen
+  // ─── Rating ────────────────────────────────────────────────────────────────
+
   if (phase === "rating") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
@@ -343,7 +293,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           )}
         </div>
 
-        {/* Simple star rating */}
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -354,9 +303,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             >
               <Star
                 className={`size-8 ${
-                  star <= rating
-                    ? "fill-amber text-amber"
-                    : "text-muted-foreground"
+                  star <= rating ? "fill-amber text-amber" : "text-muted-foreground"
                 }`}
               />
             </button>
@@ -375,7 +322,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           <Button
             onClick={handleSubmitRating}
             disabled={rating === 0}
-            className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
+            className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             Bewertung abgeben
           </Button>
@@ -391,7 +338,8 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     )
   }
 
-  // Error screen
+  // ─── Error ─────────────────────────────────────────────────────────────────
+
   if (phase === "error") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
@@ -404,48 +352,21 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     )
   }
 
-  // Video call screen (trial or paid) - wrapped in DailyProvider
-  const videoCallContent = (
+  // ─── Active call (trial / paid) — iframe embed ─────────────────────────────
+
+  return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* Remote video (full screen) */}
-        <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
-          {isInCall ? (
-            <RemoteParticipants takumiName={booking.takumiName} initials={initials} />
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <Avatar className="size-28 border-4 border-white/20">
-                <AvatarFallback className="bg-white/10 text-3xl font-bold text-primary-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <p className="text-lg font-semibold text-primary-foreground">{booking.takumiName}</p>
-              <Badge
-                className={
-                  phase === "trial"
-                    ? "border-accent/50 bg-accent/20 text-accent"
-                    : "border-amber/50 bg-amber/20 text-amber"
-                }
-              >
-                {phase === "trial" ? "Kostenlose Probe" : "Bezahlte Session"}
-              </Badge>
-            </div>
-          )}
-        </div>
-
-        {/* Self-view PIP */}
-        <div className="absolute right-4 top-16 flex size-32 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-stone-800 shadow-lg">
-          {isInCall ? (
-            <LocalParticipant isCameraOff={isCameraOff} />
-          ) : isCameraOff ? (
-            <VideoOff className="size-8 text-primary-foreground/40" />
-          ) : (
-            <User className="size-12 text-primary-foreground/30" />
-          )}
-        </div>
+        {/* Daily.co iframe — full-screen embed */}
+        <iframe
+          src={iframeUrl()}
+          allow="camera; microphone; fullscreen; display-capture; autoplay"
+          className="absolute inset-0 size-full border-0"
+          title={`Video-Session mit ${booking.takumiName}`}
+        />
 
         {/* Timer overlay */}
-        <div className="absolute left-1/2 top-4 -translate-x-1/2">
+        <div className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">
           <div className="flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 backdrop-blur-sm">
             <span
               className={`size-2 rounded-full animate-live-pulse ${
@@ -455,59 +376,28 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <span className="font-mono text-sm font-bold text-primary-foreground">
               {formatTime(timer)}
             </span>
-            <span className="text-[10px] text-primary-foreground/60">
+            <Badge
+              variant="outline"
+              className={`text-[10px] ${
+                phase === "trial"
+                  ? "border-accent/50 text-accent"
+                  : "border-amber/50 text-amber"
+              }`}
+            >
               {phase === "trial" ? "Probe" : "Bezahlt"}
-            </span>
+            </Badge>
           </div>
         </div>
 
-        {/* Controls bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pb-8 pt-12">
-          <div className="mx-auto flex max-w-xs items-center justify-around">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
-                isMuted ? "bg-destructive" : "bg-white/20"
-              }`}
-              aria-label={isMuted ? "Stummschaltung aufheben" : "Stummschalten"}
-            >
-              {isMuted ? (
-                <MicOff className="size-5 text-destructive-foreground" />
-              ) : (
-                <Mic className="size-5 text-primary-foreground" />
-              )}
-            </button>
-
-            <button
-              onClick={() => setIsCameraOff(!isCameraOff)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
-                isCameraOff ? "bg-destructive" : "bg-white/20"
-              }`}
-              aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
-            >
-              {isCameraOff ? (
-                <VideoOff className="size-5 text-destructive-foreground" />
-              ) : (
-                <Video className="size-5 text-primary-foreground" />
-              )}
-            </button>
-
-            <button
-              onClick={handleEndCall}
-              className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
-              aria-label="Anruf beenden"
-            >
-              <PhoneOff className="size-6 text-destructive-foreground" />
-            </button>
-
-            <button
-              onClick={() => toast.info("Meldung gesendet")}
-              className="flex size-12 items-center justify-center rounded-full bg-white/20"
-              aria-label="Problem melden"
-            >
-              <AlertTriangle className="size-5 text-primary-foreground" />
-            </button>
-          </div>
+        {/* End call button */}
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+          <button
+            onClick={handleEndCall}
+            className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
+            aria-label="Anruf beenden"
+          >
+            <PhoneOff className="size-6 text-destructive-foreground" />
+          </button>
         </div>
       </div>
 
@@ -518,20 +408,9 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         takumiName={booking.takumiName}
         onPaymentSuccess={handlePaymentSuccess}
         onEnd={handleEndCall}
-        price={booking.price * 100} // convert to cents
+        price={booking.price * 100}
         duration={30}
       />
     </>
   )
-
-  // Wrap in DailyProvider when in call
-  if (isInCall) {
-    return (
-      <DailyProvider url={dailyRoomUrl}>
-        {videoCallContent}
-      </DailyProvider>
-    )
-  }
-
-  return videoCallContent
 }
