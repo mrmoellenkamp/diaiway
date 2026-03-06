@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { prisma } from "@/lib/db"
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   const [users, total] = await Promise.all([
-    db.user.findMany({
+    prisma.user.findMany({
       where,
       take: limit,
       skip: (page - 1) * limit,
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         _count: { select: { bookings: true } },
       },
     }),
-    db.user.count({ where }),
+    prisma.user.count({ where }),
   ])
 
   return NextResponse.json({ users, total, page, limit })

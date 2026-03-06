@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { prisma } from "@/lib/db"
 
 export async function PATCH(
   req: NextRequest,
@@ -15,7 +15,7 @@ export async function PATCH(
   const body = await req.json()
   const { role, appRole, name } = body
 
-  const updated = await db.user.update({
+  const updated = await prisma.user.update({
     where: { id },
     data: {
       ...(role ? { role } : {}),
@@ -44,6 +44,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Kann den eigenen Account nicht löschen" }, { status: 400 })
   }
 
-  await db.user.delete({ where: { id } })
+  await prisma.user.delete({ where: { id } })
   return NextResponse.json({ ok: true })
 }
