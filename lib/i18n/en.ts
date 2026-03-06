@@ -339,6 +339,7 @@ const en = {
   "booking.bookButton": "Book now · {price}€",
   "booking.bookingInProgress": "Booking...",
   "booking.selectAppointmentError": "Please select an appointment.",
+  "booking.pastSlotError": "This time slot is in the past and cannot be booked.",
   "booking.loginRequired": "Please sign in first.",
   "booking.networkError": "Network error. Please check your connection.",
   "booking.incompleteProfile": "The expert profile is incomplete. Please choose a different time or expert.",
