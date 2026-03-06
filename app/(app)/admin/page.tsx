@@ -17,9 +17,19 @@ import {
   BarChart3, TrendingUp, TrendingDown, Activity, BookOpen,
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
-  ArrowUpRight, ArrowDownRight, Minus,
+  ArrowUpRight, ArrowDownRight, Minus, Lock,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -688,9 +698,18 @@ function DatabaseTab({
     finally { setIsSeeding(false) }
   }
 
+  const [resetPassword, setResetPassword] = useState("")
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const RESET_PHRASE = "ALLE DATEN LÖSCHEN"
+
   async function handleReset() {
-    if (!confirm("ACHTUNG: Alle Daten (Nutzer, Experten, Buchungen) werden unwiderruflich gelöscht. Fortfahren?")) return
+    if (resetPassword !== RESET_PHRASE) {
+      toast.error(`Bitte genau eingeben: ${RESET_PHRASE}`)
+      return
+    }
     setIsResetting(true)
+    setResetDialogOpen(false)
+    setResetPassword("")
     try {
       const res = await fetch("/api/admin/reset-db", { method: "POST" })
       const data = await res.json()
@@ -717,9 +736,56 @@ function DatabaseTab({
             <Button onClick={handleSeed} disabled={isSeeding || isResetting} className="h-10 flex-1 gap-2">
               {isSeeding ? <><Loader2 className="size-4 animate-spin" /> Schreibe…</> : <><Database className="size-4" /> Experten seeden</>}
             </Button>
-            <Button onClick={handleReset} disabled={isResetting || isSeeding} variant="destructive" className="h-10 flex-1 gap-2">
-              {isResetting ? <><Loader2 className="size-4 animate-spin" /> Lösche…</> : <><AlertTriangle className="size-4" /> DB zurücksetzen</>}
-            </Button>
+
+            {/* Reset — protected by explicit phrase confirmation */}
+            <AlertDialog open={resetDialogOpen} onOpenChange={(o) => { setResetDialogOpen(o); if (!o) setResetPassword("") }}>
+              <AlertDialogTrigger asChild>
+                <Button disabled={isResetting || isSeeding} variant="destructive" className="h-10 flex-1 gap-2">
+                  {isResetting
+                    ? <><Loader2 className="size-4 animate-spin" /> Lösche…</>
+                    : <><AlertTriangle className="size-4" /> DB zurücksetzen</>}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                    <Lock className="size-5" />
+                    Datenbank unwiderruflich löschen?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm leading-relaxed space-y-3">
+                    <span className="block">
+                      Diese Aktion löscht <strong>alle Nutzer, Experten und Buchungen</strong> aus der Datenbank.
+                      Sie kann <strong>nicht rückgängig gemacht</strong> werden.
+                    </span>
+                    <span className="block font-medium text-foreground">
+                      Zur Bestätigung genau eingeben:
+                    </span>
+                    <code className="block rounded bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive text-center tracking-wide">
+                      ALLE DATEN LÖSCHEN
+                    </code>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="ALLE DATEN LÖSCHEN"
+                  className="font-mono text-sm border-destructive/40 focus-visible:ring-destructive"
+                  onPaste={(e) => e.preventDefault()}
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setResetPassword("")}>Abbrechen</AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    disabled={resetPassword !== RESET_PHRASE || isResetting}
+                    onClick={handleReset}
+                    className="gap-2"
+                  >
+                    {isResetting ? <Loader2 className="size-4 animate-spin" /> : <AlertTriangle className="size-4" />}
+                    Endgültig löschen
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           {seedResult && <p className={`text-xs font-medium ${seedResult.startsWith("Fehler") ? "text-destructive" : "text-green-600"}`}>{seedResult}</p>}
         </CardContent>
