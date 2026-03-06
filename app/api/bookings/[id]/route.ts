@@ -188,6 +188,18 @@ export async function PATCH(
           { status: 409 }
         )
       }
+
+      // Allow joining max 5 minutes before the scheduled start time
+      const scheduledStart = new Date(`${booking.date}T${booking.startTime}:00`)
+      const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)
+      if (new Date() < earliestJoin) {
+        const minutesLeft = Math.ceil((earliestJoin.getTime() - Date.now()) / 60000)
+        return NextResponse.json(
+          { error: `Der Raum öffnet 5 Minuten vor dem Termin. Noch ${minutesLeft} Minute(n).` },
+          { status: 425 } // Too Early
+        )
+      }
+
       const updated = await prisma.booking.update({
         where: { id },
         data: { status: "active", sessionStartedAt: new Date() },
@@ -206,16 +218,44 @@ export async function PATCH(
       const now = new Date()
       const duration = booking.sessionStartedAt
         ? Math.round((now.getTime() - new Date(booking.sessionStartedAt).getTime()) / 60000)
-        : null
+        : 0
+
+      const FREE_TRIAL_MINUTES = 5
+      const isFreeSession = (duration ?? 0) < FREE_TRIAL_MINUTES
+
+      // If session was under 5 minutes and was already paid → full automatic refund
+      let autoRefunded = false
+      if (isFreeSession && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+        try {
+          await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId })
+          await prisma.booking.update({
+            where: { id },
+            data: { paymentStatus: "refunded" },
+          })
+          autoRefunded = true
+        } catch (refundErr) {
+          console.error("[end-session] Auto-refund für <5min Session fehlgeschlagen:", refundErr)
+        }
+      }
+
       const updated = await prisma.booking.update({
         where: { id },
-        data: { status: "completed", sessionEndedAt: now, sessionDuration: duration },
+        data: {
+          status: "completed",
+          sessionEndedAt: now,
+          sessionDuration: duration,
+          // Mark trial as used if session was free
+          ...(isFreeSession ? { trialUsed: true } : {}),
+        },
       })
+
       return NextResponse.json({
         success: true,
         status: "completed",
         sessionEndedAt: updated.sessionEndedAt,
         sessionDuration: updated.sessionDuration,
+        autoRefunded,
+        isFreeSession,
       })
     }
 

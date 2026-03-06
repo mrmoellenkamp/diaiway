@@ -133,6 +133,14 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     }
   }
 
+  // Check how many minutes until the session starts (for early-join blocking)
+  const minutesUntilStart = booking
+    ? Math.ceil(
+        (new Date(`${booking.date}T${booking.startTime}`).getTime() - Date.now()) / 60000
+      )
+    : 999
+  const tooEarlyToJoin = minutesUntilStart > 5
+
   const handlePaymentSuccess = () => {
     setPhase("paid")
     setTimer(1800)
@@ -140,10 +148,18 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   }
 
   const handleEndCall = async () => {
-    await patchBooking("end-session")
+    const result = await patchBooking("end-session")
     setIsInCall(false)
     setPhase("rating")
-    toast.info("Sitzung beendet.")
+    if (result?.isFreeSession) {
+      if (result?.autoRefunded) {
+        toast.success("Kostenlose Probe beendet. Deine Zahlung wurde automatisch erstattet.")
+      } else {
+        toast.info("Kostenlose Probe beendet (unter 5 Minuten).")
+      }
+    } else {
+      toast.info("Sitzung beendet.")
+    }
   }
 
   const handleSubmitRating = () => {
@@ -255,9 +271,22 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </button>
           </div>
 
+          {tooEarlyToJoin && (
+            <div className="flex w-full items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+              <Clock className="size-4 shrink-0" />
+              <span>
+                Der Raum öffnet 5 Minuten vor dem Termin.{" "}
+                {minutesUntilStart > 60
+                  ? `Noch ca. ${Math.floor(minutesUntilStart / 60)} Std. ${minutesUntilStart % 60} Min.`
+                  : `Noch ${minutesUntilStart} Minute(n).`}
+              </span>
+            </div>
+          )}
+
           <Button
             onClick={handleStartTrial}
-            className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90"
+            disabled={tooEarlyToJoin}
+            className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90 disabled:opacity-50"
           >
             <Video className="mr-2 size-5" />
             Beitreten
