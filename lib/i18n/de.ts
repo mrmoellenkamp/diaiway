@@ -37,8 +37,8 @@ const de = {
   "nav.expertsOverview": "Experten-Übersicht",
 
   // Landing
-  "landing.heroTitle": "Dein Projekt in den besten Händen",
-  "landing.heroDesc": "Echte Experten. Live per Video. Von Gemüsegarten bis zum Oldtimer — in 5 Minuten kostenlos testen.",
+  "landing.heroTitle": "Experten-Beratung auf Knopfdruck. Sicher. Schnell. Überall.",
+  "landing.heroDesc": "Echte Experten. Live per Video. Vom Gemüsegarten bis zum Oldtimer — in 5 Minuten kostenlos testen.",
   "landing.findExpert": "Experte finden",
   "landing.discoverCategories": "Kategorien entdecken",
   "landing.becomeTakumi": "Takumi werden",
