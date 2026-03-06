@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { prisma } from "@/lib/db"
 
 export async function GET() {
   const session = await auth()
@@ -35,34 +35,34 @@ export async function GET() {
     recentUsers,
     topExperts,
   ] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { appRole: "shugyo" } }),
-    db.user.count({ where: { appRole: "takumi" } }),
-    db.user.count({ where: { createdAt: { gte: startOfMonth } } }),
-    db.user.count({ where: { createdAt: { gte: startOf30Days } } }),
-    db.expert.count(),
-    db.expert.count({ where: { isLive: true } }),
-    db.expert.count({ where: { verified: true } }),
-    db.booking.count(),
-    db.booking.groupBy({ by: ["status"], _count: true }),
-    db.booking.count({ where: { createdAt: { gte: startOfMonth } } }),
-    db.booking.count({ where: { createdAt: { gte: startOf7Days } } }),
-    db.booking.aggregate({
+    prisma.user.count(),
+    prisma.user.count({ where: { appRole: "shugyo" } }),
+    prisma.user.count({ where: { appRole: "takumi" } }),
+    prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+    prisma.user.count({ where: { createdAt: { gte: startOf30Days } } }),
+    prisma.expert.count(),
+    prisma.expert.count({ where: { isLive: true } }),
+    prisma.expert.count({ where: { verified: true } }),
+    prisma.booking.count(),
+    prisma.booking.groupBy({ by: ["status"], _count: true }),
+    prisma.booking.count({ where: { createdAt: { gte: startOfMonth } } }),
+    prisma.booking.count({ where: { createdAt: { gte: startOf7Days } } }),
+    prisma.booking.aggregate({
       where: { paymentStatus: "paid" },
       _sum: { paidAmount: true },
       _count: true,
     }),
-    db.booking.aggregate({
+    prisma.booking.aggregate({
       where: { paymentStatus: "paid", paidAt: { gte: startOfMonth } },
       _sum: { paidAmount: true },
       _count: true,
     }),
-    db.booking.aggregate({
+    prisma.booking.aggregate({
       where: { paymentStatus: "paid", paidAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
       _sum: { paidAmount: true },
       _count: true,
     }),
-    db.booking.findMany({
+    prisma.booking.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
       select: {
@@ -78,7 +78,7 @@ export async function GET() {
         cancelledBy: true,
       },
     }),
-    db.user.findMany({
+    prisma.user.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
       select: {
@@ -90,7 +90,7 @@ export async function GET() {
         createdAt: true,
       },
     }),
-    db.expert.findMany({
+    prisma.expert.findMany({
       take: 5,
       orderBy: { sessionCount: "desc" },
       select: {
