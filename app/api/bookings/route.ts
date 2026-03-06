@@ -154,15 +154,21 @@ export async function POST(req: Request) {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
     try {
+      const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
       await sendBookingRequestEmail({
         to: expertEmail,
         takumiName: expert.name,
         userName: session.user.name || "Nutzer",
+        userEmail: session.user.email || "",
         date,
         startTime,
         endTime,
-        acceptUrl: `${baseUrl}/api/bookings/${booking.id}/status?action=confirmed&token=${statusToken}`,
-        declineUrl: `${baseUrl}/api/bookings/${booking.id}/status?action=declined&token=${statusToken}`,
+        price: booking.price,
+        note: note || "",
+        acceptUrl: `${respondBase}&action=confirmed`,
+        declineUrl: `${respondBase}&action=declined`,
+        askUrl: `${respondBase}&action=ask`,
+        dashboardUrl: `${baseUrl}/sessions`,
       })
     } catch (emailErr) {
       console.error("[Ionos SMTP] Failed to send booking request email:", emailErr)

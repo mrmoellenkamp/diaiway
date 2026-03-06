@@ -5,9 +5,9 @@ const smtpHost     = process.env.EMAIL_SERVER_HOST     || process.env.SMTP_HOST 
 const smtpPort     = Number(process.env.EMAIL_SERVER_PORT || process.env.SMTP_PORT) || 587
 const smtpUser     = process.env.EMAIL_SERVER_USER     || process.env.SMTP_USER     || ""
 const smtpPassword = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASSWORD || ""
-const smtpFrom     = process.env.EMAIL_FROM            || process.env.SMTP_FROM     || smtpUser
+export const smtpFrom = process.env.EMAIL_FROM            || process.env.SMTP_FROM     || smtpUser
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   host: smtpHost,
   port: smtpPort,
   secure: smtpPort === 465,
@@ -149,31 +149,71 @@ export async function sendBookingRequestEmail(opts: {
   to: string
   takumiName: string
   userName: string
+  userEmail: string
   date: string
   startTime: string
   endTime: string
+  price: number
+  note?: string
   acceptUrl: string
   declineUrl: string
+  askUrl: string
+  dashboardUrl: string
 }) {
+  const noteBlock = opts.note?.trim()
+    ? `<p style="margin:8px 0 0;font-size:13px;color:#1c1917;"><strong>Nachricht:</strong> ${opts.note}</p>`
+    : ""
+
   const body = `
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
       Hallo <strong style="color:#1c1917;">${opts.takumiName}</strong>,<br/>
-      <strong style="color:#1c1917;">${opts.userName}</strong> moechte eine Session mit dir buchen:
+      du hast eine neue Buchungsanfrage von <strong style="color:#1c1917;">${opts.userName}</strong>.
+      Bitte bestätige oder lehne sie ab.
     </p>
+
     <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:24px;">
-      <tr><td style="padding:16px 20px;">
-        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Datum:</strong> ${opts.date}</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Zeit:</strong> ${opts.startTime} - ${opts.endTime}</p>
+      <tr><td style="padding:20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Von:</strong> ${opts.userName} (${opts.userEmail})</p>
+        <p style="margin:6px 0 0;font-size:13px;color:#1c1917;"><strong>Datum:</strong> ${opts.date}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Zeit:</strong> ${opts.startTime}–${opts.endTime} Uhr</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Preis:</strong> ${opts.price} €</p>
+        ${noteBlock}
       </td></tr>
     </table>
-    <div style="text-align:center;padding:8px 0;">
-      ${btn(opts.acceptUrl, "Annehmen", "#064e3b")}
-      ${btn(opts.declineUrl, "Ablehnen", "#dc2626")}
-    </div>`
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="padding:4px;">
+          <a href="${opts.acceptUrl}" style="display:block;text-align:center;padding:13px 0;background-color:#064e3b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:10px;">
+            ✓ Buchung annehmen
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px;">
+          <a href="${opts.declineUrl}" style="display:block;text-align:center;padding:13px 0;background-color:#dc2626;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:10px;">
+            ✕ Buchung ablehnen
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px;">
+          <a href="${opts.askUrl}" style="display:block;text-align:center;padding:13px 0;background-color:#f5f5f4;color:#1c1917;font-size:14px;font-weight:600;text-decoration:none;border-radius:10px;border:1px solid #e7e5e3;">
+            ? Rückfrage stellen
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:16px 0 0;font-size:12px;text-align:center;color:#a8a29e;">
+      Oder öffne dein <a href="${opts.dashboardUrl}" style="color:#064e3b;text-decoration:underline;">diAiway-Dashboard</a>, um alle Buchungen zu verwalten.
+    </p>`
+
   await transporter.sendMail({
     from: smtpFrom,
     to: opts.to,
-    subject: `diAiway - Neue Buchungsanfrage von ${opts.userName}`,
+    replyTo: opts.userEmail,
+    subject: `diAiway – Neue Buchungsanfrage von ${opts.userName}`,
     html: emailWrapper("Neue Buchungsanfrage", body),
   })
 }
