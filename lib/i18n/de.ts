@@ -268,6 +268,8 @@ const de = {
   "mentor.welcome": "Willkommen! Beschreibe dein Projekt oder lade ein Foto hoch.",
   "mentor.photoUploadMessage": "Ich habe ein Foto von meinem Problem hochgeladen. Bitte analysiere es und gib mir eine Einschätzung.",
   "mentor.declineSearch": "Nein danke, ich möchte weiter mit der KI arbeiten.",
+  "mentor.placeholderEmbedded": "Beschreibe dein Projekt...",
+  "mentor.placeholderFloating": "Schreibe deine Frage...",
 
   // Video / Session
   "video.error": "Fehler.",
