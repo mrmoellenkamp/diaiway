@@ -38,7 +38,7 @@ export default authMiddleware((req) => {
   }
 
   // Protected app pages — any logged-in user
-  const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/messages"]
+  const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages"]
   for (const prefix of protectedPrefixes) {
     if (pathname.startsWith(prefix) && !isLoggedIn) {
       return NextResponse.redirect(
@@ -56,7 +56,7 @@ export default authMiddleware((req) => {
   response.headers.set("X-XSS-Protection", "1; mode=block")
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.daily.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.daily.co https://*.googleapis.com wss:; frame-src 'self' https://js.stripe.com https://*.daily.co; font-src 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://*.daily.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.daily.co https://*.googleapis.com wss:; frame-src 'self' https://js.stripe.com https://*.daily.co; font-src 'self';"
   )
   response.headers.set(
     "Permissions-Policy",
@@ -78,6 +78,7 @@ export const config = {
     "/dashboard/:path*",
     "/booking/:path*",
     "/sessions/:path*",
+    "/session/:path*",
     "/messages/:path*",
     // Apply security headers to all non-static routes
     "/((?!_next/static|_next/image|favicon.ico|images/|icon|apple-icon|manifest).*)",
