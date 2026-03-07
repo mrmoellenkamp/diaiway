@@ -259,6 +259,11 @@ const es = {
   "mentor.close": "Cerrar chat",
   "mentor.chat": "Chat del Mentor de Proyecto",
   "mentor.retryError": "Por favor, inténtalo de nuevo.",
+  "mentor.headerTitleEmbedded": "diAIway intelligence",
+  "mentor.headerTitleFloating": "Mentor de Proyecto",
+  "mentor.headerDescEmbedded": "Revisión de proyecto — Analiza, planifica, encuentra expertos",
+  "mentor.headerDescFloating": "Tu asesor personal",
+  "mentor.online": "En línea",
 
   // Video / Session
   "video.error": "Error.",
