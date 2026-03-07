@@ -39,11 +39,7 @@ export function AppHeader({ title }: { title?: string }) {
             <Link href="/messages">
               <Bell className="size-5" />
               <span className="sr-only">{t("messages.title")}</span>
-              {totalUnread > 0 ? (
-                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-accent-foreground">
-                  {totalUnread}
-                </span>
-              ) : (
+              {totalUnread > 0 && (
                 <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" />
               )}
             </Link>
