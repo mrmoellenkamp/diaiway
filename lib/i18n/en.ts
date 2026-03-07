@@ -49,7 +49,7 @@ const en = {
   "landing.mentorDesc": "Describe your project, upload photos and get an expert analysis.",
   "landing.howItWorks": "How it works",
   "landing.step1Title": "Describe your problem",
-  "landing.step1Desc": "Take a photo or describe your problem. Our AI Guide will find the perfect expert.",
+  "landing.step1Desc": "Take a photo or describe your request. Our diAIway-intelligence tries to answer your question immediately or finds the perfect Takumi for you.",
   "landing.step2Title": "Book appointment",
   "landing.step2Desc": "Start the video session completely risk-free. The first 5 minutes are free so you can check whether the chemistry and expertise are right.",
   "landing.step3Title": "Pay securely",

@@ -49,7 +49,7 @@ const es = {
   "landing.mentorDesc": "Describe tu proyecto, sube fotos y obtén un análisis experto.",
   "landing.howItWorks": "Cómo funciona",
   "landing.step1Title": "Describe tu problema",
-  "landing.step1Desc": "Toma una foto o describe tu problema. Nuestra Guía IA encontrará al experto perfecto.",
+  "landing.step1Desc": "Haz una foto o describe tu solicitud. Nuestro diAIway-intelligence intenta responder tu pregunta al instante o encuentra al Takumi perfecto para ti.",
   "landing.step2Title": "Reservar cita",
   "landing.step2Desc": "Inicia la sesión de video sin ningún riesgo. Los primeros 5 minutos son gratis para que puedas comprobar si la química y la experiencia encajan.",
   "landing.step3Title": "Paga de forma segura",
