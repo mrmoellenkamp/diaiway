@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { useFavorites } from "@/hooks/use-favorites"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n"
 
 interface FavoriteButtonProps {
   takumiId: string
@@ -15,6 +16,7 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteButtonProps) {
   const { isFavorite, toggleFavorite, isLoggedIn } = useFavorites()
+  const { t } = useI18n()
   const [isAnimating, setIsAnimating] = useState(false)
   const router = useRouter()
   const isFav = isFavorite(takumiId)
@@ -24,7 +26,7 @@ export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteBut
     e.stopPropagation()
 
     if (!isLoggedIn) {
-      toast.info("Bitte melde dich an, um Favoriten zu speichern.")
+      toast.info(t("favorites.loginRequired"))
       router.push("/login")
       return
     }
@@ -33,9 +35,9 @@ export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteBut
     const added = await toggleFavorite(takumiId)
 
     if (added === true) {
-      toast.success("Zu Favoriten hinzugefuegt!")
+      toast.success(t("favorites.added"))
     } else if (added === false) {
-      toast.success("Aus Favoriten entfernt.")
+      toast.success(t("favorites.removed"))
     }
 
     setTimeout(() => setIsAnimating(false), 300)
@@ -55,7 +57,7 @@ export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteBut
         isAnimating && "scale-125",
         className
       )}
-      aria-label={isFav ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufuegen"}
+      aria-label={isFav ? t("favorites.ariaRemove") : t("favorites.ariaAdd")}
     >
       <Heart
         className={cn(

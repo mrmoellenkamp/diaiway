@@ -69,7 +69,7 @@ export default function MessagesPage() {
             <p className="text-[11px] text-muted-foreground">{thread.subcategory}</p>
           </div>
           <Button asChild size="sm" variant="outline" className="h-8 rounded-lg text-xs">
-            <Link href={`/takumi/${thread.takumiId}`}>Profil</Link>
+            <Link href={`/takumi/${thread.takumiId}`}>{t("common.profile")}</Link>
           </Button>
         </div>
 
@@ -104,7 +104,7 @@ export default function MessagesPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Nachricht schreiben..."
+              placeholder={t("messages.placeholder")}
               className="h-10 rounded-xl bg-muted/50 text-sm"
             />
             <Button

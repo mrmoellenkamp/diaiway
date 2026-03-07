@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n"
 import { SessionCheckout } from "@/components/stripe-checkout"
 import { X, Loader2, CheckCircle2, CreditCard } from "lucide-react"
 
@@ -26,6 +27,7 @@ export function HandshakeOverlay({
   price,
   duration,
 }: HandshakeOverlayProps) {
+  const { t } = useI18n()
   const [step, setStep] = useState<Step>("decision")
   const [error, setError] = useState("")
 
@@ -59,7 +61,7 @@ export function HandshakeOverlay({
           <button
             onClick={onEnd}
             className="absolute right-3 top-3 rounded-full bg-black/10 p-1.5 text-amber-900 transition-colors hover:bg-black/20"
-            aria-label="Schliessen"
+            aria-label={t("handshake.close")}
           >
             <X className="size-5" />
           </button>
@@ -70,10 +72,10 @@ export function HandshakeOverlay({
 
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-amber-900">
-              Problem analysiert?
+              {t("handshake.problemAnalyzed")}
             </h2>
             <p className="text-sm text-amber-800/80">
-              Die kostenlose Probezeit ist vorbei. Moechtest du die Session fortsetzen?
+              {t("handshake.trialOverDesc")}
             </p>
           </div>
 
@@ -89,19 +91,19 @@ export function HandshakeOverlay({
               className="h-14 w-full rounded-xl bg-amber-900 text-lg font-bold text-amber-50 hover:bg-amber-950 shadow-lg"
             >
               <CreditCard className="mr-2 size-5" />
-              Weiter fuer {priceEuro} EUR ({duration} Min)
+              {t("handshake.continueFor", { price: priceEuro, duration: String(duration) })}
             </Button>
             <Button
               onClick={onEnd}
               variant="ghost"
               className="w-full text-amber-800 hover:text-amber-900 hover:bg-amber-500/20"
             >
-              Sitzung beenden
+              {t("handshake.endSession")}
             </Button>
           </div>
 
           <p className="text-[10px] text-amber-800/60">
-            Sichere Zahlung via Stripe
+            {t("handshake.securePayment")}
           </p>
         </div>
       </div>
@@ -116,23 +118,23 @@ export function HandshakeOverlay({
           <button
             onClick={() => setStep("decision")}
             className="absolute right-3 top-3 rounded-full bg-muted p-1.5 text-muted-foreground transition-colors hover:bg-muted/80"
-            aria-label="Zurueck"
+            aria-label={t("handshake.back")}
           >
             <X className="size-5" />
           </button>
 
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-bold text-foreground">
-              Zahlung fuer Session
+              {t("handshake.paymentTitle")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {duration} Minuten mit {takumiName}
+              {t("handshake.minutesWith", { duration: String(duration), name: takumiName })}
             </p>
           </div>
 
           <div className="w-full rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Betrag:</span>
+              <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
               <span className="text-lg font-bold text-foreground">{priceEuro} EUR</span>
             </div>
           </div>

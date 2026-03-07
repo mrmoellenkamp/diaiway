@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { DailyVideoCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
+import { useI18n } from "@/lib/i18n"
 
 type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
 
@@ -42,6 +43,7 @@ function getInitials(name: string): string {
 
 export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const dailyRoomUrl = `https://diaiway.daily.co/${bookingId}`
   const [booking, setBooking] = useState<BookingRecord | null>(null)
   const [phase, setPhase] = useState<Phase>("loading")
@@ -66,7 +68,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         const res = await fetch(`/api/bookings/${bookingId}`)
         const data = await res.json()
         if (!res.ok) {
-          setErrorMsg(data.error || "Fehler beim Laden.")
+          setErrorMsg(data.error || t("video.loadError"))
           setPhase("error")
           return
         }
@@ -86,7 +88,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           setPhase("error")
         }
       } catch {
-        setErrorMsg("Netzwerkfehler beim Laden der Buchung.")
+        setErrorMsg(t("common.networkError"))
         setPhase("error")
       }
     }
@@ -113,12 +115,12 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data.error || "Fehler.")
+        toast.error(data.error || t("video.error"))
         return null
       }
       return data
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
       return null
     }
   }
@@ -129,7 +131,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
       setPhase("trial")
       setTimer(300)
       setIsInCall(true)
-      toast.success("Session gestartet!")
+      toast.success(t("video.sessionStarted"))
     }
   }
 
@@ -144,7 +146,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const handlePaymentSuccess = () => {
     setPhase("paid")
     setTimer(1800)
-    toast.success("Zahlung erfolgreich! Session laeuft weiter.")
+    toast.success(t("video.paymentSuccess"))
   }
 
   const handleEndCall = async () => {
@@ -153,17 +155,17 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     setPhase("rating")
     if (result?.isFreeSession) {
       if (result?.autoRefunded) {
-        toast.success("Kostenlose Probe beendet. Deine Zahlung wurde automatisch erstattet.")
+        toast.success(t("video.refundInfo"))
       } else {
-        toast.info("Kostenlose Probe beendet (unter 5 Minuten).")
+        toast.info(t("video.trialEndedShort"))
       }
     } else {
-      toast.info("Sitzung beendet.")
+      toast.info(t("video.sessionEnded"))
     }
   }
 
   const handleSubmitRating = () => {
-    toast.success("Bewertung gespeichert! Danke.")
+    toast.success(t("video.ratingSaved"))
     router.push("/sessions")
   }
 
@@ -254,7 +256,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
                   ? "border-destructive bg-destructive/10 text-destructive"
                   : "border-border bg-card text-muted-foreground"
               }`}
-              aria-label={isMuted ? "Mikrofon einschalten" : "Mikrofon ausschalten"}
+              aria-label={isMuted ? t("video.micOn") : t("video.micOff")}
             >
               {isMuted ? <MicOff className="size-5" /> : <Mic className="size-5" />}
             </button>
@@ -265,7 +267,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
                   ? "border-destructive bg-destructive/10 text-destructive"
                   : "border-border bg-card text-muted-foreground"
               }`}
-              aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
+              aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
             >
               {isCameraOff ? <VideoOff className="size-5" /> : <Video className="size-5" />}
             </button>
@@ -464,7 +466,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               className={`flex size-12 items-center justify-center rounded-full transition-colors ${
                 isCameraOff ? "bg-destructive" : "bg-white/20"
               }`}
-              aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
+              aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
             >
               {isCameraOff ? (
                 <VideoOff className="size-5 text-destructive-foreground" />
@@ -476,15 +478,15 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <button
               onClick={handleEndCall}
               className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
-              aria-label="Anruf beenden"
+              aria-label={t("video.endCall")}
             >
               <PhoneOff className="size-6 text-destructive-foreground" />
             </button>
 
             <button
-              onClick={() => toast.info("Meldung gesendet")}
+              onClick={() => toast.info(t("video.reportSent"))}
               className="flex size-12 items-center justify-center rounded-full bg-white/20"
-              aria-label="Problem melden"
+              aria-label={t("video.reportProblem")}
             >
               <AlertTriangle className="size-5 text-primary-foreground" />
             </button>

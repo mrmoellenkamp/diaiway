@@ -243,6 +243,111 @@ const en = {
   "profile.adminDashboard": "Admin Dashboard",
   "profile.loggedOut": "You have been logged out.",
 
+  // Favorites
+  "favorites.loginRequired": "Please sign in to save favorites.",
+  "favorites.added": "Added to favorites!",
+  "favorites.removed": "Removed from favorites.",
+  "favorites.ariaAdd": "Add to favorites",
+  "favorites.ariaRemove": "Remove from favorites",
+
+  // Aria / Accessibility
+  "aria.showPassword": "Show password",
+  "aria.hidePassword": "Hide password",
+
+  // Mentor / AI FAB
+  "mentor.open": "Open project mentor",
+  "mentor.close": "Close chat",
+  "mentor.chat": "Project Mentor Chat",
+  "mentor.retryError": "Please try again.",
+
+  // Video / Session
+  "video.error": "Error.",
+  "video.sessionStarted": "Session started!",
+  "video.paymentSuccess": "Payment successful! Session continues.",
+  "video.refundInfo": "Free trial ended. Your payment has been automatically refunded.",
+  "video.trialEndedShort": "Free trial ended (under 5 minutes).",
+  "video.sessionEnded": "Session ended.",
+  "video.ratingSaved": "Rating saved! Thank you.",
+  "video.micOn": "Turn microphone on",
+  "video.micOff": "Turn microphone off",
+  "video.camOn": "Turn camera on",
+  "video.camOff": "Turn camera off",
+  "video.endCall": "End call",
+  "video.reportSent": "Report sent",
+  "video.reportProblem": "Report problem",
+  "video.reviewPlaceholder": "Optional: Write a review...",
+  "video.sessionExtended": "Session extended! Good luck.",
+  "video.paymentReleased": "Payment released!",
+  "video.backToSessions": "Back to sessions",
+  "video.loadError": "Error loading.",
+  "video.thenPrice": "Then {price}€ / session",
+  "video.decideAfterTrial": "Decide after the trial",
+  "video.roomOpens": "The room opens 5 minutes before the appointment.",
+  "video.sessionEndedTitle": "Session ended",
+  "video.howWasExperience": "How was your experience with {name}?",
+  "video.duration": "Duration: {min} minutes",
+  "video.submitRating": "Submit rating",
+  "video.skip": "Skip",
+  "video.freeTrial": "Free trial",
+  "video.paidSession": "Paid session",
+  "video.trial": "Trial",
+  "video.paid": "Paid",
+  "video.starAria": "{n} stars",
+  "video.networkError": "Network error.",
+
+  // Handshake
+  "handshake.close": "Close",
+  "handshake.back": "Back",
+  "handshake.problemAnalyzed": "Problem analyzed?",
+  "handshake.trialOverDesc": "The free trial is over. Would you like to continue the session?",
+  "handshake.continueFor": "Continue for {price} EUR ({duration} min)",
+  "handshake.endSession": "End session",
+  "handshake.securePayment": "Secure payment via Stripe",
+  "handshake.paymentTitle": "Payment for session",
+  "handshake.minutesWith": "{duration} minutes with {name}",
+  "handshake.amount": "Amount:",
+
+  // Review
+  "review.starsAria": "{rating} of {max} stars",
+
+  // Image Upload
+  "imageUpload.fileTypeError": "Only JPG, PNG, WebP and GIF allowed.",
+  "imageUpload.fileSizeError": "Maximum file size: {mb} MB.",
+  "imageUpload.uploadError": "Upload failed.",
+  "imageUpload.uploadSuccess": "Image uploaded successfully.",
+  "imageUpload.uploadNetworkError": "Network error during upload.",
+  "imageUpload.uploading": "Uploading...",
+  "imageUpload.dragDrop": "Click or drag image",
+  "imageUpload.ariaUpload": "Upload image",
+  "imageUpload.replaceImage": "Replace image",
+  "imageUpload.removeImage": "Remove image",
+  "imageUpload.formatHint": "JPG, PNG, WebP · max. 5 MB",
+
+  // Reset Password
+  "reset.success": "Password changed successfully!",
+  "reset.title": "Set new password",
+  "reset.confirmPlaceholder": "Enter password again",
+  "reset.confirmLabel": "Confirm password",
+  "reset.minChars": "At least 6 characters",
+  "reset.strengthVeryStrong": "Very strong",
+  "reset.strengthStrong": "Strong",
+  "reset.strengthOk": "OK",
+  "reset.strengthShort": "Too short",
+  "reset.loginNow": "Sign in now",
+
+  // Paused
+  "paused.reactivated": "Account reactivated.",
+  "paused.reactivateError": "Error reactivating account.",
+
+  // Messages (extra)
+  "messages.placeholder": "Write message...",
+
+  // Booking Respond
+  "booking.respondNotePlaceholder": "Your question or note about the booking request…",
+
+  // Global Nav titles
+  "globalNav.availability": "My Availability",
+
   // Edit Profile
   "editProfile.title": "Edit Profile",
   "editProfile.personalData": "Personal Data",

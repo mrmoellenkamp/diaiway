@@ -243,6 +243,111 @@ const es = {
   "profile.adminDashboard": "Panel de administración",
   "profile.loggedOut": "Has cerrado sesión.",
 
+  // Favorites
+  "favorites.loginRequired": "Inicia sesión para guardar favoritos.",
+  "favorites.added": "¡Añadido a favoritos!",
+  "favorites.removed": "Eliminado de favoritos.",
+  "favorites.ariaAdd": "Añadir a favoritos",
+  "favorites.ariaRemove": "Quitar de favoritos",
+
+  // Aria / Accessibility
+  "aria.showPassword": "Mostrar contraseña",
+  "aria.hidePassword": "Ocultar contraseña",
+
+  // Mentor / AI FAB
+  "mentor.open": "Abrir mentor de proyecto",
+  "mentor.close": "Cerrar chat",
+  "mentor.chat": "Chat del Mentor de Proyecto",
+  "mentor.retryError": "Por favor, inténtalo de nuevo.",
+
+  // Video / Session
+  "video.error": "Error.",
+  "video.sessionStarted": "¡Sesión iniciada!",
+  "video.paymentSuccess": "¡Pago exitoso! La sesión continúa.",
+  "video.refundInfo": "Prueba gratuita terminada. Tu pago ha sido reembolsado automáticamente.",
+  "video.trialEndedShort": "Prueba gratuita terminada (menos de 5 minutos).",
+  "video.sessionEnded": "Sesión terminada.",
+  "video.ratingSaved": "¡Valoración guardada! Gracias.",
+  "video.micOn": "Encender micrófono",
+  "video.micOff": "Apagar micrófono",
+  "video.camOn": "Encender cámara",
+  "video.camOff": "Apagar cámara",
+  "video.endCall": "Finalizar llamada",
+  "video.reportSent": "Reporte enviado",
+  "video.reportProblem": "Reportar problema",
+  "video.reviewPlaceholder": "Opcional: Escribe una valoración...",
+  "video.sessionExtended": "¡Sesión extendida! Buena suerte.",
+  "video.paymentReleased": "¡Pago liberado!",
+  "video.backToSessions": "Volver a sesiones",
+  "video.loadError": "Error al cargar.",
+  "video.thenPrice": "Luego {price}€ / sesión",
+  "video.decideAfterTrial": "Decide después de la prueba",
+  "video.roomOpens": "La sala se abre 5 minutos antes de la cita.",
+  "video.sessionEndedTitle": "Sesión terminada",
+  "video.howWasExperience": "¿Cómo fue tu experiencia con {name}?",
+  "video.duration": "Duración: {min} minutos",
+  "video.submitRating": "Enviar valoración",
+  "video.skip": "Omitir",
+  "video.freeTrial": "Prueba gratuita",
+  "video.paidSession": "Sesión de pago",
+  "video.trial": "Prueba",
+  "video.paid": "Pagado",
+  "video.starAria": "{n} estrellas",
+  "video.networkError": "Error de red.",
+
+  // Handshake
+  "handshake.close": "Cerrar",
+  "handshake.back": "Atrás",
+  "handshake.problemAnalyzed": "¿Problema analizado?",
+  "handshake.trialOverDesc": "La prueba gratuita ha terminado. ¿Quieres continuar la sesión?",
+  "handshake.continueFor": "Continuar por {price} EUR ({duration} min)",
+  "handshake.endSession": "Terminar sesión",
+  "handshake.securePayment": "Pago seguro vía Stripe",
+  "handshake.paymentTitle": "Pago de la sesión",
+  "handshake.minutesWith": "{duration} minutos con {name}",
+  "handshake.amount": "Importe:",
+
+  // Review
+  "review.starsAria": "{rating} de {max} estrellas",
+
+  // Image Upload
+  "imageUpload.fileTypeError": "Solo se permiten JPG, PNG, WebP y GIF.",
+  "imageUpload.fileSizeError": "Tamaño máximo: {mb} MB.",
+  "imageUpload.uploadError": "Error al subir.",
+  "imageUpload.uploadSuccess": "Imagen subida correctamente.",
+  "imageUpload.uploadNetworkError": "Error de red al subir.",
+  "imageUpload.uploading": "Subiendo...",
+  "imageUpload.dragDrop": "Haz clic o arrastra la imagen",
+  "imageUpload.ariaUpload": "Subir imagen",
+  "imageUpload.replaceImage": "Reemplazar imagen",
+  "imageUpload.removeImage": "Eliminar imagen",
+  "imageUpload.formatHint": "JPG, PNG, WebP · máx. 5 MB",
+
+  // Reset Password
+  "reset.success": "¡Contraseña cambiada correctamente!",
+  "reset.title": "Establecer nueva contraseña",
+  "reset.confirmPlaceholder": "Introduce la contraseña de nuevo",
+  "reset.confirmLabel": "Confirmar contraseña",
+  "reset.minChars": "Mínimo 6 caracteres",
+  "reset.strengthVeryStrong": "Muy fuerte",
+  "reset.strengthStrong": "Fuerte",
+  "reset.strengthOk": "OK",
+  "reset.strengthShort": "Muy corta",
+  "reset.loginNow": "Iniciar sesión ahora",
+
+  // Paused
+  "paused.reactivated": "Cuenta reactivada.",
+  "paused.reactivateError": "Error al reactivar la cuenta.",
+
+  // Messages (extra)
+  "messages.placeholder": "Escribir mensaje...",
+
+  // Booking Respond
+  "booking.respondNotePlaceholder": "Tu pregunta o nota sobre la solicitud de reserva…",
+
+  // Global Nav titles
+  "globalNav.availability": "Mi disponibilidad",
+
   // Edit Profile
   "editProfile.title": "Editar perfil",
   "editProfile.personalData": "Datos personales",
