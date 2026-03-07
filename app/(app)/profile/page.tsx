@@ -214,7 +214,7 @@ export default function ProfilePage() {
   const { data: session, status, update: updateSession } = useSession()
   const { role, setRole, setIsLoggedIn } = useApp()
   const { t } = useI18n()
-  const { takumis } = useTakumis()
+  const { takumis, mutate: mutateTakumis } = useTakumis()
   const router = useRouter()
   const [isLive, setIsLive] = useState(false)
   const isTakumi = role === "takumi"
@@ -236,14 +236,16 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-  // Load full profile + booking stats from MongoDB
+  // Load full profile + booking stats + takumi isLive
   useEffect(() => {
     async function loadProfile() {
       try {
-        const [profileRes, bookingsRes] = await Promise.all([
+        const fetches: Promise<Response>[] = [
           fetch("/api/user/profile"),
           fetch("/api/bookings"),
-        ])
+        ]
+        if (isTakumi) fetches.push(fetch("/api/user/takumi-profile"))
+        const [profileRes, bookingsRes, takumiRes] = await Promise.all(fetches)
         if (profileRes.ok) {
           const data = await profileRes.json()
           setDbName(data.name || "")
@@ -260,6 +262,10 @@ export default function ProfilePage() {
             completed.reduce((sum: number, b: { price?: number }) => sum + (b.price || 0), 0)
           )
         }
+        if (isTakumi && takumiRes?.ok) {
+          const tp = await takumiRes.json()
+          if (tp.exists && typeof tp.isLive === "boolean") setIsLive(tp.isLive)
+        }
       } catch {
         // fall back to defaults (0)
       } finally {
@@ -271,7 +277,7 @@ export default function ProfilePage() {
     } else if (status !== "loading") {
       setProfileLoading(false)
     }
-  }, [session, status])
+  }, [session, status, isTakumi])
 
   // Prefer DB data, fall back to session
   const userName = dbName || session?.user?.name || t("profile.userFallback")
@@ -531,9 +537,24 @@ export default function ProfilePage() {
                 </div>
                 <Switch
                   checked={isLive}
-                  onCheckedChange={(v) => {
-                    setIsLive(v)
-                    toast.success(v ? t("profile.nowLive") : t("profile.nowOffline"))
+                  onCheckedChange={async (v) => {
+                    try {
+                      const res = await fetch("/api/user/takumi-profile", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ isLive: v }),
+                      })
+                      if (res.ok) {
+                        setIsLive(v)
+                        mutateTakumis()
+                        toast.success(v ? t("profile.nowLive") : t("profile.nowOffline"))
+                      } else {
+                        const data = await res.json()
+                        toast.error(data.error || t("profile.error"))
+                      }
+                    } catch {
+                      toast.error(t("common.networkError"))
+                    }
                   }}
                 />
               </CardContent>
