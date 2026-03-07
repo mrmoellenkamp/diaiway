@@ -18,19 +18,8 @@ export interface DailyPrebuiltCallProps {
 /** Alias for VideoConfig compatibility */
 export type DailyVideoCallProps = DailyPrebuiltCallProps
 
-export type DailyVideoCallProps = DailyPrebuiltCallProps
-
-/** Alias for VideoConfig compatibility */
-export type DailyVideoCallProps = DailyPrebuiltCallProps
-
-/** Alias for VideoConfig compatibility */
-export type DailyVideoCallProps = DailyPrebuiltCallProps
-
-/** Alias for VideoConfig compatibility */
-export type DailyVideoCallProps = DailyPrebuiltCallProps
-
-/** Alias for VideoConfig compatibility */
-export type DailyVideoCallProps = DailyPrebuiltCallProps
+/** diaiway Primärfarbe (accent aus globals.css) */
+const ACCENT_HEX = "#22c55e"
 
 export default function DailyPrebuiltCall({
   roomUrl,
@@ -46,6 +35,8 @@ export default function DailyPrebuiltCall({
       const Daily = (await import("@daily-co/daily-js")).default
       frame = Daily.createFrame(containerRef.current!, {
         url: roomUrl,
+        lang: "de",
+        theme: { accent: ACCENT_HEX },
         iframeStyle: {
           width: "100%",
           height: "100%",
@@ -67,6 +58,16 @@ export default function DailyPrebuiltCall({
   }, [roomUrl])
 
   return (
-    <div ref={containerRef} className="flex flex-1 min-h-0" style={{ minHeight: "400px" }} />
+    <div
+      ref={containerRef}
+      className="flex flex-1 min-h-0"
+      style={{
+        minHeight: "400px",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    />
   )
 }

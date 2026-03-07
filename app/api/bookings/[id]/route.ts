@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { refundTransactionForBooking } from "@/lib/wallet-service"
 
 export const runtime = "nodejs"
 
@@ -372,6 +373,12 @@ export async function PATCH(
           partial: feeApplies && feeAmount > 0,
           feeAmount,
           refundAmount,
+        }
+        // Wallet: pendingBalance freigeben, Transaction auf REFUNDED setzen
+        try {
+          await refundTransactionForBooking(id)
+        } catch (walletErr) {
+          console.error("[Booking Cancel] Wallet refund failed:", walletErr)
         }
       } catch (stripeErr) {
         console.error("[Stripe Refund] Failed:", stripeErr)

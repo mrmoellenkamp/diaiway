@@ -69,8 +69,11 @@ export async function GET(req: NextRequest) {
         },
         body: JSON.stringify({
           name: roomName,
-          privacy: "public", // Public allows join with URL; private requires meeting tokens
-          properties: { max_participants: 2 },
+          privacy: "private", // Nur mit gültigem Token beitretbar
+          properties: {
+            max_participants: 2,
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Raum läuft nach 7 Tagen ab
+          },
         }),
       })
 
@@ -99,9 +102,42 @@ export async function GET(req: NextRequest) {
       effectiveRoomName = roomName
     }
 
-    // Public rooms: join with URL only (no token). Tokens can cause connection issues.
-    // Both participants get the same room URL → same room.
-    return NextResponse.json({ roomUrl: baseRoomUrl })
+    // Meeting-Token serverseitig generieren — ohne Token kein Zugang (private room)
+    const userName = session.user.name || (isBooker ? booking.userName : booking.expertName) || "Teilnehmer"
+    const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 2 // 2 Stunden
+    const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        properties: {
+          room_name: effectiveRoomName,
+          user_name: userName,
+          user_id: uid.slice(0, 36),
+          exp,
+          is_owner: true,
+        },
+      }),
+    })
+
+    if (!tokenRes.ok) {
+      const errBody = await tokenRes.text()
+      console.error("[Daily] Token creation failed:", tokenRes.status, errBody)
+      return NextResponse.json(
+        { error: "Video-Token konnte nicht erstellt werden. Bitte später erneut versuchen." },
+        { status: 502 }
+      )
+    }
+
+    const tokenData = (await tokenRes.json()) as { token?: string }
+    const token = tokenData?.token
+    const roomUrl = token
+      ? `${baseRoomUrl}${baseRoomUrl.includes("?") ? "&" : "?"}t=${token}`
+      : baseRoomUrl
+
+    return NextResponse.json({ roomUrl })
   } catch (err) {
     console.error("[Daily] Room API error:", err)
     return NextResponse.json(
