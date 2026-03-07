@@ -216,7 +216,7 @@ npx prisma studio
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur & Abläufe |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Beitragen & i18n-Sync |
-| [docs/UPDATE.md](docs/UPDATE.md) | Dokumentation aktuell halten |
+| [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | iOS/Android-Migration vorbereiten |
 | [docs/UPDATE.md](docs/UPDATE.md) | Dokumentation aktuell halten |
 
 ---

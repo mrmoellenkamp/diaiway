@@ -132,7 +132,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:min-w-0">
           <Avatar className="size-8 border-2 border-primary/10">
             {session.user.image ? (
               <img src={session.user.image} alt={userName} className="size-full rounded-full object-cover" />

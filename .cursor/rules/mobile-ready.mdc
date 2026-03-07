@@ -1,0 +1,25 @@
+---
+description: Mobile-Readiness – Web-App für iOS/Android-Migration vorbereiten
+globs: 
+  - "app/**/*.tsx"
+  - "components/**/*.tsx"
+  - "lib/**/*.ts"
+alwaysApply: false
+---
+
+# Mobile-Readiness
+
+Die Web-App wird später zu iOS und Android migriert. Bei Änderungen beachten:
+
+## Touch & Layout
+- Klickbare Elemente mind. 44×44px (min-h-11 min-w-11 oder größer)
+- Keine Hover-only Interaktionen – auch per Tap erreichbar
+- Safe-Area bei fixed/sticky: `pb-[max(0.5rem,env(safe-area-inset-bottom))]` etc.
+
+## Code
+- Kein `window`/`document` in Kernlogik – in Client-Hooks isolieren
+- API-Logik in `lib/` ohne DOM-Abhängigkeiten (wiederverwendbar für Native)
+- Responsive: Mobile-first, `useIsMobile` nutzen
+
+## Referenz
+Siehe `docs/MOBILE-READINESS.md` für vollständige Richtlinien.
