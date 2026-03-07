@@ -75,6 +75,7 @@ export async function GET(
         cancelFeeAmount: booking.cancelFeeAmount,
         cancelledAt: booking.cancelledAt,
         cancelPreview,
+        isExpert, // true if current user is the Takumi (expert) for this booking
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       },
@@ -160,10 +161,11 @@ export async function PATCH(
   const { id } = await params
 
   try {
-    const { action } = await req.json()
-    if (!action || !["start-session", "end-session", "cancel"].includes(action)) {
+    const body = await req.json().catch(() => ({}))
+    const { action, rating, reviewText } = body as { action?: string; rating?: number; reviewText?: string }
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating"].includes(action)) {
       return NextResponse.json(
-        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel." },
+        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating." },
         { status: 400 }
       )
     }
@@ -258,6 +260,64 @@ export async function PATCH(
         autoRefunded,
         isFreeSession,
       })
+    }
+
+    // ── submit-review (Shugyo bewertet Takumi) ─────────────────────────────
+    if (action === "submit-review") {
+      if (booking.status !== "completed") {
+        return NextResponse.json(
+          { error: "Bewertung nur nach abgeschlossener Session möglich." },
+          { status: 409 }
+        )
+      }
+      if (!isBooker) {
+        return NextResponse.json({ error: "Nur der Buchungsersteller kann den Experten bewerten." }, { status: 403 })
+      }
+      const r = Math.min(5, Math.max(1, Number(rating) || 0))
+      if (r < 1) {
+        return NextResponse.json({ error: "Bitte wähle 1–5 Sterne." }, { status: 400 })
+      }
+      await prisma.review.create({
+        data: {
+          expertId: booking.expertId,
+          userId: booking.userId,
+          rating: r,
+          text: (reviewText || "").trim().slice(0, 2000),
+        },
+      })
+      // Update expert's aggregate rating
+      const reviews = await prisma.review.findMany({ where: { expertId: booking.expertId }, select: { rating: true } })
+      const avg = reviews.reduce((s, x) => s + x.rating, 0) / reviews.length
+      await prisma.expert.update({
+        where: { id: booking.expertId },
+        data: { rating: Math.round(avg * 10) / 10, reviewCount: reviews.length },
+      })
+      return NextResponse.json({ success: true })
+    }
+
+    // ── submit-expert-rating (Takumi bewertet Shugyo) ───────────────────────
+    if (action === "submit-expert-rating") {
+      if (booking.status !== "completed") {
+        return NextResponse.json(
+          { error: "Bewertung nur nach abgeschlossener Session möglich." },
+          { status: 409 }
+        )
+      }
+      if (!isExpert) {
+        return NextResponse.json({ error: "Nur der Experte kann den Nutzer bewerten." }, { status: 403 })
+      }
+      const r = Math.min(5, Math.max(1, Number(rating) || 0))
+      if (r < 1) {
+        return NextResponse.json({ error: "Bitte wähle 1–5 Sterne." }, { status: 400 })
+      }
+      await prisma.booking.update({
+        where: { id },
+        data: {
+          expertRating: r,
+          expertReviewText: (reviewText || "").trim().slice(0, 2000),
+        },
+      })
+      return NextResponse.json({ success: true })
     }
 
     // ── cancel ─────────────────────────────────────────────────────────────

@@ -112,12 +112,12 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     return () => clearInterval(interval)
   }, [phase, timer])
 
-  async function patchBooking(action: string) {
+  async function patchBooking(action: string, extra?: { rating?: number; reviewText?: string }) {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, ...extra }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -199,8 +199,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     }
   }
 
-  const handleSubmitRating = () => {
-    toast.success(t("video.ratingSaved"))
+  const handleSubmitRating = async () => {
+    const action = booking?.isExpert ? "submit-expert-rating" : "submit-review"
+    const result = await patchBooking(action, { rating, reviewText })
+    if (result) {
+      toast.success(t("video.ratingSaved"))
+      router.push("/sessions")
+    }
+  }
+
+  const handleSkipRating = () => {
     router.push("/sessions")
   }
 
@@ -344,17 +352,19 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   // ─── Rating ──────────────────────────────────────────────────────────────
 
   if (phase === "rating") {
+    const rateeName = booking.isExpert ? booking.userName : booking.takumiName
+    const rateeInitials = getInitials(rateeName)
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
         <Avatar className="size-20 border-4 border-primary/10">
           <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-            {initials}
+            {rateeInitials}
           </AvatarFallback>
         </Avatar>
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">{t("video.sessionEndedTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("video.howWasExperience", { name: booking.takumiName })}
+            {t("video.howWasExperience", { name: rateeName })}
           </p>
           {booking.sessionDuration != null && (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -397,7 +407,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             {t("video.submitRating")}
           </Button>
           <Button
-            onClick={() => router.push("/sessions")}
+            onClick={handleSkipRating}
             variant="outline"
             className="h-12 w-full rounded-xl"
           >
