@@ -469,7 +469,7 @@ const es = {
   "booking.escrowNotice": "Tu dinero solo se cobrará después de tu aprobación. Puedes cancelar en cualquier momento durante el período de prueba.",
   "booking.chooseAppointment": "Elegir cita",
   "booking.selectedSlot": "{date} a las {time}",
-  "booking.selectedSlotRange": "{start} – {end} (30 min)",
+  "booking.selectedSlotRange": "{start} – {end} ({duration} min)",
   "booking.noteLabel": "Mensaje al experto (opcional)",
   "booking.notePlaceholder": "Describe brevemente tu consulta...",
   "booking.cancellationTitle": "Política de cancelación",
@@ -505,6 +505,9 @@ const es = {
   "booking.loginRequired": "Por favor inicia sesión primero.",
   "booking.networkError": "Error de red. Por favor verifica tu conexión.",
   "booking.incompleteProfile": "El perfil del experto está incompleto. Elige otro horario o experto.",
+  "booking.successTitle": "Solicitud de reserva enviada",
+  "booking.successInfo": "Estamos reenviando tu solicitud de reserva a {name}. Se pondrá en contacto contigo lo antes posible o confirmará la reserva.",
+  "booking.successContinue": "Continuar a Planificadas",
 
   // Availability Dashboard
   "avail.title": "Mi disponibilidad",

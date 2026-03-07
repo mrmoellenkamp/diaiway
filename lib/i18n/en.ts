@@ -469,7 +469,7 @@ const en = {
   "booking.escrowNotice": "Your money will only be charged after your approval. You can cancel at any time during the trial period.",
   "booking.chooseAppointment": "Choose appointment",
   "booking.selectedSlot": "{date} at {time}",
-  "booking.selectedSlotRange": "{start} – {end} (30 min)",
+  "booking.selectedSlotRange": "{start} – {end} ({duration} min)",
   "booking.noteLabel": "Message to the expert (optional)",
   "booking.notePlaceholder": "Briefly describe your concern...",
   "booking.cancellationTitle": "Cancellation policy",
@@ -505,6 +505,9 @@ const en = {
   "booking.loginRequired": "Please sign in first.",
   "booking.networkError": "Network error. Please check your connection.",
   "booking.incompleteProfile": "The expert profile is incomplete. Please choose a different time or expert.",
+  "booking.successTitle": "Booking request sent",
+  "booking.successInfo": "We are forwarding your booking request to {name}. They will contact you as soon as possible or confirm the booking.",
+  "booking.successContinue": "Continue to Planned",
 
   // Availability Dashboard
   "avail.title": "My Availability",

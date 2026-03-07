@@ -16,6 +16,15 @@ import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import { toast } from "sonner"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar,
 } from "lucide-react"
 
@@ -45,6 +54,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [selectedEnd, setSelectedEnd] = useState("")
   const [note, setNote] = useState("")
   const [isBooking, setIsBooking] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   function handleTimeSelect(date: string, start: string, end: string) {
     // Guard: never allow selecting a slot in the past
@@ -95,7 +105,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       const data = await res.json()
       if (res.ok) {
         toast.success(data.message || t("booking.bookButton").replace("{price}", String(takumi.pricePerSession)))
-        router.push("/sessions")
+        setShowSuccessDialog(true)
       } else {
         const errorMsg = data.error?.includes("validation")
           ? t("booking.incompleteProfile")
@@ -109,8 +119,28 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     }
   }
 
+  function handleSuccessContinue() {
+    setShowSuccessDialog(false)
+    router.push("/sessions?tab=upcoming")
+  }
+
   return (
     <PageContainer>
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("booking.successTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("booking.successInfo", { name: takumi.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleSuccessContinue}>
+              {t("booking.successContinue")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -208,9 +238,15 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                   .replace("{time}", selectedStart)}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {t("booking.selectedSlotRange")
-                  .replace("{start}", selectedStart)
-                  .replace("{end}", selectedEnd)}
+                {(() => {
+                  const [sh, sm] = selectedStart.split(":").map(Number)
+                  const [eh, em] = (selectedEnd || selectedStart).split(":").map(Number)
+                  const duration = (eh * 60 + em) - (sh * 60 + sm)
+                  return t("booking.selectedSlotRange")
+                    .replace("{start}", selectedStart)
+                    .replace("{end}", selectedEnd || selectedStart)
+                    .replace("{duration}", String(duration))
+                })()}
               </span>
             </div>
           </div>
