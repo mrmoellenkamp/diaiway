@@ -142,10 +142,10 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
               </AvatarFallback>
             )}
           </Avatar>
-          <span className="hidden text-sm font-medium text-foreground sm:inline">
+          <span className={cn("hidden text-sm font-medium sm:inline", variant === "landing" ? "text-white" : "text-foreground")}>
             {userName.split(" ")[0]}
           </span>
-          <ChevronDown className="size-3.5 text-muted-foreground" />
+          <ChevronDown className={cn("size-3.5", variant === "landing" ? "text-white/80" : "text-muted-foreground")} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
