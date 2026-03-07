@@ -37,8 +37,8 @@ const en = {
   "nav.expertsOverview": "Experts Overview",
 
   // Landing
-  "landing.heroTitle": "Your project in the best hands",
-  "landing.heroDesc": "Real experts. Live via video. From vegetable gardens to classic cars — try 5 minutes free.",
+  "landing.heroTitle": "DIY help at the push of a button. Safe. Fast. Everywhere.",
+  "landing.heroDesc": "Individual support from people with experience. Live via video. From vegetable gardens to classic cars",
   "landing.findExpert": "Find an expert",
   "landing.discoverCategories": "Discover categories",
   "landing.becomeTakumi": "Become a Takumi",
