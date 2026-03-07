@@ -9,6 +9,7 @@ import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
 import { GlobalFooter } from '@/components/global-footer'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { PushNotificationProvider } from '@/components/push-notification-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -64,10 +65,12 @@ export default function RootLayout({
           <SessionProvider>
             <I18nProvider>
               <AppProvider>
-                <GlobalNavigation />
-                {children}
-                <GlobalFooter />
-                <AiMentorFab />
+                <PushNotificationProvider>
+                  <GlobalNavigation />
+                  {children}
+                  <GlobalFooter />
+                  <AiMentorFab />
+                </PushNotificationProvider>
               </AppProvider>
             </I18nProvider>
           </SessionProvider>

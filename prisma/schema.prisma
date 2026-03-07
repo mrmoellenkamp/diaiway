@@ -62,10 +62,24 @@ model User {
   updatedAt        DateTime   @updatedAt
 
   // Relations
-  expert         Expert?
-  bookings       Booking[]      @relation("UserBookings")
-  availability   Availability?
-  notifications Notification[]
+  expert            Expert?
+  bookings          Booking[]         @relation("UserBookings")
+  availability      Availability?
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String
+  p256dh    String   // public key
+  auth      String   // auth secret
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+  @@index([userId])
 }
 
 model Expert {

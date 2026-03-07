@@ -3,6 +3,7 @@ import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
+import { sendPushToUser } from "@/lib/push"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 
 export const runtime = "nodejs"
@@ -193,6 +194,11 @@ export async function POST(req: Request) {
             body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           },
         })
+        sendPushToUser(expert.userId, {
+          title: "Neue Buchungsanfrage",
+          body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          url: "/messages",
+        }).catch(() => {})
       } catch { /* notification errors must not block */ }
     }
 
