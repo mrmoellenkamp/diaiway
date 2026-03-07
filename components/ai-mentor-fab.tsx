@@ -5,9 +5,11 @@ import { Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MentorChat } from "@/components/mentor-chat"
 import { useApp } from "@/lib/app-context"
+import { useI18n } from "@/lib/i18n"
 
 export function AiMentorFab() {
   const { isMentorOpen: isOpen, setMentorOpen: setIsOpen } = useApp()
+  const { t } = useI18n()
   const pathname = usePathname()
 
   const isInApp =
@@ -43,7 +45,7 @@ export function AiMentorFab() {
             "fixed right-4 z-[45] flex size-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto",
             isInApp ? "bottom-[max(6rem,calc(1.5rem+env(safe-area-inset-bottom)))]" : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
           )}
-          aria-label="Projekt-Mentor offnen"
+          aria-label={t("mentor.open")}
         >
           <Sparkles className="size-6 text-accent" />
           <span className="absolute -top-0.5 -right-0.5 flex size-3">
@@ -64,13 +66,13 @@ export function AiMentorFab() {
               : "bottom-[max(1rem,env(safe-area-inset-bottom))] max-h-[calc(100vh-2rem)]"
           )}
           role="dialog"
-          aria-label="Projekt-Mentor Chat"
+          aria-label={t("mentor.chat")}
         >
           {/* Close button */}
           <button
             onClick={() => setIsOpen(false)}
             className="absolute right-3 top-3 z-10 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-white/30 backdrop-blur-sm text-muted-foreground transition-colors hover:bg-white/50 hover:text-foreground active:scale-95"
-            aria-label="Chat schliessen"
+            aria-label={t("mentor.close")}
           >
             <X className="size-5" />
           </button>

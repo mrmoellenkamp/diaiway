@@ -239,7 +239,7 @@ function RegisterForm() {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+              aria-label={showPassword ? t("aria.hidePassword") : t("aria.showPassword")}
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -271,7 +271,7 @@ function RegisterForm() {
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={showConfirm ? "Passwort verbergen" : "Passwort anzeigen"}
+              aria-label={showConfirm ? t("aria.hidePassword") : t("aria.showPassword")}
               tabIndex={-1}
             >
               {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}

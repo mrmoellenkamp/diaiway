@@ -24,13 +24,13 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   if (pathname.startsWith("/projects")) return t("projects.title")
   if (pathname.startsWith("/messages")) return t("messages.title")
   if (pathname.startsWith("/profile")) return t("common.profile")
-  if (pathname.startsWith("/dashboard/availability")) return "Meine Verfuegbarkeit"
-  if (pathname.startsWith("/admin")) return "Admin"
-  if (pathname.startsWith("/legal/agb")) return "AGB"
-  if (pathname.startsWith("/legal/impressum")) return "Impressum"
-  if (pathname.startsWith("/legal/datenschutz")) return "Datenschutz"
-  if (pathname.startsWith("/booking")) return "Buchung"
-  if (pathname.startsWith("/session")) return "Session"
+  if (pathname.startsWith("/dashboard/availability")) return t("globalNav.availability")
+  if (pathname.startsWith("/admin")) return t("profile.adminDashboard")
+  if (pathname.startsWith("/legal/agb")) return t("landing.terms")
+  if (pathname.startsWith("/legal/impressum")) return t("footer.imprint")
+  if (pathname.startsWith("/legal/datenschutz")) return t("footer.privacy")
+  if (pathname.startsWith("/booking")) return t("booking.title")
+  if (pathname.startsWith("/session")) return t("sessions.title")
   return undefined
 }
 

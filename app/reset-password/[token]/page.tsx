@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2, Lock, ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export default function ResetPasswordPage({
   params,
@@ -14,6 +15,7 @@ export default function ResetPasswordPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = use(params)
+  const { t } = useI18n()
 
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -27,12 +29,12 @@ export default function ResetPasswordPage({
     setError("")
 
     if (!password || password.length < 6) {
-      setError("Das Passwort muss mindestens 6 Zeichen lang sein.")
+      setError(t("reset.passwordMinLength"))
       return
     }
 
     if (password !== confirmPassword) {
-      setError("Die Passwoerter stimmen nicht ueberein.")
+      setError(t("register.errorPasswordMismatch"))
       return
     }
 
@@ -47,12 +49,12 @@ export default function ResetPasswordPage({
 
       if (res.ok) {
         setIsReset(true)
-        toast.success("Passwort erfolgreich geaendert!")
+        toast.success(t("reset.success"))
       } else {
-        setError(data.error || "Fehler beim Zuruecksetzen.")
+        setError(data.error || t("reset.resetError"))
       }
     } catch {
-      setError("Netzwerkfehler. Bitte versuche es erneut.")
+      setError(t("common.networkError"))
     } finally {
       setIsLoading(false)
     }
@@ -67,12 +69,12 @@ export default function ResetPasswordPage({
             <Lock className="size-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground text-balance">
-            {isReset ? "Passwort geaendert!" : "Neues Passwort vergeben"}
+            {isReset ? t("reset.titleSuccess") : t("reset.title")}
           </h1>
           <p className="text-center text-sm text-muted-foreground leading-relaxed">
             {isReset
-              ? "Du kannst dich jetzt mit deinem neuen Passwort anmelden."
-              : "Waehle ein sicheres neues Passwort fuer dein diAiway-Konto."}
+              ? t("reset.successDesc")
+              : t("reset.desc")}
           </p>
         </div>
 
@@ -83,23 +85,23 @@ export default function ResetPasswordPage({
                 <CheckCircle className="size-8 text-primary" />
               </div>
               <p className="text-center text-sm text-muted-foreground leading-relaxed">
-                Dein Passwort wurde erfolgreich geaendert. Dein Konto ist wieder sicher.
+                {t("reset.successDetail")}
               </p>
             </div>
 
             <Button asChild className="h-12 w-full rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-md shadow-primary/20">
-              <Link href="/login">Jetzt anmelden</Link>
+              <Link href="/login">{t("reset.loginNow")}</Link>
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Neues Passwort</Label>
+              <Label htmlFor="password">{t("reset.newPassword")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mindestens 6 Zeichen"
+                  placeholder={t("reset.minChars")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 rounded-xl pr-12"
@@ -111,7 +113,7 @@ export default function ResetPasswordPage({
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                  aria-label={showPassword ? t("aria.hidePassword") : t("aria.showPassword")}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
@@ -119,11 +121,11 @@ export default function ResetPasswordPage({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="confirm">Passwort bestaetigen</Label>
+              <Label htmlFor="confirm">{t("reset.confirmLabel")}</Label>
               <Input
                 id="confirm"
                 type="password"
-                placeholder="Passwort erneut eingeben"
+                placeholder={t("reset.confirmPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-12 rounded-xl"
@@ -152,7 +154,7 @@ export default function ResetPasswordPage({
                   ))}
                 </div>
                 <span className="text-[10px] text-muted-foreground">
-                  {password.length >= 12 ? "Sehr stark" : password.length >= 8 ? "Stark" : password.length >= 6 ? "OK" : "Zu kurz"}
+                  {password.length >= 12 ? t("reset.strengthVeryStrong") : password.length >= 8 ? t("reset.strengthStrong") : password.length >= 6 ? t("reset.strengthOk") : t("reset.strengthShort")}
                 </span>
               </div>
             )}

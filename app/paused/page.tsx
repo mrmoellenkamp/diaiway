@@ -18,10 +18,10 @@ export default function PausedPage() {
         body: JSON.stringify({ action: "resume" }),
       })
       if (res.ok) {
-        toast.success("Konto reaktiviert.")
+        toast.success(t("paused.reactivated"))
         window.location.href = "/home"
       } else {
-        toast.error("Fehler beim Reaktivieren.")
+        toast.error(t("paused.reactivateError"))
       }
     } finally {
       setResuming(false)

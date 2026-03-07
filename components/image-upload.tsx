@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Camera, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 
 interface ImageUploadProps {
   /** Current image URL (controlled) */
@@ -35,14 +36,15 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const { t } = useI18n()
 
   async function handleFile(file: File) {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Nur JPG, PNG, WebP und GIF erlaubt.")
+      toast.error(t("imageUpload.fileTypeError"))
       return
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(`Maximale Dateigröße: ${MAX_SIZE_MB} MB.`)
+      toast.error(t("imageUpload.fileSizeError", { mb: String(MAX_SIZE_MB) }))
       return
     }
 
@@ -56,13 +58,13 @@ export function ImageUpload({
       const data = await res.json()
 
       if (!res.ok) {
-        toast.error(data.error || "Upload fehlgeschlagen.")
+        toast.error(data.error || t("imageUpload.uploadError"))
         return
       }
       onChange(data.url)
-      toast.success("Bild erfolgreich hochgeladen.")
+      toast.success(t("imageUpload.uploadSuccess"))
     } catch {
-      toast.error("Netzwerkfehler beim Upload.")
+      toast.error(t("imageUpload.uploadNetworkError"))
     } finally {
       setIsUploading(false)
       if (inputRef.current) inputRef.current.value = ""
@@ -98,7 +100,7 @@ export function ImageUpload({
           onClick={() => inputRef.current?.click()}
           disabled={disabled || isUploading}
           className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
-          aria-label="Bild hochladen"
+          aria-label={t("imageUpload.ariaUpload")}
         >
           {isUploading ? (
             <Loader2 className="size-3.5 animate-spin text-primary-foreground" />
@@ -134,7 +136,7 @@ export function ImageUpload({
           value ? "h-36" : "h-28",
           (disabled || isUploading) && "cursor-not-allowed opacity-60"
         )}
-        aria-label="Bild hochladen"
+        aria-label={t("imageUpload.ariaUpload")}
       >
         {value ? (
           <>
@@ -147,7 +149,7 @@ export function ImageUpload({
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-              <p className="text-xs font-medium text-white">Bild ersetzen</p>
+              <p className="text-xs font-medium text-white">{t("imageUpload.replaceImage")}</p>
             </div>
           </>
         ) : (
@@ -158,9 +160,9 @@ export function ImageUpload({
               <Upload className="size-6 text-muted-foreground/60" />
             )}
             <p className="text-xs text-muted-foreground">
-              {isUploading ? "Wird hochgeladen..." : "Klicken oder Bild reinziehen"}
+              {isUploading ? t("imageUpload.uploading") : t("imageUpload.dragDrop")}
             </p>
-            <p className="text-[10px] text-muted-foreground/60">JPG, PNG, WebP · max. 5 MB</p>
+            <p className="text-[10px] text-muted-foreground/60">{t("imageUpload.formatHint")}</p>
           </>
         )}
       </div>
@@ -173,7 +175,7 @@ export function ImageUpload({
           className="flex items-center gap-1.5 self-start text-[11px] text-muted-foreground hover:text-destructive transition-colors"
         >
           <Trash2 className="size-3" />
-          Bild entfernen
+          {t("imageUpload.removeImage")}
         </button>
       )}
 

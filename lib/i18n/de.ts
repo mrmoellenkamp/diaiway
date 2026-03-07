@@ -243,6 +243,110 @@ const de = {
   "profile.adminDashboard": "Admin-Dashboard",
   "profile.loggedOut": "Du wurdest abgemeldet.",
 
+  // Favorites
+  "favorites.loginRequired": "Bitte melde dich an, um Favoriten zu speichern.",
+  "favorites.added": "Zu Favoriten hinzugefügt!",
+  "favorites.removed": "Aus Favoriten entfernt.",
+  "favorites.ariaAdd": "Zu Favoriten hinzufügen",
+  "favorites.ariaRemove": "Aus Favoriten entfernen",
+
+  // Aria / Accessibility
+  "aria.showPassword": "Passwort anzeigen",
+  "aria.hidePassword": "Passwort verbergen",
+
+  // Mentor / AI FAB
+  "mentor.open": "Projekt-Mentor öffnen",
+  "mentor.close": "Chat schließen",
+  "mentor.chat": "Projekt-Mentor Chat",
+  "mentor.retryError": "Bitte versuche es erneut.",
+
+  // Video / Session
+  "video.error": "Fehler.",
+  "video.sessionStarted": "Session gestartet!",
+  "video.paymentSuccess": "Zahlung erfolgreich! Session läuft weiter.",
+  "video.refundInfo": "Kostenlose Probe beendet. Deine Zahlung wurde automatisch erstattet.",
+  "video.trialEndedShort": "Kostenlose Probe beendet (unter 5 Minuten).",
+  "video.sessionEnded": "Sitzung beendet.",
+  "video.ratingSaved": "Bewertung gespeichert! Danke.",
+  "video.micOn": "Mikrofon einschalten",
+  "video.micOff": "Mikrofon ausschalten",
+  "video.camOn": "Kamera einschalten",
+  "video.camOff": "Kamera ausschalten",
+  "video.endCall": "Anruf beenden",
+  "video.reportSent": "Meldung gesendet",
+  "video.reportProblem": "Problem melden",
+  "video.reviewPlaceholder": "Optional: Schreibe eine Bewertung...",
+  "video.sessionExtended": "Session verlängert! Viel Erfolg.",
+  "video.paymentReleased": "Geld freigegeben!",
+  "video.backToSessions": "Zurück zu Sessions",
+  "video.loadError": "Fehler beim Laden.",
+  "video.thenPrice": "Dann {price}€ / Session",
+  "video.decideAfterTrial": "Entscheide nach der Probezeit",
+  "video.roomOpens": "Der Raum öffnet 5 Minuten vor dem Termin.",
+  "video.sessionEndedTitle": "Session beendet",
+  "video.howWasExperience": "Wie war deine Erfahrung mit {name}?",
+  "video.duration": "Dauer: {min} Minuten",
+  "video.submitRating": "Bewertung abgeben",
+  "video.skip": "Überspringen",
+  "video.freeTrial": "Kostenlose Probe",
+  "video.paidSession": "Bezahlte Session",
+  "video.trial": "Probe",
+  "video.paid": "Bezahlt",
+  "video.starAria": "{n} Sterne",
+
+  // Handshake Overlay
+  "handshake.close": "Schließen",
+  "handshake.back": "Zurück",
+  "handshake.problemAnalyzed": "Problem analysiert?",
+  "handshake.trialOverDesc": "Die kostenlose Probezeit ist vorbei. Möchtest du die Session fortsetzen?",
+  "handshake.continueFor": "Weiter für {price} EUR ({duration} Min)",
+  "handshake.endSession": "Sitzung beenden",
+  "handshake.securePayment": "Sichere Zahlung via Stripe",
+  "handshake.paymentTitle": "Zahlung für Session",
+  "handshake.minutesWith": "{duration} Minuten mit {name}",
+  "handshake.amount": "Betrag:",
+
+  // Review
+  "review.starsAria": "{rating} von {max} Sternen",
+
+  // Image Upload
+  "imageUpload.fileTypeError": "Nur JPG, PNG, WebP und GIF erlaubt.",
+  "imageUpload.fileSizeError": "Maximale Dateigröße: {mb} MB.",
+  "imageUpload.uploadError": "Upload fehlgeschlagen.",
+  "imageUpload.uploadSuccess": "Bild erfolgreich hochgeladen.",
+  "imageUpload.uploadNetworkError": "Netzwerkfehler beim Upload.",
+  "imageUpload.uploading": "Wird hochgeladen...",
+  "imageUpload.dragDrop": "Klicken oder Bild reinziehen",
+  "imageUpload.ariaUpload": "Bild hochladen",
+  "imageUpload.replaceImage": "Bild ersetzen",
+  "imageUpload.removeImage": "Bild entfernen",
+  "imageUpload.formatHint": "JPG, PNG, WebP · max. 5 MB",
+
+  // Reset Password
+  "reset.success": "Passwort erfolgreich geändert!",
+  "reset.title": "Neues Passwort vergeben",
+  "reset.confirmPlaceholder": "Passwort erneut eingeben",
+  "reset.confirmLabel": "Passwort bestätigen",
+  "reset.minChars": "Mindestens 6 Zeichen",
+  "reset.strengthVeryStrong": "Sehr stark",
+  "reset.strengthStrong": "Stark",
+  "reset.strengthOk": "OK",
+  "reset.strengthShort": "Zu kurz",
+  "reset.loginNow": "Jetzt anmelden",
+
+  // Paused
+  "paused.reactivated": "Konto reaktiviert.",
+  "paused.reactivateError": "Fehler beim Reaktivieren.",
+
+  // Messages (extra)
+  "messages.placeholder": "Nachricht schreiben...",
+
+  // Booking Respond
+  "booking.respondNotePlaceholder": "Deine Frage oder Anmerkung zur Buchungsanfrage…",
+
+  // Global Nav titles
+  "globalNav.availability": "Meine Verfügbarkeit",
+
   // Edit Profile
   "editProfile.title": "Profil bearbeiten",
   "editProfile.personalData": "Persönliche Daten",
