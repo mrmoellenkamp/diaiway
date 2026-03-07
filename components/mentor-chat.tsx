@@ -59,7 +59,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     setSearchResults,
   } = useApp()
   const { takumis } = useTakumis()
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const localeRef = useRef(locale)
   localeRef.current = locale
   const chatTransport = useMemo(
@@ -194,11 +194,11 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground">
-            {isEmbedded ? "diAIway intelligence" : "Projekt-Mentor"}
+            {isEmbedded ? t("mentor.headerTitleEmbedded") : t("mentor.headerTitleFloating")}
             <span className="font-jp ml-1.5 text-[10px] font-normal text-primary/40">{"導師"}</span>
           </p>
           <p className="text-[10px] text-muted-foreground truncate">
-            {isEmbedded ? "Projekt-Check -- Analysiere, plane, finde Experten" : "Dein personlicher Berater"}
+            {isEmbedded ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
           </p>
         </div>
         <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-semibold text-accent">
@@ -206,7 +206,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
             <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent" />
             <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
           </span>
-          Online
+          {t("mentor.online")}
         </span>
       </div>
 
