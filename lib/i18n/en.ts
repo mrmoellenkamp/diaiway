@@ -259,6 +259,7 @@ const en = {
   "mentor.close": "Close chat",
   "mentor.chat": "Project Mentor Chat",
   "mentor.retryError": "Please try again.",
+  "mentor.attachPhoto": "Attach photo",
   "mentor.headerTitleEmbedded": "diAIway intelligence",
   "mentor.headerTitleFloating": "Project Mentor",
   "mentor.headerDescEmbedded": "Project Check — Analyze, plan, find experts",

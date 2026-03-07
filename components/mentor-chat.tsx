@@ -40,6 +40,28 @@ function cleanText(text: string): string {
   return text.replace(/\[TAKUMI_TIP\]/g, "").trim()
 }
 
+async function convertFilesToDataURLs(
+  files: FileList
+): Promise<Array<{ type: "file"; mediaType: string; url: string }>> {
+  return Promise.all(
+    Array.from(files).map(
+      (file) =>
+        new Promise<{ type: "file"; mediaType: string; url: string }>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            resolve({
+              type: "file",
+              mediaType: file.type,
+              url: reader.result as string,
+            })
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+    )
+  )
+}
+
 interface MentorChatProps {
   variant: "embedded" | "floating"
   className?: string
@@ -73,6 +95,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingHandled = useRef(false)
   const proactiveShown = useRef(false)
   const [showProactivePrompt, setShowProactivePrompt] = useState(false)
@@ -160,9 +183,25 @@ export function MentorChat({ variant, className }: MentorChatProps) {
 
   function handlePhotoUpload() {
     if (isStreaming) return
-    sendMessage({
-      text: t("mentor.photoUploadMessage"),
-    })
+    fileInputRef.current?.click()
+  }
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    if (isStreaming) return
+    try {
+      const fileParts = await convertFilesToDataURLs(files)
+      sendMessage({
+        role: "user",
+        parts: [
+          { type: "text", text: t("mentor.photoUploadMessage") },
+          ...fileParts,
+        ],
+      })
+    } finally {
+      e.target.value = ""
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -469,14 +508,24 @@ export function MentorChat({ variant, className }: MentorChatProps) {
       {/* Input Bar */}
       <div className="border-t border-primary/8 bg-white/40 px-3 py-2.5">
         <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
-          <button
-            onClick={handlePhotoUpload}
-            disabled={isStreaming}
-            className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary disabled:opacity-40"
-            aria-label="Foto hochladen"
+          <label
+            className={cn(
+              "relative mb-0.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+              isStreaming && "pointer-events-none opacity-40"
+            )}
+            aria-label={t("mentor.attachPhoto")}
           >
-            <Paperclip className="size-3.5" />
-          </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              onChange={handleFileSelect}
+              disabled={isStreaming}
+            />
+            <Paperclip className="size-3.5 pointer-events-none" />
+          </label>
           <textarea
             ref={textareaRef}
             value={input}
