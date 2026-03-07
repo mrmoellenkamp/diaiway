@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
 
@@ -225,6 +226,7 @@ export default function ProfilePage() {
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
+  const [refundPreference, setRefundPreference] = useState<"payout" | "wallet">("payout")
   const [completedSessions, setCompletedSessions] = useState(0)
   const [totalSpent, setTotalSpent] = useState(0)
 
@@ -252,6 +254,7 @@ export default function ProfilePage() {
           setDbEmail(data.email || "")
           setDbImage(data.image || "")
           setFavorites(data.favorites || [])
+          setRefundPreference((data.refundPreference === "wallet" ? "wallet" : "payout") as "payout" | "wallet")
         }
         if (bookingsRes.ok) {
           const bookings = await bookingsRes.json()
@@ -519,6 +522,60 @@ export default function ProfilePage() {
               />
             </CardContent>
           </Card>
+
+          {/* Refund preference (Shugyo only) */}
+          {!isTakumi && (
+            <Card className="border-border/60 gap-0 py-0">
+              <CardContent className="flex flex-col gap-3 p-4">
+                <div className="flex items-center gap-2">
+                  <Wallet className="size-4 text-muted-foreground" />
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{t("profile.refundPreference")}</span>
+                    <p className="text-xs text-muted-foreground">{t("profile.refundPreferenceDesc")}</p>
+                  </div>
+                </div>
+                <RadioGroup
+                  value={refundPreference}
+                  onValueChange={async (v: "payout" | "wallet") => {
+                    setRefundPreference(v)
+                    try {
+                      const res = await fetch("/api/user/profile", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ refundPreference: v }),
+                      })
+                      if (res.ok) {
+                        toast.success(t("profile.refundPreferenceSaved"))
+                      } else {
+                        const data = await res.json()
+                        toast.error(data.error || t("profile.error"))
+                        setRefundPreference(refundPreference)
+                      }
+                    } catch {
+                      toast.error(t("common.networkError"))
+                      setRefundPreference(refundPreference)
+                    }
+                  }}
+                  className="grid gap-2"
+                >
+                  <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                    <RadioGroupItem value="payout" />
+                    <div>
+                      <span className="text-sm font-medium">{t("profile.refundPayout")}</span>
+                      <p className="text-xs text-muted-foreground">{t("profile.refundPayoutDesc")}</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                    <RadioGroupItem value="wallet" />
+                    <div>
+                      <span className="text-sm font-medium">{t("profile.refundWallet")}</span>
+                      <p className="text-xs text-muted-foreground">{t("profile.refundWalletDesc")}</p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Go Live toggle (Takumi only) */}
           {isTakumi && (

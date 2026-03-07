@@ -65,9 +65,12 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
-  // Wallet (für Takumis: verfügbares Guthaben / in Auszahlung)
-  balance          Int       @default(0)  // EUR cents, auszahlbar
-  pendingBalance   Int       @default(0)  // EUR cents, in Qualitätssicherung
+  // Wallet (für Takumis: Verdienst; für Shugyos: Guthaben aus Rückerstattungen)
+  balance          Int       @default(0)  // EUR cents
+  pendingBalance   Int       @default(0)  // EUR cents, in Qualitätssicherung (nur Takumi)
+
+  // Shugyo: Bei Rückerstattung — "payout" = Auszahlung auf Karte, "wallet" = Guthaben
+  refundPreference String    @default("payout")
 
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -177,6 +180,9 @@ model Booking {
   cancelledBy     String?    // "user" | "expert"
   cancelFeeAmount Int?       // EUR cents retained (only if fee applies)
   cancelledAt     DateTime?
+
+  // Refund choice (bei Ablehnung): Shugyo wählt Auszahlung oder Wallet-Gutschrift
+  refundChoicePending Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

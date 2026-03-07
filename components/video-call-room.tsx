@@ -105,12 +105,15 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   useEffect(() => {
     if (phase !== "trial" && phase !== "paid") return
     if (timer <= 0) {
-      if (phase === "trial") setPhase("handshake")
+      if (phase === "trial") {
+        // Bereits bei Buchung bezahlt? → direkt zu "paid", kein Handshake
+        setPhase(booking?.paymentStatus === "paid" ? "paid" : "handshake")
+      }
       return
     }
     const interval = setInterval(() => setTimer((t) => t - 1), 1000)
     return () => clearInterval(interval)
-  }, [phase, timer])
+  }, [phase, timer, booking?.paymentStatus])
 
   async function patchBooking(action: string, extra?: { rating?: number; reviewText?: string }) {
     try {

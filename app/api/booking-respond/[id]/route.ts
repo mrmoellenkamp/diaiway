@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { stripe } from "@/lib/stripe"
+import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import type { BookingStatus } from "@prisma/client"
@@ -76,6 +78,40 @@ export async function POST(
       where: { id },
       data: { status: action as BookingStatus },
     })
+
+    // Bei Ablehnung + bereits bezahlt: Refund an Shugyo (Auszahlung oder Wallet-Gutschrift)
+    if (action === "declined" && booking.paymentStatus === "paid") {
+      try {
+        const shugyo = await prisma.user.findUnique({
+          where: { id: booking.userId },
+          select: { refundPreference: true },
+        })
+        const pref = (shugyo?.refundPreference as "payout" | "wallet") || "payout"
+
+        const paidViaWallet = !booking.stripePaymentIntentId || booking.stripePaymentIntentId === "wallet"
+        if (paidViaWallet || pref === "wallet") {
+          // Guthaben ins Wallet gutschreiben (kein Stripe-Refund)
+          const res = await creditRefundToShugyoWallet(id)
+          if (!res.ok) console.error("[booking-respond] Wallet-Gutschrift fehlgeschlagen:", res.error)
+        } else {
+          // Auszahlung auf Karte (Stripe-Refund) — nur bei echter Stripe-Zahlung
+          const pi = booking.stripePaymentIntentId
+          if (pi && pi !== "wallet" && pi.startsWith("pi_")) {
+            await stripe.refunds.create({ payment_intent: pi })
+            await refundTransactionForBooking(id)
+          } else if (pi === "wallet") {
+            // Ursprünglich mit Wallet bezahlt → Gutschrift zurück
+            await creditRefundToShugyoWallet(id)
+          }
+        }
+        await prisma.booking.update({
+          where: { id },
+          data: { paymentStatus: "refunded" },
+        })
+      } catch (refundErr) {
+        console.error("[booking-respond] Refund bei Ablehnung fehlgeschlagen:", refundErr)
+      }
+    }
 
     try {
       await sendBookingStatusEmail({

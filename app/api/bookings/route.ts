@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { takumiId, date, startTime, endTime, price, note } = body
+    const { takumiId, date, startTime, endTime, price, note, deferNotification } = body
 
     if (!takumiId || !date || !startTime || !endTime) {
       return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
@@ -161,51 +161,54 @@ export async function POST(req: Request) {
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
-    try {
-      const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
-      await sendBookingRequestEmail({
-        to: expertEmail,
-        takumiName: expert.name,
-        userName: session.user.name || "Nutzer",
-        userEmail: session.user.email || "",
-        date,
-        startTime,
-        endTime,
-        price: booking.price,
-        note: note || "",
-        acceptUrl: `${respondBase}&action=confirmed`,
-        declineUrl: `${respondBase}&action=declined`,
-        askUrl: `${respondBase}&action=ask`,
-        dashboardUrl: `${baseUrl}/sessions`,
-      })
-    } catch (emailErr) {
-      console.error("[Ionos SMTP] Failed to send booking request email:", emailErr)
-    }
-
-    // Notification für Takumi (zeitgleich mit E-Mail)
-    if (expert.userId) {
+    // Bei Vorauszahlung: E-Mail/Notification erst nach Zahlung (im Webhook)
+    if (!deferNotification) {
       try {
-        await prisma.notification.create({
-          data: {
-            userId: expert.userId,
-            type: "booking_request",
-            bookingId: booking.id,
+        const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
+        await sendBookingRequestEmail({
+          to: expertEmail,
+          takumiName: expert.name,
+          userName: session.user.name || "Nutzer",
+          userEmail: session.user.email || "",
+          date,
+          startTime,
+          endTime,
+          price: booking.price,
+          note: note || "",
+          acceptUrl: `${respondBase}&action=confirmed`,
+          declineUrl: `${respondBase}&action=declined`,
+          askUrl: `${respondBase}&action=ask`,
+          dashboardUrl: `${baseUrl}/sessions`,
+        })
+      } catch (emailErr) {
+        console.error("[Ionos SMTP] Failed to send booking request email:", emailErr)
+      }
+
+      if (expert.userId) {
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: expert.userId,
+              type: "booking_request",
+              bookingId: booking.id,
+              title: "Neue Buchungsanfrage",
+              body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+            },
+          })
+          sendPushToUser(expert.userId, {
             title: "Neue Buchungsanfrage",
             body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
-          },
-        })
-        sendPushToUser(expert.userId, {
-          title: "Neue Buchungsanfrage",
-          body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
-          url: "/messages",
-        }).catch(() => {})
-      } catch { /* notification errors must not block */ }
+            url: "/messages",
+          }).catch(() => {})
+        } catch { /* notification errors must not block */ }
+      }
     }
 
     return NextResponse.json({
       success: true,
       bookingId: booking.id,
-      message: "Buchungsanfrage gesendet!",
+      deferNotification: !!deferNotification,
+      message: deferNotification ? "Buchung erstellt. Bitte zahle jetzt." : "Buchungsanfrage gesendet!",
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })

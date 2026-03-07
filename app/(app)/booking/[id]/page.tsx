@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -25,9 +25,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard,
 } from "lucide-react"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { BookingCheckout } from "@/components/booking-checkout"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -36,6 +37,19 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const { data: session } = useSession()
   const { takumis, isLoading: isTakumisLoading } = useTakumis()
   const takumi = takumis.find((tk) => tk.id === id)
+
+  const [step, setStep] = useState<"form" | "checkout" | "success">("form")
+  const [bookingIdForPayment, setBookingIdForPayment] = useState<string | null>(null)
+  const [walletBalanceCents, setWalletBalanceCents] = useState(0)
+
+  useEffect(() => {
+    if (step === "checkout" && session?.user) {
+      fetch("/api/wallet/history")
+        .then((r) => r.json())
+        .then((data) => setWalletBalanceCents(data.wallet?.balance ?? 0))
+        .catch(() => {})
+    }
+  }, [step, session?.user])
 
   if (isTakumisLoading) {
     return (
@@ -101,12 +115,13 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           endTime: selectedEnd,
           price: takumi.pricePerSession,
           note,
+          deferNotification: true,
         }),
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(data.message || t("booking.bookButton").replace("{price}", String(takumi.pricePerSession)))
-        setShowSuccessDialog(true)
+        setBookingIdForPayment(data.bookingId)
+        setStep("checkout")
       } else {
         const errorMsg = data.error?.includes("validation")
           ? t("booking.incompleteProfile")
@@ -145,14 +160,56 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="shrink-0">
-            <Link href={`/takumi/${takumi.id}`}>
+          {step === "checkout" ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() => setStep("form")}
+              aria-label={t("handshake.back")}
+            >
               <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
-          <h1 className="text-lg font-bold text-foreground">{t("booking.title")}</h1>
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="icon" className="shrink-0">
+              <Link href={`/takumi/${takumi.id}`}>
+                <ArrowLeft className="size-5" />
+              </Link>
+            </Button>
+          )}
+          <h1 className="text-lg font-bold text-foreground">
+            {step === "checkout" ? t("handshake.paymentTitle") : t("booking.title")}
+          </h1>
         </div>
 
+        {step === "checkout" && bookingIdForPayment ? (
+          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
+            <p className="text-sm text-muted-foreground">
+              {t("handshake.minutesWith", { duration: "30", name: takumi.name })}
+            </p>
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
+              <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
+              <span className="text-lg font-bold text-foreground">
+                {(takumi.pricePerSession || 0).toFixed(2)} EUR
+              </span>
+            </div>
+            <BookingCheckout
+              bookingId={bookingIdForPayment}
+              takumiName={takumi.name}
+              priceInCents={(takumi.pricePerSession || 0) * 100}
+              walletBalanceCents={walletBalanceCents}
+              onSuccess={() => {
+                setStep("success")
+                setShowSuccessDialog(true)
+              }}
+              onError={(err) => {
+                toast.error(err)
+                setStep("form")
+              }}
+            />
+          </div>
+        ) : (
+          <>
         {/* Takumi Summary */}
         <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
           <Avatar className="size-14 border-2 border-primary/10">
@@ -306,6 +363,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             )}
           </Button>
         </form>
+          </>
+        )}
       </div>
     </PageContainer>
   )

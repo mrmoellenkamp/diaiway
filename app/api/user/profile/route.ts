@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, createdAt: true },
+      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, createdAt: true },
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
@@ -25,6 +25,7 @@ export async function GET() {
       role: user.role,
       appRole: user.appRole || "shugyo",
       favorites: user.favorites || [],
+      refundPreference: user.refundPreference || "payout",
       createdAt: user.createdAt,
     })
   } catch (err: unknown) {
@@ -55,6 +56,12 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "Ungueltige Rolle." }, { status: 400 })
       }
       data.appRole = body.appRole
+    }
+    if (body.refundPreference !== undefined) {
+      if (!["payout", "wallet"].includes(body.refundPreference)) {
+        return NextResponse.json({ error: "Ungueltige Refund-Präferenz." }, { status: 400 })
+      }
+      data.refundPreference = body.refundPreference
     }
 
     if (Object.keys(data).length === 0) {

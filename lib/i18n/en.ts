@@ -248,6 +248,14 @@ const en = {
   "profile.total": "Total",
   "profile.adminDashboard": "Admin Dashboard",
   "profile.loggedOut": "You have been logged out.",
+  "profile.refundPreference": "Refund on decline",
+  "profile.refundPreferenceDesc": "When a booking is declined, you can choose how to receive your money back.",
+  "profile.refundPayout": "Payout to card",
+  "profile.refundPayoutDesc": "Money will be refunded to your registered card.",
+  "profile.refundWallet": "Credit to wallet",
+  "profile.refundWalletDesc": "Amount will be credited to your wallet for future bookings.",
+  "profile.refundPreferenceSaved": "Setting saved.",
+  "profile.error": "Error saving.",
 
   // Favorites
   "favorites.loginRequired": "Please sign in to save favorites.",
@@ -335,6 +343,12 @@ const en = {
   "handshake.paymentTitle": "Payment for session",
   "handshake.minutesWith": "{duration} minutes with {name}",
   "handshake.amount": "Amount:",
+  "handshake.choosePaymentMethod": "Choose payment method",
+  "handshake.payWithWallet": "Pay with wallet balance",
+  "handshake.payWithCard": "Pay with card",
+  "handshake.walletPayError": "Wallet payment failed.",
+  "handshake.loadingPayment": "Loading payment form...",
+  "handshake.checkoutError": "Checkout could not be initialized.",
 
   // Review
   "review.starsAria": "{rating} of {max} stars",

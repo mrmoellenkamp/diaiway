@@ -10,7 +10,54 @@ export interface SessionCheckoutParams {
   priceInCents: number
 }
 
-/** Create a Stripe Checkout Session for a video session payment. */
+export interface BookingCheckoutParams {
+  bookingId: string
+  takumiName: string
+  priceInCents: number
+}
+
+/** Create a Stripe Checkout Session for booking payment (Vorauszahlung). */
+export async function startBookingCheckout(params: BookingCheckoutParams) {
+  const { bookingId, takumiName, priceInCents } = params
+
+  if (!bookingId || !priceInCents) {
+    throw new Error("Missing required parameters for checkout")
+  }
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  if (!booking) throw new Error("Booking not found")
+  if (booking.paymentStatus === "paid") throw new Error("Buchung bereits bezahlt")
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: "embedded",
+    redirect_on_completion: "never",
+    payment_method_types: ["card", "paypal"],
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `Buchung Video-Session mit ${takumiName}`,
+            description: `30 Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr`,
+          },
+          unit_amount: priceInCents,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    metadata: { bookingId, type: "booking_payment" },
+  })
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { stripeSessionId: session.id, paymentStatus: "pending" },
+  })
+
+  return { clientSecret: session.client_secret, sessionId: session.id }
+}
+
+/** Create a Stripe Checkout Session for a video session payment (während des Calls). */
 export async function startSessionCheckout(params: SessionCheckoutParams) {
   const { bookingId, takumiName, duration, priceInCents } = params
 
@@ -25,6 +72,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
+    payment_method_types: ["card", "paypal"],
     line_items: [
       {
         price_data: {
