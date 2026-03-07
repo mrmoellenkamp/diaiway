@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
@@ -23,8 +23,6 @@ import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-
-const chatTransport = new DefaultChatTransport({ api: "/api/chat" })
 
 function getMessageText(msg: UIMessage): string {
   if (!msg.parts || !Array.isArray(msg.parts)) return ""
@@ -62,6 +60,16 @@ export function MentorChat({ variant, className }: MentorChatProps) {
   } = useApp()
   const { takumis } = useTakumis()
   const { locale } = useI18n()
+  const localeRef = useRef(locale)
+  localeRef.current = locale
+  const chatTransport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => ({ locale: localeRef.current }),
+      }),
+    []
+  )
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -80,7 +88,6 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     id: "diaiway-mentor",
     transport: chatTransport,
     initialMessages: storedMessages.length > 0 ? storedMessages : undefined,
-    body: { locale },
   })
 
   const isStreaming = status === "streaming" || status === "submitted"
