@@ -264,6 +264,7 @@ const de = {
   "mentor.headerDescEmbedded": "Projekt-Check — Analysiere, plane, finde Experten",
   "mentor.headerDescFloating": "Dein persönlicher Berater",
   "mentor.online": "Online",
+  "mentor.welcome": "Willkommen! Beschreibe dein Projekt oder lade ein Foto hoch.",
 
   // Video / Session
   "video.error": "Fehler.",

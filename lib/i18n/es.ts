@@ -264,6 +264,7 @@ const es = {
   "mentor.headerDescEmbedded": "Revisión de proyecto — Analiza, planifica, encuentra expertos",
   "mentor.headerDescFloating": "Tu asesor personal",
   "mentor.online": "En línea",
+  "mentor.welcome": "¡Bienvenido! Describe tu proyecto o sube una foto.",
 
   // Video / Session
   "video.error": "Error.",
