@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import useSWR from "swr"
 import { PageContainer } from "@/components/page-container"
@@ -60,7 +60,8 @@ function LoadingSkeleton() {
   )
 }
 
-export default function SessionsPage() {
+/** Inner content that uses useSearchParams – must be wrapped in Suspense to avoid prerender errors */
+function SessionsContent() {
   const { t } = useI18n()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
@@ -133,5 +134,13 @@ export default function SessionsPage() {
         )}
       </div>
     </PageContainer>
+  )
+}
+
+export default function SessionsPage() {
+  return (
+    <Suspense fallback={<PageContainer><LoadingSkeleton /></PageContainer>}>
+      <SessionsContent />
+    </Suspense>
   )
 }
