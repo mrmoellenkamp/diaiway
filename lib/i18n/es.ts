@@ -248,6 +248,13 @@ const es = {
   "profile.total": "Total",
   "profile.adminDashboard": "Panel de administración",
   "profile.loggedOut": "Has cerrado sesión.",
+  "profile.refundPreference": "Reembolso al rechazar",
+  "profile.refundPreferenceDesc": "Cuando una reserva sea rechazada, puedes elegir cómo recibir tu dinero de vuelta.",
+  "profile.refundPayout": "Devolución a la tarjeta",
+  "profile.refundPayoutDesc": "El dinero se devolverá a tu tarjeta registrada.",
+  "profile.refundWallet": "Crédito al monedero",
+  "profile.refundWalletDesc": "El importe se acreditará en tu monedero para futuras reservas.",
+  "profile.refundPreferenceSaved": "Configuración guardada.",
 
   // Favorites
   "favorites.loginRequired": "Inicia sesión para guardar favoritos.",
@@ -335,6 +342,12 @@ const es = {
   "handshake.paymentTitle": "Pago de la sesión",
   "handshake.minutesWith": "{duration} minutos con {name}",
   "handshake.amount": "Importe:",
+  "handshake.choosePaymentMethod": "Elegir método de pago",
+  "handshake.payWithWallet": "Pagar con saldo del monedero",
+  "handshake.payWithCard": "Pagar con tarjeta",
+  "handshake.walletPayError": "Pago con monedero fallido.",
+  "handshake.loadingPayment": "Cargando formulario de pago...",
+  "handshake.checkoutError": "No se pudo inicializar el checkout.",
 
   // Review
   "review.starsAria": "{rating} de {max} estrellas",

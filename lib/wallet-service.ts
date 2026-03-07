@@ -47,6 +47,69 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
 }
 
 /**
+ * Bezahlung einer Buchung mit Wallet-Guthaben (Shugyo).
+ * Reduziert User.balance des Shugyo, erstellt Transaction, erhöht Takumi pendingBalance.
+ */
+export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const existing = await prisma.transaction.findUnique({ where: { bookingId } })
+  if (existing) return { ok: true } // Bereits bezahlt (Idempotenz)
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { expert: true },
+  })
+  if (!booking) return { ok: false, error: "Booking not found" }
+  if (booking.paymentStatus === "paid") return { ok: true }
+  if (!booking.expert?.userId) return { ok: false, error: "Expert has no user" }
+
+  const totalAmountCents = Math.round((booking.price || 0) * 100)
+  if (totalAmountCents <= 0) return { ok: false, error: "Invalid price" }
+
+  const shugyo = await prisma.user.findUnique({
+    where: { id: booking.userId },
+    select: { balance: true },
+  })
+  if (!shugyo || shugyo.balance < totalAmountCents) {
+    return { ok: false, error: "Insufficient wallet balance" }
+  }
+
+  const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
+  const netPayout = totalAmountCents - platformFee
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: booking.userId },
+      data: { balance: { decrement: totalAmountCents } },
+    })
+    await tx.user.update({
+      where: { id: booking.expert.userId },
+      data: { pendingBalance: { increment: totalAmountCents } },
+    })
+    await tx.transaction.create({
+      data: {
+        bookingId,
+        expertId: booking.expertId,
+        userId: booking.userId,
+        totalAmount: totalAmountCents,
+        platformFee,
+        netPayout,
+        status: "PENDING",
+      },
+    })
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        paymentStatus: "paid",
+        stripePaymentIntentId: "wallet",
+        paidAt: new Date(),
+        paidAmount: totalAmountCents,
+      },
+    })
+  })
+  return { ok: true }
+}
+
+/**
  * Schritt 2: Freigabe nach Call
  * 24 Stunden nach einem als 'completed' markierten Call wird die platformFee (15%) abgezogen
  * und der Restbetrag von pendingBalance in das balance des Takumi verschoben.
@@ -140,6 +203,70 @@ export async function releasePendingTransactions() {
 }
 
 /**
+ * Rückerstattung als Wallet-Guthaben (statt Auszahlung).
+ * Betrag wird dem Shugyo gutgeschrieben, Takumi's pendingBalance wird freigegeben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Gutschrift (statt Auszahlung auf Karte).
+ * Betrag wird dem Shugyo-Guthaben (User.balance) gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
  * Refund bei Buchungsstornierung (nach erfolgreichem Stripe-Refund).
  * Wird von der Buchungs-API aufgerufen, wenn User/Expert storniert und Stripe refunded.
  */
@@ -158,6 +285,358 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
     await tx.user.update({
       where: { id: expertUserId },
       data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Gutschrift (statt Auszahlung).
+ * Betrag wird dem Shugyo-Guthaben (User.balance) gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund – Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (statt Stripe-Auszahlung).
+ * Takumi pendingBalance wird reduziert, Shugyo balance erhöht.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Gutschrift (Shugyo wählt "wallet").
+ * Kein Stripe-Refund – Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Gutschrift (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo-Balance gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo-Balance gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Guthaben (Shugyo wählt "wallet").
+ * Kein Stripe-Refund; Betrag wird dem Shugyo auf balance gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
+    })
+    await tx.transaction.update({
+      where: { id: t.id },
+      data: { status: "REFUNDED" },
+    })
+  })
+  return { ok: true }
+}
+
+/**
+ * Rückerstattung als Wallet-Gutschrift (Shugyo wählt "wallet").
+ * Kein Stripe-Refund — Betrag wird dem Shugyo-Guthaben gutgeschrieben.
+ */
+export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await prisma.transaction.findUnique({
+    where: { bookingId },
+    include: { expert: { include: { user: true } } },
+  })
+  if (!t) return { ok: true }
+  if (t.status !== "PENDING") return { ok: true }
+
+  const expertUserId = t.expert?.user?.id
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { decrement: t.totalAmount } },
+    })
+    await tx.user.update({
+      where: { id: t.userId },
+      data: { balance: { increment: t.totalAmount } },
     })
     await tx.transaction.update({
       where: { id: t.id },

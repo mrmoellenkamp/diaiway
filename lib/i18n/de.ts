@@ -248,6 +248,14 @@ const de = {
   "profile.total": "Gesamt",
   "profile.adminDashboard": "Admin-Dashboard",
   "profile.loggedOut": "Du wurdest abgemeldet.",
+  "profile.refundPreference": "Rückerstattung bei Ablehnung",
+  "profile.refundPreferenceDesc": "Wenn eine Buchung abgelehnt wird, kannst du wählen, wie du dein Geld zurückerhältst.",
+  "profile.refundPayout": "Auszahlung auf Karte",
+  "profile.refundPayoutDesc": "Geld wird auf deine hinterlegte Karte zurücküberwiesen.",
+  "profile.refundWallet": "Guthaben ins Wallet",
+  "profile.refundWalletDesc": "Betrag wird deinem Wallet gutgeschrieben und kann für zukünftige Buchungen genutzt werden.",
+  "profile.refundPreferenceSaved": "Einstellung gespeichert.",
+  "profile.error": "Fehler beim Speichern.",
 
   // Favorites
   "favorites.loginRequired": "Bitte melde dich an, um Favoriten zu speichern.",
@@ -334,6 +342,12 @@ const de = {
   "handshake.paymentTitle": "Zahlung für Session",
   "handshake.minutesWith": "{duration} Minuten mit {name}",
   "handshake.amount": "Betrag:",
+  "handshake.choosePaymentMethod": "Zahlungsart wählen",
+  "handshake.payWithWallet": "Mit Guthaben bezahlen",
+  "handshake.payWithCard": "Mit Karte bezahlen",
+  "handshake.walletPayError": "Wallet-Zahlung fehlgeschlagen.",
+  "handshake.loadingPayment": "Zahlungsformular wird geladen...",
+  "handshake.checkoutError": "Checkout konnte nicht initialisiert werden.",
 
   // Review
   "review.starsAria": "{rating} von {max} Sternen",
