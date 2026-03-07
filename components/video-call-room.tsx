@@ -82,9 +82,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         } else if (data.booking.status === "completed") {
           setPhase("rating")
         } else {
-          setErrorMsg(
-            `Buchung hat Status "${data.booking.status}" und kann nicht gestartet werden.`
-          )
+          setErrorMsg(t("video.bookingStatusError", { status: data.booking.status }))
           setPhase("error")
         }
       } catch {
@@ -178,7 +176,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           <AlertTriangle className="size-12 text-destructive" />
           <p className="text-center text-sm text-muted-foreground">{errorMsg}</p>
           <Button variant="outline" onClick={() => router.push("/sessions")}>
-            Zurueck zu Sessions
+            {t("video.backToSessions")}
           </Button>
         </div>
       )
@@ -202,7 +200,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
               <ArrowLeft className="size-5" />
             </Button>
-            <h1 className="text-lg font-semibold text-foreground">Session starten</h1>
+            <h1 className="text-lg font-semibold text-foreground">{t("video.startSession")}</h1>
           </div>
 
           <Avatar className="size-24 border-4 border-primary/10">
@@ -226,22 +224,22 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               <div className="flex items-center gap-3 text-sm">
                 <Clock className="size-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-foreground">5 Minuten kostenlos testen</p>
-                  <p className="text-xs text-muted-foreground">Lerne deinen Takumi kennen</p>
+                  <p className="font-medium text-foreground">{t("video.fiveMinFree")}</p>
+                  <p className="text-xs text-muted-foreground">{t("video.learnTakumi")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Shield className="size-4 text-accent" />
                 <div>
-                  <p className="font-medium text-foreground">Escrow-Schutz</p>
-                  <p className="text-xs text-muted-foreground">Zahlung erst nach Freigabe</p>
+                  <p className="font-medium text-foreground">{t("video.escrowProtection")}</p>
+                  <p className="text-xs text-muted-foreground">{t("video.paymentAfterRelease")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Star className="size-4 text-amber" />
                 <div>
-                  <p className="font-medium text-foreground">Dann {booking.price}&euro; / Session</p>
-                  <p className="text-xs text-muted-foreground">Entscheide nach der Probezeit</p>
+                  <p className="font-medium text-foreground">{t("video.thenPrice", { price: booking.price })}</p>
+                  <p className="text-xs text-muted-foreground">{t("video.decideAfterTrial")}</p>
                 </div>
               </div>
             </CardContent>
@@ -277,10 +275,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <div className="flex w-full items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <Clock className="size-4 shrink-0" />
               <span>
-                Der Raum öffnet 5 Minuten vor dem Termin.{" "}
+                {t("video.roomOpens")}{" "}
                 {minutesUntilStart > 60
-                  ? `Noch ca. ${Math.floor(minutesUntilStart / 60)} Std. ${minutesUntilStart % 60} Min.`
-                  : `Noch ${minutesUntilStart} Minute(n).`}
+                  ? t("video.roomOpensInHours", {
+                      h: Math.floor(minutesUntilStart / 60),
+                      m: minutesUntilStart % 60,
+                    })
+                  : t("video.roomOpensInMinutes", { n: minutesUntilStart })}
               </span>
             </div>
           )}
@@ -291,11 +292,11 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90 disabled:opacity-50"
           >
             <Video className="mr-2 size-5" />
-            Beitreten
+            {t("video.join")}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Video-Raum:{" "}
+            {t("video.videoRoom")}{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-[10px]">{dailyRoomUrl}</code>
           </p>
         </div>
@@ -314,13 +315,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           </AvatarFallback>
         </Avatar>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-foreground">Session beendet</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("video.sessionEndedTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Wie war deine Erfahrung mit {booking.takumiName}?
+            {t("video.howWasExperience", { name: booking.takumiName })}
           </p>
           {booking.sessionDuration != null && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Dauer: {booking.sessionDuration} Minuten
+              {t("video.duration", { min: booking.sessionDuration })}
             </p>
           )}
         </div>
@@ -331,7 +332,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               key={star}
               onClick={() => setRating(star)}
               className="p-1 transition-transform hover:scale-110"
-              aria-label={`${star} Sterne`}
+              aria-label={t("video.starAria", { n: star })}
             >
               <Star
                 className={`size-8 ${
@@ -345,7 +346,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         <textarea
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
-          placeholder="Optional: Schreibe eine Bewertung..."
+          placeholder={t("video.reviewPlaceholder")}
           className="w-full max-w-sm resize-none rounded-xl border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           rows={3}
         />
@@ -356,14 +357,14 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             disabled={rating === 0}
             className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
-            Bewertung abgeben
+            {t("video.submitRating")}
           </Button>
           <Button
             onClick={() => router.push("/sessions")}
             variant="outline"
             className="h-12 w-full rounded-xl"
           >
-            Ueberspringen
+            {t("video.skip")}
           </Button>
         </div>
       </div>
@@ -377,9 +378,9 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
         <AlertTriangle className="size-12 text-destructive" />
         <p className="text-center text-sm text-muted-foreground">{errorMsg}</p>
-        <Button variant="outline" onClick={() => router.push("/sessions")}>
-          Zurueck zu Sessions
-        </Button>
+          <Button variant="outline" onClick={() => router.push("/sessions")}>
+            {t("video.backToSessions")}
+          </Button>
       </div>
     )
   }
@@ -414,7 +415,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
                     : "border-amber/50 bg-amber/20 text-amber"
                 }
               >
-                {phase === "trial" ? "Kostenlose Probe" : "Bezahlte Session"}
+                {phase === "trial" ? t("video.freeTrial") : t("video.paidSession")}
               </Badge>
             </div>
           </div>
@@ -439,7 +440,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
                   : "border-amber/50 text-amber"
               }`}
             >
-              {phase === "trial" ? "Probe" : "Bezahlt"}
+              {phase === "trial" ? t("video.trial") : t("video.paid")}
             </Badge>
           </div>
         </div>
@@ -452,7 +453,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               className={`flex size-12 items-center justify-center rounded-full transition-colors ${
                 isMuted ? "bg-destructive" : "bg-white/20"
               }`}
-              aria-label={isMuted ? "Stummschaltung aufheben" : "Stummschalten"}
+              aria-label={isMuted ? t("video.unmuteAria") : t("video.muteAria")}
             >
               {isMuted ? (
                 <MicOff className="size-5 text-destructive-foreground" />

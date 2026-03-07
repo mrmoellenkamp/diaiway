@@ -310,6 +310,18 @@ const de = {
   "video.trial": "Probe",
   "video.paid": "Bezahlt",
   "video.starAria": "{n} Sterne",
+  "video.startSession": "Session starten",
+  "video.fiveMinFree": "5 Minuten kostenlos testen",
+  "video.learnTakumi": "Lerne deinen Takumi kennen",
+  "video.escrowProtection": "Escrow-Schutz",
+  "video.paymentAfterRelease": "Zahlung erst nach Freigabe",
+  "video.join": "Beitreten",
+  "video.videoRoom": "Video-Raum:",
+  "video.roomOpensInHours": "Noch ca. {h} Std. {m} Min.",
+  "video.roomOpensInMinutes": "Noch {n} Minute(n).",
+  "video.muteAria": "Stummschalten",
+  "video.unmuteAria": "Stummschaltung aufheben",
+  "video.bookingStatusError": "Buchung hat Status \"{status}\" und kann nicht gestartet werden.",
 
   // Handshake Overlay
   "handshake.close": "Schließen",
