@@ -40,7 +40,7 @@ const es = {
   "landing.heroTitle": "Ayuda DIY al alcance de un clic. Seguro. Rápido. En todas partes.",
   "landing.heroDesc": "Soporte individual de personas con experiencia. En vivo por video. Desde jardines hasta coches clásicos",
   "landing.findExpert": "Encontrar experto",
-  "landing.discoverCategories": "Descubrir categorías",
+  "landing.discoverCategories": "Preguntar a la IA y descubrir categorías",
   "landing.becomeTakumi": "Ser Takumi",
   "landing.freeMinutes": "Handshake gratis",
   "landing.noSubscription": "Sin suscripción",

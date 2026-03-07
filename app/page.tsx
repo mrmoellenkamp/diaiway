@@ -5,12 +5,11 @@ import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
-import { MentorChat } from "@/components/mentor-chat"
 import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
-import { ArrowRight, Video, Shield, Zap, CheckCircle, Sparkles, Star } from "lucide-react"
+import { ArrowRight, Video, Shield, Zap, CheckCircle, Star } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 
 export default function LandingPage() {
@@ -85,25 +84,6 @@ export default function LandingPage() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
-      </section>
-
-      {/* Mentor Chat */}
-      <section className="mx-auto max-w-md px-4 pt-14 pb-6">
-        <div className="mb-5 flex flex-col items-center gap-1.5 text-center">
-          <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
-              <Sparkles className="size-3.5 text-primary" />
-            </div>
-            <h2 className="text-lg font-bold text-foreground">
-              {t("landing.mentorTitle")}
-              <span className="font-jp ml-1.5 text-xs font-normal text-primary/30">{"導師"}</span>
-            </h2>
-          </div>
-          <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-            {t("landing.mentorDesc")}
-          </p>
-        </div>
-        <MentorChat variant="embedded" />
       </section>
 
       {/* How It Works */}
