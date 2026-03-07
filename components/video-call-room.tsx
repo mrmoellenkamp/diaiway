@@ -443,8 +443,10 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             roomUrl={roomUrl}
             isCameraOff={isCameraOff}
             isMuted={isMuted}
-            takumiName={booking.takumiName}
-            initials={initials}
+            otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
+            otherParticipantInitials={getInitials(
+              booking.isExpert ? booking.userName : booking.takumiName
+            )}
           />
         ) : isInCall ? (
           <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
