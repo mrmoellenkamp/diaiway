@@ -119,6 +119,12 @@ const en = {
   "register.errorSignIn": "Account created but sign-in failed. Please sign in manually.",
   "register.errorNetwork": "Connection error. Please try again.",
   "register.success": "Account created! Welcome to diAiway.",
+  "register.shugyoIcon": "修行",
+  "register.shugyoSubtitle": "Learner & Seeker",
+  "register.shugyoDesc": "Find experts for your questions and problems",
+  "register.takumiIcon": "匠",
+  "register.takumiSubtitle": "Master & Expert",
+  "register.takumiDesc": "Share your knowledge and earn money",
 
   // Forgot Password
   "forgot.title": "Forgot password?",
