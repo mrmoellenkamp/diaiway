@@ -11,6 +11,7 @@ import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, 
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
+import { formatTimeBerlin } from "@/lib/date-utils"
 import { toast } from "sonner"
 
 interface NotificationItem {
@@ -273,8 +274,7 @@ export default function MessagesPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-foreground">{t.takumiName}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {time.getHours().toString().padStart(2, "0")}:
-                      {time.getMinutes().toString().padStart(2, "0")}
+                      {formatTimeBerlin(time)}
                     </span>
                   </div>
                   <p className="truncate text-xs text-muted-foreground">

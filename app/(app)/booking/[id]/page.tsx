@@ -27,6 +27,7 @@ import {
 import {
   ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar,
 } from "lucide-react"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -57,8 +58,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   function handleTimeSelect(date: string, start: string, end: string) {
-    // Guard: never allow selecting a slot in the past
-    const slotDateTime = new Date(`${date}T${start}`)
+    // Guard: never allow selecting a slot in the past (Berlin time)
+    const slotDateTime = parseBerlinDateTime(date, start)
     if (slotDateTime <= new Date()) {
       toast.error(t("booking.pastSlotError"))
       return
@@ -74,8 +75,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       toast.error(t("booking.selectAppointmentError"))
       return
     }
-    // Double-check at submit time — slot may have become past while form was open
-    const slotDateTime = new Date(`${selectedDate}T${selectedStart}`)
+    // Double-check at submit time — slot may have become past while form was open (Berlin time)
+    const slotDateTime = parseBerlinDateTime(selectedDate, selectedStart)
     if (slotDateTime <= new Date()) {
       toast.error(t("booking.pastSlotError"))
       setSelectedDate("")

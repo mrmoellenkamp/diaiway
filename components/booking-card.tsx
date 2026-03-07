@@ -21,6 +21,7 @@ import {
 import { Video, Clock, Calendar, Phone, X, Loader2, AlertTriangle, CheckCircle2, UserX } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
+import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -152,10 +153,7 @@ export function BookingCard({
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="size-3" />
-              {new Date(booking.date + "T00:00:00").toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {formatDateBerlinShort(new Date(booking.date + "T12:00:00Z"))}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="size-3" />
@@ -226,7 +224,7 @@ export function BookingCard({
                         <p>
                           {t("booking.cancelConfirm")
                             .replace("{name}", isExpertView ? booking.userName : booking.takumiName)
-                            .replace("{date}", new Date(booking.date + "T00:00:00").toLocaleDateString("de-DE"))}
+                            .replace("{date}", formatDateBerlin(new Date(booking.date + "T12:00:00Z")))}
                         </p>
 
                         {/* Fee preview panel */}
