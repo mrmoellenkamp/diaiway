@@ -42,11 +42,18 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+const FALLBACK_DAILY_DOMAIN = "https://diaiway.daily.co"
+
 export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const router = useRouter()
   const { t } = useI18n()
-  const dailyRoomUrl = `https://diaiway.daily.co/${bookingId}`
+  const dailyDomain =
+    (typeof window !== "undefined"
+      ? (process.env.NEXT_PUBLIC_DAILY_DOMAIN as string | undefined)
+      : process.env.NEXT_PUBLIC_DAILY_DOMAIN) || FALLBACK_DAILY_DOMAIN
+  const fallbackRoomUrl = `${dailyDomain.replace(/\/$/, "")}/${bookingId}`
   const [booking, setBooking] = useState<BookingRecord | null>(null)
+  const [roomUrl, setRoomUrl] = useState<string | null>(null)
   const [phase, setPhase] = useState<Phase>("loading")
   const [timer, setTimer] = useState(300)
   const [isMuted, setIsMuted] = useState(false)
@@ -124,9 +131,38 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     }
   }
 
+  // Fetch room URL when we need to join (pre-call or already in call)
+  const fetchRoomUrl = useCallback(async (): Promise<string | null> => {
+    try {
+      const res = await fetch(`/api/daily/room?bookingId=${encodeURIComponent(bookingId)}`)
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || t("video.loadError"))
+        return null
+      }
+      return data.roomUrl ?? null
+    } catch {
+      toast.error(t("common.networkError"))
+      return null
+    }
+  }, [bookingId, t])
+
+  useEffect(() => {
+    if (!isInCall || roomUrl || !booking) return
+    if (booking.status !== "confirmed" && booking.status !== "active") return
+    let cancelled = false
+    fetchRoomUrl().then((url) => {
+      if (!cancelled && url) setRoomUrl(url)
+    })
+    return () => { cancelled = true }
+  }, [isInCall, roomUrl, booking, fetchRoomUrl])
+
   const handleStartTrial = async () => {
+    const url = await fetchRoomUrl()
+    if (!url) return
     const result = await patchBooking("start-session")
     if (result) {
+      setRoomUrl(url)
       setPhase("trial")
       setTimer(300)
       setIsInCall(true)
@@ -298,7 +334,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
           <p className="text-center text-xs text-muted-foreground">
             {t("video.videoRoom")}{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-[10px]">{dailyRoomUrl}</code>
+            <code className="rounded bg-muted px-1 py-0.5 text-[10px]">{roomUrl || fallbackRoomUrl}</code>
           </p>
         </div>
       </div>
@@ -392,14 +428,22 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
         {/* DailyVideoCall loaded client-only via dynamic import (ssr: false) */}
-        {isInCall && (
+        {isInCall && roomUrl ? (
           <DailyVideoCall
-            roomUrl={dailyRoomUrl}
+            roomUrl={roomUrl}
             isCameraOff={isCameraOff}
+            isMuted={isMuted}
             takumiName={booking.takumiName}
             initials={initials}
           />
-        )}
+        ) : isInCall ? (
+          <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="size-10 animate-spin text-primary-foreground/60" />
+              <p className="text-sm text-primary-foreground/80">Video-Raum wird vorbereitet...</p>
+            </div>
+          </div>
+        ) : null}
 
         {/* Fallback while Daily is not yet in call */}
         {!isInCall && (

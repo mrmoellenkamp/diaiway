@@ -107,6 +107,7 @@ function LocalParticipant({ isCameraOff }: { isCameraOff: boolean }) {
 export interface DailyVideoCallProps {
   roomUrl: string
   isCameraOff: boolean
+  isMuted?: boolean
   takumiName: string
   initials: string
 }
@@ -115,11 +116,16 @@ export interface DailyVideoCallProps {
 export default function DailyVideoCall({
   roomUrl,
   isCameraOff,
+  isMuted = false,
   takumiName,
   initials,
 }: DailyVideoCallProps) {
+  const dailyConfig = {
+    startVideoOff: isCameraOff,
+    startAudioOff: isMuted,
+  }
   return (
-    <DailyProvider url={roomUrl}>
+    <DailyProvider url={roomUrl} dailyConfig={dailyConfig}>
       {/* Remote video — full screen */}
       <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
         <RemoteParticipants takumiName={takumiName} initials={initials} />
