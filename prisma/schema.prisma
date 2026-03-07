@@ -146,6 +146,10 @@ model Booking {
   sessionDuration       Int?          // minutes
   trialUsed             Boolean       @default(false)
 
+  // Expert's rating of the user (Shugyo) — set when Takumi rates the booker
+  expertRating    Float?
+  expertReviewText String?
+
   // Payment
   paymentStatus         PaymentStatus @default(unpaid)
   stripeSessionId       String?

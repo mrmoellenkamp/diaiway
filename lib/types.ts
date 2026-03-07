@@ -96,6 +96,8 @@ export interface BookingRecord {
   takumiName: string
   takumiEmail: string
   takumiId: string
+  // Role: true if current user is the Takumi (expert) for this booking
+  isExpert?: boolean
   // Cancellation
   cancelledBy?: string
   cancelFeeAmount?: number
