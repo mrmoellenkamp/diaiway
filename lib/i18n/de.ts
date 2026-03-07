@@ -265,6 +265,8 @@ const de = {
   "mentor.headerDescFloating": "Dein persönlicher Berater",
   "mentor.online": "Online",
   "mentor.welcome": "Willkommen! Beschreibe dein Projekt oder lade ein Foto hoch.",
+  "mentor.photoUploadMessage": "Ich habe ein Foto von meinem Problem hochgeladen. Bitte analysiere es und gib mir eine Einschätzung.",
+  "mentor.declineSearch": "Nein danke, ich möchte weiter mit der KI arbeiten.",
 
   // Video / Session
   "video.error": "Fehler.",
