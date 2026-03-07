@@ -60,12 +60,15 @@ function MenuItem({
   label,
   href,
   accent = false,
+  comingSoonKey,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   href?: string
   accent?: boolean
+  comingSoonKey?: string
 }) {
+  const { t } = useI18n()
   const inner = (
     <div className="flex items-center gap-3 px-4 py-3.5">
       <Icon className={`size-5 ${accent ? "text-accent" : "text-muted-foreground"}`} />
@@ -85,7 +88,7 @@ function MenuItem({
   return (
     <button
       className="block w-full text-left transition-colors hover:bg-muted/50"
-      onClick={() => toast.info("Funktion kommt bald!")}
+      onClick={() => toast.info(comingSoonKey ? t(comingSoonKey) : t("profile.comingSoon"))}
     >
       {inner}
     </button>
@@ -93,6 +96,7 @@ function MenuItem({
 }
 
 function AccountManagement() {
+  const { t } = useI18n()
   const [pausing, setPausing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -105,10 +109,10 @@ function AccountManagement() {
         body: JSON.stringify({ action: "pause" }),
       })
       if (res.ok) {
-        toast.success("Konto pausiert.")
+        toast.success(t("profile.accountPaused"))
         window.location.href = "/paused"
       } else {
-        toast.error("Fehler beim Pausieren.")
+        toast.error(t("profile.pauseError"))
       }
     } finally {
       setPausing(false)
@@ -120,10 +124,10 @@ function AccountManagement() {
     try {
       const res = await fetch("/api/user/account", { method: "DELETE" })
       if (res.ok) {
-        toast.success("Konto gelöscht.")
+        toast.success(t("profile.accountDeleted"))
         await signOut({ callbackUrl: "/" })
       } else {
-        toast.error("Fehler beim Löschen.")
+        toast.error(t("profile.deleteError"))
       }
     } finally {
       setDeleting(false)
@@ -133,7 +137,7 @@ function AccountManagement() {
   return (
     <div className="flex flex-col gap-2 border-t border-border/40 pt-4 mt-2">
       <p className="text-[11px] text-muted-foreground text-center font-medium uppercase tracking-wide">
-        Konto-Verwaltung
+        {t("profile.accountManagement")}
       </p>
 
       {/* Pause */}
@@ -141,30 +145,28 @@ function AccountManagement() {
         <AlertDialogTrigger asChild>
           <Button variant="outline" className="w-full gap-2 text-sm text-muted-foreground">
             <PauseCircle className="size-4" />
-            Konto pausieren
+            {t("profile.pauseAccount")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <PauseCircle className="size-5 text-yellow-500" />
-              Konto pausieren?
+              {t("profile.pauseAccountConfirm")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-relaxed">
-              Dein Konto wird vorübergehend deaktiviert. Du kannst dich weiterhin einloggen
-              und dein Konto jederzeit reaktivieren. Alle deine Daten bleiben erhalten.
-              {" "}Als Takumi wirst du sofort als offline markiert.
+              {t("profile.pauseAccountDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handlePause}
               disabled={pausing}
               className="bg-yellow-500 hover:bg-yellow-600 text-white"
             >
               {pausing ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              Jetzt pausieren
+              {t("profile.pauseNow")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -178,31 +180,28 @@ function AccountManagement() {
             className="w-full gap-2 text-xs text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5"
           >
             <Trash2 className="size-3.5" />
-            Konto dauerhaft löschen
+            {t("profile.deleteAccount")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="size-5" />
-              Konto unwiderruflich löschen?
+              {t("profile.deleteAccountConfirm")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-relaxed">
-              <strong>Diese Aktion kann nicht rückgängig gemacht werden.</strong>
-              {" "}Alle persönlichen Daten (Profil, Bilder, Experten-Profil, Verfügbarkeit, Bewertungen)
-              werden gemäß DSGVO dauerhaft gelöscht. Buchungshistorie wird aus steuerrechtlichen
-              Gründen (§ 147 AO) anonymisiert aufbewahrt.
+              {t("profile.deleteAccountDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {deleting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              Ja, Konto löschen
+              {t("profile.deleteAccountConfirmBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -275,7 +274,7 @@ export default function ProfilePage() {
   }, [session, status])
 
   // Prefer DB data, fall back to session
-  const userName = dbName || session?.user?.name || "Nutzer"
+  const userName = dbName || session?.user?.name || t("profile.userFallback")
   const userEmail = dbEmail || session?.user?.email || ""
   const userImage = dbImage || session?.user?.image || ""
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -286,7 +285,7 @@ export default function ProfilePage() {
     const updates: Record<string, string> = {}
     if (isEditingName && editName.trim() && editName.trim() !== userName) {
       if (editName.trim().length < 2) {
-        toast.error("Name muss mindestens 2 Zeichen lang sein.")
+        toast.error(t("profile.nameMinLength"))
         return
       }
       updates.name = editName.trim()
@@ -295,7 +294,7 @@ export default function ProfilePage() {
       updates.image = editImage
     }
     if (Object.keys(updates).length === 0) {
-      toast.info("Keine Aenderungen vorhanden.")
+      toast.info(t("profile.noChanges"))
       return
     }
     setIsSaving(true)
@@ -323,7 +322,7 @@ export default function ProfilePage() {
         toast.error(data.error)
       }
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setIsSaving(false)
     }
@@ -332,7 +331,7 @@ export default function ProfilePage() {
   async function handleLogout() {
     setIsLoggedIn(false)
     await signOut({ redirect: false })
-    toast.success("Du wurdest abgemeldet.")
+    toast.success(t("profile.loggedOut"))
     router.push("/")
     router.refresh()
   }
@@ -372,7 +371,7 @@ export default function ProfilePage() {
                 <Input
                   value={editImage}
                   onChange={(e) => { setEditImage(e.target.value); setHasUnsavedChanges(true) }}
-                  placeholder="Bild-URL eingeben..."
+                  placeholder={t("profile.imageUrlPlaceholder")}
                   className="h-8 text-xs"
                 />
                 <Button
@@ -442,12 +441,12 @@ export default function ProfilePage() {
               {isSaving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Wird gespeichert...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <Check className="size-4" />
-                  Aenderungen speichern
+                  {t("profile.saveChanges")}
                 </>
               )}
             </Button>
@@ -456,11 +455,11 @@ export default function ProfilePage() {
           {/* Stats */}
           <Card className="border-border/60 gap-0 py-0">
             <CardContent className="flex items-center justify-around p-4">
-              <StatBox label="Sessions" value={String(completedSessions)} />
+              <StatBox label={t("profile.sessions")} value={String(completedSessions)} />
               <div className="h-8 w-px bg-border" />
-              <StatBox label={isTakumi ? "Verdient" : "Ausgegeben"} value={`${totalSpent}\u20AC`} />
+              <StatBox label={isTakumi ? t("profile.earned") : t("profile.spent")} value={`${totalSpent}\u20AC`} />
               <div className="h-8 w-px bg-border" />
-              <StatBox label="Favoriten" value={String(favorites.length)} />
+              <StatBox label={t("profile.favorites")} value={String(favorites.length)} />
             </CardContent>
           </Card>
 
@@ -470,7 +469,7 @@ export default function ProfilePage() {
               <CardContent className="flex flex-col gap-3 p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Heart className="size-4 text-destructive" />
-                  Favoriten-Takumis
+                  {t("profile.favoriteTakumis")}
                 </h3>
                 <div className="flex flex-col gap-2">
                   {favoriteTakumis.map((t) => (
@@ -500,16 +499,16 @@ export default function ProfilePage() {
           <Card className="border-border/60 gap-0 py-0">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">Rolle wechseln</span>
+                <span className="text-sm font-medium text-foreground">{t("profile.switchRole")}</span>
                 <span className="text-xs text-muted-foreground">
-                  Aktuell: {isTakumi ? "Takumi (Experte)" : "Shugyo (Lerner)"}
+                  {isTakumi ? t("profile.currentRoleTakumi") : t("profile.currentRoleShugyo")}
                 </span>
               </div>
               <Switch
                 checked={isTakumi}
                 onCheckedChange={(checked) => {
                   setRole(checked ? "takumi" : "shugyo")
-                  toast.success(checked ? "Du bist jetzt Takumi!" : "Du bist jetzt Shugyo!")
+                  toast.success(checked ? t("profile.nowTakumi") : t("profile.nowShugyo"))
                 }}
               />
             </CardContent>
@@ -523,10 +522,10 @@ export default function ProfilePage() {
                   <Radio className={`size-5 ${isLive ? "text-accent animate-live-pulse" : "text-muted-foreground"}`} />
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold text-foreground">
-                      {isLive ? "Du bist Live!" : "Offline"}
+                      {isLive ? t("profile.youAreLive") : t("profile.offline")}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {isLive ? "Shugyo konnen dich jetzt buchen" : "Aktiviere, um Anfragen zu erhalten"}
+                      {isLive ? t("profile.shugyoCanBook") : t("profile.activateToReceive")}
                     </span>
                   </div>
                 </div>
@@ -534,7 +533,7 @@ export default function ProfilePage() {
                   checked={isLive}
                   onCheckedChange={(v) => {
                     setIsLive(v)
-                    toast.success(v ? "Du bist jetzt Live!" : "Du bist jetzt Offline.")
+                    toast.success(v ? t("profile.nowLive") : t("profile.nowOffline"))
                   }}
                 />
               </CardContent>
@@ -547,20 +546,20 @@ export default function ProfilePage() {
               <CardContent className="flex flex-col gap-3 p-4">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Wallet className="size-4 text-accent" />
-                  Einnahmen
+                  {t("profile.earnings")}
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="flex flex-col items-center gap-0.5 rounded-lg bg-muted p-3">
                     <span className="text-base font-bold text-foreground">{`${totalSpent}\u20AC`}</span>
-                    <span className="text-[10px] text-muted-foreground">Gesamt</span>
+                    <span className="text-[10px] text-muted-foreground">{t("profile.total")}</span>
                   </div>
                   <div className="flex flex-col items-center gap-0.5 rounded-lg bg-muted p-3">
                     <span className="text-base font-bold text-foreground">{completedSessions}</span>
-                    <span className="text-[10px] text-muted-foreground">Sessions</span>
+                    <span className="text-[10px] text-muted-foreground">{t("profile.sessions")}</span>
                   </div>
                   <div className="flex flex-col items-center gap-0.5 rounded-lg bg-muted p-3">
                     <span className="text-base font-bold text-foreground">{favorites.length}</span>
-                    <span className="text-[10px] text-muted-foreground">Favoriten</span>
+                    <span className="text-[10px] text-muted-foreground">{t("profile.favorites")}</span>
                   </div>
                 </div>
               </CardContent>
@@ -585,7 +584,7 @@ export default function ProfilePage() {
             <Button variant="outline" className="w-full gap-2 text-sm" asChild>
               <Link href="/admin">
                 <BarChart3 className="size-4" />
-                Admin-Dashboard
+                {t("profile.adminDashboard")}
               </Link>
             </Button>
           )}
