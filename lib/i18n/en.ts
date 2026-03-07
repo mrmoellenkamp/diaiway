@@ -171,6 +171,12 @@ const en = {
   "messages.emptyDesc": "Start a conversation with an expert.",
   "messages.discoverCategories": "Discover categories",
   "messages.bookingAlerts": "Booking notifications",
+  "messages.bookingConfirm": "Confirm",
+  "messages.bookingDecline": "Decline",
+  "messages.bookingAsk": "Ask a question",
+  "messages.bookingViewDetails": "View details",
+  "messages.bookingConfirmedToast": "Booking confirmed",
+  "messages.bookingDeclinedToast": "Booking declined",
 
   // Projects
   "projects.title": "My Projects",

@@ -34,11 +34,10 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   const [sending, setSending] = useState(false)
   const [error,   setError]   = useState("")
 
-  // Load booking info for display
+  // Load booking info for display (token from email link, or session for logged-in expert)
   useEffect(() => {
-    if (!token) { setPhase("error"); setError("Ungültiger Link – kein Token."); return }
-
-    fetch(`/api/booking-respond/${id}?token=${token}`)
+    const url = token ? `/api/booking-respond/${id}?token=${token}` : `/api/booking-respond/${id}`
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) { setPhase("error"); setError(data.error); return }

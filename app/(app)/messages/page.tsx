@@ -7,10 +7,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle } from "lucide-react"
+import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
+import { toast } from "sonner"
 
 interface NotificationItem {
   id: string
@@ -28,6 +29,7 @@ export default function MessagesPage() {
   const [activeThread, setActiveThread] = useState<string | null>(null)
   const [input, setInput] = useState("")
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [actingId, setActingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/notifications")
@@ -122,6 +124,7 @@ export default function MessagesPage() {
   }
 
   const unreadNotifications = notifications.filter((n) => !n.read)
+
   const markAsRead = (ids: string[]) => {
     fetch("/api/notifications", {
       method: "PATCH",
@@ -135,6 +138,30 @@ export default function MessagesPage() {
         }
       })
       .catch(() => {})
+  }
+
+  async function handleBookingAction(bookingId: string, action: "confirmed" | "declined", notificationId: string) {
+    setActingId(notificationId)
+    try {
+      const res = await fetch(`/api/booking-respond/${bookingId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(action === "confirmed" ? t("messages.bookingConfirmedToast") : t("messages.bookingDeclinedToast"))
+        markAsRead([notificationId])
+        setNotifications((prev) => prev.map((no) => (no.id === notificationId ? { ...no, read: true } : no)))
+        refreshNotificationCount?.()
+      } else {
+        toast.error(data.error || "Fehler")
+      }
+    } catch {
+      toast.error("Fehler")
+    } finally {
+      setActingId(null)
+    }
   }
 
   const NotificationIcon = ({ type }: { type: string }) => {
@@ -160,12 +187,48 @@ export default function MessagesPage() {
               )}
               onClick={() => {
                 markAsRead([n.id])
-                if (n.bookingId) window.location.href = `/sessions`
+                if (n.bookingId && n.type === "booking_request") {
+                  window.location.href = `/booking/respond/${n.bookingId}`
+                } else if (n.bookingId) {
+                  window.location.href = `/sessions`
+                }
               }}
             >
               <NotificationIcon type={n.type} />
               <AlertTitle>{n.title}</AlertTitle>
               <AlertDescription>{n.body}</AlertDescription>
+              {n.type === "booking_request" && n.bookingId && (
+                <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => handleBookingAction(n.bookingId!, "confirmed", n.id)}
+                    disabled={actingId === n.id}
+                  >
+                    {actingId === n.id ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle className="size-3" />}
+                    {t("messages.bookingConfirm")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 text-xs border-destructive/30 text-destructive"
+                    onClick={() => handleBookingAction(n.bookingId!, "declined", n.id)}
+                    disabled={actingId === n.id}
+                  >
+                    {t("messages.bookingDecline")}
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                    <Link href={`/booking/respond/${n.bookingId}`} onClick={(e) => { e.stopPropagation(); markAsRead([n.id]) }}>
+                      {t("messages.bookingAsk")}
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+                    <Link href={`/booking/respond/${n.bookingId}`} onClick={(e) => e.stopPropagation()}>
+                      {t("messages.bookingViewDetails")}
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </Alert>
           ))}
         </div>

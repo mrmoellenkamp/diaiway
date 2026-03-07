@@ -171,6 +171,12 @@ const de = {
   "messages.emptyDesc": "Starte eine Unterhaltung mit einem Experten.",
   "messages.discoverCategories": "Kategorien entdecken",
   "messages.bookingAlerts": "Buchungsbenachrichtigungen",
+  "messages.bookingConfirm": "Bestätigen",
+  "messages.bookingDecline": "Ablehnen",
+  "messages.bookingAsk": "Rückfrage stellen",
+  "messages.bookingViewDetails": "Details ansehen",
+  "messages.bookingConfirmedToast": "Buchung bestätigt",
+  "messages.bookingDeclinedToast": "Buchung abgelehnt",
 
   // Projects
   "projects.title": "Meine Projekte",
