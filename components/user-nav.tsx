@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, LogIn, ChevronDown, CalendarClock } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
 
 export function UserNav({ variant = "default" }: { variant?: "default" | "landing" | "mobile" }) {
   const { data: session, status } = useSession()
