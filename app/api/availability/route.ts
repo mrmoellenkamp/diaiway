@@ -27,6 +27,15 @@ export async function GET(req: Request) {
 
   if (!takumiId) return NextResponse.json({ error: "takumiId fehlt." }, { status: 400 })
 
+  // Input validation: restrict to expected ID format (cuid/alphanumeric)
+  const idRegex = /^[a-zA-Z0-9_-]{1,50}$/
+  if (!idRegex.test(takumiId)) {
+    return NextResponse.json({ error: "Ungültiges Format für takumiId." }, { status: 400 })
+  }
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Ungültiges Datumsformat (erwartet: YYYY-MM-DD)." }, { status: 400 })
+  }
+
   try {
     // Resolve to userId: takumiId may be either a User ID or Expert ID
     let userId = takumiId

@@ -15,7 +15,7 @@ export function LandingHeader() {
   const { t } = useI18n()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto">
+    <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-2.5">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/10">

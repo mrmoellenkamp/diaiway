@@ -49,6 +49,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  viewportFit: 'cover', // Enables safe-area-inset-* on iOS notch devices
 }
 
 export default function RootLayout({

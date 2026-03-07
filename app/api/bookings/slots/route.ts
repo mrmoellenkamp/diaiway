@@ -16,6 +16,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "takumiId und date erforderlich." }, { status: 400 })
   }
 
+  // Input validation: prevent injection, restrict to expected formats
+  const idRegex = /^[a-zA-Z0-9_-]{1,50}$/
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+  if (!idRegex.test(takumiId) || !dateRegex.test(date)) {
+    return NextResponse.json({ error: "Ungültiges Format für takumiId oder date." }, { status: 400 })
+  }
+
   try {
     const bookings = await prisma.booking.findMany({
       where: {
