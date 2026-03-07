@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 
 interface RoleSelectorProps {
   selected: "shugyo" | "takumi" | null
@@ -8,6 +9,8 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
+  const { t } = useI18n()
+
   return (
     <div className="grid grid-cols-2 gap-3">
       <button
@@ -23,10 +26,10 @@ export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
         <span className="font-jp text-3xl transition-transform group-hover:scale-110">修行</span>
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-foreground">Shugyo</span>
-          <span className="text-xs text-muted-foreground">Lerner & Suchender</span>
+          <span className="text-xs text-muted-foreground">{t("register.shugyoSubtitle")}</span>
         </div>
         <p className="text-[10px] text-muted-foreground leading-relaxed">
-          Finde Experten fur deine Fragen und Probleme
+          {t("register.shugyoDesc")}
         </p>
       </button>
 
@@ -43,10 +46,10 @@ export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
         <span className="font-jp text-3xl transition-transform group-hover:scale-110">匠</span>
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-foreground">Takumi</span>
-          <span className="text-xs text-muted-foreground">Meister & Experte</span>
+          <span className="text-xs text-muted-foreground">{t("register.takumiSubtitle")}</span>
         </div>
         <p className="text-[10px] text-muted-foreground leading-relaxed">
-          Teile dein Wissen und verdiene Geld
+          {t("register.takumiDesc")}
         </p>
       </button>
     </div>
