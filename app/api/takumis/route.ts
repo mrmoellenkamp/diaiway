@@ -99,3 +99,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
+
+/** PATCH — update expert (admin only, e.g. isLive toggle) */
+export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
+    return NextResponse.json({ error: "Nicht autorisiert. Nur Admins." }, { status: 401 })
+  }
+
+  try {
+    const body = await req.json()
+    const { id } = body
+    if (!id || typeof id !== "string") {
+      return NextResponse.json({ error: "Experten-ID erforderlich." }, { status: 400 })
+    }
+
+    const data: Record<string, unknown> = {}
+    if (typeof body.isLive === "boolean") data.isLive = body.isLive
+    if (body.isPro !== undefined) data.isPro = !!body.isPro
+    if (body.verified !== undefined) data.verified = !!body.verified
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: "Keine Änderungen angegeben." }, { status: 400 })
+    }
+
+    await prisma.expert.update({
+      where: { id },
+      data,
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Fehler beim Aktualisieren"
+    console.error("[diAiway] PATCH /api/takumis error:", message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

@@ -73,6 +73,7 @@ export async function PUT(req: Request) {
     if (body.imageUrl !== undefined)        data.imageUrl        = body.imageUrl
     if (body.socialLinks !== undefined)     data.socialLinks     = body.socialLinks
     if (body.cancelPolicy !== undefined)    data.cancelPolicy    = body.cancelPolicy
+    if (body.isLive !== undefined)          data.isLive          = !!body.isLive
 
     const expert = await prisma.expert.upsert({
       where: { userId: session.user.id },
@@ -108,6 +109,38 @@ export async function PUT(req: Request) {
       success: true,
       id: expert.id,
       message: "Takumi-Profil gespeichert.",
+    })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+  }
+}
+
+/** PATCH — update isLive (Takumi only) */
+export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+
+  try {
+    const body = await req.json()
+    if (typeof body.isLive !== "boolean") {
+      return NextResponse.json({ error: "isLive muss true oder false sein." }, { status: 400 })
+    }
+
+    const expert = await prisma.expert.updateMany({
+      where: { userId: session.user.id },
+      data: { isLive: body.isLive },
+    })
+
+    if (expert.count === 0) {
+      return NextResponse.json({ error: "Kein Takumi-Profil gefunden." }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      isLive: body.isLive,
+      message: body.isLive ? "Du bist jetzt live." : "Du bist jetzt offline.",
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
