@@ -311,6 +311,18 @@ const es = {
   "video.paid": "Pagado",
   "video.starAria": "{n} estrellas",
   "video.networkError": "Error de red.",
+  "video.startSession": "Iniciar sesión",
+  "video.fiveMinFree": "5 minutos gratis de prueba",
+  "video.learnTakumi": "Conoce a tu Takumi",
+  "video.escrowProtection": "Protección de depósito",
+  "video.paymentAfterRelease": "Pago solo tras aprobación",
+  "video.join": "Unirse",
+  "video.videoRoom": "Sala de video:",
+  "video.roomOpensInHours": "Aprox. {h} h {m} min restantes.",
+  "video.roomOpensInMinutes": "{n} minuto(s) restantes.",
+  "video.muteAria": "Silenciar",
+  "video.unmuteAria": "Activar sonido",
+  "video.bookingStatusError": "La reserva tiene estado \"{status}\" y no puede iniciarse.",
 
   // Handshake
   "handshake.close": "Cerrar",

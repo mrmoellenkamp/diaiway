@@ -311,6 +311,18 @@ const en = {
   "video.paid": "Paid",
   "video.starAria": "{n} stars",
   "video.networkError": "Network error.",
+  "video.startSession": "Start session",
+  "video.fiveMinFree": "5 minutes free trial",
+  "video.learnTakumi": "Get to know your Takumi",
+  "video.escrowProtection": "Escrow protection",
+  "video.paymentAfterRelease": "Payment only after approval",
+  "video.join": "Join",
+  "video.videoRoom": "Video room:",
+  "video.roomOpensInHours": "About {h} hrs {m} min left.",
+  "video.roomOpensInMinutes": "{n} minute(s) left.",
+  "video.muteAria": "Mute",
+  "video.unmuteAria": "Unmute",
+  "video.bookingStatusError": "Booking has status \"{status}\" and cannot be started.",
 
   // Handshake
   "handshake.close": "Close",
