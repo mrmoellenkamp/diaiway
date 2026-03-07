@@ -98,13 +98,60 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   return { clientSecret: session.client_secret, sessionId: session.id }
 }
 
-/** Verify payment status for a booking (client-side polling). */
+/** Verify payment status for a booking (client-side polling).
+ * Prüft DB und bei pending zusätzlich Stripe direkt (Webhook kann verzögert sein).
+ */
 export async function verifySessionPayment(bookingId: string) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true, paidAt: true, paidAmount: true },
+    select: {
+      paymentStatus: true,
+      paidAt: true,
+      paidAmount: true,
+      stripeSessionId: true,
+    },
   })
   if (!booking) return { status: "error", message: "Booking not found" }
+
+  if (booking.paymentStatus === "paid") {
+    return {
+      status: "paid" as const,
+      paidAt: booking.paidAt,
+      paidAmount: booking.paidAmount,
+    }
+  }
+
+  // Bei pending: Stripe direkt prüfen (Webhook kann verzögert sein)
+  if (booking.paymentStatus === "pending" && booking.stripeSessionId) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(booking.stripeSessionId)
+      if (session.status === "complete" && session.payment_status === "paid") {
+        const amountTotal = session.amount_total ?? 0
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: {
+            paymentStatus: "paid",
+            stripePaymentIntentId: session.payment_intent as string,
+            paidAt: new Date(),
+            paidAmount: amountTotal,
+          },
+        })
+        const { onPaymentReceived } = await import("@/lib/wallet-service")
+        try {
+          await onPaymentReceived(bookingId, amountTotal)
+        } catch {
+          /* Wallet-Update optional */
+        }
+        return {
+          status: "paid" as const,
+          paidAt: new Date(),
+          paidAmount: amountTotal,
+        }
+      }
+    } catch {
+      /* Stripe-Abfrage fehlgeschlagen, DB-Status zurückgeben */
+    }
+  }
 
   return {
     status: booking.paymentStatus,
