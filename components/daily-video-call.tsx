@@ -6,6 +6,7 @@
  * preventing the "window is not defined" build error on Vercel.
  */
 
+import { useEffect } from "react"
 import {
   DailyProvider,
   useDaily,
@@ -52,11 +53,11 @@ function DailyVideoTile({
 // ─── Remote participants ────────────────────────────────────────────────────
 
 function RemoteParticipants({
-  takumiName,
-  initials,
+  otherParticipantName,
+  otherParticipantInitials,
 }: {
-  takumiName: string
-  initials: string
+  otherParticipantName: string
+  otherParticipantInitials: string
 }) {
   const participantIds = useParticipantIds({ filter: "remote" })
 
@@ -64,9 +65,9 @@ function RemoteParticipants({
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex size-28 items-center justify-center rounded-full border-4 border-white/20 bg-white/10">
-          <span className="text-3xl font-bold text-primary-foreground">{initials}</span>
+          <span className="text-3xl font-bold text-primary-foreground">{otherParticipantInitials}</span>
         </div>
-        <p className="text-lg font-semibold text-primary-foreground">{takumiName}</p>
+        <p className="text-lg font-semibold text-primary-foreground">{otherParticipantName}</p>
         <p className="text-sm text-primary-foreground/60">Warte auf Verbindung...</p>
       </div>
     )
@@ -79,6 +80,26 @@ function RemoteParticipants({
       ))}
     </>
   )
+}
+
+// ─── Error handler (logs Daily errors to console for debugging) ─────────────
+
+function DailyErrorHandler() {
+  const daily = useDaily()
+  useEffect(() => {
+    const call = daily
+    if (!call) return
+    const handleError = (e: { type?: string; errorMsg?: string }) => {
+      console.error("[Daily] Error:", e?.type, e?.errorMsg ?? e)
+    }
+    call.on("error", handleError)
+    call.on("nonfatal-error", handleError)
+    return () => {
+      call.off("error", handleError)
+      call.off("nonfatal-error", handleError)
+    }
+  }, [daily])
+  return null
 }
 
 // ─── Local participant (PiP) ────────────────────────────────────────────────
@@ -108,8 +129,10 @@ export interface DailyVideoCallProps {
   roomUrl: string
   isCameraOff: boolean
   isMuted?: boolean
-  takumiName: string
-  initials: string
+  /** Name of the other participant we're waiting for (Shugyo or Takumi depending on viewer) */
+  otherParticipantName: string
+  /** Initials for the other participant's avatar */
+  otherParticipantInitials: string
 }
 
 // eslint-disable-next-line react/display-name
@@ -117,8 +140,8 @@ export default function DailyVideoCall({
   roomUrl,
   isCameraOff,
   isMuted = false,
-  takumiName,
-  initials,
+  otherParticipantName,
+  otherParticipantInitials,
 }: DailyVideoCallProps) {
   const dailyConfig = {
     startVideoOff: isCameraOff,
@@ -126,9 +149,13 @@ export default function DailyVideoCall({
   }
   return (
     <DailyProvider url={roomUrl} dailyConfig={dailyConfig}>
+      <DailyErrorHandler />
       {/* Remote video — full screen */}
       <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
-        <RemoteParticipants takumiName={takumiName} initials={initials} />
+        <RemoteParticipants
+          otherParticipantName={otherParticipantName}
+          otherParticipantInitials={otherParticipantInitials}
+        />
       </div>
 
       {/* Self-view PiP */}

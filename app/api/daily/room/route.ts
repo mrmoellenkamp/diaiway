@@ -109,11 +109,13 @@ export async function GET(req: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        room_name: effectiveRoomName,
-        user_name: userName,
-        user_id: uid,
-        exp,
-        is_owner: true,
+        properties: {
+          room_name: effectiveRoomName,
+          user_name: userName,
+          user_id: uid.slice(0, 36), // Daily limit: 36 chars
+          exp,
+          is_owner: true,
+        },
       }),
     })
 
