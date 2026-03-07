@@ -39,7 +39,7 @@ const de = {
   // Landing
   "landing.heroTitle": "DIY-Hilfe auf Knopfdruck. Sicher. Schnell. Überall.",
   "landing.heroDesc": "Individueller Support von Menschen mit Erfahrung. Live per Video. Vom Gemüsegarten bis zum Oldtimer",
-  "landing.findExpert": "Experte finden",
+  "landing.findExpert": "AI fragen und Experten (Takumi) finden",
   "landing.discoverCategories": "AI fragen & Kategorien entdecken",
   "landing.becomeTakumi": "Takumi werden",
   "landing.freeMinutes": "Handshake gratis",
