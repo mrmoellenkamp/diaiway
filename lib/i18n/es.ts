@@ -268,6 +268,8 @@ const es = {
   "mentor.welcome": "¡Bienvenido! Describe tu proyecto o sube una foto.",
   "mentor.photoUploadMessage": "He subido una foto de mi problema. Por favor analízala y dame una valoración.",
   "mentor.declineSearch": "No gracias, prefiero seguir con la IA.",
+  "mentor.placeholderEmbedded": "Describe tu proyecto...",
+  "mentor.placeholderFloating": "Escribe tu pregunta...",
 
   // Video / Session
   "video.error": "Error.",

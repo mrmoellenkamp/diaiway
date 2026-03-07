@@ -532,7 +532,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isStreaming}
-            placeholder={isEmbedded ? "Beschreibe dein Projekt..." : "Schreibe deine Frage..."}
+            placeholder={isEmbedded ? t("mentor.placeholderEmbedded") : t("mentor.placeholderFloating")}
             rows={1}
             className="min-w-0 flex-1 resize-none bg-transparent py-1 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
             style={{ maxHeight: 160 }}
