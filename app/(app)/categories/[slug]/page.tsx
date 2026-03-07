@@ -16,11 +16,12 @@ export default function CategoryDetailPage({ params }: { params: Promise<{ slug:
   const { slug } = use(params)
   const { t } = useI18n()
   const categories = useCategories()
-  const category = categories.find((c) => c.slug === slug)
-  if (!category) notFound()
-
   const { takumis } = useTakumis()
+
+  const category = categories.find((c) => c.slug === slug)
   const categoryTakumis = takumis.filter((tk) => tk.categorySlug === slug)
+
+  if (!category) notFound()
 
   return (
     <PageContainer>
