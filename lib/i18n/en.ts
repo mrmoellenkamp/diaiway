@@ -45,7 +45,7 @@ const en = {
   "landing.freeMinutes": "Handshake free",
   "landing.noSubscription": "No subscription",
   "landing.gdprCompliant": "GDPR compliant",
-  "landing.mentorTitle": "diAiway Mentor",
+  "landing.mentorTitle": "diAIway intelligence",
   "landing.mentorDesc": "Describe your project, upload photos and get an expert analysis.",
   "landing.howItWorks": "How it works",
   "landing.step1Title": "Describe your problem",

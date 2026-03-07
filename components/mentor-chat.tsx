@@ -184,7 +184,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground">
-            {isEmbedded ? "diAiway Mentor" : "Projekt-Mentor"}
+            {isEmbedded ? "diAIway intelligence" : "Projekt-Mentor"}
             <span className="font-jp ml-1.5 text-[10px] font-normal text-primary/40">{"導師"}</span>
           </p>
           <p className="text-[10px] text-muted-foreground truncate">
