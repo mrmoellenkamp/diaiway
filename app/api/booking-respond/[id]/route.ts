@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
 
-/** GET — load booking info for the respond page (token-authenticated, no login required) */
+/** Resolve auth: token (email link) or session (logged-in expert) */
+async function resolveBookingAuth(id: string, token: string | null) {
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: { expert: true },
+  })
+  if (!booking) return { error: "Buchung nicht gefunden." as const, booking: null }
+  if (token?.trim()) {
+    if (booking.statusToken !== token) return { error: "Ungültiger Token." as const, booking: null }
+    return { error: null as const, booking }
+  }
+  const session = await auth()
+  if (!session?.user?.id) return { error: "Token fehlt oder nicht eingeloggt." as const, booking: null }
+  if (!booking.expert?.userId || booking.expert.userId !== session.user.id) return { error: "Keine Berechtigung." as const, booking: null }
+  return { error: null as const, booking }
+}
+
+/** GET — load booking info (token from email link, or session for logged-in expert) */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -13,11 +31,9 @@ export async function GET(
   const { id } = await params
   const token = req.nextUrl.searchParams.get("token")
 
-  if (!token) return NextResponse.json({ error: "Token fehlt." }, { status: 400 })
-
-  const booking = await prisma.booking.findUnique({ where: { id } })
+  const { error, booking } = await resolveBookingAuth(id, token)
+  if (error) return NextResponse.json({ error }, { status: token ? 403 : 401 })
   if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
-  if (booking.statusToken !== token) return NextResponse.json({ error: "Ungültiger Token." }, { status: 403 })
 
   return NextResponse.json({
     id: booking.id,
@@ -33,22 +49,21 @@ export async function GET(
   })
 }
 
-/** POST — confirm, decline, or send a question (token-authenticated, no login required) */
+/** POST — confirm, decline, or send a question (token from email, or session for logged-in expert) */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const body = await req.json()
-  const { token, action, message } = body
+  const body = await req.json().catch(() => ({}))
+  const { token, action, message } = body as { token?: string; action?: string; message?: string }
 
-  if (!token) return NextResponse.json({ error: "Token fehlt." }, { status: 400 })
-
-  const booking = await prisma.booking.findUnique({ where: { id } })
+  const { error, booking } = await resolveBookingAuth(id, token ?? null)
+  if (error) return NextResponse.json({ error }, { status: 400 })
   if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
-  if (booking.statusToken !== token) return NextResponse.json({ error: "Ungültiger Token." }, { status: 403 })
 
   const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
+  const effectiveToken = token || booking.statusToken
 
   // ── Confirm or Decline ───────────────────────────────────────────────────
   if (action === "confirmed" || action === "declined") {
@@ -100,7 +115,7 @@ export async function POST(
       return NextResponse.json({ error: "Nachricht darf nicht leer sein." }, { status: 400 })
     }
 
-    const respondUrl = `${baseUrl}/booking/respond/${id}?token=${token}&action=confirmed`
+    const respondUrl = `${baseUrl}/booking/respond/${id}?token=${effectiveToken}&action=confirmed`
 
     try {
       await transporter.sendMail({
