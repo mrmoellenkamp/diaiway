@@ -21,6 +21,7 @@ const en = {
   "common.no": "No",
   "common.active": "Active",
   "common.saving": "Saving...",
+  "common.retry": "Retry",
 
   // Global Footer
   "footer.privacy": "Privacy Policy",

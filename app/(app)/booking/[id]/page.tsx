@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw,
 } from "lucide-react"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"
@@ -35,12 +35,18 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const { t } = useI18n()
   const router = useRouter()
   const { data: session } = useSession()
-  const { takumis, isLoading: isTakumisLoading } = useTakumis()
+  const { takumis, isLoading: isTakumisLoading, error: takumisError, mutate: mutateTakumis } = useTakumis()
   const takumi = takumis.find((tk) => tk.id === id)
 
   const [step, setStep] = useState<"form" | "checkout" | "success">("form")
   const [bookingIdForPayment, setBookingIdForPayment] = useState<string | null>(null)
   const [walletBalanceCents, setWalletBalanceCents] = useState(0)
+  const [selectedDate, setSelectedDate] = useState("")
+  const [selectedStart, setSelectedStart] = useState("")
+  const [selectedEnd, setSelectedEnd] = useState("")
+  const [note, setNote] = useState("")
+  const [isBooking, setIsBooking] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   useEffect(() => {
     if (step === "checkout" && session?.user) {
@@ -62,14 +68,21 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  if (!takumi) notFound()
+  if (takumisError) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+          <p className="text-sm text-muted-foreground">{t("booking.networkError")}</p>
+          <Button variant="outline" onClick={() => mutateTakumis()} className="gap-2">
+            <RefreshCcw className="size-4" />
+            {t("common.retry")}
+          </Button>
+        </div>
+      </PageContainer>
+    )
+  }
 
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedStart, setSelectedStart] = useState("")
-  const [selectedEnd, setSelectedEnd] = useState("")
-  const [note, setNote] = useState("")
-  const [isBooking, setIsBooking] = useState(false)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  if (!takumi) notFound()
 
   function handleTimeSelect(date: string, start: string, end: string) {
     // Guard: never allow selecting a slot in the past (Berlin time)

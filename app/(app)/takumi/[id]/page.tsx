@@ -93,14 +93,14 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const { id } = use(params)
   const { t } = useI18n()
   const { takumis } = useTakumis()
-  const takumi = takumis.find((tk) => tk.id === id)
-  if (!takumi) notFound()
-
   const { openMentorWithTakumi, sendDirectMessage } = useApp()
   const router = useRouter()
   const [isContacting, setIsContacting] = useState(false)
   const [isDmSending, setIsDmSending] = useState(false)
   const [dmSent, setDmSent] = useState(false)
+
+  const takumi = takumis.find((tk) => tk.id === id)
+  if (!takumi) notFound()
 
   function handleContact() {
     setIsContacting(true)

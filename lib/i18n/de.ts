@@ -21,6 +21,7 @@ const de = {
   "common.no": "Nein",
   "common.active": "Aktiv",
   "common.saving": "Wird gespeichert...",
+  "common.retry": "Erneut versuchen",
 
   // Global Footer
   "footer.privacy": "Datenschutz",
