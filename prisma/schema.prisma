@@ -181,9 +181,6 @@ model Booking {
   cancelFeeAmount Int?       // EUR cents retained (only if fee applies)
   cancelledAt     DateTime?
 
-  // Refund choice (bei Ablehnung): Shugyo wählt Auszahlung oder Wallet-Gutschrift
-  refundChoicePending Boolean @default(false)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
