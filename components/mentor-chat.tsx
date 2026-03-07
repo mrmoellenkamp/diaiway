@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
+import { useI18n } from "@/lib/i18n"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const chatTransport = new DefaultChatTransport({ api: "/api/chat" })
@@ -60,6 +61,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     setSearchResults,
   } = useApp()
   const { takumis } = useTakumis()
+  const { locale } = useI18n()
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -78,6 +80,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     id: "diaiway-mentor",
     transport: chatTransport,
     initialMessages: storedMessages.length > 0 ? storedMessages : undefined,
+    body: { locale },
   })
 
   const isStreaming = status === "streaming" || status === "submitted"

@@ -10,7 +10,7 @@ import { auth } from "@/lib/auth"
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-const SYSTEM_PROMPT = `Du bist der diAiway Projekt-Mentor -- ein erfahrener, freundlicher Berater mit tiefem Fachwissen in Handwerk, Technik, Haus & Garten, Elektronik, KFZ und vielen weiteren Bereichen.
+const SYSTEM_BASE = `Du bist der diAiway Projekt-Mentor -- ein erfahrener, freundlicher Berater mit tiefem Fachwissen in Handwerk, Technik, Haus & Garten, Elektronik, KFZ und vielen weiteren Bereichen.
 
 DEIN CHARAKTER:
 - Du antwortest ausfuhrlich, kompetent und strukturiert wie ein echter Meister (Takumi).
@@ -18,7 +18,6 @@ DEIN CHARAKTER:
 - Du fragst gezielt nach, um das Problem besser zu verstehen (Alter des Gerats, Marke, bisherige Versuche, Fotos).
 - Du gibst konkrete, praxisnahe Tipps, Werkzeuglisten und Schritt-fur-Schritt-Anleitungen.
 - Du bist geduldig und erklarst auch Grundlagen, wenn der Nutzer Anfanger ist.
-- Du sprichst immer Deutsch.
 
 DEINE GRENZEN UND UBERGANGSLOGIK:
 - Du hilfst ZUERST ausfuhrlich selbst. Du bist kein Suchbot, sondern ein echter Berater.
@@ -34,6 +33,18 @@ STIL:
 - Gib immer das Gefuhl, dass du dich wirklich fur das Projekt interessierst
 - Nutze Emoji sparsam (maximal 1-2 pro Nachricht, z.B. bei Warnungen)`
 
+const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
+  de: "Du sprichst immer Deutsch.",
+  en: "You always speak English.",
+  es: "Siempre respondes en español.",
+}
+
+const USER_CONTEXT: Record<string, string> = {
+  de: (name: string) => `Der aktuelle Nutzer heisst "${name}". Sprich ihn gelegentlich mit seinem Namen an.`,
+  en: (name: string) => `The current user is named "${name}". Address them by name occasionally.`,
+  es: (name: string) => `El usuario actual se llama "${name}". Dirígete a él/ella por su nombre ocasionalmente.`,
+}
+
 export async function POST(req: Request) {
   const keyPresent = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!keyPresent) {
@@ -44,13 +55,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages }: { messages: UIMessage[] } = await req.json()
+    const body = await req.json()
+    const { messages, locale: reqLocale } = body as { messages: UIMessage[]; locale?: string }
+    const locale = reqLocale && ["de", "en", "es"].includes(reqLocale) ? reqLocale : "de"
+
+    const langInstruction = LANGUAGE_INSTRUCTIONS[locale] ?? LANGUAGE_INSTRUCTIONS.de
 
     let userContext = ""
     try {
       const session = await auth()
       if (session?.user?.name) {
-        userContext = `\n\nDer aktuelle Nutzer heisst "${session.user.name}". Sprich ihn gelegentlich mit seinem Namen an.`
+        const userCtxFn = USER_CONTEXT[locale] ?? USER_CONTEXT.de
+        userContext = `\n\n${userCtxFn(session.user.name)}`
       }
     } catch { /* not authenticated */ }
 
@@ -68,9 +84,10 @@ export async function POST(req: Request) {
       }
     } catch { /* DB not available */ }
 
+    const systemPrompt = SYSTEM_BASE + "\n- " + langInstruction + userContext + expertContext
     const result = streamText({
       model: "google/gemini-2.0-flash",
-      system: SYSTEM_PROMPT + userContext + expertContext,
+      system: systemPrompt,
       messages: await convertToModelMessages(messages),
       abortSignal: req.signal,
     })
