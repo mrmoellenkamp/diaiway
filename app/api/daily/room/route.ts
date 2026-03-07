@@ -51,49 +51,84 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Use existing room URL if we have one
+    const roomName = bookingId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 128)
+    let baseRoomUrl: string
+    let effectiveRoomName: string
+
+    // Use existing room URL if we have one, otherwise create room
     if (booking.dailyRoomUrl?.trim()) {
-      return NextResponse.json({ roomUrl: booking.dailyRoomUrl })
+      baseRoomUrl = booking.dailyRoomUrl
+      // Extract room name from URL (e.g. https://domain.daily.co/roomname -> roomname)
+      effectiveRoomName = baseRoomUrl.split("/").pop()?.split("?")[0] || roomName
+    } else {
+      const res = await fetch("https://api.daily.co/v1/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          name: roomName,
+          privacy: "public", // Public allows join with URL; private requires meeting tokens
+          properties: { max_participants: 2 },
+        }),
+      })
+
+      if (!res.ok) {
+        const errBody = await res.text()
+        console.error("[Daily] Room creation failed:", res.status, errBody)
+        return NextResponse.json(
+          { error: "Video-Raum konnte nicht erstellt werden. Bitte später erneut versuchen." },
+          { status: 502 }
+        )
+      }
+
+      const room = (await res.json()) as { url?: string }
+      baseRoomUrl = room?.url
+      if (!baseRoomUrl) {
+        return NextResponse.json(
+          { error: "Ungültige Antwort vom Video-Service." },
+          { status: 502 }
+        )
+      }
+
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { dailyRoomUrl: baseRoomUrl },
+      })
+      effectiveRoomName = roomName
     }
 
-    // Create room via Daily REST API
-    const roomName = bookingId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 128)
-    const res = await fetch("https://api.daily.co/v1/rooms", {
+    // Create meeting token so participant can join (required for reliable connections)
+    const userName = session.user.name || (isBooker ? booking.userName : booking.expertName) || "Teilnehmer"
+    const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 2 // 2 hours
+    const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        name: roomName,
-        privacy: "private",
-        properties: { max_participants: 2 },
+        room_name: effectiveRoomName,
+        user_name: userName,
+        user_id: uid,
+        exp,
+        is_owner: true,
       }),
     })
 
-    if (!res.ok) {
-      const errBody = await res.text()
-      console.error("[Daily] Room creation failed:", res.status, errBody)
-      return NextResponse.json(
-        { error: "Video-Raum konnte nicht erstellt werden. Bitte später erneut versuchen." },
-        { status: 502 }
-      )
+    if (!tokenRes.ok) {
+      const errBody = await tokenRes.text()
+      console.error("[Daily] Token creation failed:", tokenRes.status, errBody)
+      // Fallback: return room URL without token (works for public rooms)
+      return NextResponse.json({ roomUrl: baseRoomUrl })
     }
 
-    const room = (await res.json()) as { url?: string }
-    const roomUrl = room?.url
-    if (!roomUrl) {
-      return NextResponse.json(
-        { error: "Ungültige Antwort vom Video-Service." },
-        { status: 502 }
-      )
-    }
-
-    // Persist room URL so both parties use the same room
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: { dailyRoomUrl: roomUrl },
-    })
+    const tokenData = (await tokenRes.json()) as { token?: string }
+    const token = tokenData?.token
+    const roomUrl = token
+      ? `${baseRoomUrl}${baseRoomUrl.includes("?") ? "&" : "?"}t=${token}`
+      : baseRoomUrl
 
     return NextResponse.json({ roomUrl })
   } catch (err) {
