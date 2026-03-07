@@ -45,7 +45,7 @@ const de = {
   "landing.freeMinutes": "Handshake gratis",
   "landing.noSubscription": "Kein Abo",
   "landing.gdprCompliant": "DSGVO konform",
-  "landing.mentorTitle": "diAiway Mentor",
+  "landing.mentorTitle": "diAIway intelligence",
   "landing.mentorDesc": "Beschreibe dein Projekt, lade Fotos hoch und erhalte eine fundierte Analyse.",
   "landing.howItWorks": "So funktioniert's",
   "landing.step1Title": "Problem beschreiben",
