@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
+import { sendPushToUser } from "@/lib/push"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
@@ -104,6 +105,7 @@ export async function POST(
           body,
         },
       })
+      sendPushToUser(booking.userId, { title, body, url: "/messages" }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
     return NextResponse.json({ ok: true, status: action })
@@ -162,15 +164,21 @@ export async function POST(
 
     // Notification für Shugyo (zeitgleich mit E-Mail)
     try {
+      const notifBody = `${booking.expertName} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
       await prisma.notification.create({
         data: {
           userId: booking.userId,
           type: "booking_question",
           bookingId: booking.id,
           title: "Rückfrage zu deiner Buchung",
-          body: `${booking.expertName} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`,
+          body: notifBody,
         },
       })
+      sendPushToUser(booking.userId, {
+        title: "Rückfrage zu deiner Buchung",
+        body: notifBody,
+        url: "/messages",
+      }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
     return NextResponse.json({ ok: true })

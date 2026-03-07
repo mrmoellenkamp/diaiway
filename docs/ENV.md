@@ -67,6 +67,15 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 |----------|--------------|
 | `ADMIN_PASSWORD` | Schutz für `/api/auth/seed-admin` |
 
+## Web Push (Benachrichtigungen)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `VAPID_PUBLIC_KEY` | Öffentlicher VAPID-Key (auch als `NEXT_PUBLIC_VAPID_PUBLIC_KEY` für Client) |
+| `VAPID_PRIVATE_KEY` | Privater VAPID-Key (nur serverseitig) |
+
+VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+v.publicKey);console.log('VAPID_PRIVATE_KEY='+v.privateKey);console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY='+v.publicKey);"`
+
 ---
 
 *Referenz: `.env.example` im Projektroot*
