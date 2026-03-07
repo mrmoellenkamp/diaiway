@@ -3,6 +3,7 @@ import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 export const runtime = "nodejs"
 
@@ -91,8 +92,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
     }
 
-    // Reject bookings in the past
-    const slotDateTime = new Date(`${date}T${startTime}`)
+    // Reject bookings in the past (Berlin time)
+    const slotDateTime = parseBerlinDateTime(date, startTime)
     if (slotDateTime <= new Date()) {
       return NextResponse.json({ error: "Buchungen in der Vergangenheit sind nicht möglich." }, { status: 400 })
     }

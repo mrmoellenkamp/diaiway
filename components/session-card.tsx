@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReviewStars } from "@/components/review-stars"
 import { Video, Clock, Calendar } from "lucide-react"
+import { formatDateBerlin, formatTimeBerlin } from "@/lib/date-utils"
 import type { Session } from "@/lib/types"
 
 const statusConfig = {
@@ -39,11 +40,11 @@ export function SessionCard({ session }: { session: Session }) {
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="size-3" />
-                {date.toLocaleDateString("de-DE", { day: "2-digit", month: "short" })}
+                {formatDateBerlin(date).split(".").slice(0, 2).join(".")}
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="size-3" />
-                {date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                {formatTimeBerlin(date)}
               </span>
               <span className="flex items-center gap-1">
                 <Video className="size-3" />

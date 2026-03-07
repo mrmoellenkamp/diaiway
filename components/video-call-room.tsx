@@ -25,6 +25,7 @@ import {
 import { DailyVideoCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
 
@@ -133,10 +134,10 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     }
   }
 
-  // Check how many minutes until the session starts (for early-join blocking)
+  // Check how many minutes until the session starts (Berlin time, for early-join blocking)
   const minutesUntilStart = booking
     ? Math.ceil(
-        (new Date(`${booking.date}T${booking.startTime}`).getTime() - Date.now()) / 60000
+        (parseBerlinDateTime(booking.date, booking.startTime).getTime() - Date.now()) / 60000
       )
     : 999
   const tooEarlyToJoin = minutesUntilStart > 5

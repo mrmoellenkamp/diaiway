@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 export const runtime = "nodejs"
 
@@ -116,8 +117,8 @@ function computeCancelFee(
 ): CancelPreview {
   const policy = parseCancelPolicy(expert?.cancelPolicy)
 
-  // Parse session datetime
-  const sessionDt = new Date(`${booking.date}T${booking.startTime}:00`)
+  // Parse session datetime (Berlin time)
+  const sessionDt = parseBerlinDateTime(booking.date, booking.startTime)
   const now = new Date()
   const hoursUntilSession = (sessionDt.getTime() - now.getTime()) / (1000 * 60 * 60)
 
@@ -189,8 +190,8 @@ export async function PATCH(
         )
       }
 
-      // Allow joining max 5 minutes before the scheduled start time
-      const scheduledStart = new Date(`${booking.date}T${booking.startTime}:00`)
+      // Allow joining max 5 minutes before the scheduled start time (Berlin time)
+      const scheduledStart = parseBerlinDateTime(booking.date, booking.startTime)
       const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)
       if (new Date() < earliestJoin) {
         const minutesLeft = Math.ceil((earliestJoin.getTime() - Date.now()) / 60000)
