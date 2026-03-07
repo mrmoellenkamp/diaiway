@@ -8,6 +8,7 @@ import { SessionProvider } from '@/components/session-provider'
 import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
 import { GlobalFooter } from '@/components/global-footer'
+import { ErrorBoundary } from '@/components/error-boundary'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -58,16 +59,18 @@ export default function RootLayout({
   return (
     <html lang="de" className={_notoJP.variable}>
       <body className="font-sans antialiased">
-        <SessionProvider>
-          <I18nProvider>
-            <AppProvider>
-              <GlobalNavigation />
-              {children}
-              <GlobalFooter />
-              <AiMentorFab />
-            </AppProvider>
-          </I18nProvider>
-        </SessionProvider>
+        <ErrorBoundary>
+          <SessionProvider>
+            <I18nProvider>
+              <AppProvider>
+                <GlobalNavigation />
+                {children}
+                <GlobalFooter />
+                <AiMentorFab />
+              </AppProvider>
+            </I18nProvider>
+          </SessionProvider>
+        </ErrorBoundary>
         <Toaster position="top-center" richColors />
         <Analytics />
       </body>
