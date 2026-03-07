@@ -59,22 +59,36 @@ export function BookingCheckout({
     }
   }, [paymentMethod])
 
+  const checkPayment = async () => {
+    try {
+      const result = await verifySessionPayment(bookingId)
+      if (result.status === "paid") {
+        setPolling(false)
+        onSuccess()
+        return true
+      }
+      if (result.status === "failed") {
+        setPolling(false)
+        onError("Zahlung fehlgeschlagen")
+        return true
+      }
+    } catch {
+      /* weiter pollen */
+    }
+    return false
+  }
+
+  // onComplete: Sofort prüfen, wenn Stripe Zahlung meldet (kein Warten auf Poll)
+  const handleComplete = () => {
+    checkPayment()
+  }
+
   useEffect(() => {
     if (!polling) return
     const interval = setInterval(async () => {
-      try {
-        const result = await verifySessionPayment(bookingId)
-        if (result.status === "paid") {
-          setPolling(false)
-          onSuccess()
-        } else if (result.status === "failed") {
-          setPolling(false)
-          onError("Zahlung fehlgeschlagen")
-        }
-      } catch {
-        // Continue polling
-      }
-    }, 2000)
+      const done = await checkPayment()
+      if (done) clearInterval(interval)
+    }, 1000)
     return () => clearInterval(interval)
   }, [polling, bookingId, onSuccess, onError])
 
@@ -149,9 +163,33 @@ export function BookingCheckout({
     )
   }
 
+  async function handlePaymentComplete() {
+    // Stripe onComplete: Sofort prüfen, ggf. mit Retries (API kann kurz verzögert sein)
+    for (let i = 0; i < 5; i++) {
+      try {
+        const result = await verifySessionPayment(bookingId)
+        if (result.status === "paid") {
+          setPolling(false)
+          onSuccess()
+          return
+        }
+      } catch {
+        /* weiter versuchen */
+      }
+      if (i < 4) await new Promise((r) => setTimeout(r, 500))
+    }
+    /* Polling übernimmt falls noch nicht paid */
+  }
+
   return (
     <div id="checkout" className="w-full">
-      <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret: clientSecret! }}>
+      <EmbeddedCheckoutProvider
+        stripe={stripePromise}
+        options={{
+          clientSecret: clientSecret!,
+          onComplete: () => handlePaymentComplete(),
+        }}
+      >
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>
