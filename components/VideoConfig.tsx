@@ -7,10 +7,10 @@
  */
 import dynamic from "next/dynamic"
 import { Loader2 } from "lucide-react"
-import type { DailyVideoCallProps } from "@/components/daily-video-call"
+import type { DailyVideoCallProps } from "@/components/daily-prebuilt-call"
 
 export const DailyVideoCall = dynamic<DailyVideoCallProps>(
-  () => import("@/components/daily-video-call"),
+  () => import("@/components/daily-prebuilt-call"),
   {
     ssr: false,
     loading: () => (

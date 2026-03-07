@@ -99,40 +99,9 @@ export async function GET(req: NextRequest) {
       effectiveRoomName = roomName
     }
 
-    // Create meeting token so participant can join (required for reliable connections)
-    const userName = session.user.name || (isBooker ? booking.userName : booking.expertName) || "Teilnehmer"
-    const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 2 // 2 hours
-    const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        properties: {
-          room_name: effectiveRoomName,
-          user_name: userName,
-          user_id: uid.slice(0, 36), // Daily limit: 36 chars
-          exp,
-          is_owner: true,
-        },
-      }),
-    })
-
-    if (!tokenRes.ok) {
-      const errBody = await tokenRes.text()
-      console.error("[Daily] Token creation failed:", tokenRes.status, errBody)
-      // Fallback: return room URL without token (works for public rooms)
-      return NextResponse.json({ roomUrl: baseRoomUrl })
-    }
-
-    const tokenData = (await tokenRes.json()) as { token?: string }
-    const token = tokenData?.token
-    const roomUrl = token
-      ? `${baseRoomUrl}${baseRoomUrl.includes("?") ? "&" : "?"}t=${token}`
-      : baseRoomUrl
-
-    return NextResponse.json({ roomUrl })
+    // Public rooms: join with URL only (no token). Tokens can cause connection issues.
+    // Both participants get the same room URL → same room.
+    return NextResponse.json({ roomUrl: baseRoomUrl })
   } catch (err) {
     console.error("[Daily] Room API error:", err)
     return NextResponse.json(
