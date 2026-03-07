@@ -265,6 +265,8 @@ const en = {
   "mentor.headerDescFloating": "Your personal advisor",
   "mentor.online": "Online",
   "mentor.welcome": "Welcome! Describe your project or upload a photo.",
+  "mentor.photoUploadMessage": "I have uploaded a photo of my problem. Please analyze it and give me an assessment.",
+  "mentor.declineSearch": "No thanks, I'd like to continue with the AI.",
 
   // Video / Session
   "video.error": "Error.",

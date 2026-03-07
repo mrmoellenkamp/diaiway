@@ -155,13 +155,13 @@ export function MentorChat({ variant, className }: MentorChatProps) {
 
   function handleDeclineSearch() {
     setShowProactivePrompt(false)
-    sendMessage({ text: "Nein danke, ich mochte weiter mit der KI arbeiten." })
+    sendMessage({ text: t("mentor.declineSearch") })
   }
 
   function handlePhotoUpload() {
     if (isStreaming) return
     sendMessage({
-      text: "Ich habe ein Foto von meinem Problem hochgeladen. Bitte analysiere es und gib mir eine Einschatzung.",
+      text: t("mentor.photoUploadMessage"),
     })
   }
 
