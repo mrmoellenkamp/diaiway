@@ -49,7 +49,7 @@ const de = {
   "landing.mentorDesc": "Beschreibe dein Projekt, lade Fotos hoch und erhalte eine fundierte Analyse.",
   "landing.howItWorks": "So funktioniert's",
   "landing.step1Title": "Problem beschreiben",
-  "landing.step1Desc": "Mach ein Foto oder beschreibe dein Problem. Unser AI-Guide findet den perfekten Experten.",
+  "landing.step1Desc": "Mach ein Foto oder beschreibe dein Anliegen. Unser diAIway-intelligence versucht deine Frage sofort zu beantworten oder findet den perfekten Takumi für dich.",
   "landing.step2Title": "Termin Buchen",
   "landing.step2Desc": "Starte die Video-Session völlig risikofrei. Die ersten 5 Minuten sind kostenlos, damit du prüfen kannst, ob die Chemie und die Expertise stimmen.",
   "landing.step3Title": "Sicher bezahlen",
