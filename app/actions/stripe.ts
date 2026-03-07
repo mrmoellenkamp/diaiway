@@ -30,7 +30,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
-    redirect_on_completion: "never",
+    redirect_on_completion: "if_required", // PayPal requires redirect; "never" incompatible
     payment_method_types: ["card", "paypal"],
     line_items: [
       {
@@ -71,7 +71,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
-    redirect_on_completion: "never",
+    redirect_on_completion: "if_required", // PayPal requires redirect; "never" incompatible
     payment_method_types: ["card", "paypal"],
     line_items: [
       {
