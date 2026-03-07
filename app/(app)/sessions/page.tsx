@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import useSWR from "swr"
 import { PageContainer } from "@/components/page-container"
 import { BookingCard } from "@/components/booking-card"
@@ -61,7 +62,17 @@ function LoadingSkeleton() {
 
 export default function SessionsPage() {
   const { t } = useI18n()
-  const [activeTab, setActiveTab] = useState<TabId>("active")
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const initialTab: TabId =
+    tabParam === "upcoming" || tabParam === "completed" ? tabParam : "active"
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab)
+
+  useEffect(() => {
+    if (tabParam === "upcoming" || tabParam === "completed") {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
   const { data, isLoading, mutate } = useSWR<{ bookings: BookingRecord[] }>("/api/bookings", fetcher, {
     refreshInterval: 10000, // refresh every 10s to catch live status changes
   })

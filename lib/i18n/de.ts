@@ -469,7 +469,7 @@ const de = {
   "booking.escrowNotice": "Dein Geld wird erst nach deiner Freigabe belastet. Du kannst nach der Probezeit jederzeit abbrechen.",
   "booking.chooseAppointment": "Termin wählen",
   "booking.selectedSlot": "{date} um {time} Uhr",
-  "booking.selectedSlotRange": "{start} – {end} (30 Min)",
+  "booking.selectedSlotRange": "{start} – {end} ({duration} Min)",
   "booking.noteLabel": "Nachricht an den Experten (optional)",
   "booking.notePlaceholder": "Beschreibe kurz dein Anliegen...",
   "booking.cancellationTitle": "Stornierungsbedingungen",
@@ -507,6 +507,9 @@ const de = {
   "booking.loginRequired": "Bitte zuerst anmelden.",
   "booking.networkError": "Netzwerkfehler. Bitte prüfe deine Verbindung.",
   "booking.incompleteProfile": "Das Expertenprofil ist unvollständig. Bitte wähle einen anderen Termin oder Experten.",
+  "booking.successTitle": "Buchungsanfrage gesendet",
+  "booking.successInfo": "Wir leiten deine Buchungsanfrage an {name} weiter. Er wird sich schnellstmöglich melden oder die Buchung bestätigen.",
+  "booking.successContinue": "Weiter zu Geplant",
 
   // Availability Dashboard
   "avail.title": "Meine Verfügbarkeit",
