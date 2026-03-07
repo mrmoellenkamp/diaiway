@@ -2,6 +2,8 @@
 
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
+import { sendBookingRequestEmail } from "@/lib/email"
+import { sendPushToUser } from "@/lib/push"
 
 export interface SessionCheckoutParams {
   bookingId: string
@@ -141,6 +143,54 @@ export async function verifySessionPayment(bookingId: string) {
           await onPaymentReceived(bookingId, amountTotal)
         } catch {
           /* Wallet-Update optional */
+        }
+        // E-Mail + Benachrichtigung an Takumi (falls Webhook nicht gefeuert hat)
+        if (session.metadata?.type === "booking_payment") {
+          try {
+            const fullBooking = await prisma.booking.findUnique({
+              where: { id: bookingId },
+              include: { expert: true },
+            })
+            if (fullBooking) {
+              const baseUrl =
+                process.env.NEXTAUTH_URL ||
+                (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+              const respondBase = `${baseUrl}/booking/respond/${fullBooking.id}?token=${fullBooking.statusToken}&action=confirmed`
+              await sendBookingRequestEmail({
+                to: fullBooking.expertEmail,
+                takumiName: fullBooking.expertName,
+                userName: fullBooking.userName,
+                userEmail: fullBooking.userEmail,
+                date: fullBooking.date,
+                startTime: fullBooking.startTime,
+                endTime: fullBooking.endTime,
+                price: fullBooking.price,
+                note: fullBooking.note || "",
+                acceptUrl: `${respondBase.replace("action=confirmed", "")}&action=confirmed`,
+                declineUrl: `${respondBase.replace("action=confirmed", "")}&action=declined`,
+                askUrl: `${respondBase.replace("action=confirmed", "")}&action=ask`,
+                dashboardUrl: `${baseUrl}/sessions`,
+              })
+              if (fullBooking.expert?.userId) {
+                await prisma.notification.create({
+                  data: {
+                    userId: fullBooking.expert.userId,
+                    type: "booking_request",
+                    bookingId: fullBooking.id,
+                    title: "Neue Buchungsanfrage (bezahlt)",
+                    body: `${fullBooking.userName} hat eine Session am ${fullBooking.date} von ${fullBooking.startTime}–${fullBooking.endTime} Uhr gebucht und bezahlt.`,
+                  },
+                })
+                sendPushToUser(fullBooking.expert.userId, {
+                  title: "Neue Buchung (bezahlt)",
+                  body: `${fullBooking.userName} hat am ${fullBooking.date} um ${fullBooking.startTime} Uhr gebucht.`,
+                  url: "/sessions",
+                }).catch(() => {})
+              }
+            }
+          } catch (notifyErr) {
+            console.error("[verifySessionPayment] Notification failed:", notifyErr)
+          }
         }
         return {
           status: "paid" as const,
