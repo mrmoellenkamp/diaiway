@@ -225,7 +225,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
               <Bot className="size-3.5 text-primary" />
             </div>
             <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border/30 bg-white/80 px-3 py-2.5 text-[13px] leading-relaxed text-foreground shadow-sm">
-              Willkommen! Beschreibe dein Projekt oder lade ein Foto hoch.{" "}
+              {t("mentor.welcome")}{" "}
               <span className="font-jp text-primary/30">{"匠"}</span>
             </div>
           </div>
