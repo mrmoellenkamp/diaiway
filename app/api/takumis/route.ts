@@ -41,8 +41,12 @@ export async function GET() {
     )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "DB-Fehler"
-    console.error("[diAiway] GET /api/takumis error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const stack = err instanceof Error ? err.stack : undefined
+    console.error("[diAiway] GET /api/takumis error:", message, stack)
+    return NextResponse.json(
+      { error: message, ...(process.env.NODE_ENV === "development" && stack && { stack }) },
+      { status: 500 }
+    )
   }
 }
 
