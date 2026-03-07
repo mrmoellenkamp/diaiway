@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
+import { onPaymentReceived } from "@/lib/wallet-service"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -80,15 +81,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   console.log("[Stripe Webhook] Processing checkout.session.completed for booking:", bookingId)
 
+  const amountTotal = session.amount_total ?? 0
+
   await prisma.booking.update({
     where: { id: bookingId },
     data: {
       paymentStatus: "paid",
       stripePaymentIntentId: session.payment_intent as string,
       paidAt: new Date(),
-      paidAmount: session.amount_total,
+      paidAmount: amountTotal,
     },
   })
+
+  // Wallet: Betrag in pendingBalance des Takumi parken
+  try {
+    await onPaymentReceived(bookingId, amountTotal)
+  } catch (walletErr) {
+    console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
+  }
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {

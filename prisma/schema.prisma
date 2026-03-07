@@ -44,6 +44,12 @@ enum PaymentStatus {
   failed
 }
 
+enum TransactionStatus {
+  PENDING   // Zahlung eingegangen, in Qualitätssicherung
+  COMPLETED // Nach 24h freigegeben, Takumi hat Guthaben erhalten
+  REFUNDED  // Rückerstattung an Shugyo
+}
+
 // ─── Models ────────────────────────────────────────────────────────────────
 
 model User {
@@ -58,15 +64,21 @@ model User {
   favorites        String[]   // array of Expert IDs
   resetToken       String?
   resetTokenExpiry DateTime?
+
+  // Wallet (für Takumis: verfügbares Guthaben / in Auszahlung)
+  balance          Int       @default(0)  // EUR cents, auszahlbar
+  pendingBalance   Int       @default(0)  // EUR cents, in Qualitätssicherung
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
   // Relations
-  expert            Expert?
-  bookings          Booking[]         @relation("UserBookings")
-  availability      Availability?
-  notifications     Notification[]
-  pushSubscriptions PushSubscription[]
+  expert              Expert?
+  bookings            Booking[]         @relation("UserBookings")
+  availability        Availability?
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  transactionsPaid   Transaction[]     @relation("UserPaidTransactions")
 }
 
 model PushSubscription {
@@ -115,9 +127,13 @@ model Expert {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // Stripe Connect für Payout-on-Demand (Takumi muss verknüpft haben)
+  stripeConnectAccountId String?
+
   // Relations
-  bookings Booking[]
-  reviews  Review[]
+  bookings    Booking[]
+  reviews     Review[]
+  transactions Transaction[] @relation("ExpertTransactions")
 }
 
 model Booking {
@@ -165,6 +181,8 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  transaction Transaction?
+
   @@index([expertId, date, status])
   @@index([userId])
   @@index([statusToken])
@@ -206,4 +224,27 @@ model Notification {
 
   @@index([userId])
   @@index([userId, read])
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  bookingId String            @unique
+  booking   Booking           @relation(fields: [bookingId], references: [id])
+  expertId  String
+  expert    Expert            @relation("ExpertTransactions", fields: [expertId], references: [id])
+  userId    String            // Shugyo (Zahler)
+  user      User              @relation("UserPaidTransactions", fields: [userId], references: [id])
+  totalAmount Int             // EUR cents (Bruttobetrag)
+  platformFee  Int            // EUR cents (15 % Provision)
+  netPayout   Int             // EUR cents (für Takumi)
+  status    TransactionStatus @default(PENDING)
+  invoicePdfUrl    String?    // Rechnung diaiway → Shugyo
+  creditNotePdfUrl String?    // Gutschrift diaiway → Takumi
+  completedAt      DateTime?  // Freigabezeitpunkt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([expertId])
+  @@index([userId])
+  @@index([status])
 }
