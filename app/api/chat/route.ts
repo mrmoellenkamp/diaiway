@@ -6,6 +6,7 @@ import {
 } from "ai"
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -46,6 +47,15 @@ const USER_CONTEXT: Record<string, string> = {
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req)
+  const rl = rateLimit(`chat:ip:${ip}`, { limit: 30, windowSec: 60 })
+  if (!rl.success) {
+    return Response.json(
+      { error: "Zu viele Anfragen. Bitte warte kurz." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+    )
+  }
+
   const keyPresent = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!keyPresent) {
     return Response.json(

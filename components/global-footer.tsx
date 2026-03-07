@@ -28,7 +28,7 @@ export function GlobalFooter() {
 
   return (
     <footer
-      className={`w-full py-4 text-center ${hasBottomNav ? "pb-24" : "pb-6"}`}
+      className={`w-full py-4 text-center ${hasBottomNav ? "pb-24" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"}`}
       aria-label="Legal and support links"
     >
       <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground/60">

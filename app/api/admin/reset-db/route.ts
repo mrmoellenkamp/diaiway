@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export const runtime = "nodejs"
@@ -7,8 +8,13 @@ export const runtime = "nodejs"
  * POST /api/admin/reset-db
  * Truncates all application data tables in the correct order
  * (respecting foreign key constraints).
+ * Requires admin session.
  */
 export async function POST() {
+  const session = await auth()
+  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
+    return NextResponse.json({ error: "Nicht autorisiert." }, { status: 401 })
+  }
   try {
     // Order matters: delete children before parents
     const [reviews, bookings, availability, experts, users] = await prisma.$transaction([

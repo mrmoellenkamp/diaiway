@@ -55,6 +55,10 @@ export default authMiddleware((req) => {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
   response.headers.set("X-XSS-Protection", "1; mode=block")
   response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.daily.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.daily.co https://*.googleapis.com wss:; frame-src 'self' https://js.stripe.com https://*.daily.co; font-src 'self';"
+  )
+  response.headers.set(
     "Permissions-Policy",
     // Allow camera + microphone for video calls; deny everything else
     "camera=(self), microphone=(self), geolocation=(), payment=(self)"
