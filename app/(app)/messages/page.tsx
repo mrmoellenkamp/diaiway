@@ -205,7 +205,7 @@ export default function MessagesPage() {
                     onClick={() => handleBookingAction(n.bookingId!, "confirmed", n.id)}
                     disabled={actingId === n.id}
                   >
-                    {actingId === n.id ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle className="size-3" />}
+                    {actingId === n.id ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
                     {t("messages.bookingConfirm")}
                   </Button>
                   <Button
@@ -248,8 +248,8 @@ export default function MessagesPage() {
         </div>
       ) : dmThreads.length === 0 ? null : (
         <div className="flex flex-col gap-1">
-          {dmThreads.map((t) => {
-            const lastMsg = t.messages[t.messages.length - 1]
+          {dmThreads.filter((t) => t.messages.length > 0).map((t) => {
+            const lastMsg = t.messages[t.messages.length - 1]!
             const time = new Date(lastMsg.timestamp)
             return (
               <button
