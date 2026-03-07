@@ -36,6 +36,18 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 |----------|--------------|
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API Key |
 
+## Content Safety (Bild-Moderation)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key (SafeSearch). Prüft hochgeladene Bilder auf explizite Inhalte. Ohne Key wird die Prüfung übersprungen. |
+
+## Content Safety (Bild-Moderation)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key (SafeSearch). Prüft hochgeladene Bilder auf explizite Inhalte. Ohne Key wird die Prüfung übersprungen. |
+
 ## Daily.co (Video)
 
 | Variable | Beschreibung |
