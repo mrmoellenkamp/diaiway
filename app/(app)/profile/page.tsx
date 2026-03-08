@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ImageUpload } from "@/components/image-upload"
 import { Switch } from "@/components/ui/switch"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
@@ -279,20 +280,21 @@ export default function ProfilePage() {
             </button>
 
             {isEditingImage && (
-              <div className="flex items-center gap-2 w-full max-w-xs">
-                <Input
+              <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                <ImageUpload
                   value={editImage}
-                  onChange={(e) => { setEditImage(e.target.value); setHasUnsavedChanges(true) }}
-                  placeholder={t("profile.imageUrlPlaceholder")}
-                  className="h-8 text-xs"
+                  onChange={(url) => { setEditImage(url); setHasUnsavedChanges(true) }}
+                  folder="profiles"
+                  variant="avatar"
                 />
                 <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7 shrink-0"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
                   onClick={() => { setIsEditingImage(false); setEditImage("") }}
                 >
-                  <X className="size-3.5 text-muted-foreground" />
+                  <X className="size-3.5" />
+                  {t("common.cancel")}
                 </Button>
               </div>
             )}
