@@ -52,7 +52,12 @@ export async function POST(request: NextRequest) {
     }
 
     const contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
-    const blob = await put(filename, buffer, { access: "public", contentType })
+
+    const blobPromise = put(filename, buffer, { access: "public", contentType })
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Upload timeout")), 25000)
+    )
+    const blob = await Promise.race([blobPromise, timeoutPromise])
 
     return NextResponse.json({ url: blob.url })
   } catch (error) {
