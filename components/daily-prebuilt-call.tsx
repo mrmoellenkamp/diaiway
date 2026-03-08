@@ -3,6 +3,7 @@
 /**
  * Daily Prebuilt — fertiges Video-UI von Daily, oft zuverlässiger als Custom.
  * Verwendet createFrame() für ein eingebettetes iframe.
+ * Kamera-Wechsel (Front/Rück) via customTrayButtons + cycleCamera() für Mobilgeräte.
  */
 
 import { useEffect, useRef } from "react"
@@ -21,6 +22,12 @@ export type DailyVideoCallProps = DailyPrebuiltCallProps
 /** diaiway Primärfarbe (accent aus globals.css) */
 const ACCENT_HEX = "#22c55e"
 
+/** Icon-URL für Kamera-Wechsel (Front/Rück) auf Mobilgeräten */
+function getCameraSwitchIconUrl(): string {
+  if (typeof window === "undefined") return ""
+  return `${window.location.origin}/icons/camera-switch.svg`
+}
+
 export default function DailyPrebuiltCall({
   roomUrl,
 }: DailyPrebuiltCallProps) {
@@ -29,10 +36,12 @@ export default function DailyPrebuiltCall({
   useEffect(() => {
     if (!roomUrl || !containerRef.current) return
 
-    let frame: { destroy: () => void } | null = null
+    let frame: { destroy: () => void; on: (e: string, h: (ev: { button_id: string }) => void) => void; cycleCamera: (opts: { preferDifferentFacingMode: boolean }) => Promise<unknown> } | null = null
 
     async function init() {
       const Daily = (await import("@daily-co/daily-js")).default
+      const iconUrl = getCameraSwitchIconUrl()
+
       frame = Daily.createFrame(containerRef.current!, {
         url: roomUrl,
         lang: "de",
@@ -44,7 +53,28 @@ export default function DailyPrebuiltCall({
           borderRadius: "0",
         },
         showLeaveButton: false, // Wir nutzen eigene End-Call-Steuerung
+        ...(iconUrl
+          ? {
+              customTrayButtons: {
+                cameraSwitch: {
+                  iconPath: iconUrl,
+                  iconPathDarkMode: iconUrl,
+                  label: "Kamera wechseln",
+                  tooltip: "Front- und Rückkamera wechseln (falls verfügbar)",
+                },
+              },
+            }
+          : {}),
+      }) as typeof frame
+
+      frame.on("custom-button-click", (ev: { button_id: string }) => {
+        if (ev.button_id === "cameraSwitch") {
+          frame?.cycleCamera?.({ preferDifferentFacingMode: true }).catch((err) =>
+            console.warn("[Daily] Kamera-Wechsel:", err)
+          )
+        }
       })
+
       await frame.join()
     }
 
