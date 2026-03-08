@@ -40,6 +40,8 @@ export async function GET(
 
   return NextResponse.json({
     id: booking.id,
+    userId: booking.userId,
+    expertId: booking.expertId,
     userName: booking.userName,
     userEmail: booking.userEmail,
     expertName: booking.expertName,

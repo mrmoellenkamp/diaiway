@@ -259,6 +259,8 @@ const en = {
   "profile.refundWalletDesc": "Amount will be credited to your wallet for future bookings.",
   "profile.refundPreferenceSaved": "Setting saved.",
   "profile.error": "Error saving.",
+  "profile.memberSince": "Member since {date}",
+  "profile.userProfileHint": "Shugyo profiles show basic info only.",
 
   // Finances
   "finances.title": "Finances",

@@ -11,6 +11,8 @@ type Phase = "loading" | "confirm" | "form" | "done" | "error"
 
 interface BookingInfo {
   id: string
+  userId?: string
+  expertId?: string
   userName: string
   userEmail: string
   expertName: string
@@ -151,12 +153,25 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
             <>
               <div className="bg-gradient-to-r from-emerald-900 to-emerald-700 px-6 py-5">
                 <h2 className="text-lg font-bold text-white">Buchungsanfrage</h2>
-                <p className="text-xs text-emerald-100 mt-0.5">von {booking.userName}</p>
+                <p className="text-xs text-emerald-100 mt-0.5">
+                  von {booking.userId ? (
+                    <Link href={`/user/${booking.userId}`} className="underline hover:text-emerald-50">
+                      {booking.userName}
+                    </Link>
+                  ) : (
+                    booking.userName
+                  )}
+                </p>
               </div>
               <div className="p-6 flex flex-col gap-5">
                 {/* Details */}
                 <div className="rounded-xl bg-stone-50 border border-stone-100 p-4 flex flex-col gap-2">
-                  <Row label="Nutzer" value={`${booking.userName} (${booking.userEmail})`} />
+                  <Row
+                    label="Nutzer"
+                    value={`${booking.userName} (${booking.userEmail})`}
+                    userNameLink={booking.userId ? `/user/${booking.userId}` : undefined}
+                    userName={booking.userName}
+                  />
                   <Row label="Datum" value={booking.date} />
                   <Row label="Zeit" value={`${booking.startTime}–${booking.endTime} Uhr`} />
                   <Row label="Preis" value={`${booking.price} €`} />
@@ -200,7 +215,15 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
           {phase === "form" && booking && (
             <>
               <div className="bg-gradient-to-r from-stone-800 to-stone-700 px-6 py-5">
-                <h2 className="text-lg font-bold text-white">Rückfrage an {booking.userName}</h2>
+                <h2 className="text-lg font-bold text-white">
+                  Rückfrage an {booking.userId ? (
+                    <Link href={`/user/${booking.userId}`} className="underline hover:text-stone-200">
+                      {booking.userName}
+                    </Link>
+                  ) : (
+                    booking.userName
+                  )}
+                </h2>
                 <p className="text-xs text-stone-300 mt-0.5">
                   Deine Nachricht wird per E-Mail zugestellt.
                 </p>
@@ -244,11 +267,33 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  userNameLink,
+  userName,
+}: {
+  label: string
+  value: string
+  userNameLink?: string
+  userName?: string
+}) {
+  let content: React.ReactNode = value
+  if (userNameLink && userName && value.startsWith(userName)) {
+    const rest = value.slice(userName.length)
+    content = (
+      <>
+        <Link href={userNameLink} className="text-emerald-700 underline hover:text-emerald-800">
+          {userName}
+        </Link>
+        {rest}
+      </>
+    )
+  }
   return (
     <div className="flex gap-2 text-sm">
       <span className="font-medium text-stone-700 shrink-0 w-24">{label}:</span>
-      <span className="text-stone-600">{value}</span>
+      <span className="text-stone-600">{content}</span>
     </div>
   )
 }

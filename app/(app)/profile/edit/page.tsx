@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -42,6 +43,7 @@ const EMPTY_SLOTS: Slots = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
 
 interface Booking {
   id: string
+  userId?: string
   userName: string
   date: string
   startTime: string
@@ -828,7 +830,13 @@ export default function EditProfilePage() {
                       {pendingBookings.map((b) => (
                         <div key={b.id} className="flex items-center justify-between rounded-lg border border-amber-200 bg-card p-3">
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-medium text-foreground">{b.userName}</span>
+                            {b.userId ? (
+                              <Link href={`/user/${b.userId}`} className="text-sm font-medium text-foreground underline-offset-2 hover:underline">
+                                {b.userName}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-medium text-foreground">{b.userName}</span>
+                            )}
                             <span className="text-xs text-muted-foreground">
                               {b.date} / {b.startTime} - {b.endTime}
                             </span>
@@ -869,7 +877,13 @@ export default function EditProfilePage() {
                       {confirmedBookings.map((b) => (
                         <div key={b.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                           <div className="flex flex-col">
-                            <span className="text-xs font-medium text-foreground">{b.userName}</span>
+                            {b.userId ? (
+                              <Link href={`/user/${b.userId}`} className="text-xs font-medium text-foreground underline-offset-2 hover:underline">
+                                {b.userName}
+                              </Link>
+                            ) : (
+                              <span className="text-xs font-medium text-foreground">{b.userName}</span>
+                            )}
                             <span className="text-[11px] text-muted-foreground">{b.date} / {b.startTime}-{b.endTime}</span>
                           </div>
                           <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/5 text-primary">

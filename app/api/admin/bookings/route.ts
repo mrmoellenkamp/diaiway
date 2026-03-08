@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        userId: true,
+        expertId: true,
         userName: true,
         userEmail: true,
         expertName: true,

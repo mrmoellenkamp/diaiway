@@ -68,7 +68,11 @@ export default function MessagesPage() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">{thread.takumiName}</p>
+            <p className="text-sm font-semibold text-foreground">
+              <Link href={`/takumi/${thread.takumiId}`} className="underline-offset-2 hover:underline">
+                {thread.takumiName}
+              </Link>
+            </p>
             <p className="text-[11px] text-muted-foreground">{thread.subcategory}</p>
           </div>
           <Button asChild size="sm" variant="outline" className="h-8 rounded-lg text-xs">
@@ -253,10 +257,13 @@ export default function MessagesPage() {
             const lastMsg = t.messages[t.messages.length - 1]!
             const time = new Date(lastMsg.timestamp)
             return (
-              <button
+              <div
                 key={t.takumiId}
+                role="button"
+                tabIndex={0}
                 onClick={() => setActiveThread(t.takumiId)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/50"
+                onKeyDown={(e) => e.key === "Enter" && setActiveThread(t.takumiId)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted/50 cursor-pointer"
               >
                 <div className="relative">
                   <Avatar className="size-11 border border-primary/10">
@@ -272,8 +279,14 @@ export default function MessagesPage() {
                 </div>
                 <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{t.takumiName}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <Link
+                      href={`/takumi/${t.takumiId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-semibold text-foreground underline-offset-2 hover:underline truncate"
+                    >
+                      {t.takumiName}
+                    </Link>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
                       {formatTimeBerlin(time)}
                     </span>
                   </div>
@@ -282,7 +295,7 @@ export default function MessagesPage() {
                     {lastMsg.text}
                   </p>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>

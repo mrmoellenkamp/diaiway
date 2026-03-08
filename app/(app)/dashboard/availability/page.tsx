@@ -38,6 +38,7 @@ const EMPTY_SLOTS: Slots = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
 
 interface Booking {
   id: string
+  userId?: string
   userName: string
   date: string
   startTime: string
@@ -424,7 +425,15 @@ export default function AvailabilityPage() {
                     className="flex items-center justify-between rounded-lg border border-amber-200/60 bg-card p-3"
                   >
                     <div>
-                      <p className="text-sm font-medium">{b.userName}</p>
+                      <p className="text-sm font-medium">
+                        {b.userId ? (
+                          <Link href={`/user/${b.userId}`} className="underline-offset-2 hover:underline">
+                            {b.userName}
+                          </Link>
+                        ) : (
+                          b.userName
+                        )}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDisplay(b.date)} · {b.startTime}–{b.endTime}
                       </p>
@@ -720,7 +729,15 @@ export default function AvailabilityPage() {
                                   className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2"
                                 >
                                   <div className="flex-1 min-w-0">
-                                    <p className="truncate text-xs font-semibold">{b.userName}</p>
+                                    <p className="truncate text-xs font-semibold">
+                                      {b.userId ? (
+                                        <Link href={`/user/${b.userId}`} className="underline-offset-2 hover:underline">
+                                          {b.userName}
+                                        </Link>
+                                      ) : (
+                                        b.userName
+                                      )}
+                                    </p>
                                     <p className="text-[11px] text-muted-foreground tabular-nums">
                                       {b.startTime} – {b.endTime}
                                     </p>
@@ -1009,7 +1026,15 @@ export default function AvailabilityPage() {
                     className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2"
                   >
                     <div>
-                      <p className="text-xs font-medium">{b.userName}</p>
+                      <p className="text-xs font-medium">
+                        {b.userId ? (
+                          <Link href={`/user/${b.userId}`} className="underline-offset-2 hover:underline">
+                            {b.userName}
+                          </Link>
+                        ) : (
+                          b.userName
+                        )}
+                      </p>
                       <p className="text-[11px] text-muted-foreground">
                         {formatDisplay(b.date)} · {b.startTime}–{b.endTime}
                       </p>

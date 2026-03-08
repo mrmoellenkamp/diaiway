@@ -102,6 +102,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        userId: true,
+        expertId: true,
         userName: true,
         expertName: true,
         date: true,
