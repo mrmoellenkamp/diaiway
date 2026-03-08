@@ -30,6 +30,11 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 | `STRIPE_WEBHOOK_SECRET` | Webhook-Signatur (für `/api/webhooks/stripe`) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Publishable Key (Client) |
 
+**Stripe Webhook Events** (im Dashboard konfigurieren):
+- `checkout.session.completed`
+- `payment_intent.amount_capturable_updated` (Fallback bei Hold & Capture)
+- `payment_intent.payment_failed`
+
 ## AI (diAIway intelligence)
 
 | Variable | Beschreibung |
@@ -42,12 +47,12 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 |----------|--------------|
 | `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für: Pre-Check vor Daily-Join (Shugyo-Bild), Live-Monitoring während des Calls. Ohne Key wird die Prüfung übersprungen. |
 
-## Daily.co (Video)
+## Daily.co (Video & Voice)
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `DAILY_API_KEY` | Daily.co API Key |
-| `NEXT_PUBLIC_DAILY_DOMAIN` | z.B. `https://diaiway.daily.co` |
+| `DAILY_API_KEY` | Daily.co API Key (Raum-Erstellung) |
+| `NEXT_PUBLIC_DAILY_DOMAIN` | z.B. `https://diaiway.daily.co` (für Video- und Voice-Calls) |
 
 ## Vercel Blob
 

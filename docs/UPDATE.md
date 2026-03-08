@@ -31,8 +31,8 @@ Bei fehlenden i18n-Keys in `en.ts` oder `es.ts` schlägt der Check fehl.
 
 ## Checkliste vor Release
 
-- [ ] README: Features, Tech-Stack, Schnellstart prüfen
-- [ ] docs/ENV.md: Alle genutzten Variablen dokumentiert
+- [ ] README: Features (Voice-only, Handshake, Kategorien), Tech-Stack, Schnellstart prüfen
+- [ ] docs/ENV.md: Alle genutzten Variablen, Stripe Webhook-Events dokumentiert
 - [ ] .env.example: Aktuell und ohne echte Secrets
-- [ ] docs/ARCHITECTURE.md: API-Routen, Abläufe aktuell
+- [ ] docs/ARCHITECTURE.md: API-Routen, CallType, Abläufe, Stripe Hold & Capture aktuell
 - [ ] "Letzte Aktualisierung" in README anpassen
