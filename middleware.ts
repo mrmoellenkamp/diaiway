@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 import { authMiddleware } from "@/lib/auth-edge"
 
 export default authMiddleware((req) => {
+  // CORS: OPTIONS (Preflight) darf nicht mit 307 redirected werden – sonst Fehler "Preflight response is not successful"
+  if (req.method === "OPTIONS") {
+    return NextResponse.next()
+  }
+
   const { pathname } = req.nextUrl
   const token = req.auth
   const isLoggedIn = !!token?.user
