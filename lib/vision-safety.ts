@@ -36,6 +36,10 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
   if (!apiKey?.trim()) return { safe: true }
 
+  const timeoutMs = 8000
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
   try {
     const base64 = buffer.toString("base64")
     const res = await fetch(`${VISION_API}?key=${apiKey}`, {
@@ -47,7 +51,9 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
           features: [{ type: "SAFE_SEARCH_DETECTION" }],
         }],
       }),
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
     if (!res.ok) {
       console.error("[Vision] API error:", res.status, await res.text())
       return { safe: true }
@@ -58,6 +64,7 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
     const result = checkAnnotation(annotation)
     return { safe: result.safe, reason: result.reason }
   } catch (err) {
+    clearTimeout(timeoutId)
     console.error("[Vision] Safety check failed:", err)
     return { safe: true }
   }
@@ -67,6 +74,10 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
 export async function checkImageSafetyFromBase64(base64: string): Promise<SafetyCheckResult> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
   if (!apiKey?.trim()) return { safe: true }
+
+  const timeoutMs = 8000
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const res = await fetch(`${VISION_API}?key=${apiKey}`, {
@@ -78,7 +89,9 @@ export async function checkImageSafetyFromBase64(base64: string): Promise<Safety
           features: [{ type: "SAFE_SEARCH_DETECTION" }],
         }],
       }),
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
     if (!res.ok) {
       console.error("[Vision] API error:", res.status, await res.text())
       return { safe: true }
@@ -88,6 +101,7 @@ export async function checkImageSafetyFromBase64(base64: string): Promise<Safety
     if (!annotation) return { safe: true }
     return checkAnnotation(annotation)
   } catch (err) {
+    clearTimeout(timeoutId)
     console.error("[Vision] Safety check failed:", err)
     return { safe: true }
   }
