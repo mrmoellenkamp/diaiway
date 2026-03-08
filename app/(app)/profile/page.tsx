@@ -21,6 +21,7 @@ import {
   Calendar,
   CalendarClock,
   CreditCard,
+  FileText,
   Settings,
   LogOut,
   ChevronRight,
@@ -240,12 +241,13 @@ export default function ProfilePage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Load full profile + booking stats + takumi isLive
+  // Shugyo: use view=shugyo for spent/sessions. Takumi: use view=takumi for earnings/sessions.
   useEffect(() => {
     async function loadProfile() {
       try {
         const fetches: Promise<Response>[] = [
           fetch("/api/user/profile"),
-          fetch("/api/bookings"),
+          fetch(`/api/bookings?view=${isTakumi ? "takumi" : "shugyo"}`),
         ]
         if (isTakumi) fetches.push(fetch("/api/user/takumi-profile"))
         const [profileRes, bookingsRes, takumiRes] = await Promise.all(fetches)
@@ -653,10 +655,8 @@ export default function ProfilePage() {
               {isTakumi && (
                 <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
               )}
-              <MenuItem icon={CreditCard} label={t("profile.payments")} />
-              {isTakumi && (
-                <MenuItem icon={BarChart3} label={t("profile.statistics")} />
-              )}
+              <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
+              <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
               <MenuItem icon={Settings} label={t("common.settings")} />
             </CardContent>
           </Card>

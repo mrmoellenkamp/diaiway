@@ -77,7 +77,7 @@ export function AiMentorFab() {
             <X className="size-5" />
           </button>
 
-          <MentorChat variant="floating" className="h-[520px]" />
+          <MentorChat variant="floating" className="h-[340px]" />
         </div>
       )}
     </>
