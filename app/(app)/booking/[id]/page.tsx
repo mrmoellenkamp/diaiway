@@ -224,6 +224,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 setStep("form")
               }}
             />
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              {t("booking.redirectFallback")}{" "}
+              <Link href="/sessions?tab=upcoming" className="font-medium text-primary underline underline-offset-2">
+                {t("booking.successContinue")}
+              </Link>
+            </p>
           </div>
         ) : (
           <>

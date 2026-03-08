@@ -634,6 +634,7 @@ const es = {
   "booking.successTitle": "Solicitud de reserva enviada",
   "booking.successInfo": "Estamos reenviando tu solicitud de reserva a {name}. Se pondrá en contacto contigo lo antes posible o confirmará la reserva.",
   "booking.successContinue": "Continuar a Planificadas",
+  "booking.redirectFallback": "¿La redirección no funciona?",
 
   // Availability Dashboard
   "avail.title": "Mi disponibilidad",
