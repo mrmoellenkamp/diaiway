@@ -47,7 +47,7 @@ interface Stats {
 }
 
 interface RecentBooking {
-  id: string; userName: string; expertName: string; date: string
+  id: string; userId?: string; expertId?: string; userName: string; expertName: string; date: string
   startTime: string; status: string; price: number; paymentStatus: string
   createdAt: string; cancelledBy: string | null
 }
@@ -67,7 +67,7 @@ interface AdminUser {
 }
 
 interface AdminBooking {
-  id: string; userName: string; userEmail: string; expertName: string
+  id: string; userId?: string; expertId?: string; userName: string; userEmail: string; expertName: string
   date: string; startTime: string; endTime: string; status: string
   price: number; paymentStatus: string; paidAmount: number | null
   stripePaymentIntentId: string | null; cancelledBy: string | null
@@ -285,7 +285,17 @@ function OverviewTab({ stats }: { stats: Stats }) {
             <div key={b.id} className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-foreground truncate">
-                  {b.userName} → {b.expertName}
+                  {b.userId ? (
+                    <Link href={`/user/${b.userId}`} className="underline-offset-2 hover:underline">{b.userName}</Link>
+                  ) : (
+                    b.userName
+                  )}{" "}
+                  →{" "}
+                  {b.expertId ? (
+                    <Link href={`/takumi/${b.expertId}`} className="underline-offset-2 hover:underline">{b.expertName}</Link>
+                  ) : (
+                    b.expertName
+                  )}
                 </p>
                 <p className="text-[11px] text-muted-foreground">{b.date} · {b.startTime}</p>
               </div>
@@ -548,8 +558,21 @@ function BookingsTab() {
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColor(b.status)}`}>{b.status}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColor(b.paymentStatus)}`}>{b.paymentStatus}</span>
                   </div>
-                  <p className="text-sm font-semibold text-foreground">{b.userName}</p>
-                  <p className="text-xs text-muted-foreground">→ {b.expertName}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {b.userId ? (
+                      <Link href={`/user/${b.userId}`} className="underline-offset-2 hover:underline">{b.userName}</Link>
+                    ) : (
+                      b.userName
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    →{" "}
+                    {b.expertId ? (
+                      <Link href={`/takumi/${b.expertId}`} className="underline-offset-2 hover:underline">{b.expertName}</Link>
+                    ) : (
+                      b.expertName
+                    )}
+                  </p>
                   <p className="text-[11px] text-muted-foreground mt-1">{b.date} · {b.startTime}–{b.endTime}</p>
                   {b.cancelledBy && (
                     <p className="text-[11px] text-red-500 mt-0.5">Storniert durch: {b.cancelledBy}

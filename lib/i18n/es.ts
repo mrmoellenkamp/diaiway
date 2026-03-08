@@ -259,6 +259,8 @@ const es = {
   "profile.refundWalletDesc": "El importe se acreditará en tu monedero para futuras reservas.",
   "profile.refundPreferenceSaved": "Configuración guardada.",
   "profile.error": "Error al guardar.",
+  "profile.memberSince": "Miembro desde {date}",
+  "profile.userProfileHint": "Los perfiles Shugyo muestran solo información básica.",
 
   // Finances
   "finances.title": "Finanzas",

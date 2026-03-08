@@ -147,9 +147,25 @@ export function BookingCard({
 
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-semibold text-foreground">
-              {isExpertView ? booking.userName : booking.takumiName}
-            </span>
+            {isExpertView && booking.userId ? (
+              <Link
+                href={`/user/${booking.userId}`}
+                className="truncate font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                {booking.userName}
+              </Link>
+            ) : (booking.expertId || booking.takumiId) ? (
+              <Link
+                href={`/takumi/${booking.expertId || booking.takumiId}`}
+                className="truncate font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                {booking.takumiName}
+              </Link>
+            ) : (
+              <span className="truncate font-semibold text-foreground">
+                {isExpertView ? booking.userName : booking.takumiName}
+              </span>
+            )}
             <Badge variant="outline" className={`shrink-0 text-[10px] ${status.className}`}>
               {isLive && (
                 <span className="mr-1 inline-block size-1.5 animate-pulse rounded-full bg-current" />

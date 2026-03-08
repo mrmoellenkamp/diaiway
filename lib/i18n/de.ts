@@ -259,6 +259,8 @@ const de = {
   "profile.refundWalletDesc": "Betrag wird deinem Wallet gutgeschrieben und kann für zukünftige Buchungen genutzt werden.",
   "profile.refundPreferenceSaved": "Einstellung gespeichert.",
   "profile.error": "Fehler beim Speichern.",
+  "profile.memberSince": "Mitglied seit {date}",
+  "profile.userProfileHint": "Shugyo-Profile zeigen nur Basisinfos.",
 
   // Finances
   "finances.title": "Finanzen",
