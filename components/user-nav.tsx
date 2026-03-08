@@ -69,6 +69,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
 
   const userName = session.user.name || t("common.profile")
   const userRole = (session.user as { role?: string }).role
+  const appRole = (session.user as { appRole?: string }).appRole
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -101,7 +102,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           <User className="size-4 text-muted-foreground" />
           {t("nav.myProfile")}
         </Link>
-        {(userRole === "takumi" || userRole === "admin") && (
+        {(appRole === "takumi" || userRole === "admin") && (
           <Link
             href="/dashboard/availability"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
@@ -161,7 +162,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             {t("nav.myProfile")}
           </Link>
         </DropdownMenuItem>
-        {(userRole === "takumi" || userRole === "admin") && (
+        {(appRole === "takumi" || userRole === "admin") && (
           <DropdownMenuItem asChild>
             <Link href="/dashboard/availability" className="flex items-center gap-2">
               <CalendarClock className="size-4" />

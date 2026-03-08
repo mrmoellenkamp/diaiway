@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import {
   Calendar,
+  CalendarClock,
   CreditCard,
   Settings,
   LogOut,
@@ -649,6 +650,9 @@ export default function ProfilePage() {
             <CardContent className="flex flex-col p-0 divide-y divide-border">
               <MenuItem icon={Edit3} label={t("profile.editProfile")} href="/profile/edit" accent />
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
+              {isTakumi && (
+                <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
+              )}
               <MenuItem icon={CreditCard} label={t("profile.payments")} />
               {isTakumi && (
                 <MenuItem icon={BarChart3} label={t("profile.statistics")} />
