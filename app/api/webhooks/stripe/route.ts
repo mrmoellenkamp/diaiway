@@ -49,6 +49,14 @@ export async function POST(req: Request) {
         break
       }
 
+      case "payment_intent.amount_capturable_updated": {
+        // Fallback bei manual capture: checkout.session.completed kann payment_status=unpaid haben;
+        // dieses Event feuert, wenn die Zahlung autorisiert ist
+        const pi = event.data.object as Stripe.PaymentIntent
+        await handleAmountCapturableUpdated(pi)
+        break
+      }
+
       case "payment_intent.succeeded":
         // Hauptfluss über checkout.session.completed; hier keine Aktion nötig
         break
@@ -77,7 +85,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
+  const existing = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { paymentStatus: true },
+  })
+  if (existing?.paymentStatus === "paid") return // Idempotenz
 
+  // Bei manual capture: payment_status = "unpaid" (autorisiert, nicht eingezogen) – trotzdem erfüllen
   const amountTotal = session.amount_total ?? 0
 
   await prisma.booking.update({
@@ -100,6 +114,45 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // Bei Vorauszahlung (booking_payment): E-Mail + Notification an Takumi senden
   const paymentType = session.metadata?.type
   if (paymentType === "booking_payment") {
+    try {
+      await notifyTakumiAfterPayment(bookingId)
+    } catch (notifyErr) {
+      console.error("[Stripe Webhook] Booking notification failed:", notifyErr)
+    }
+  }
+}
+
+/** Fallback für manual capture: Zahlung autorisiert, noch nicht eingezogen */
+async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
+  if (pi.status !== "requires_capture") return
+
+  const bookingId = pi.metadata?.bookingId
+  if (!bookingId) return
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { paymentStatus: true },
+  })
+  if (!booking || booking.paymentStatus === "paid") return
+
+  const amountTotal = pi.amount ?? 0
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      paymentStatus: "paid",
+      stripePaymentIntentId: pi.id,
+      paidAt: new Date(),
+      paidAmount: amountTotal,
+    },
+  })
+
+  try {
+    await onPaymentReceived(bookingId, amountTotal)
+  } catch (walletErr) {
+    console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
+  }
+
+  if (pi.metadata?.type === "booking_payment") {
     try {
       await notifyTakumiAfterPayment(bookingId)
     } catch (notifyErr) {

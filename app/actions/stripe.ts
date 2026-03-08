@@ -60,6 +60,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     mode: "payment",
     payment_intent_data: {
       capture_method: "manual", // Hold & Capture: Geld nur reservieren, erst bei Leistung einziehen
+      metadata: { bookingId, type: "booking_payment" }, // Für amount_capturable_updated-Webhook
     },
     metadata: { bookingId, type: "booking_payment" },
   })
@@ -107,6 +108,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
     mode: "payment",
     payment_intent_data: {
       capture_method: "manual", // Hold & Capture
+      metadata: { bookingId, type: "session_payment" }, // Für amount_capturable_updated-Webhook
     },
     metadata: { bookingId, type: "session_payment" },
   })
@@ -143,10 +145,14 @@ export async function verifySessionPayment(bookingId: string) {
   }
 
   // Bei pending: Stripe direkt prüfen (Webhook kann verzögert sein)
+  // Bei manual capture: payment_status = "unpaid" (nur autorisiert, noch nicht eingezogen)
   if (booking.paymentStatus === "pending" && booking.stripeSessionId) {
     try {
       const session = await stripe.checkout.sessions.retrieve(booking.stripeSessionId)
-      if (session.status === "complete" && session.payment_status === "paid") {
+      const isPaidOrAuthorized =
+        session.status === "complete" &&
+        (session.payment_status === "paid" || session.payment_status === "unpaid")
+      if (isPaidOrAuthorized) {
         const amountTotal = session.amount_total ?? 0
         await prisma.booking.update({
           where: { id: bookingId },
