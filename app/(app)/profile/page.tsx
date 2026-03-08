@@ -230,6 +230,8 @@ export default function ProfilePage() {
   const [dbImage, setDbImage] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
   const [refundPreference, setRefundPreference] = useState<"payout" | "wallet">("payout")
+  const [skillLevel, setSkillLevel] = useState<string | null>(null)
+  const [projectCount, setProjectCount] = useState(0)
   const [completedSessions, setCompletedSessions] = useState(0)
   const [totalSpent, setTotalSpent] = useState(0)
 
@@ -240,6 +242,7 @@ export default function ProfilePage() {
   const [isEditingImage, setIsEditingImage] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [savingSkill, setSavingSkill] = useState(false)
 
   // Load full profile + booking stats + takumi isLive
   // Shugyo: use view=shugyo for spent/sessions. Takumi: use view=takumi for earnings/sessions.
@@ -251,7 +254,8 @@ export default function ProfilePage() {
           fetch(`/api/bookings?view=${isTakumi ? "takumi" : "shugyo"}`),
         ]
         if (isTakumi) fetches.push(fetch("/api/user/takumi-profile"))
-        const [profileRes, bookingsRes, takumiRes] = await Promise.all(fetches)
+        else fetches.push(fetch("/api/shugyo/projects"))
+        const [profileRes, bookingsRes, takumiOrProjectsRes] = await Promise.all(fetches)
         if (profileRes.ok) {
           const data = await profileRes.json()
           setDbName(data.name || "")
@@ -259,6 +263,11 @@ export default function ProfilePage() {
           setDbImage(data.image || "")
           setFavorites(data.favorites || [])
           setRefundPreference((data.refundPreference === "wallet" ? "wallet" : "payout") as "payout" | "wallet")
+          setSkillLevel(data.skillLevel ?? null)
+        }
+        if (!isTakumi && takumiOrProjectsRes?.ok) {
+          const { projects } = await takumiOrProjectsRes.json()
+          setProjectCount(Array.isArray(projects) ? projects.length : 0)
         }
         if (bookingsRes.ok) {
           const bookings = await bookingsRes.json()
@@ -269,8 +278,8 @@ export default function ProfilePage() {
             completed.reduce((sum: number, b: { price?: number }) => sum + (b.price || 0), 0)
           )
         }
-        if (isTakumi && takumiRes?.ok) {
-          const tp = await takumiRes.json()
+        if (isTakumi && takumiOrProjectsRes?.ok) {
+          const tp = await takumiOrProjectsRes.json()
           if (tp.exists && typeof tp.isLive === "boolean") setIsLive(tp.isLive)
         }
       } catch {
@@ -293,6 +302,28 @@ export default function ProfilePage() {
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
 
   const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
+
+  async function handleSkillLevelChange(level: "NEULING" | "FORTGESCHRITTEN" | "PROFI") {
+    setSavingSkill(true)
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skillLevel: level }),
+      })
+      if (res.ok) {
+        setSkillLevel(level)
+        toast.success(t("shugyo.skillSaved"))
+      } else {
+        const data = await res.json()
+        toast.error(data.error || t("profile.error"))
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    } finally {
+      setSavingSkill(false)
+    }
+  }
 
   async function handleSaveProfile() {
     const updates: Record<string, string> = {}
@@ -475,6 +506,57 @@ export default function ProfilePage() {
               <StatBox label={t("profile.favorites")} value={String(favorites.length)} />
             </CardContent>
           </Card>
+
+          {/* Shugyo Lerner-Profil (nur für Shugyo sichtbar) */}
+          {!isTakumi && (
+            <Card className="border-primary/20 bg-primary/5 gap-0 py-0">
+              <CardContent className="flex flex-col gap-3 p-4">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <FolderOpen className="size-4 text-primary" />
+                  {t("shugyo.dashboardTitle")}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{t("shugyo.skillLevel")}:</span>
+                  {(["NEULING", "FORTGESCHRITTEN", "PROFI"] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => handleSkillLevelChange(level)}
+                      disabled={savingSkill}
+                      className="focus:outline-none"
+                    >
+                      <Badge
+                        variant="outline"
+                        className={`cursor-pointer text-[10px] transition-all ${
+                          skillLevel === level
+                            ? level === "NEULING"
+                              ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/40"
+                              : level === "FORTGESCHRITTEN"
+                                ? "bg-blue-500/20 text-blue-700 border-blue-500/40"
+                                : "bg-violet-500/20 text-violet-700 border-violet-500/40"
+                            : "bg-muted/50 text-muted-foreground border-border"
+                        } ${savingSkill ? "opacity-70" : ""}`}
+                      >
+                        {level === "NEULING"
+                          ? t("shugyo.skillNeuling")
+                          : level === "FORTGESCHRITTEN"
+                            ? t("shugyo.skillFortgeschritten")
+                            : t("shugyo.skillProfi")}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {t("shugyo.projectCount", { count: String(projectCount) })}
+                  </span>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/profile/shugyo">{t("shugyo.manageProjects")}</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Favorites */}
           {favorites.length > 0 && (
