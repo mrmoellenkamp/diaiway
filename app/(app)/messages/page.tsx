@@ -32,12 +32,20 @@ export default function MessagesPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actingId, setActingId] = useState<string | null>(null)
 
+  async function fetchNotifications() {
+    const r = await fetch("/api/notifications")
+    const data = r.ok ? await r.json() : null
+    if (data?.notifications) {
+      setNotifications(data.notifications)
+      refreshNotificationCount()
+    }
+  }
+
   useEffect(() => {
-    fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => data?.notifications && setNotifications(data.notifications))
-      .catch(() => {})
-  }, [])
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [refreshNotificationCount])
 
   const thread = dmThreads.find((t) => t.takumiId === activeThread)
 

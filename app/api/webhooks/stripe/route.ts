@@ -3,8 +3,7 @@ import { headers } from "next/headers"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { onPaymentReceived } from "@/lib/wallet-service"
-import { sendBookingRequestEmail } from "@/lib/email"
-import { sendPushToUser } from "@/lib/push"
+import { notifyTakumiAfterPayment } from "@/lib/notify-takumi"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -106,49 +105,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const paymentType = session.metadata?.type
   if (paymentType === "booking_payment") {
     try {
-      const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { expert: true },
-      })
-      if (!booking) return
-
-      const baseUrl =
-        process.env.NEXTAUTH_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-      const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${booking.statusToken}&action=confirmed`
-
-      await sendBookingRequestEmail({
-        to: booking.expertEmail,
-        takumiName: booking.expertName,
-        userName: booking.userName,
-        userEmail: booking.userEmail,
-        date: booking.date,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        price: booking.price,
-        note: booking.note || "",
-        acceptUrl: `${respondBase.replace("action=confirmed", "")}&action=confirmed`,
-        declineUrl: `${respondBase.replace("action=confirmed", "")}&action=declined`,
-        askUrl: `${respondBase.replace("action=confirmed", "")}&action=ask`,
-        dashboardUrl: `${baseUrl}/sessions`,
-      })
-
-      if (booking.expert?.userId) {
-        await prisma.notification.create({
-          data: {
-            userId: booking.expert.userId,
-            type: "booking_request",
-            bookingId: booking.id,
-            title: "Neue Buchungsanfrage (bezahlt)",
-            body: `${booking.userName} hat eine Session am ${booking.date} von ${booking.startTime}–${booking.endTime} Uhr gebucht und bezahlt.`,
-          },
-        })
-        sendPushToUser(booking.expert.userId, {
-          title: "Neue Buchung (bezahlt)",
-          body: `${booking.userName} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
-          url: "/sessions",
-        }).catch(() => {})
-      }
+      await notifyTakumiAfterPayment(bookingId)
     } catch (notifyErr) {
       console.error("[Stripe Webhook] Booking notification failed:", notifyErr)
     }
