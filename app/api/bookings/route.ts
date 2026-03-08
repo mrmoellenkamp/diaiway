@@ -13,12 +13,18 @@ function emailForName(name: string): string {
   return `${local || "expert"}@diaiway.test`
 }
 
-/** GET — list bookings for the current user (as booker or as expert) */
-export async function GET() {
+/** GET — list bookings for the current user (as booker or as expert)
+ * Query: view=takumi — only bookings where user is the expert (for availability dashboard)
+ *        view=shugyo — only bookings where user is the booker (default: both)
+ */
+export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
+
+  const { searchParams } = new URL(req.url)
+  const view = searchParams.get("view")
 
   try {
     // Find expert profile linked to this user (if any)
@@ -27,13 +33,22 @@ export async function GET() {
       select: { id: true },
     })
 
-    const bookings = await prisma.booking.findMany({
-      where: {
+    let whereClause: { userId?: string; expertId?: string; OR?: Array<{ userId: string } | { expertId: string }> }
+    if (view === "takumi" && userExpert) {
+      whereClause = { expertId: userExpert.id }
+    } else if (view === "shugyo") {
+      whereClause = { userId: session.user.id }
+    } else {
+      whereClause = {
         OR: [
           { userId: session.user.id },
           ...(userExpert ? [{ expertId: userExpert.id }] : []),
         ],
-      },
+      }
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: whereClause,
       include: { expert: { select: { avatar: true, subcategory: true } } },
       orderBy: { createdAt: "desc" },
     })
@@ -65,6 +80,7 @@ export async function GET() {
         sessionDuration: b.sessionDuration,
         trialUsed: b.trialUsed,
         paymentStatus: b.paymentStatus,
+        statusToken: b.statusToken,
         stripeSessionId: b.stripeSessionId,
         stripePaymentIntentId: b.stripePaymentIntentId,
         paidAt: b.paidAt,
