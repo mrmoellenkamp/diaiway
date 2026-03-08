@@ -28,6 +28,7 @@ export const { auth: authMiddleware } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: string }).role || "user"
+        token.appRole = (user as { appRole?: string }).appRole || "shugyo"
         token.id = user.id
       }
       return token
@@ -35,6 +36,7 @@ export const { auth: authMiddleware } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         (session.user as { role?: string }).role = token.role as string
+        ;(session.user as { appRole?: string }).appRole = (token.appRole as string) || "shugyo"
         ;(session.user as { id?: string }).id = token.id as string
       }
       return session
