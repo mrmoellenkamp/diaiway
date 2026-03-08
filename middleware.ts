@@ -6,6 +6,7 @@ export default authMiddleware((req) => {
   const token = req.auth
   const isLoggedIn = !!token?.user
   const role   = (token?.user as { role?: string })?.role   || "user"
+  const appRole = (token?.user as { appRole?: string })?.appRole || "shugyo"
   const status = (token?.user as { status?: string })?.status || "active"
 
   // Paused accounts — block all app routes except /paused and auth routes
@@ -27,13 +28,13 @@ export default authMiddleware((req) => {
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
-  // Availability dashboard — only takumi and admin
+  // Availability dashboard — only takumi (appRole) and admin (role)
   if (pathname.startsWith("/dashboard/availability")) {
     if (!isLoggedIn)
       return NextResponse.redirect(
         new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
       )
-    if (role !== "takumi" && role !== "admin")
+    if (appRole !== "takumi" && role !== "admin")
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
