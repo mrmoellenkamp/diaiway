@@ -200,7 +200,7 @@ export async function POST(req: Request) {
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
-    // Bei Vorauszahlung: E-Mail/Notification erst nach Zahlung (im Webhook)
+    // E-Mail + Notification: erst nach Vorautorisierung (im Webhook / pay-with-wallet)
     if (!deferNotification) {
       try {
         const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
