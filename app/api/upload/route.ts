@@ -10,6 +10,17 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects", "takumi-portfolio"]
 
 export async function POST(request: NextRequest) {
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim()
+  if (!blobToken) {
+    return NextResponse.json(
+      {
+        error:
+          "BLOB_READ_WRITE_TOKEN fehlt. In .env.local eintragen. Dev-Server danach neu starten (npm run dev).",
+      },
+      { status: 500 }
+    )
+  }
+
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -52,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
-    const blob = await put(filename, buffer, { access: "public", contentType })
+    const blob = await put(filename, buffer, { access: "public", contentType, token: blobToken })
 
     return NextResponse.json({ url: blob.url })
   } catch (error) {
