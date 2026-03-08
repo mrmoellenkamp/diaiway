@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
-const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects"]
+const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects", "takumi-portfolio"]
 
 export async function POST(request: NextRequest) {
   try {

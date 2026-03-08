@@ -110,6 +110,7 @@ model User {
   pushSubscriptions   PushSubscription[]
   transactionsPaid   Transaction[]     @relation("UserPaidTransactions")
   shugyoProjects      ShugyoProject[]
+  takumiPortfolio     TakumiPortfolioProject[]
 }
 
 model ShugyoProject {
@@ -180,6 +181,20 @@ model Expert {
   bookings    Booking[]
   reviews     Review[]
   transactions Transaction[] @relation("ExpertTransactions")
+}
+
+model TakumiPortfolioProject {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String    @default("")
+  imageUrl        String    @default("")
+  category        String    @default("")
+  completionDate  DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Booking {

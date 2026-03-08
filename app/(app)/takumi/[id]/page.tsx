@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -17,6 +17,7 @@ import {
   ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail,
 } from "lucide-react"
 import type { SocialLinks } from "@/lib/types"
+import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 
 // ─── Social media icon + link helpers ──────────────────────────────────────
 
@@ -98,8 +99,19 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const [isContacting, setIsContacting] = useState(false)
   const [isDmSending, setIsDmSending] = useState(false)
   const [dmSent, setDmSent] = useState(false)
+  const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
   const takumi = takumis.find((tk) => tk.id === id)
+
+  useEffect(() => {
+    if (!id) return
+    fetch(`/api/takumi/portfolio?expertId=${encodeURIComponent(id)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.projects)) setPortfolioProjects(data.projects)
+      })
+      .catch(() => {})
+  }, [id])
   if (!takumi) notFound()
 
   function handleContact() {
@@ -196,22 +208,13 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {/* Portfolio Placeholder */}
-          <div className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">{t("takumiPage.portfolio")}</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-square rounded-xl bg-muted flex items-center justify-center"
-                >
-                  <span className="text-xs text-muted-foreground">
-                    {t("takumiPage.portfolioItem").replace("{n}", String(i))}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Portfolio — Qualitätsnachweis für Shugyo */}
+          <TakumiPortfolioGallery
+            projects={portfolioProjects}
+            readOnly={false}
+            title={t("takumiPage.masterpieces")}
+            emptyMessage={t("takumiPage.portfolioEmpty")}
+          />
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
