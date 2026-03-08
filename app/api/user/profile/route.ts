@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, createdAt: true },
+      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, createdAt: true },
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
@@ -27,6 +27,7 @@ export async function GET() {
       favorites: user.favorites || [],
       refundPreference: user.refundPreference || "payout",
       invoiceData: user.invoiceData ?? null,
+      skillLevel: user.skillLevel ?? null,
       createdAt: user.createdAt,
     })
   } catch (err: unknown) {
@@ -69,6 +70,13 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "Ungueltige Rechnungsdaten." }, { status: 400 })
       }
       data.invoiceData = body.invoiceData
+    }
+    if (body.skillLevel !== undefined) {
+      const valid = ["NEULING", "FORTGESCHRITTEN", "PROFI"]
+      if (body.skillLevel !== null && !valid.includes(body.skillLevel)) {
+        return NextResponse.json({ error: "Ungueltige Kenntnisstufe." }, { status: 400 })
+      }
+      data.skillLevel = body.skillLevel
     }
 
     if (Object.keys(data).length === 0) {

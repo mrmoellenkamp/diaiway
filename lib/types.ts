@@ -103,6 +103,9 @@ export interface BookingRecord {
   takumiId: string
   // Role: true if current user is the Takumi (expert) for this booking
   isExpert?: boolean
+  // Für Takumi: Shugyo Kenntnisstufe + Projektbilder
+  shugyoSkillLevel?: string | null
+  shugyoProjects?: { id: string; title: string; description: string; imageUrl: string }[]
   // Cancellation
   cancelledBy?: string
   cancelFeeAmount?: number

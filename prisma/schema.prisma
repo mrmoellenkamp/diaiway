@@ -49,6 +49,12 @@ enum CallType {
   VOICE
 }
 
+enum SkillLevel {
+  NEULING
+  FORTGESCHRITTEN
+  PROFI
+}
+
 enum TransactionStatus {
   PENDING    // @deprecated Legacy, wird als AUTHORIZED behandelt
   COMPLETED  // @deprecated Legacy, wird als CAPTURED behandelt
@@ -90,6 +96,9 @@ model User {
   // unternehmen: + companyName, legalForm?, vatId?, taxNumber?, kleinunternehmer (§19 UStG)
   invoiceData      Json?
 
+  // Shugyo: Kenntnisstufe für bessere Beratung
+  skillLevel       SkillLevel?
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -100,6 +109,19 @@ model User {
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
   transactionsPaid   Transaction[]     @relation("UserPaidTransactions")
+  shugyoProjects      ShugyoProject[]
+}
+
+model ShugyoProject {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @default("")
+  imageUrl    String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 model PushSubscription {
