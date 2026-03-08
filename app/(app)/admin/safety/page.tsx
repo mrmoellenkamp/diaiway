@@ -130,6 +130,12 @@ export default function AdminSafetyPage() {
           </div>
         </div>
 
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/safety/incidents">KI-Alert Incidents</Link>
+          </Button>
+        </div>
+
         <p className="text-sm text-muted-foreground">
           Verwalte Safety Reports aus dem Video-Call. Bei schweren Verstößen kannst du Nutzer dauerhaft sperren (isBanned).
         </p>

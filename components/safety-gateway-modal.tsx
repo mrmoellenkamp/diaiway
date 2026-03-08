@@ -21,23 +21,27 @@ import { useI18n } from "@/lib/i18n"
 
 interface SafetyGatewayModalProps {
   open: boolean
-  onConfirm: () => void
+  onConfirm: (snapshotConsent: boolean) => void
   disabled?: boolean
   /** Bei Voice-Call: Video-Snapshot-/Video-Raum-Warnung weglassen */
   isVoiceCall?: boolean
+  /** Ist aktueller Nutzer der Shugyo (Bucher)? Nur Shugyo muss Snapshot-Einwilligung geben */
+  isBooker?: boolean
 }
 
-export function SafetyGatewayModal({ open, onConfirm, disabled, isVoiceCall }: SafetyGatewayModalProps) {
+export function SafetyGatewayModal({ open, onConfirm, disabled, isVoiceCall, isBooker }: SafetyGatewayModalProps) {
   const { t } = useI18n()
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
+  const [check4, setCheck4] = useState(false)
 
-  const allAccepted = check1 && check2 && check3
+  const needsSnapshot = isVoiceCall !== true && isBooker === true
+  const allAccepted = check1 && check2 && check3 && (!needsSnapshot || check4)
 
   const handleConfirm = () => {
     if (!allAccepted) return
-    onConfirm()
+    onConfirm(needsSnapshot ? check4 : false)
   }
 
   return (
@@ -70,6 +74,12 @@ export function SafetyGatewayModal({ open, onConfirm, disabled, isVoiceCall }: S
             <Checkbox checked={check3} onCheckedChange={(v) => setCheck3(!!v)} />
             <span className="text-sm">{t("safety.checkGoogleSafety")}</span>
           </label>
+          {needsSnapshot && (
+            <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-border p-4 hover:bg-muted/50 transition-colors">
+              <Checkbox checked={check4} onCheckedChange={(v) => setCheck4(!!v)} />
+              <span className="text-sm">{t("safety.checkSnapshotConsent")}</span>
+            </label>
+          )}
         </div>
 
         <DialogFooter>

@@ -16,6 +16,22 @@ interface SafeSearchAnnotation {
   medical?: SafeSearchLevel
 }
 
+export interface SafetyCheckResult {
+  safe: boolean
+  reason?: string
+  /** Welcher Kategorie (adult/violence/racy) Verstoß, falls vorhanden */
+  violation?: { key: string; level: string }
+}
+
+function checkAnnotation(annotation: SafeSearchAnnotation): SafetyCheckResult {
+  for (const [key, level] of Object.entries(annotation)) {
+    if (UNSAFE_LEVELS.includes(level as string)) {
+      return { safe: false, reason: `Bild enthält möglicherweise ungeeignete Inhalte (${key}).`, violation: { key, level } }
+    }
+  }
+  return { safe: true }
+}
+
 export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean; reason?: string }> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
   if (!apiKey?.trim()) return { safe: true }
@@ -39,13 +55,38 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
     const data = await res.json()
     const annotation = data?.responses?.[0]?.safeSearchAnnotation as SafeSearchAnnotation | undefined
     if (!annotation) return { safe: true }
-
-    for (const [key, level] of Object.entries(annotation)) {
-      if (UNSAFE_LEVELS.includes(level as string)) {
-        return { safe: false, reason: `Bild enthält möglicherweise ungeeignete Inhalte (${key}).` }
-      }
-    }
+    const result = checkAnnotation(annotation)
+    return { safe: result.safe, reason: result.reason }
+  } catch (err) {
+    console.error("[Vision] Safety check failed:", err)
     return { safe: true }
+  }
+}
+
+/** Pre-Check & Alert: Prüft Base64-Bild, gibt detailliertes Ergebnis (inkl. violation für Speicherung) */
+export async function checkImageSafetyFromBase64(base64: string): Promise<SafetyCheckResult> {
+  const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
+  if (!apiKey?.trim()) return { safe: true }
+
+  try {
+    const res = await fetch(`${VISION_API}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requests: [{
+          image: { content: base64.replace(/^data:image\/\w+;base64,/, "") },
+          features: [{ type: "SAFE_SEARCH_DETECTION" }],
+        }],
+      }),
+    })
+    if (!res.ok) {
+      console.error("[Vision] API error:", res.status, await res.text())
+      return { safe: true }
+    }
+    const data = await res.json()
+    const annotation = data?.responses?.[0]?.safeSearchAnnotation as SafeSearchAnnotation | undefined
+    if (!annotation) return { safe: true }
+    return checkAnnotation(annotation)
   } catch (err) {
     console.error("[Vision] Safety check failed:", err)
     return { safe: true }
