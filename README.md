@@ -2,7 +2,7 @@
 
 **DIY-Hilfe auf Knopfdruck. Sicher. Schnell. Überall.**
 
-diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung. Die Plattform bietet einen AI-Guide (diAIway intelligence), Buchungen, Video-Sessions via Daily.co, Escrow-Zahlungen mit Stripe und mehrsprachige Unterstützung (DE, EN, ES).
+diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video- und Voice-Beratung. Die Plattform bietet einen AI-Guide (diAIway intelligence), Buchungen, Video- oder Voice-Sessions via Daily.co, Escrow-Zahlungen mit Stripe (Hold & Capture) und mehrsprachige Unterstützung (DE, EN, ES).
 
 ---
 
@@ -24,16 +24,17 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung
 
 ### Für Shugyo (Nutzer)
 - **diAIway intelligence**: AI-Mentor für Projektbeschreibung und Expertenempfehlung
-- **Kategorien durchsuchen**: Experten nach Fachgebiet finden
-- **Buchungen**: Termine mit Takumis buchen; Vorauszahlung (Stripe oder Wallet) vor Bestätigung
-- **Video-Sessions**: 5 Min Handshake gratis, dann bezahlte Session (Daily.co)
+- **Kategorien durchsuchen**: 11 Kategorien (Heimwerken, Freizeit & Hobby, Haus & Garten, Auto/Rad/Sport, Elektronik, Mode & Beauty, Haustiere, Familie/Kind/Baby, Unterricht & Kurse, Dienstleistungen, Musik/Film/Bücher)
+- **Buchungen**: Termine mit Takumis buchen; **Video oder Voice** als Call-Typ wählbar; Vorauszahlung (Stripe oder Wallet) vor Bestätigung
+- **Video- oder Voice-Sessions**: 5 Min Handshake (Probezeit) gratis, dann bezahlte Session via Daily.co; Voice-Calls nutzen Daily Audio (kein Video, kein Pre-Check)
+- **Handshake-Overlay**: Nach Probezeit erscheint Zahlungsdialog für Session-Fortsetzung; Stripe Embedded Checkout oder Wallet
 - **Wallet**: Guthaben für Rückerstattungen; Zahlung mit Wallet bei Buchung möglich
 - **Benachrichtigungen**: Buchungsbestätigungen in Nachrichten
 - **Profil**: Favoriten, Sessions, Profilnamen als Links zu `/user/[id]`, Konto pausieren/löschen (DSGVO)
-- **Safety**: Snapshot-Einwilligung für diAiway Safety Enforcement (Pre-Check, Live-Monitoring)
+- **Safety**: Snapshot-Einwilligung für diAIway Safety Enforcement (Pre-Check, Live-Monitoring); bei Voice-Calls entfällt Pre-Check
 
 ### Für Takumi (Experten)
-- **Profil & Verfügbarkeit**: 15-Min-Intervall-Kalender, Routinen, Ausnahmen
+- **Profil & Verfügbarkeit**: 15-Min-Intervall-Kalender, Routinen, Ausnahmen; **Preis für Video** (pro Session) und **Preis für Voice** (pro 15 Min) separat einstellbar
 - **Stornierungsrichtlinie**: Kostenlose Stornierung bis X Stunden vorher, danach X% Gebühr
 - **Social Media**: Instagram, TikTok, Facebook etc. verknüpfen
 - **Buchungsanfragen**: E-Mail (nach Zahlung) + In-App unter „Nachrichten“ + Button „Annehmen, Ablehnen & Nachfrage“ bei pending-Buchungen in „Geplant“
@@ -47,8 +48,9 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung
 
 ### Technisch
 - **i18n**: Deutsch (Master), Englisch, Spanisch
+- **Zahlung**: Stripe Hold & Capture (manual capture); Webhooks: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`; bei manual capture `payment_status` = unpaid → trotzdem autorisiert
 - **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers
-- **Safety Enforcement**: Pre-Check (Vision API vor Daily-Join), Live-Monitoring, Vercel Blob für Incidents
+- **Safety Enforcement**: Pre-Check (Vision API vor Daily-Join, nur bei Video), Live-Monitoring, Vercel Blob für Incidents
 - **Rechtlich**: Impressum, AGB, Datenschutz, Hilfe-Seite
 
 ---
@@ -60,8 +62,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung
 | Framework | Next.js 16 (App Router) |
 | Datenbank | PostgreSQL (Prisma ORM) |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
-| Zahlung | Stripe (Checkout, Webhooks) |
-| Video | Daily.co |
+| Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks) |
+| Video & Audio | Daily.co (Video + Voice-only via DailyAudioCall) |
 | AI | Vercel AI SDK |
 | Storage | Vercel Blob |
 | E-Mail | Nodemailer (SMTP) |
@@ -166,9 +168,9 @@ Details: [docs/ENV.md](docs/ENV.md)
 ## Datenbank
 
 ### Schema (Prisma)
-- **User**: Auth, Rolle (user/admin), AppRole (shugyo/takumi), Status (active/paused), Wallet
-- **Expert**: Takumi-Profil, Kategorie, Preis, Social Links, Stornierungsrichtlinie
-- **Booking**: Buchung, Status, Zahlung, Video-Session, Stornierung, Safety-Einwilligung
+- **User**: Auth, Rolle (user/admin), AppRole (shugyo/takumi), Status (active/paused), Wallet, invoiceData
+- **Expert**: Takumi-Profil, Kategorie, pricePerSession (Video), priceVoice15Min (Voice), Social Links, Stornierungsrichtlinie
+- **Booking**: Buchung, callType (VIDEO \| VOICE), Status, Zahlung, Session, Stornierung, Safety-Einwilligung
 - **Review**: Bewertungen
 - **Availability**: Verfügbarkeit (15-Min-Slots, Routinen, Ausnahmen)
 - **Notification**: Buchungsbenachrichtigungen
@@ -214,7 +216,7 @@ npx prisma studio
 
 ### Nach dem ersten Deploy
 - `npx prisma db push` mit Production-DATABASE_URL ausführen
-- Stripe Webhook auf `https://your-domain.com/api/webhooks/stripe` zeigen
+- Stripe Webhook auf `https://your-domain.com/api/webhooks/stripe` zeigen; Events: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`
 - E-Mail-SMTP für Produktion konfigurieren
 
 ---
