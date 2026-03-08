@@ -217,7 +217,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               walletBalanceCents={walletBalanceCents}
               onSuccess={() => {
                 toast.success(t("booking.successTitle"))
-                router.push("/sessions?tab=upcoming")
+                window.location.href = "/sessions?tab=upcoming"
               }}
               onError={(err) => {
                 toast.error(err)
