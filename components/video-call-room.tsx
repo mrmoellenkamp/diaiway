@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
+import { ShugyoInfoPanel } from "@/components/shugyo-info-panel"
 import { toast } from "sonner"
 import {
   Mic,
@@ -706,6 +707,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </div>
           </div>
         )}
+
+        {/* Shugyo-Info-Panel für Takumi (Experte sieht Lerner-Kenntnisstufe + Projektbilder) */}
+        {booking.isExpert &&
+          (booking.shugyoSkillLevel || (booking.shugyoProjects?.length ?? 0) > 0) && (
+            <ShugyoInfoPanel
+              userName={booking.userName}
+              skillLevel={booking.shugyoSkillLevel ?? null}
+              projects={booking.shugyoProjects ?? []}
+            />
+          )}
 
         {/* Timer overlay */}
         <div className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2">

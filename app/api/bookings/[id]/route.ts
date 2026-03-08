@@ -30,7 +30,10 @@ export async function GET(
   try {
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { expert: true },
+      include: {
+        expert: true,
+        user: { select: { skillLevel: true } },
+      },
     })
     if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
 
@@ -52,6 +55,20 @@ export async function GET(
 
     // Compute cancel fee preview for current time
     const cancelPreview = computeCancelFee(booking, booking.expert)
+
+    // Für Takumi: Shugyo Kenntnisstufe + neueste Projektbilder laden
+    let shugyoSkillLevel: string | null = null
+    let shugyoProjects: { id: string; title: string; description: string; imageUrl: string }[] = []
+    if (isExpert && booking.userId) {
+      shugyoSkillLevel = booking.user?.skillLevel ?? null
+      const projects = await prisma.shugyoProject.findMany({
+        where: { userId: booking.userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, title: true, description: true, imageUrl: true },
+      })
+      shugyoProjects = projects
+    }
 
     return NextResponse.json({
       booking: {
@@ -91,6 +108,8 @@ export async function GET(
         cancelledAt: booking.cancelledAt,
         cancelPreview,
         isExpert, // true if current user is the Takumi (expert) for this booking
+        shugyoSkillLevel,
+        shugyoProjects,
         safetyAcceptedAt: booking.safetyAcceptedAt,
         snapshotConsentAt: booking.snapshotConsentAt,
         createdAt: booking.createdAt,

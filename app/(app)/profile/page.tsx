@@ -36,6 +36,7 @@ import {
   PauseCircle,
   Trash2,
   AlertTriangle,
+  FolderOpen,
 } from "lucide-react"
 import {
   AlertDialog,
@@ -651,6 +652,9 @@ export default function ProfilePage() {
           <Card className="overflow-hidden border-border/60 gap-0 py-0">
             <CardContent className="flex flex-col p-0 divide-y divide-border">
               <MenuItem icon={Edit3} label={t("profile.editProfile")} href="/profile/edit" accent />
+              {!isTakumi && (
+                <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
+              )}
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
               {isTakumi && (
                 <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
