@@ -36,6 +36,8 @@ export async function GET(req: Request) {
     let whereClause: { userId?: string; expertId?: string; OR?: Array<{ userId: string } | { expertId: string }> }
     if (view === "takumi" && userExpert) {
       whereClause = { expertId: userExpert.id }
+    } else if (view === "takumi" && !userExpert) {
+      whereClause = { expertId: "none" }  // no expert → no takumi bookings
     } else if (view === "shugyo") {
       whereClause = { userId: session.user.id }
     } else {

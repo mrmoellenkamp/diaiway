@@ -72,6 +72,11 @@ model User {
   // Shugyo: Bei Rückerstattung — "payout" = Auszahlung auf Karte, "wallet" = Guthaben
   refundPreference String    @default("payout")
 
+  // Rechnungsdaten: { type: "privat"|"unternehmen", ... }
+  // privat: fullName, street, houseNumber, zip, city, country, email
+  // unternehmen: + companyName, legalForm?, vatId?, taxNumber?, kleinunternehmer (§19 UStG)
+  invoiceData      Json?
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 

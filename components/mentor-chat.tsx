@@ -256,7 +256,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         ref={scrollRef}
         className={cn(
           "flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none",
-          isEmbedded ? "min-h-[320px] max-h-[420px]" : "min-h-0"
+          isEmbedded ? "min-h-[180px] max-h-[260px]" : "min-h-0"
         )}
       >
         {/* Welcome */}
