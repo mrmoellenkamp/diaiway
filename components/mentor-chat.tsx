@@ -211,9 +211,11 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     }
   }
 
-  // Resolve search result Takumi objects
+  // Resolve search result Takumi objects (filter out IDs that no longer exist)
   const matchedTakumis = searchResults
-    ? searchResults.map((id) => takumis.find((t) => t.id === id)!).filter(Boolean)
+    ? searchResults
+        .map((id) => takumis.find((t) => t.id === id))
+        .filter((t): t is NonNullable<typeof t> => !!t)
     : []
 
   return (

@@ -24,13 +24,21 @@ import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  pending:   { label: "Ausstehend",     className: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400" },
-  confirmed: { label: "Bestaetigt",     className: "bg-primary/10 text-primary border-primary/30" },
-  active:    { label: "Live",           className: "bg-accent/15 text-accent border-accent/30" },
-  completed: { label: "Abgeschlossen",  className: "bg-muted text-muted-foreground border-border" },
-  declined:  { label: "Abgelehnt",      className: "bg-destructive/10 text-destructive border-destructive/30" },
-  cancelled: { label: "Storniert",      className: "bg-destructive/10 text-destructive border-destructive/30" },
+const STATUS_KEYS: Record<string, string> = {
+  pending: "booking.statusPending",
+  confirmed: "booking.statusConfirmed",
+  active: "booking.statusActive",
+  completed: "booking.statusCompleted",
+  declined: "booking.statusDeclined",
+  cancelled: "booking.statusCancelled",
+}
+const statusClassNames: Record<string, string> = {
+  pending: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
+  confirmed: "bg-primary/10 text-primary border-primary/30",
+  active: "bg-accent/15 text-accent border-accent/30",
+  completed: "bg-muted text-muted-foreground border-border",
+  declined: "bg-destructive/10 text-destructive border-destructive/30",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/30",
 }
 
 function getInitials(name: string): string {
@@ -69,7 +77,11 @@ export function BookingCard({
   const [isExpertCancelling, setIsExpertCancelling] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const status = statusConfig[booking.status] || statusConfig.pending
+  const statusKey = STATUS_KEYS[booking.status] || STATUS_KEYS.pending
+  const status = {
+    label: t(statusKey),
+    className: statusClassNames[booking.status] || statusClassNames.pending,
+  }
   const isLive = booking.status === "active"
   const canJoin = booking.status === "confirmed" || booking.status === "active"
   const canCancel = ["pending", "confirmed", "active"].includes(booking.status)
