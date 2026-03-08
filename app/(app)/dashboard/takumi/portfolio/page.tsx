@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +16,10 @@ import { categories } from "@/lib/categories"
 
 export default function TakumiPortfolioPage() {
   const { t } = useI18n()
+  const { data: session } = useSession()
+  const appRole = (session?.user as { appRole?: string })?.appRole
+  const canEdit = appRole === "takumi"
+
   const [projects, setProjects] = useState<TakumiPortfolioProject[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -118,17 +123,17 @@ export default function TakumiPortfolioPage() {
             </div>
           </div>
 
-          {/* Galerie */}
+          {/* Galerie — Lightbox immer, Löschen nur für Takumi */}
           <TakumiPortfolioGallery
             projects={projects}
             readOnly={false}
             title={t("portfolio.masterpieces")}
             emptyMessage={t("portfolio.empty")}
-            onDelete={handleDelete}
+            onDelete={canEdit ? handleDelete : undefined}
           />
 
-          {/* Add-Formular */}
-          {showForm ? (
+          {/* Add-Formular — nur für Takumi; Shugyo sehen ihre Projekte lesend */}
+          {canEdit && showForm ? (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">{t("portfolio.addProject")}</CardTitle>
@@ -226,7 +231,7 @@ export default function TakumiPortfolioPage() {
                 </form>
               </CardContent>
             </Card>
-          ) : (
+          ) : canEdit ? (
             <Button
               variant="outline"
               className="w-full gap-2 border-dashed"
@@ -234,7 +239,7 @@ export default function TakumiPortfolioPage() {
             >
               <Plus className="size-4" /> {t("portfolio.addProject")}
             </Button>
-          )}
+          ) : null}
 
         </div>
       </PageContainer>
