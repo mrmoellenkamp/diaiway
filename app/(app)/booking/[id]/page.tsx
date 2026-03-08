@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Mic, Info, Loader2, Calendar, CreditCard, RefreshCcw,
 } from "lucide-react"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"
@@ -44,6 +44,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedStart, setSelectedStart] = useState("")
   const [selectedEnd, setSelectedEnd] = useState("")
+  const [callType, setCallType] = useState<"VIDEO" | "VOICE">("VIDEO")
   const [note, setNote] = useState("")
   const [isBooking, setIsBooking] = useState(false)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
@@ -84,6 +85,21 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
   if (!takumi) notFound()
 
+  const priceVideo15 = takumi.priceVideo15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
+  const priceVoice15 = takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
+  const durationMin = selectedStart && selectedEnd
+    ? (() => {
+        const [sh, sm] = selectedStart.split(":").map(Number)
+        const [eh, em] = selectedEnd.split(":").map(Number)
+        return (eh * 60 + em) - (sh * 60 + sm)
+      })()
+    : 0
+  const slots15 = durationMin / 15
+  const totalPrice =
+    callType === "VIDEO"
+      ? Math.round(slots15 * priceVideo15 * 100) / 100
+      : Math.round(slots15 * priceVoice15 * 100) / 100
+
   function handleTimeSelect(date: string, start: string, end: string) {
     // Guard: never allow selecting a slot in the past (Berlin time)
     const slotDateTime = parseBerlinDateTime(date, start)
@@ -103,8 +119,16 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
   async function handleBook(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedDate || !selectedStart) {
+    if (!selectedDate || !selectedStart || !selectedEnd) {
       toast.error(t("booking.selectAppointmentError"))
+      return
+    }
+    if (durationMin < 15 || durationMin % 15 !== 0) {
+      toast.error(t("booking.durationInvalid"))
+      return
+    }
+    if (totalPrice < 1) {
+      toast.error(t("booking.priceInvalid"))
       return
     }
     // Double-check at submit time — slot may have become past while form was open (Berlin time)
@@ -135,7 +159,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           date: selectedDate,
           startTime: selectedStart,
           endTime: selectedEnd,
-          price: takumi.pricePerSession,
+          callType,
+          totalPrice,
           note,
           deferNotification: true,
         }),
@@ -207,18 +232,18 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         {step === "checkout" && bookingIdForPayment ? (
           <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
             <p className="text-sm text-muted-foreground">
-              {t("handshake.minutesWith", { duration: "30", name: takumi.name })}
+              {t("handshake.minutesWith", { duration: String(durationMin), name: takumi.name })}
             </p>
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
               <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
               <span className="text-lg font-bold text-foreground">
-                {(takumi.pricePerSession || 0).toFixed(2)} EUR
+                {totalPrice.toFixed(2)} €
               </span>
             </div>
             <BookingCheckout
               bookingId={bookingIdForPayment}
               takumiName={takumi.name}
-              priceInCents={(takumi.pricePerSession || 0) * 100}
+              priceInCents={Math.round(totalPrice * 100)}
               walletBalanceCents={walletBalanceCents}
               onSuccess={() => {
                 setStep("success")
@@ -249,26 +274,71 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {/* Service Details */}
+        {/* Service Details & Call Type */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">{t("booking.sessionDetails")}</h2>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Video className="size-4" /> {t("booking.liveVideoSession")}
+                <Clock className="size-4" /> {t("booking.minDuration")}
               </span>
-              <span className="text-foreground">30 Min</span>
+              <span className="text-foreground">15 Min</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="size-4" /> {t("booking.freeTrialTime")}
+                <Video className="size-4" /> {t("booking.videoSessionOption")}
               </span>
-              <span className="font-medium text-accent">{t("booking.freeMinutes")}</span>
+              <span className="text-foreground">{priceVideo15.toFixed(2)} € / 15 Min</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Mic className="size-4" /> {t("booking.voiceCallOption")}
+              </span>
+              <span className="text-foreground">{priceVoice15.toFixed(2)} € / 15 Min</span>
             </div>
           </div>
         </div>
 
-        {/* Price Breakdown */}
+        {/* Call Type Selection (after time chosen) */}
+        {selectedDate && selectedStart && (
+          <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <h2 className="text-sm font-semibold text-foreground">{t("booking.callTypeTitle")}</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setCallType("VIDEO")}
+                className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-sm transition-colors ${
+                  callType === "VIDEO"
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <Video className="size-6" />
+                <span className="font-medium">{t("booking.videoSession")}</span>
+                <span className="text-xs text-muted-foreground">
+                  {priceVideo15.toFixed(2)} € / 15 Min
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCallType("VOICE")}
+                className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-sm transition-colors ${
+                  callType === "VOICE"
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <Mic className="size-6" />
+                <span className="font-medium">{t("booking.voiceCall")}</span>
+                <span className="text-xs text-muted-foreground">
+                  {priceVoice15.toFixed(2)} € / 15 Min
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Price Breakdown – dynamisch */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">{t("booking.priceBreakdown")}</h2>
           <div className="flex flex-col gap-2 text-sm">
@@ -276,15 +346,25 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               <span className="text-muted-foreground">{t("booking.trialMinutes")}</span>
               <span className="text-accent font-medium">{t("booking.free")}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">{t("booking.sessionMinutes")}</span>
-              <span className="text-foreground">{takumi.pricePerSession}&euro;</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex items-center justify-between font-semibold">
-              <span className="text-foreground">{t("booking.maximum")}</span>
-              <span className="text-foreground">{takumi.pricePerSession}&euro;</span>
-            </div>
+            {selectedDate && selectedStart && durationMin > 0 ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {callType === "VIDEO" ? t("booking.videoSession") : t("booking.voiceCall")} · {durationMin} Min
+                  </span>
+                  <span className="text-foreground">
+                    {slots15} × {callType === "VIDEO" ? priceVideo15.toFixed(2) : priceVoice15.toFixed(2)} €
+                  </span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex items-center justify-between font-semibold">
+                  <span className="text-foreground">{t("booking.total")}</span>
+                  <span className="text-foreground">{totalPrice.toFixed(2)} €</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t("booking.selectSlotForPrice")}</p>
+            )}
           </div>
           <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3">
             <Info className="size-4 shrink-0 text-accent mt-0.5" />
@@ -375,13 +455,13 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
           <Button
             type="submit"
-            disabled={!selectedDate || !selectedStart || isBooking}
+            disabled={!selectedDate || !selectedStart || totalPrice < 1 || isBooking}
             className="h-14 w-full rounded-xl bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90 shadow-lg disabled:opacity-50"
           >
             {isBooking ? (
               <><Loader2 className="size-4 animate-spin mr-2" /> {t("booking.bookingInProgress")}</>
             ) : (
-              <>{t("booking.bookButton").replace("{price}", String(takumi.pricePerSession))}</>
+              <>{t("booking.bookButton").replace("{price}", totalPrice > 0 ? totalPrice.toFixed(2) : "–")}</>
             )}
           </Button>
         </form>

@@ -135,7 +135,7 @@ export function HandshakeOverlay({
           <div className="w-full rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
-              <span className="text-lg font-bold text-foreground">{priceEuro} EUR</span>
+              <span className="text-lg font-bold text-foreground">{priceEuro} €</span>
             </div>
           </div>
 

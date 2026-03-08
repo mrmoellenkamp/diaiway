@@ -44,6 +44,11 @@ enum PaymentStatus {
   failed
 }
 
+enum CallType {
+  VIDEO
+  VOICE
+}
+
 enum TransactionStatus {
   PENDING    // @deprecated Legacy, wird als AUTHORIZED behandelt
   COMPLETED  // @deprecated Legacy, wird als CAPTURED behandelt
@@ -126,7 +131,10 @@ model Expert {
   reviewCount     Int      @default(0)
   sessionCount    Int      @default(0)
   responseTime    String   @default("< 5 Min")
-  pricePerSession Int      // EUR
+  // Neues Pricing-Modell: Preis pro 15 Min (EUR)
+  priceVideo15Min Decimal  @default(0) @db.Decimal(10, 2)
+  priceVoice15Min Decimal  @default(0) @db.Decimal(10, 2)
+  pricePerSession Int?     // Legacy: EUR pro 30 Min, Fallback wenn neue Preise fehlen
   isLive          Boolean  @default(false)
   isPro           Boolean  @default(false)
   verified        Boolean  @default(false)
@@ -167,7 +175,9 @@ model Booking {
   startTime             String        // HH:mm
   endTime               String        // HH:mm
   status                BookingStatus @default(pending)
-  price                 Int           // EUR
+  callType              CallType      @default(VIDEO)  // VIDEO oder VOICE
+  totalPrice            Decimal?      @db.Decimal(10, 2)  // Fixierter Preis bei Buchung (EUR)
+  price                 Int?          // Legacy: EUR, Fallback für Bestandsbuchungen
   note                  String        @default("")
   statusToken           String        @unique
 

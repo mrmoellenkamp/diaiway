@@ -26,6 +26,8 @@ export async function GET() {
       categoryName: expert.categoryName,
       subcategory: expert.subcategory,
       bio: expert.bio,
+      priceVideo15Min: Number(expert.priceVideo15Min),
+      priceVoice15Min: Number(expert.priceVoice15Min),
       pricePerSession: expert.pricePerSession,
       responseTime: expert.responseTime,
       isLive: expert.isLive,
@@ -68,6 +70,16 @@ export async function PUT(req: Request) {
     if (body.categoryName !== undefined)    data.categoryName    = body.categoryName
     if (body.subcategory !== undefined)     data.subcategory     = body.subcategory
     if (body.bio !== undefined)             data.bio             = body.bio
+    if (body.priceVideo15Min !== undefined) {
+      const v = Number(body.priceVideo15Min)
+      if (v < 1) return NextResponse.json({ error: "Video-Preis muss mindestens 1,00 € betragen." }, { status: 400 })
+      data.priceVideo15Min = v
+    }
+    if (body.priceVoice15Min !== undefined) {
+      const v = Number(body.priceVoice15Min)
+      if (v < 1) return NextResponse.json({ error: "Voice-Preis muss mindestens 1,00 € betragen." }, { status: 400 })
+      data.priceVoice15Min = v
+    }
     if (body.pricePerSession !== undefined) data.pricePerSession = Number(body.pricePerSession) || 0
     if (body.responseTime !== undefined)    data.responseTime    = body.responseTime
     if (body.imageUrl !== undefined)        data.imageUrl        = body.imageUrl
@@ -84,7 +96,9 @@ export async function PUT(req: Request) {
         categoryName:    (data.categoryName    as string)  || "Dienstleistungen",
         subcategory:     (data.subcategory     as string)  || "",
         bio:             (data.bio             as string)  || "",
-        pricePerSession: (data.pricePerSession as number)  || 0,
+        priceVideo15Min: (data.priceVideo15Min as number) ?? 0,
+        priceVoice15Min: (data.priceVoice15Min as number) ?? 0,
+        pricePerSession: (data.pricePerSession as number) ?? 0,
         email:           "",
         ...data,
         rating: 0,

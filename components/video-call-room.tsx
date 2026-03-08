@@ -24,7 +24,7 @@ import {
   Loader2,
   Flag,
 } from "lucide-react"
-import { DailyVideoCall } from "@/components/VideoConfig"
+import { DailyVideoCall, DailyAudioCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
 import { parseBerlinDateTime } from "@/lib/date-utils"
@@ -313,7 +313,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               <div className="flex items-center gap-3 text-sm">
                 <Star className="size-4 text-amber" />
                 <div>
-                  <p className="font-medium text-foreground">{t("video.thenPrice", { price: booking.price })}</p>
+                  <p className="font-medium text-foreground">{t("video.thenPrice", { price: Number(booking.totalPrice ?? booking.price ?? 0).toFixed(2) })}</p>
                   <p className="text-xs text-muted-foreground">{t("video.decideAfterTrial")}</p>
                 </div>
               </div>
@@ -374,6 +374,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           <SafetyGatewayModal
             open={showSafetyModal}
             onConfirm={handleSafetyConfirm}
+            isVoiceCall={booking.callType === "VOICE"}
           />
 
           <p className="text-center text-xs text-muted-foreground">
@@ -473,17 +474,28 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* DailyVideoCall loaded client-only via dynamic import (ssr: false) */}
+        {/* DailyVideoCall oder DailyAudioCall je nach callType */}
         {isInCall && roomUrl ? (
-          <DailyVideoCall
-            roomUrl={roomUrl}
-            isCameraOff={isCameraOff}
-            isMuted={isMuted}
-            otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
-            otherParticipantInitials={getInitials(
-              booking.isExpert ? booking.userName : booking.takumiName
-            )}
-          />
+          booking.callType === "VOICE" ? (
+            <DailyAudioCall
+              roomUrl={roomUrl}
+              isMuted={isMuted}
+              otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
+              otherParticipantInitials={getInitials(
+                booking.isExpert ? booking.userName : booking.takumiName
+              )}
+            />
+          ) : (
+            <DailyVideoCall
+              roomUrl={roomUrl}
+              isCameraOff={isCameraOff}
+              isMuted={isMuted}
+              otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
+              otherParticipantInitials={getInitials(
+                booking.isExpert ? booking.userName : booking.takumiName
+              )}
+            />
+          )
         ) : isInCall ? (
           <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
             <div className="flex flex-col items-center gap-3">
@@ -555,19 +567,21 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               )}
             </button>
 
-            <button
-              onClick={() => setIsCameraOff(!isCameraOff)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
-                isCameraOff ? "bg-destructive" : "bg-white/20"
-              }`}
-              aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
-            >
-              {isCameraOff ? (
-                <VideoOff className="size-5 text-destructive-foreground" />
-              ) : (
-                <Video className="size-5 text-primary-foreground" />
-              )}
-            </button>
+            {booking.callType !== "VOICE" && (
+              <button
+                onClick={() => setIsCameraOff(!isCameraOff)}
+                className={`flex size-12 items-center justify-center rounded-full transition-colors ${
+                  isCameraOff ? "bg-destructive" : "bg-white/20"
+                }`}
+                aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
+              >
+                {isCameraOff ? (
+                  <VideoOff className="size-5 text-destructive-foreground" />
+                ) : (
+                  <Video className="size-5 text-primary-foreground" />
+                )}
+              </button>
+            )}
 
             <button
               onClick={handleEndCall}
@@ -595,8 +609,15 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
         takumiName={booking.takumiName}
         onPaymentSuccess={handlePaymentSuccess}
         onEnd={handleEndCall}
-        price={booking.price * 100}
-        duration={30}
+        price={Math.round((Number(booking.totalPrice ?? booking.price ?? 0)) * 100)}
+        duration={booking.sessionDuration ?? (() => {
+          if (booking.startTime && booking.endTime) {
+            const [sh, sm] = booking.startTime.split(":").map(Number)
+            const [eh, em] = booking.endTime.split(":").map(Number)
+            return (eh * 60 + em) - (sh * 60 + sm)
+          }
+          return 30
+        })()}
       />
     </>
   )

@@ -56,7 +56,7 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
                 {takumi.responseTime}
               </span>
               <span className="text-sm font-semibold text-primary">
-                {takumi.pricePerSession}&euro; / 30 Min
+                ab {(takumi.priceVoice15Min ?? takumi.pricePerSession ? (takumi.pricePerSession ?? 0) / 2 : 0).toFixed(0)} € / 15 Min
               </span>
             </div>
           </div>

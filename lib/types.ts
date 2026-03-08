@@ -38,7 +38,9 @@ export interface Takumi {
   reviewCount: number
   sessionCount: number
   responseTime: string
-  pricePerSession: number
+  priceVideo15Min?: number
+  priceVoice15Min?: number
+  pricePerSession?: number
   isLive: boolean
   isPro: boolean
   verified: boolean
@@ -61,6 +63,7 @@ export interface Category {
 
 export type BookingStatus = "pending" | "confirmed" | "active" | "completed" | "declined" | "cancelled"
 export type PaymentStatus = "unpaid" | "pending" | "paid" | "refunded" | "failed"
+export type CallType = "VIDEO" | "VOICE"
 
 export interface BookingRecord {
   id: string         // Prisma CUID (was _id in Mongo)
@@ -74,7 +77,9 @@ export interface BookingRecord {
   startTime: string
   endTime: string
   status: BookingStatus
-  price: number
+  callType?: CallType
+  totalPrice?: number
+  price?: number
   note?: string
   dailyRoomUrl?: string
   sessionStartedAt?: string

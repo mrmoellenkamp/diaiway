@@ -70,7 +70,8 @@ export default function EditProfilePage() {
   const [categorySlug, setCategorySlug] = useState("")
   const [subcategory, setSubcategory] = useState("")
   const [bio, setBio] = useState("")
-  const [pricePerSession, setPricePerSession] = useState("")
+  const [priceVideo15Min, setPriceVideo15Min] = useState("")
+  const [priceVoice15Min, setPriceVoice15Min] = useState("")
   const [responseTime, setResponseTime] = useState("< 5 Min")
   const [takumiImageUrl, setTakumiImageUrl] = useState("")
   const [takumiExists, setTakumiExists] = useState(false)
@@ -141,7 +142,8 @@ export default function EditProfilePage() {
             setCategorySlug(data.categorySlug || "")
             setSubcategory(data.subcategory || "")
             setBio(data.bio || "")
-            setPricePerSession(String(data.pricePerSession || ""))
+            setPriceVideo15Min(String(data.priceVideo15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
+            setPriceVoice15Min(String(data.priceVoice15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
             setResponseTime(data.responseTime || "< 5 Min")
             setTakumiImageUrl(data.imageUrl || "")
             const cp = data.cancelPolicy || {}
@@ -333,6 +335,13 @@ export default function EditProfilePage() {
       }
 
       if (isTakumi) {
+        const pVideo = priceVideo15Min ? Number(priceVideo15Min) : 0
+        const pVoice = priceVoice15Min ? Number(priceVoice15Min) : 0
+        if (pVideo < 1 || pVoice < 1) {
+          toast.error(t("editProfile.priceMinError"))
+          setSaving(false)
+          return
+        }
         const takumiRes = await fetch("/api/user/takumi-profile", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -342,7 +351,8 @@ export default function EditProfilePage() {
             categoryName: selectedCategory?.name || categorySlug || undefined,
             subcategory: subcategory || undefined,
             bio: bio.trim() || undefined,
-            pricePerSession: pricePerSession ? Number(pricePerSession) : undefined,
+            priceVideo15Min: priceVideo15Min ? Number(priceVideo15Min) : undefined,
+            priceVoice15Min: priceVoice15Min ? Number(priceVoice15Min) : undefined,
             responseTime,
             imageUrl: takumiImageUrl || undefined,
             cancelPolicy: {
@@ -577,19 +587,38 @@ export default function EditProfilePage() {
                       </p>
                     </div>
 
-                    {/* Price */}
-                    <div className="flex flex-col gap-1.5">
+                    {/* Preise pro 15 Min (beide Pflicht, min 1 €) */}
+                    <div className="flex flex-col gap-3">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <DollarSign className="size-3" /> {t("editProfile.price")}
+                        <DollarSign className="size-3" /> {t("editProfile.prices15Min")}
                       </label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={pricePerSession}
-                        onChange={(e) => setPricePerSession(e.target.value)}
-                        placeholder={t("editProfile.pricePlaceholder")}
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[11px] text-muted-foreground">{t("editProfile.priceVideo15Min")}</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            value={priceVideo15Min}
+                            onChange={(e) => setPriceVideo15Min(e.target.value)}
+                            placeholder="z.B. 15"
+                          />
+                          <span className="text-[10px] text-muted-foreground">€ / 15 Min</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[11px] text-muted-foreground">{t("editProfile.priceVoice15Min")}</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            value={priceVoice15Min}
+                            onChange={(e) => setPriceVoice15Min(e.target.value)}
+                            placeholder="z.B. 10"
+                          />
+                          <span className="text-[10px] text-muted-foreground">€ / 15 Min</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{t("editProfile.pricesMinHint")}</p>
                     </div>
 
                     {/* Response Time */}
