@@ -598,6 +598,7 @@ const de = {
   "booking.cancelPolicyFreeWindow": "Kostenlose Stornierung bis {h} Stunden vor der Session.",
   "booking.cancelPolicyFull": "Kostenlose Stornierung bis {h} Stunden vor der Session. Danach werden {percent}% der Buchungsgebühr einbehalten.",
   // Cancel actions in BookingCard
+  "booking.respondToRequest": "Annehmen, Ablehnen & Nachfrage",
   "booking.statusPending": "Ausstehend",
   "booking.statusConfirmed": "Bestätigt",
   "booking.statusActive": "Live",

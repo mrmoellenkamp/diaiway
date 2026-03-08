@@ -596,6 +596,7 @@ const es = {
   "booking.cancelPolicyNoFree": "Se retiene el {percent}% de la tarifa de reserva al cancelar.",
   "booking.cancelPolicyFreeWindow": "Cancelación gratuita hasta {h} horas antes de la sesión.",
   "booking.cancelPolicyFull": "Cancelación gratuita hasta {h} horas antes de la sesión. Después se retiene el {percent}% de la tarifa.",
+  "booking.respondToRequest": "Confirmar, rechazar y preguntar",
   "booking.statusPending": "Pendiente",
   "booking.statusConfirmed": "Confirmado",
   "booking.statusActive": "En vivo",
