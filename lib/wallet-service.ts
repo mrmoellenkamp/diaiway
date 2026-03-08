@@ -11,7 +11,6 @@ import {
 } from "@/lib/pdf-invoice"
 
 const PLATFORM_FEE_PERCENT = 15
-const RELEASE_DELAY_HOURS = 24
 
 /**
  * Schritt 1: Authorization (Hold & Capture Modell)
@@ -110,105 +109,6 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
     })
   })
   return { ok: true }
-}
-
-/**
- * @deprecated Ersetzt durch processPendingCompletions (Hold & Capture).
- * Schritt 2: Freigabe nach Call — jetzt in app/actions/process-completion.ts
- */
-export async function releasePendingTransactions() {
-  // Delegation an processPendingCompletions (Hold & Capture)
-  const { processPendingCompletions } = await import("@/app/actions/process-completion")
-  const results = await processPendingCompletions()
-  return results.map((r) => ({ id: r.bookingId, ok: r.ok, error: r.error }))
-}
-
-async function _releasePendingTransactionsLegacy() {
-  const cutoff = new Date(Date.now() - RELEASE_DELAY_HOURS * 60 * 60 * 1000)
-
-  const pending = await prisma.transaction.findMany({
-    where: { status: "AUTHORIZED" },
-    include: {
-      booking: true,
-      expert: { include: { user: true } },
-    },
-  })
-
-  const toRelease = pending.filter((t) => {
-    const ended = t.booking.sessionEndedAt
-    return ended && ended <= cutoff && t.booking.status === "completed"
-  })
-
-  const results: { id: string; ok: boolean; error?: string }[] = []
-  for (const t of toRelease) {
-    try {
-      const expertUserId = t.expert?.user?.id
-      if (!expertUserId) {
-        results.push({ id: t.id, ok: false, error: "Expert has no user" })
-        continue
-      }
-      await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: expertUserId },
-          data: {
-            pendingBalance: { decrement: t.totalAmount },
-            balance: { increment: t.netPayout },
-          },
-        })
-        await tx.transaction.update({
-          where: { id: t.id },
-          data: { status: "COMPLETED", completedAt: new Date() },
-        })
-      })
-
-      // PDF-Generierung: Rechnung + Gutschrift
-      try {
-        const now = new Date()
-        const invNum = `INV-${t.bookingId.slice(-8).toUpperCase()}-${now.getFullYear()}`
-        const credNum = `GUT-${t.bookingId.slice(-8).toUpperCase()}-${now.getFullYear()}`
-
-        const invoiceBuf = await generateInvoicePdf({
-          invoiceNumber: invNum,
-          recipientName: t.booking.userName,
-          recipientEmail: t.booking.userEmail,
-          bookingId: t.bookingId,
-          expertName: t.booking.expertName,
-          totalAmountCents: t.totalAmount,
-          date: now,
-        })
-        const creditBuf = await generateCreditNotePdf({
-          creditNumber: credNum,
-          recipientName: t.expert.name,
-          recipientEmail: t.expert.email || "",
-          bookingId: t.bookingId,
-          netPayoutCents: t.netPayout,
-          platformFeeCents: t.platformFee,
-          totalAmountCents: t.totalAmount,
-          date: now,
-        })
-
-        const [invoiceBlob, creditBlob] = await Promise.all([
-          put(`invoices/${t.id}-rechnung.pdf`, Buffer.from(invoiceBuf), { access: "public" }),
-          put(`invoices/${t.id}-gutschrift.pdf`, Buffer.from(creditBuf), { access: "public" }),
-        ])
-
-        await prisma.transaction.update({
-          where: { id: t.id },
-          data: { invoicePdfUrl: invoiceBlob.url, creditNotePdfUrl: creditBlob.url },
-        })
-      } catch (pdfErr) {
-        console.error("[Wallet] PDF generation failed for transaction:", t.id, pdfErr)
-      }
-      results.push({ id: t.id, ok: true })
-    } catch (err) {
-      results.push({
-        id: t.id,
-        ok: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      })
-    }
-  }
-  return results
 }
 
 /**

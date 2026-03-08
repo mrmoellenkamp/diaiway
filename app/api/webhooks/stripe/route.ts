@@ -49,11 +49,9 @@ export async function POST(req: Request) {
         break
       }
 
-      case "payment_intent.succeeded": {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent
-        console.log("[Stripe Webhook] Payment intent succeeded:", paymentIntent.id)
+      case "payment_intent.succeeded":
+        // Hauptfluss über checkout.session.completed; hier keine Aktion nötig
         break
-      }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
@@ -62,7 +60,6 @@ export async function POST(req: Request) {
       }
 
       default:
-        console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
@@ -80,7 +77,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
-  console.log("[Stripe Webhook] Processing checkout.session.completed for booking:", bookingId)
 
   const amountTotal = session.amount_total ?? 0
 
@@ -112,14 +108,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 }
 
-async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
-  const bookingId = paymentIntent.metadata?.bookingId
+async function handlePaymentFailed(pi: Stripe.PaymentIntent) {
+  const bookingId = pi.metadata?.bookingId
   if (!bookingId) {
-    console.log("[Stripe Webhook] No bookingId in payment intent metadata")
     return
   }
 
-  console.log("[Stripe Webhook] Payment failed for booking:", bookingId)
   await prisma.booking.updateMany({
     where: { id: bookingId },
     data: { paymentStatus: "failed" },

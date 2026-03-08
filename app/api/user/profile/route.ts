@@ -98,8 +98,6 @@ export async function PATCH(req: Request) {
             bio: "",
             priceVideo15Min: 1,
             priceVoice15Min: 1,
-            priceVideo15Min: 0,
-            priceVoice15Min: 0,
             pricePerSession: 0,
             rating: 0,
             reviewCount: 0,
