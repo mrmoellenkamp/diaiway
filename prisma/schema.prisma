@@ -45,9 +45,13 @@ enum PaymentStatus {
 }
 
 enum TransactionStatus {
-  PENDING   // Zahlung eingegangen, in Qualitätssicherung
-  COMPLETED // Nach 24h freigegeben, Takumi hat Guthaben erhalten
-  REFUNDED  // Rückerstattung an Shugyo
+  PENDING    // @deprecated Legacy, wird als AUTHORIZED behandelt
+  COMPLETED  // @deprecated Legacy, wird als CAPTURED behandelt
+  AUTHORIZED // Hold: Stripe authorized, Geld reserviert, noch nicht eingezogen
+  CAPTURED   // Beleg erstellt, Takumi-Guthaben gutgeschrieben
+  CANCELED   // Storno vor Capture (Autorisierung verfällt)
+  REFUNDED   // Storno nach Capture (SR/SG-Beleg erforderlich)
+  ON_HOLD    // diaiway Safety: Pause wegen SafetyReport, manuelle Prüfung nötig
 }
 
 // ─── Models ────────────────────────────────────────────────────────────────
@@ -60,19 +64,23 @@ model User {
   role             UserRole   @default(user)
   appRole          AppRole    @default(shugyo)
   status           UserStatus @default(active)
+  isBanned         Boolean    @default(false)  // diaiway Safety: dauerhaft gesperrt
   image            String     @default("")
   favorites        String[]   // array of Expert IDs
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // Kundennummer für Belege (Format KD-10000)
+  customerNumber   String?   @unique
+
   // Wallet (für Takumis: Verdienst; für Shugyos: Guthaben aus Rückerstattungen)
   balance          Int       @default(0)  // EUR cents
-  pendingBalance   Int       @default(0)  // EUR cents, in Qualitätssicherung (nur Takumi)
+  pendingBalance   Int       @default(0)  // EUR cents, bei Hold-Modell nicht genutzt (Stripe hält)
 
   // Shugyo: Bei Rückerstattung — "payout" = Auszahlung auf Karte, "wallet" = Guthaben
   refundPreference String    @default("payout")
 
-  // Rechnungsdaten: { type: "privat"|"unternehmen", ... }
+  // Rechnungsdaten / billingDetails: { type: "privat"|"unternehmen", ... }
   // privat: fullName, street, houseNumber, zip, city, country, email
   // unternehmen: + companyName, legalForm?, vatId?, taxNumber?, kleinunternehmer (§19 UStG)
   invoiceData      Json?
@@ -170,6 +178,9 @@ model Booking {
   sessionDuration       Int?          // minutes
   trialUsed             Boolean       @default(false)
 
+  // diaiway Safety Enforcement: Pre-Call-Gateway-Zustimmung
+  safetyAcceptedAt      DateTime?
+
   // Expert's rating of the user (Shugyo) — set when Takumi rates the booker
   expertRating    Float?
   expertReviewText String?
@@ -189,7 +200,8 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transaction Transaction?
+  transaction   Transaction?
+  safetyReports SafetyReport[]
 
   @@index([expertId, date, status])
   @@index([userId])
@@ -245,14 +257,50 @@ model Transaction {
   totalAmount Int             // EUR cents (Bruttobetrag)
   platformFee  Int            // EUR cents (15 % Provision)
   netPayout   Int             // EUR cents (für Takumi)
-  status    TransactionStatus @default(PENDING)
+  status    TransactionStatus @default(AUTHORIZED)
+  invoiceNumber   String?     // RE-100001 (Rechnung an Shugyo)
+  creditNoteNumber String?    // GS-100001 (Gutschrift an Takumi)
   invoicePdfUrl    String?    // Rechnung diaiway → Shugyo
   creditNotePdfUrl String?    // Gutschrift diaiway → Takumi
-  completedAt      DateTime?  // Freigabezeitpunkt
+  // Storno-Belege bei REFUNDED
+  stornoInvoiceNumber    String?  // SR-100001
+  stornoCreditNoteNumber String?  // SG-100001
+  stornoInvoicePdfUrl    String?
+  stornoCreditNotePdfUrl String?
+  completedAt      DateTime?  // Capture-Zeitpunkt
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([expertId])
   @@index([userId])
   @@index([status])
+}
+
+// diaiway Safety Enforcement: Meldungen aus dem Call
+model SafetyReport {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  reporterId  String   // User, der gemeldet hat
+  reportedId  String   // User/Expert, gegen den gemeldet wurde (oder beide?)
+  reporterRole String  // "shugyo" | "takumi"
+  reason      String?  // optional: Kategorie oder Freitext
+  details     String?  @default("")
+  status      String   @default("pending")  // pending | reviewed | resolved
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([reporterId])
+  @@index([reportedId])
+  @@index([status])
+}
+
+// Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
+model InvoiceCounter {
+  id    String   @id @default(cuid())
+  type  String   @unique  // "RE" | "GS" | "SR" | "SG" | "KD"
+  value Int      @default(0)
+  updatedAt DateTime @updatedAt
 }

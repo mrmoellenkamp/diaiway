@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { stripe } from "@/lib/stripe"
+import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
@@ -94,11 +94,11 @@ export async function POST(
           const res = await creditRefundToShugyoWallet(id)
           if (!res.ok) console.error("[booking-respond] Wallet-Gutschrift fehlgeschlagen:", res.error)
         } else {
-          // Auszahlung auf Karte (Stripe-Refund) — nur bei echter Stripe-Zahlung
+          // Auszahlung auf Karte (Stripe Cancel/Refund) — Hold & Capture: vor Capture cancel, nach Capture refund
           const pi = booking.stripePaymentIntentId
           if (pi && pi !== "wallet" && pi.startsWith("pi_")) {
-            await stripe.refunds.create({ payment_intent: pi })
-            await refundTransactionForBooking(id)
+            const res = await cancelOrRefundPaymentIntent(pi)
+            if (res.ok) await refundTransactionForBooking(id)
           } else if (pi === "wallet") {
             // Ursprünglich mit Wallet bezahlt → Gutschrift zurück
             await creditRefundToShugyoWallet(id)

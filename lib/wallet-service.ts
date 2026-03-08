@@ -2,14 +2,22 @@
 
 import { put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
-import { generateCreditNotePdf, generateInvoicePdf } from "@/lib/pdf-invoice"
+import { getNextDocumentNumber } from "@/lib/billing"
+import {
+  generateCreditNotePdf,
+  generateInvoicePdf,
+  generateStornoCreditNotePdf,
+  generateStornoInvoicePdf,
+} from "@/lib/pdf-invoice"
 
 const PLATFORM_FEE_PERCENT = 15
 const RELEASE_DELAY_HOURS = 24
 
 /**
- * Schritt 1: Zahlungseingang
- * Wenn ein Shugyo bezahlt, wird der Betrag in pendingBalance des Takumi geparkt.
+ * Schritt 1: Authorization (Hold & Capture Modell)
+ * Wenn ein Shugyo zahlt, wird das Geld bei Stripe reserviert (capture_method: manual).
+ * Wir erstellen eine Transaction mit status AUTHORIZED. Das Guthaben wird dem Takumi
+ * erst bei processCompletion (Capture) gutgeschrieben.
  */
 export async function onPaymentReceived(bookingId: string, totalAmountCents: number) {
   const existing = await prisma.transaction.findUnique({ where: { bookingId } })
@@ -25,25 +33,18 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
   const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = totalAmountCents - platformFee
 
-  const tx = await prisma.$transaction(async (tx) => {
-    const t = await tx.transaction.create({
-      data: {
-        bookingId,
-        expertId: booking.expertId,
-        userId: booking.userId,
-        totalAmount: totalAmountCents,
-        platformFee,
-        netPayout,
-        status: "PENDING",
-      },
-    })
-    await tx.user.update({
-      where: { id: booking.expert.userId },
-      data: { pendingBalance: { increment: totalAmountCents } },
-    })
-    return t
+  const t = await prisma.transaction.create({
+    data: {
+      bookingId,
+      expertId: booking.expertId,
+      userId: booking.userId,
+      totalAmount: totalAmountCents,
+      platformFee,
+      netPayout,
+      status: "AUTHORIZED", // Hold: Stripe reserviert, noch nicht eingezogen
+    },
   })
-  return tx
+  return t
 }
 
 /**
@@ -83,7 +84,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
     })
     await tx.user.update({
       where: { id: booking.expert.userId },
-      data: { pendingBalance: { increment: totalAmountCents } },
+      data: { pendingBalance: { increment: totalAmountCents } }, // Escrow bis processCompletion
     })
     await tx.transaction.create({
       data: {
@@ -93,7 +94,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
         totalAmount: totalAmountCents,
         platformFee,
         netPayout,
-        status: "PENDING",
+        status: "AUTHORIZED", // Wallet: Escrow in pendingBalance, Capture bei processCompletion
       },
     })
     await tx.booking.update({
@@ -110,15 +111,21 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 }
 
 /**
- * Schritt 2: Freigabe nach Call
- * 24 Stunden nach einem als 'completed' markierten Call wird die platformFee (15%) abgezogen
- * und der Restbetrag von pendingBalance in das balance des Takumi verschoben.
+ * @deprecated Ersetzt durch processPendingCompletions (Hold & Capture).
+ * Schritt 2: Freigabe nach Call — jetzt in app/actions/process-completion.ts
  */
 export async function releasePendingTransactions() {
+  // Delegation an processPendingCompletions (Hold & Capture)
+  const { processPendingCompletions } = await import("@/app/actions/process-completion")
+  const results = await processPendingCompletions()
+  return results.map((r) => ({ id: r.bookingId, ok: r.ok, error: r.error }))
+}
+
+async function _releasePendingTransactionsLegacy() {
   const cutoff = new Date(Date.now() - RELEASE_DELAY_HOURS * 60 * 60 * 1000)
 
   const pending = await prisma.transaction.findMany({
-    where: { status: "PENDING" },
+    where: { status: "AUTHORIZED" },
     include: {
       booking: true,
       expert: { include: { user: true } },
@@ -158,7 +165,7 @@ export async function releasePendingTransactions() {
         const invNum = `INV-${t.bookingId.slice(-8).toUpperCase()}-${now.getFullYear()}`
         const credNum = `GUT-${t.bookingId.slice(-8).toUpperCase()}-${now.getFullYear()}`
 
-        const invoiceBuf = generateInvoicePdf({
+        const invoiceBuf = await generateInvoicePdf({
           invoiceNumber: invNum,
           recipientName: t.booking.userName,
           recipientEmail: t.booking.userEmail,
@@ -167,7 +174,7 @@ export async function releasePendingTransactions() {
           totalAmountCents: t.totalAmount,
           date: now,
         })
-        const creditBuf = generateCreditNotePdf({
+        const creditBuf = await generateCreditNotePdf({
           creditNumber: credNum,
           recipientName: t.expert.name,
           recipientEmail: t.expert.email || "",
@@ -209,26 +216,89 @@ export async function releasePendingTransactions() {
 export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const t = await prisma.transaction.findUnique({
     where: { bookingId },
-    include: { expert: { include: { user: true } } },
+    include: { expert: { include: { user: true } }, booking: true },
   })
   if (!t) return { ok: true }
-  if (t.status !== "PENDING") return { ok: true }
+  const reversable = ["AUTHORIZED", "PENDING", "CAPTURED", "COMPLETED"]
+  if (!reversable.includes(t.status)) return { ok: true }
 
   const expertUserId = t.expert?.user?.id
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: expertUserId },
-      data: { pendingBalance: { decrement: t.totalAmount } },
+  const isWallet = t.booking?.stripePaymentIntentId === "wallet"
+  const wasCaptured = t.status === "CAPTURED" || t.status === "COMPLETED"
+  const newStatus = wasCaptured ? "REFUNDED" : "CANCELED"
+
+  let stornoInvoiceNumber: string | null = null
+  let stornoCreditNoteNumber: string | null = null
+  let stornoInvoicePdfUrl: string | null = null
+  let stornoCreditNotePdfUrl: string | null = null
+
+  if (wasCaptured && t.invoiceNumber && t.creditNoteNumber && t.booking) {
+    const [srNum, sgNum] = await Promise.all([
+      getNextDocumentNumber("SR"),
+      getNextDocumentNumber("SG"),
+    ])
+    const now = new Date()
+    const srBuf = generateStornoInvoicePdf({
+      stornoNumber: srNum,
+      originalInvoiceNumber: t.invoiceNumber,
+      recipientName: t.booking.userName,
+      recipientEmail: t.booking.userEmail,
+      bookingId: t.bookingId,
+      expertName: t.booking.expertName,
+      totalAmountCents: t.totalAmount,
+      date: now,
     })
+    const sgBuf = generateStornoCreditNotePdf({
+      stornoNumber: sgNum,
+      originalCreditNoteNumber: t.creditNoteNumber,
+      recipientName: t.expert?.name ?? "",
+      recipientEmail: t.expert?.email ?? "",
+      bookingId: t.bookingId,
+      netPayoutCents: t.netPayout,
+      platformFeeCents: t.platformFee,
+      totalAmountCents: t.totalAmount,
+      date: now,
+    })
+    const [srBlob, sgBlob] = await Promise.all([
+      put(`invoices/${t.id}-${srNum}.pdf`, Buffer.from(srBuf), { access: "public" }),
+      put(`invoices/${t.id}-${sgNum}.pdf`, Buffer.from(sgBuf), { access: "public" }),
+    ])
+    stornoInvoiceNumber = srNum
+    stornoCreditNoteNumber = sgNum
+    stornoInvoicePdfUrl = srBlob.url
+    stornoCreditNotePdfUrl = sgBlob.url
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const isPreCapture = t.status === "AUTHORIZED" || t.status === "PENDING"
+    if (isPreCapture && isWallet) {
+      await tx.user.update({
+        where: { id: expertUserId },
+        data: { pendingBalance: { decrement: t.totalAmount } },
+      })
+    } else if (wasCaptured) {
+      await tx.user.update({
+        where: { id: expertUserId },
+        data: { balance: { decrement: t.netPayout } },
+      })
+    }
     await tx.user.update({
       where: { id: t.userId },
       data: { balance: { increment: t.totalAmount } },
     })
     await tx.transaction.update({
       where: { id: t.id },
-      data: { status: "REFUNDED" },
+      data: {
+        status: newStatus,
+        ...(stornoInvoiceNumber && {
+          stornoInvoiceNumber,
+          stornoCreditNoteNumber,
+          stornoInvoicePdfUrl,
+          stornoCreditNotePdfUrl,
+        }),
+      },
     })
   })
   return { ok: true }
@@ -241,22 +311,85 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
 export async function refundTransactionForBooking(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const t = await prisma.transaction.findUnique({
     where: { bookingId },
-    include: { expert: { include: { user: true } } },
+    include: { expert: { include: { user: true } }, booking: true },
   })
-  if (!t) return { ok: true } // Keine Transaction = nichts zu tun
-  if (t.status !== "PENDING") return { ok: true } // Bereits verarbeitet
+  if (!t) return { ok: true }
+  const reversable = ["AUTHORIZED", "PENDING", "CAPTURED", "COMPLETED"]
+  if (!reversable.includes(t.status)) return { ok: true }
 
   const expertUserId = t.expert?.user?.id
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: expertUserId },
-      data: { pendingBalance: { decrement: t.totalAmount } },
+  const isWallet = t.booking?.stripePaymentIntentId === "wallet"
+  const wasCaptured = t.status === "CAPTURED" || t.status === "COMPLETED"
+  const newStatus = wasCaptured ? "REFUNDED" : "CANCELED"
+
+  let stornoInvoiceNumber: string | null = null
+  let stornoCreditNoteNumber: string | null = null
+  let stornoInvoicePdfUrl: string | null = null
+  let stornoCreditNotePdfUrl: string | null = null
+
+  if (wasCaptured && t.invoiceNumber && t.creditNoteNumber && t.booking) {
+    const [srNum, sgNum] = await Promise.all([
+      getNextDocumentNumber("SR"),
+      getNextDocumentNumber("SG"),
+    ])
+    const now = new Date()
+    const srBuf = generateStornoInvoicePdf({
+      stornoNumber: srNum,
+      originalInvoiceNumber: t.invoiceNumber,
+      recipientName: t.booking.userName,
+      recipientEmail: t.booking.userEmail,
+      bookingId: t.bookingId,
+      expertName: t.booking.expertName,
+      totalAmountCents: t.totalAmount,
+      date: now,
     })
+    const sgBuf = generateStornoCreditNotePdf({
+      stornoNumber: sgNum,
+      originalCreditNoteNumber: t.creditNoteNumber,
+      recipientName: t.expert?.name ?? "",
+      recipientEmail: t.expert?.email ?? "",
+      bookingId: t.bookingId,
+      netPayoutCents: t.netPayout,
+      platformFeeCents: t.platformFee,
+      totalAmountCents: t.totalAmount,
+      date: now,
+    })
+    const [srBlob, sgBlob] = await Promise.all([
+      put(`invoices/${t.id}-${srNum}.pdf`, Buffer.from(srBuf), { access: "public" }),
+      put(`invoices/${t.id}-${sgNum}.pdf`, Buffer.from(sgBuf), { access: "public" }),
+    ])
+    stornoInvoiceNumber = srNum
+    stornoCreditNoteNumber = sgNum
+    stornoInvoicePdfUrl = srBlob.url
+    stornoCreditNotePdfUrl = sgBlob.url
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const isPreCapture = t.status === "AUTHORIZED" || t.status === "PENDING"
+    if (isPreCapture && isWallet) {
+      await tx.user.update({
+        where: { id: expertUserId },
+        data: { pendingBalance: { decrement: t.totalAmount } },
+      })
+    } else if (wasCaptured) {
+      await tx.user.update({
+        where: { id: expertUserId },
+        data: { balance: { decrement: t.netPayout } },
+      })
+    }
     await tx.transaction.update({
       where: { id: t.id },
-      data: { status: "REFUNDED" },
+      data: {
+        status: newStatus,
+        ...(stornoInvoiceNumber && {
+          stornoInvoiceNumber,
+          stornoCreditNoteNumber,
+          stornoInvoicePdfUrl,
+          stornoCreditNotePdfUrl,
+        }),
+      },
     })
   })
   return { ok: true }
@@ -276,7 +409,8 @@ export async function adminRefundFromPending(
     include: { expert: { include: { user: true } }, booking: true },
   })
   if (!t) return { ok: false, error: "Transaction not found" }
-  if (t.status !== "PENDING") return { ok: false, error: "Nur PENDING-Transaktionen können erstattet werden" }
+  const refundable = ["AUTHORIZED", "PENDING"]
+  if (!refundable.includes(t.status)) return { ok: false, error: "Nur AUTHORIZED-Transaktionen können erstattet werden" }
   if (!stripeRefundCompleted) return { ok: false, error: "Stripe-Refund muss zuerst durchgeführt werden" }
 
   const expertUserId = t.expert?.user?.id
@@ -289,10 +423,21 @@ export async function adminRefundFromPending(
     })
     await tx.transaction.update({
       where: { id: transactionId },
-      data: { status: "REFUNDED" },
+      data: { status: "CANCELED" }, // Vor Capture storniert, kein SR/SG nötig
     })
   })
   return { ok: true }
+}
+
+/**
+ * diaiway Safety Enforcement: Setzt die Transaktion einer Buchung auf ON_HOLD.
+ * Pausiert den Stripe-Capture bis manuelle Prüfung durch Admin.
+ */
+export async function setTransactionOnHoldForBooking(bookingId: string): Promise<void> {
+  await prisma.transaction.updateMany({
+    where: { bookingId },
+    data: { status: "ON_HOLD" },
+  })
 }
 
 /**
@@ -339,7 +484,10 @@ export async function getWalletHistory(userId: string, limit = 50) {
       label: t.booking.expertName,
       date: t.booking.date,
       createdAt: t.createdAt,
+      invoiceNumber: t.invoiceNumber,
       invoicePdfUrl: t.invoicePdfUrl,
+      stornoInvoiceNumber: t.stornoInvoiceNumber,
+      stornoInvoicePdfUrl: t.stornoInvoicePdfUrl,
     })),
     ...asExpert.map((t) => ({
       id: t.id,
@@ -350,7 +498,10 @@ export async function getWalletHistory(userId: string, limit = 50) {
       label: t.booking.userName,
       date: t.booking.date,
       createdAt: t.createdAt,
+      creditNoteNumber: t.creditNoteNumber,
       creditNotePdfUrl: t.creditNotePdfUrl,
+      stornoCreditNoteNumber: t.stornoCreditNoteNumber,
+      stornoCreditNotePdfUrl: t.stornoCreditNotePdfUrl,
     })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   return combined.slice(0, limit)

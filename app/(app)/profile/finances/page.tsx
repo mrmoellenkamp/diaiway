@@ -24,8 +24,14 @@ type TxItem = {
   label: string
   date: string
   createdAt: string
+  invoiceNumber?: string | null
   invoicePdfUrl?: string | null
+  stornoInvoiceNumber?: string | null
+  stornoInvoicePdfUrl?: string | null
+  creditNoteNumber?: string | null
   creditNotePdfUrl?: string | null
+  stornoCreditNoteNumber?: string | null
+  stornoCreditNotePdfUrl?: string | null
 }
 
 export default function FinancesPage() {
@@ -133,27 +139,69 @@ export default function FinancesPage() {
                           >
                             {formatCents(tx.amount)}
                           </span>
-                          {(tx.invoicePdfUrl || tx.creditNotePdfUrl) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              asChild
-                            >
-                              <a
-                                href={tx.type === "paid" ? tx.invoicePdfUrl! : tx.creditNotePdfUrl!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={
-                                  tx.type === "paid"
-                                    ? t("finances.downloadInvoice")
-                                    : t("finances.downloadCreditNote")
-                                }
-                              >
-                                <Download className="size-4" />
-                              </a>
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {tx.type === "paid" ? (
+                              <>
+                                {tx.invoicePdfUrl && (
+                                  <Button variant="ghost" size="icon" className="size-8" asChild>
+                                    <a
+                                      href={tx.invoicePdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={t("finances.downloadInvoice")}
+                                      title={tx.invoiceNumber ?? t("finances.downloadInvoice")}
+                                    >
+                                      <Download className="size-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {tx.stornoInvoicePdfUrl && (
+                                  <Button variant="ghost" size="icon" className="size-8" asChild>
+                                    <a
+                                      href={tx.stornoInvoicePdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={t("finances.downloadStornoInvoice")}
+                                      title={tx.stornoInvoiceNumber ?? t("finances.downloadStornoInvoice")}
+                                    >
+                                      <FileText className="size-4 text-muted-foreground" />
+                                    </a>
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {tx.creditNotePdfUrl && (
+                                  <Button variant="ghost" size="icon" className="size-8" asChild>
+                                    <a
+                                      href={tx.creditNotePdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={t("finances.downloadCreditNote")}
+                                      title={tx.creditNoteNumber ?? t("finances.downloadCreditNote")}
+                                    >
+                                      <Download className="size-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {tx.stornoCreditNotePdfUrl && (
+                                  <Button variant="ghost" size="icon" className="size-8" asChild>
+                                    <a
+                                      href={tx.stornoCreditNotePdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={t("finances.downloadStornoCreditNote")}
+                                      title={
+                                        tx.stornoCreditNoteNumber ?? t("finances.downloadStornoCreditNote")
+                                      }
+                                    >
+                                      <FileText className="size-4 text-muted-foreground" />
+                                    </a>
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

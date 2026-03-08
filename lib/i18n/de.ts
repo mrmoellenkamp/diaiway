@@ -271,6 +271,8 @@ const de = {
   "finances.creditNote": "Gutschrift",
   "finances.downloadInvoice": "Rechnung herunterladen",
   "finances.downloadCreditNote": "Gutschrift herunterladen",
+  "finances.downloadStornoInvoice": "Storno-Rechnung herunterladen",
+  "finances.downloadStornoCreditNote": "Storno-Gutschrift herunterladen",
   "finances.noTransactions": "Noch keine Transaktionen.",
   "finances.canWithdraw": "Auszahlung möglich",
 
@@ -369,6 +371,18 @@ const de = {
   "video.muteAria": "Stummschalten",
   "video.unmuteAria": "Stummschaltung aufheben",
   "video.bookingStatusError": "Buchung hat Status \"{status}\" und kann nicht gestartet werden.",
+
+  // diaiway Safety Enforcement
+  "safety.gatewayTitle": "diaiway Safety Enforcement",
+  "safety.gatewayDesc": "Bitte bestätige die folgenden Punkte, bevor du den Video-Raum betrittst.",
+  "safety.checkLiability": "Ich erkenne an, dass es sich um eine Dienstleistung zur Wissensvermittlung handelt und kein Erfolgswerk garantiert wird.",
+  "safety.checkConduct": "Ich verpflichte mich zu einem respektvollen Umgang und werde die diAiway-Verhaltensregeln einhalten.",
+  "safety.checkGoogleSafety": "Ich bestätige die Null-Toleranz-Politik gegenüber Gewalt und sexuellen Inhalten (diaiway Safety Standards / Google Safety Compliance).",
+  "safety.confirm": "Ich bestätige und möchte beitreten",
+  "safety.reportAndLeave": "Melden & Verlassen",
+  "safety.reportAndLeaveDesc": "Beendet den Call sofort und erstellt einen Safety-Report zur Prüfung.",
+  "safety.reportSubmitted": "Safety-Report erstellt. Der Call wurde beendet. Wir prüfen den Fall.",
+  "safety.reportFailed": "Report konnte nicht gesendet werden.",
 
   // Handshake Overlay
   "handshake.close": "Schließen",
@@ -590,6 +604,7 @@ const de = {
   "booking.bookingInProgress": "Wird gebucht...",
   "booking.selectAppointmentError": "Bitte wähle einen Termin aus.",
   "booking.pastSlotError": "Dieser Termin liegt in der Vergangenheit und kann nicht gebucht werden.",
+  "booking.max7DaysAhead": "Buchungen dürfen maximal 7 Tage im Voraus getätigt werden.",
   "booking.loginRequired": "Bitte zuerst anmelden.",
   "booking.networkError": "Netzwerkfehler. Bitte prüfe deine Verbindung.",
   "booking.incompleteProfile": "Das Expertenprofil ist unvollständig. Bitte wähle einen anderen Termin oder Experten.",

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
+import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
 import { toast } from "sonner"
 import {
   Mic,
@@ -21,6 +22,7 @@ import {
   Shield,
   Star,
   Loader2,
+  Flag,
 } from "lucide-react"
 import { DailyVideoCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
@@ -62,6 +64,8 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [reviewText, setReviewText] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
   const [isInCall, setIsInCall] = useState(false)
+  const [safetyAccepted, setSafetyAccepted] = useState(false)
+  const [showSafetyModal, setShowSafetyModal] = useState(false)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -81,6 +85,8 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           return
         }
         setBooking(data.booking)
+        setSafetyAccepted(!!data.booking.safetyAcceptedAt)
+        setShowSafetyModal(!data.booking.safetyAcceptedAt && data.booking.status === "confirmed")
         if (data.booking.status === "active") {
           setPhase("paid")
           setTimer(1800)
@@ -160,7 +166,17 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     return () => { cancelled = true }
   }, [isInCall, roomUrl, booking, fetchRoomUrl])
 
+  const handleSafetyConfirm = async () => {
+    const result = await patchBooking("accept-safety")
+    if (result) {
+      setSafetyAccepted(true)
+      setShowSafetyModal(false)
+      setBooking((b) => (b ? { ...b, safetyAcceptedAt: new Date().toISOString() } : null))
+    }
+  }
+
   const handleStartTrial = async () => {
+    if (!safetyAccepted) return
     const url = await fetchRoomUrl()
     if (!url) return
     const result = await patchBooking("start-session")
@@ -170,6 +186,17 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
       setTimer(300)
       setIsInCall(true)
       toast.success(t("video.sessionStarted"))
+    }
+  }
+
+  const handleReportAndLeave = async () => {
+    const result = await patchBooking("report-and-leave")
+    setIsInCall(false)
+    setPhase("rating")
+    if (result?.reportCreated) {
+      toast.success(t("safety.reportSubmitted"))
+    } else {
+      toast.error(t("safety.reportFailed"))
     }
   }
 
@@ -336,12 +363,18 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
           <Button
             onClick={handleStartTrial}
-            disabled={tooEarlyToJoin}
+            disabled={tooEarlyToJoin || !safetyAccepted}
             className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90 disabled:opacity-50"
+            data-testid="join-session-btn"
           >
             <Video className="mr-2 size-5" />
             {t("video.join")}
           </Button>
+
+          <SafetyGatewayModal
+            open={showSafetyModal}
+            onConfirm={handleSafetyConfirm}
+          />
 
           <p className="text-center text-xs text-muted-foreground">
             {t("video.videoRoom")}{" "}
@@ -545,11 +578,12 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </button>
 
             <button
-              onClick={() => toast.info(t("video.reportSent"))}
+              onClick={handleReportAndLeave}
               className="flex size-12 items-center justify-center rounded-full bg-white/20"
-              aria-label={t("video.reportProblem")}
+              aria-label={t("safety.reportAndLeave")}
+              title={t("safety.reportAndLeaveDesc")}
             >
-              <AlertTriangle className="size-5 text-primary-foreground" />
+              <Flag className="size-5 text-primary-foreground" />
             </button>
           </div>
         </div>

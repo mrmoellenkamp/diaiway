@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { stripe } from "@/lib/stripe"
+import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { parseBerlinDateTime } from "@/lib/date-utils"
-import { refundTransactionForBooking } from "@/lib/wallet-service"
+import {
+  creditRefundToShugyoWallet,
+  refundTransactionForBooking,
+  setTransactionOnHoldForBooking,
+} from "@/lib/wallet-service"
 
 export const runtime = "nodejs"
 
@@ -36,6 +40,14 @@ export async function GET(
 
     if (!isBooker && !isExpert) {
       return NextResponse.json({ error: "Zugriff verweigert." }, { status: 403 })
+    }
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: uid },
+      select: { isBanned: true },
+    })
+    if (currentUser?.isBanned) {
+      return NextResponse.json({ error: "Dein Zugang wurde gesperrt (diaiway Safety)." }, { status: 403 })
     }
 
     // Compute cancel fee preview for current time
@@ -77,6 +89,7 @@ export async function GET(
         cancelledAt: booking.cancelledAt,
         cancelPreview,
         isExpert, // true if current user is the Takumi (expert) for this booking
+        safetyAcceptedAt: booking.safetyAcceptedAt,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       },
@@ -164,9 +177,9 @@ export async function PATCH(
   try {
     const body = await req.json().catch(() => ({}))
     const { action, rating, reviewText } = body as { action?: string; rating?: number; reviewText?: string }
-    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating"].includes(action)) {
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "accept-safety", "report-and-leave"].includes(action)) {
       return NextResponse.json(
-        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating." },
+        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, accept-safety, report-and-leave." },
         { status: 400 }
       )
     }
@@ -184,12 +197,69 @@ export async function PATCH(
       return NextResponse.json({ error: "Zugriff verweigert." }, { status: 403 })
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: uid },
+      select: { isBanned: true },
+    })
+    if (currentUser?.isBanned) {
+      return NextResponse.json({ error: "Dein Zugang wurde gesperrt (diaiway Safety)." }, { status: 403 })
+    }
+
+    // ── accept-safety (diaiway Safety Enforcement) ──────────────────────────
+    if (action === "accept-safety") {
+      if (booking.status !== "confirmed" && booking.status !== "active") {
+        return NextResponse.json({ error: "Ungültiger Buchungsstatus." }, { status: 409 })
+      }
+      if (booking.safetyAcceptedAt) {
+        return NextResponse.json({ success: true, safetyAcceptedAt: booking.safetyAcceptedAt })
+      }
+      const updated = await prisma.booking.update({
+        where: { id },
+        data: { safetyAcceptedAt: new Date() },
+      })
+      return NextResponse.json({ success: true, safetyAcceptedAt: updated.safetyAcceptedAt })
+    }
+
+    // ── report-and-leave (diaiway Safety Enforcement) ───────────────────────
+    if (action === "report-and-leave") {
+      if (booking.status !== "active") {
+        return NextResponse.json({ error: "Nur während eines aktiven Calls." }, { status: 409 })
+      }
+      const reportedId = isBooker ? booking.expert?.userId : booking.userId
+      if (!reportedId) return NextResponse.json({ error: "Gegenpart nicht gefunden." }, { status: 400 })
+      await prisma.safetyReport.create({
+        data: {
+          bookingId: id,
+          reporterId: uid,
+          reportedId,
+          reporterRole: isBooker ? "shugyo" : "takumi",
+          reason: "report_and_leave",
+        },
+      })
+      await setTransactionOnHoldForBooking(id)
+      const now = new Date()
+      const duration = booking.sessionStartedAt
+        ? Math.round((now.getTime() - new Date(booking.sessionStartedAt).getTime()) / 60000)
+        : 0
+      await prisma.booking.update({
+        where: { id },
+        data: { status: "completed", sessionEndedAt: now, sessionDuration: duration },
+      })
+      return NextResponse.json({ success: true, reportCreated: true })
+    }
+
     // ── start-session ──────────────────────────────────────────────────────
     if (action === "start-session") {
       if (booking.status !== "confirmed") {
         return NextResponse.json(
           { error: `Session kann nur aus Status "confirmed" gestartet werden (aktuell: "${booking.status}").` },
           { status: 409 }
+        )
+      }
+      if (!booking.safetyAcceptedAt) {
+        return NextResponse.json(
+          { error: "diaiway Safety Enforcement: Bitte bestätige zuerst die Safety-Richtlinien." },
+          { status: 403 }
         )
       }
 
@@ -227,16 +297,23 @@ export async function PATCH(
       const FREE_TRIAL_MINUTES = 5
       const isFreeSession = (duration ?? 0) < FREE_TRIAL_MINUTES
 
-      // If session was under 5 minutes and was already paid → full automatic refund
+      // If session was under 5 minutes and was already paid → full automatic refund (oder Cancel vor Capture)
       let autoRefunded = false
       if (isFreeSession && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
         try {
-          await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId })
-          await prisma.booking.update({
-            where: { id },
-            data: { paymentStatus: "refunded" },
-          })
-          autoRefunded = true
+          const res = await cancelOrRefundPaymentIntent(booking.stripePaymentIntentId)
+          if (res.ok) {
+            await prisma.booking.update({
+              where: { id },
+              data: { paymentStatus: "refunded" },
+            })
+            try {
+              await refundTransactionForBooking(id)
+            } catch (walletErr) {
+              console.error("[end-session] refundTransactionForBooking:", walletErr)
+            }
+            autoRefunded = true
+          }
         } catch (refundErr) {
           console.error("[end-session] Auto-refund für <5min Session fehlgeschlagen:", refundErr)
         }
@@ -349,36 +426,28 @@ export async function PATCH(
     } = { refunded: false }
 
     if (booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+      const isWallet = booking.stripePaymentIntentId === "wallet"
       try {
-        const stripeRefundPayload: Parameters<typeof stripe.refunds.create>[0] = {
-          payment_intent: booking.stripePaymentIntentId,
-          reason: cancelledBy === "expert" ? "requested_by_customer" : "requested_by_customer",
+        if (isWallet) {
+          await creditRefundToShugyoWallet(id)
+          refundResult = { refunded: true, refundAmount, partial: feeApplies && feeAmount > 0, feeAmount }
+        } else {
+          const res = await cancelOrRefundPaymentIntent(booking.stripePaymentIntentId, {
+            amount: feeApplies && refundAmount > 0 ? refundAmount : undefined,
+            reason: "requested_by_customer",
+          })
+          if (!res.ok) throw new Error(res.error)
+          refundResult = { refunded: true, refundAmount, partial: feeApplies && feeAmount > 0, feeAmount }
         }
-        // Partial refund if fee applies
-        if (feeApplies && feeAmount > 0 && refundAmount > 0) {
-          stripeRefundPayload.amount = refundAmount
-        }
-
-        const refund = await stripe.refunds.create(stripeRefundPayload)
-
         const newPaymentStatus = feeApplies && feeAmount > 0 ? "paid" : "refunded"
         await prisma.booking.update({
           where: { id },
           data: { paymentStatus: newPaymentStatus },
         })
-
-        refundResult = {
-          refunded: true,
-          refundId: refund.id,
-          partial: feeApplies && feeAmount > 0,
-          feeAmount,
-          refundAmount,
-        }
-        // Wallet: pendingBalance freigeben, Transaction auf REFUNDED setzen
         try {
           await refundTransactionForBooking(id)
         } catch (walletErr) {
-          console.error("[Booking Cancel] Wallet refund failed:", walletErr)
+          console.error("[Booking Cancel] refundTransactionForBooking:", walletErr)
         }
       } catch (stripeErr) {
         console.error("[Stripe Refund] Failed:", stripeErr)

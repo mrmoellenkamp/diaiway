@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
-import { parseBerlinDateTime } from "@/lib/date-utils"
+import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 
 export const runtime = "nodejs"
 
@@ -115,6 +115,11 @@ export async function POST(req: Request) {
     const slotDateTime = parseBerlinDateTime(date, startTime)
     if (slotDateTime <= new Date()) {
       return NextResponse.json({ error: "Buchungen in der Vergangenheit sind nicht möglich." }, { status: 400 })
+    }
+
+    // 7-Tage-Regel: Buchungen max. 7 Tage im Voraus
+    if (isBeyondMaxBookingDays(date, startTime)) {
+      return NextResponse.json({ error: "Buchungen dürfen maximal 7 Tage im Voraus getätigt werden." }, { status: 400 })
     }
 
     // Load expert
