@@ -66,12 +66,11 @@ export default authMiddleware((req) => {
   response.headers.set("X-XSS-Protection", "1; mode=block")
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://*.daily.co https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.daily.co https://*.googleapis.com https://vercel.live wss:; frame-src 'self' https://js.stripe.com https://*.daily.co https://vercel.live; font-src 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://*.daily.co https://vercel.live https://*.hcaptcha.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.daily.co https://*.googleapis.com https://vercel.live https://*.hcaptcha.com wss:; frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.stripe.com https://*.daily.co https://vercel.live https://*.hcaptcha.com https://newassets.hcaptcha.com; font-src 'self';"
   )
   response.headers.set(
     "Permissions-Policy",
-    // Allow camera + microphone for video calls; deny everything else
-    "camera=(self), microphone=(self), geolocation=(), payment=(self)"
+    "camera=(self https://newassets.hcaptcha.com https://hcaptcha.com), microphone=(self https://newassets.hcaptcha.com https://hcaptcha.com), geolocation=(), payment=(self)"
   )
   response.headers.set(
     "Strict-Transport-Security",
