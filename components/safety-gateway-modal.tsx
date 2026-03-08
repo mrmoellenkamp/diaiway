@@ -48,6 +48,7 @@ export function SafetyGatewayModal({ open, onConfirm, disabled, isVoiceCall, isB
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
         className="max-w-lg"
+        showCloseButton={false}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

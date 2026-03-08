@@ -526,6 +526,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </div>
           )}
 
+          {!safetyAccepted && !showSafetyModal && preCheckPhase === "idle" && (
+            <Button
+              variant="outline"
+              className="w-full rounded-xl border-primary/40"
+              onClick={() => setShowSafetyModal(true)}
+            >
+              <Shield className="mr-2 size-5" />
+              {t("safety.confirm")}
+            </Button>
+          )}
           <Button
             onClick={handleStartTrial}
             disabled={tooEarlyToJoin || !safetyAccepted || preCheckPhase === "running"}
@@ -535,6 +545,11 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             <Video className="mr-2 size-5" />
             {t("video.join")}
           </Button>
+          {!safetyAccepted && (
+            <p className="text-center text-xs text-muted-foreground">
+              {t("safety.gatewayTitle")}
+            </p>
+          )}
 
           <SafetyGatewayModal
             open={showSafetyModal}
