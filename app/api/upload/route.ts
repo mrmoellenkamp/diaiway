@@ -5,7 +5,7 @@ import { checkImageSafety } from "@/lib/vision-safety"
 
 export const runtime = "nodejs"
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects", "takumi-portfolio"]
 
@@ -51,11 +51,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: reason ?? "Bild enthält ungeeignete Inhalte." }, { status: 400 })
     }
 
-    const blob = await put(filename, file, { access: "public" })
+    const contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
+    const blob = await put(filename, buffer, { access: "public", contentType })
 
     return NextResponse.json({ url: blob.url })
   } catch (error) {
-    console.error("[diAiway] Upload error:", error)
-    return NextResponse.json({ error: "Upload fehlgeschlagen." }, { status: 500 })
+    const err = error as Error
+    console.error("[diAiway] Upload error:", err?.message ?? err)
+    const msg =
+      err?.message?.toLowerCase().includes("blob") || err?.message?.toLowerCase().includes("token")
+        ? "Blob-Speicher nicht konfiguriert. Bitte BLOB_READ_WRITE_TOKEN prüfen."
+        : "Upload fehlgeschlagen."
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
