@@ -47,7 +47,7 @@ const de = {
   "landing.noSubscription": "Kein Abo",
   "landing.gdprCompliant": "DSGVO konform",
   "landing.mentorTitle": "diAIway intelligence",
-  "landing.mentorDesc": "Beschreibe dein Projekt, lade Fotos hoch und erhalte eine fundierte Analyse.",
+  "landing.mentorDesc": "Beschreibe dein Projekt, lade Fotos hoch und erhalte eine fundierte Analyse oder suche in den Kategorien nach einem passenden Ansprechpartner.",
   "landing.howItWorks": "So funktioniert's",
   "landing.step1Title": "Problem beschreiben",
   "landing.step1Desc": "Mach ein Foto oder beschreibe dein Anliegen. Unser diAIway-intelligence versucht deine Frage sofort zu beantworten oder findet den perfekten Takumi für dich.",
@@ -725,7 +725,7 @@ const de = {
   "cat.haus-garten.sub3": "Einrichtungsberatung",
   "cat.haus-garten.sub4": "Schädlingsbekämpfung",
 
-  "cat.auto-rad-boot": "Auto, Rad & Boot",
+  "cat.auto-rad-boot": "Auto, Rad & Sport",
   "cat.auto-rad-boot.desc": "KFZ-Diagnose, Motorrad, Fahrrad",
   "cat.auto-rad-boot.sub0": "KFZ-Diagnose",
   "cat.auto-rad-boot.sub1": "Motorrad-Wartung",
@@ -765,7 +765,7 @@ const de = {
   "cat.musik-film-buecher.sub3": "Filmschnitt",
   "cat.musik-film-buecher.sub4": "Buchbinderei",
 
-  "cat.freizeit-hobby": "Freizeit, Hobby & Nachbarschaft",
+  "cat.freizeit-hobby": "Freizeit & Hobby",
   "cat.freizeit-hobby.desc": "Sport, Kochen, Handarbeit",
   "cat.freizeit-hobby.sub0": "Kochen & Backen",
   "cat.freizeit-hobby.sub1": "Handarbeit & Nähen",
@@ -789,7 +789,7 @@ const de = {
   "cat.unterricht-kurse.sub3": "Musikunterricht",
   "cat.unterricht-kurse.sub4": "Prüfungsvorbereitung",
 
-  "cat.heimwerken": "Heimwerken & Renovierung",
+  "cat.heimwerken": "Heimwerken & Renovieren",
   "cat.heimwerken.desc": "Elektrik, Sanitär, Malerarbeiten",
   "cat.heimwerken.sub0": "Elektrik-Beratung",
   "cat.heimwerken.sub1": "Sanitär-Hilfe",
