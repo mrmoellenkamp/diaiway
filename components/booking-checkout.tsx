@@ -59,11 +59,16 @@ export function BookingCheckout({
     }
   }, [paymentMethod])
 
+  const ensureTakumiNotified = () => {
+    fetch(`/api/bookings/${bookingId}/notify-takumi`, { method: "POST" }).catch(() => {})
+  }
+
   const checkPayment = async () => {
     try {
       const result = await verifySessionPayment(bookingId)
       if (result.status === "paid") {
         setPolling(false)
+        ensureTakumiNotified()
         onSuccess()
         return true
       }
@@ -100,6 +105,7 @@ export function BookingCheckout({
       })
       const data = await res.json()
       if (res.ok) {
+        ensureTakumiNotified()
         onSuccess()
       } else {
         onError(data.error || "Zahlung fehlgeschlagen")
@@ -170,6 +176,7 @@ export function BookingCheckout({
         const result = await verifySessionPayment(bookingId)
         if (result.status === "paid") {
           setPolling(false)
+          ensureTakumiNotified()
           onSuccess()
           return
         }
