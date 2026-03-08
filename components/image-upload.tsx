@@ -22,7 +22,7 @@ interface ImageUploadProps {
   disabled?: boolean
 }
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
 const MAX_SIZE_MB = 5
 
 export function ImageUpload({
