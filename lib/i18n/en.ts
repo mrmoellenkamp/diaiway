@@ -47,7 +47,7 @@ const en = {
   "landing.noSubscription": "No subscription",
   "landing.gdprCompliant": "GDPR compliant",
   "landing.mentorTitle": "diAIway intelligence",
-  "landing.mentorDesc": "Describe your project, upload photos and get an expert analysis.",
+  "landing.mentorDesc": "Describe your project, upload photos and get an expert analysis or search in categories for a suitable contact.",
   "landing.howItWorks": "How it works",
   "landing.step1Title": "Describe your problem",
   "landing.step1Desc": "Take a photo or describe your request. Our diAIway-intelligence tries to answer your question immediately or finds the perfect Takumi for you.",
@@ -723,7 +723,7 @@ const en = {
   "cat.haus-garten.sub3": "Interior Advice",
   "cat.haus-garten.sub4": "Pest Control",
 
-  "cat.auto-rad-boot": "Car, Bike & Boat",
+  "cat.auto-rad-boot": "Car, Bike & Sports",
   "cat.auto-rad-boot.desc": "Vehicle diagnosis, motorcycle, bicycle",
   "cat.auto-rad-boot.sub0": "Vehicle Diagnosis",
   "cat.auto-rad-boot.sub1": "Motorcycle Maintenance",
@@ -763,7 +763,7 @@ const en = {
   "cat.musik-film-buecher.sub3": "Film Editing",
   "cat.musik-film-buecher.sub4": "Bookbinding",
 
-  "cat.freizeit-hobby": "Leisure, Hobby & Community",
+  "cat.freizeit-hobby": "Leisure & Hobby",
   "cat.freizeit-hobby.desc": "Sports, cooking, crafts",
   "cat.freizeit-hobby.sub0": "Cooking & Baking",
   "cat.freizeit-hobby.sub1": "Crafts & Sewing",

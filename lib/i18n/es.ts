@@ -47,7 +47,7 @@ const es = {
   "landing.noSubscription": "Sin suscripción",
   "landing.gdprCompliant": "RGPD conforme",
   "landing.mentorTitle": "diAIway intelligence",
-  "landing.mentorDesc": "Describe tu proyecto, sube fotos y obtén un análisis experto.",
+  "landing.mentorDesc": "Describe tu proyecto, sube fotos y obtén un análisis experto o busca en las categorías un contacto adecuado.",
   "landing.howItWorks": "Cómo funciona",
   "landing.step1Title": "Describe tu problema",
   "landing.step1Desc": "Haz una foto o describe tu solicitud. Nuestro diAIway-intelligence intenta responder tu pregunta al instante o encuentra al Takumi perfecto para ti.",
@@ -723,7 +723,7 @@ const es = {
   "cat.haus-garten.sub3": "Asesoramiento de interiores",
   "cat.haus-garten.sub4": "Control de plagas",
 
-  "cat.auto-rad-boot": "Coche, Bici y Barco",
+  "cat.auto-rad-boot": "Coche, Bici y Deporte",
   "cat.auto-rad-boot.desc": "Diagnóstico de vehículos, moto, bicicleta",
   "cat.auto-rad-boot.sub0": "Diagnóstico de vehículos",
   "cat.auto-rad-boot.sub1": "Mantenimiento de motos",
@@ -763,7 +763,7 @@ const es = {
   "cat.musik-film-buecher.sub3": "Edición de vídeo",
   "cat.musik-film-buecher.sub4": "Encuadernación",
 
-  "cat.freizeit-hobby": "Ocio, Aficiones y Comunidad",
+  "cat.freizeit-hobby": "Ocio y Aficiones",
   "cat.freizeit-hobby.desc": "Deporte, cocina, manualidades",
   "cat.freizeit-hobby.sub0": "Cocina y repostería",
   "cat.freizeit-hobby.sub1": "Manualidades y costura",
