@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
@@ -32,6 +32,43 @@ export function SessionCheckout({
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
 
+  const checkPayment = async () => {
+    try {
+      const result = await verifySessionPayment(bookingId)
+      if (result.status === "paid") {
+        setPolling(false)
+        onSuccess()
+        return true
+      }
+      if (result.status === "failed") {
+        setPolling(false)
+        onError("Zahlung fehlgeschlagen")
+        return true
+      }
+    } catch {
+      /* weiter pollen */
+    }
+    return false
+  }
+
+  // Stripe onComplete: Sofort prüfen, wenn Zahlung abgeschlossen (wie BookingCheckout)
+  const handleComplete = async () => {
+    for (let i = 0; i < 5; i++) {
+      try {
+        const result = await verifySessionPayment(bookingId)
+        if (result.status === "paid") {
+          setPolling(false)
+          onSuccess()
+          return
+        }
+      } catch {
+        /* weiter versuchen */
+      }
+      if (i < 4) await new Promise((r) => setTimeout(r, 500))
+    }
+    /* Polling übernimmt falls noch nicht paid */
+  }
+
   // Start checkout session on mount
   useEffect(() => {
     const params: SessionCheckoutParams = {
@@ -45,7 +82,6 @@ export function SessionCheckout({
       .then((result) => {
         setClientSecret(result.clientSecret)
         setLoading(false)
-        // Start polling for payment confirmation
         setPolling(true)
       })
       .catch((err) => {
@@ -54,24 +90,14 @@ export function SessionCheckout({
       })
   }, [bookingId, takumiName, duration, priceInCents, onError])
 
-  // Poll for payment status
+  // Poll for payment status (Fallback falls onComplete nicht feuert)
   useEffect(() => {
     if (!polling) return
 
     const interval = setInterval(async () => {
-      try {
-        const result = await verifySessionPayment(bookingId)
-        if (result.status === "paid") {
-          setPolling(false)
-          onSuccess()
-        } else if (result.status === "failed") {
-          setPolling(false)
-          onError("Zahlung fehlgeschlagen")
-        }
-      } catch {
-        // Continue polling
-      }
-    }, 2000)
+      const done = await checkPayment()
+      if (done) clearInterval(interval)
+    }, 1000)
 
     return () => clearInterval(interval)
   }, [polling, bookingId, onSuccess, onError])
@@ -97,7 +123,10 @@ export function SessionCheckout({
     <div id="checkout" className="w-full">
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
-        options={{ clientSecret }}
+        options={{
+          clientSecret: clientSecret!,
+          onComplete: () => handleComplete(),
+        }}
       >
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>

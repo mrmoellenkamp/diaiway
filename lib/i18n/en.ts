@@ -411,6 +411,8 @@ const en = {
   "handshake.walletPayError": "Wallet payment failed.",
   "handshake.loadingPayment": "Loading payment form...",
   "handshake.checkoutError": "Checkout could not be initialized.",
+  "handshake.redirectFallback": "Redirect stuck? Check payment & continue",
+  "handshake.checkingPayment": "Checking...",
 
   // Review
   "review.starsAria": "{rating} of {max} stars",

@@ -410,6 +410,8 @@ const de = {
   "handshake.walletPayError": "Wallet-Zahlung fehlgeschlagen.",
   "handshake.loadingPayment": "Zahlungsformular wird geladen...",
   "handshake.checkoutError": "Checkout konnte nicht initialisiert werden.",
+  "handshake.redirectFallback": "Weiterleitung hängt? Zahlung prüfen & fortfahren",
+  "handshake.checkingPayment": "Wird geprüft...",
 
   // Review
   "review.starsAria": "{rating} von {max} Sternen",

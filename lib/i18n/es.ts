@@ -411,6 +411,8 @@ const es = {
   "handshake.walletPayError": "Pago con monedero fallido.",
   "handshake.loadingPayment": "Cargando formulario de pago...",
   "handshake.checkoutError": "No se pudo inicializar el checkout.",
+  "handshake.redirectFallback": "¿Redirección atascada? Verificar pago y continuar",
+  "handshake.checkingPayment": "Comprobando...",
 
   // Review
   "review.starsAria": "{rating} de {max} estrellas",

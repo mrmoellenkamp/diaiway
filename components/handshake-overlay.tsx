@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/lib/i18n"
 import { SessionCheckout } from "@/components/stripe-checkout"
+import { verifySessionPayment } from "@/app/actions/stripe"
 import { X, Loader2, CheckCircle2, CreditCard } from "lucide-react"
 
 interface HandshakeOverlayProps {
@@ -30,6 +31,7 @@ export function HandshakeOverlay({
   const { t } = useI18n()
   const [step, setStep] = useState<Step>("decision")
   const [error, setError] = useState("")
+  const [checkingFallback, setCheckingFallback] = useState(false)
 
   if (!isOpen) return null
 
@@ -51,6 +53,18 @@ export function HandshakeOverlay({
   const handlePaymentError = (errorMsg: string) => {
     setError(errorMsg)
     setStep("decision")
+  }
+
+  const handleFallbackCheck = async () => {
+    setCheckingFallback(true)
+    try {
+      const result = await verifySessionPayment(bookingId)
+      if (result.status === "paid") {
+        handlePaymentSuccess()
+      }
+    } finally {
+      setCheckingFallback(false)
+    }
   }
 
   // Decision screen
@@ -149,6 +163,15 @@ export function HandshakeOverlay({
               onError={handlePaymentError}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={handleFallbackCheck}
+            disabled={checkingFallback}
+            className="mt-2 text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+          >
+            {checkingFallback ? t("handshake.checkingPayment") : t("handshake.redirectFallback")}
+          </button>
         </div>
       </div>
     )
