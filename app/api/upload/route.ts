@@ -61,7 +61,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: blob.url })
   } catch (error) {
-    console.error("[diAiway] Upload error:", (error as Error)?.message ?? error)
+    const msg = (error as Error)?.message ?? ""
+    console.error("[diAiway] Upload error:", msg)
+    if (msg.includes("does not exist") || msg.includes("store")) {
+      return NextResponse.json(
+        {
+          error:
+            "Blob-Store nicht gefunden. Bitte in Vercel einen neuen Blob Store (Public) anlegen und BLOB_READ_WRITE_TOKEN mit dem neuen Token aktualisieren.",
+        },
+        { status: 500 }
+      )
+    }
     return NextResponse.json({ error: "Upload fehlgeschlagen." }, { status: 500 })
   }
 }
