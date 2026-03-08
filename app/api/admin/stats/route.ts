@@ -8,6 +8,39 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
+  // Sync: Nutzer mit appRole=takumi müssen einen Expert haben (konsistente Anzeige)
+  const takumiUsers = await prisma.user.findMany({
+    where: { appRole: "takumi" },
+    select: { id: true, name: true, email: true },
+  })
+  for (const u of takumiUsers) {
+    const existing = await prisma.expert.findUnique({ where: { userId: u.id } })
+    if (!existing) {
+      await prisma.expert.create({
+        data: {
+          userId: u.id,
+          name: u.name,
+          avatar: (u.name && u.name.charAt(0).toUpperCase()) || "T",
+          email: u.email ?? "",
+          categorySlug: "dienstleistungen",
+          categoryName: "Dienstleistungen",
+          subcategory: "",
+          bio: "",
+          pricePerSession: 0,
+          rating: 0,
+          reviewCount: 0,
+          sessionCount: 0,
+          isLive: false,
+          isPro: false,
+          verified: false,
+          portfolio: [],
+          joinedDate: new Date().toISOString().slice(0, 10),
+          matchRate: 0,
+        },
+      })
+    }
+  }
+
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)

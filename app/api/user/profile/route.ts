@@ -80,6 +80,37 @@ export async function PATCH(req: Request) {
       data,
     })
 
+    // Sync: Bei appRole takumi muss ein Expert existieren (konsistente Admin-Anzeige)
+    if (data.appRole === "takumi") {
+      const existing = await prisma.expert.findUnique({
+        where: { userId: session.user.id },
+      })
+      if (!existing) {
+        await prisma.expert.create({
+          data: {
+            userId: session.user.id,
+            name: user.name,
+            avatar: (user.name && user.name.charAt(0).toUpperCase()) || "T",
+            email: user.email ?? "",
+            categorySlug: "dienstleistungen",
+            categoryName: "Dienstleistungen",
+            subcategory: "",
+            bio: "",
+            pricePerSession: 0,
+            rating: 0,
+            reviewCount: 0,
+            sessionCount: 0,
+            isLive: false,
+            isPro: false,
+            verified: false,
+            portfolio: [],
+            joinedDate: new Date().toISOString().slice(0, 10),
+            matchRate: 0,
+          },
+        })
+      }
+    }
+
     return NextResponse.json({
       success: true,
       name: user.name,
