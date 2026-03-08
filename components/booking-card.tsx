@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Video, Clock, Calendar, Phone, X, Loader2, AlertTriangle, CheckCircle2, UserX } from "lucide-react"
+import { Video, Clock, Calendar, Phone, X, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
@@ -211,7 +211,19 @@ export function BookingCard({
           )}
 
           {/* Action buttons */}
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
+            {/* Takumi: pending → Annehmen / Ablehnen / Nachfrage (nur über Link, da keine E-Mail/Notification ankam) */}
+            {isExpertView && booking.status === "pending" && (
+              <Link href={`/booking/respond/${bookingId}`} className="flex-1 min-w-[140px]">
+                <Button
+                  size="sm"
+                  className="h-9 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <MessageSquare className="mr-1.5 size-3.5" />
+                  {t("booking.respondToRequest")}
+                </Button>
+              </Link>
+            )}
             {canJoin && (
               <Link href={`/session/${bookingId}`} className="flex-1">
                 <Button

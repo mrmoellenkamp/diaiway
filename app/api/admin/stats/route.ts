@@ -14,32 +14,49 @@ export async function GET() {
     select: { id: true, name: true, email: true },
   })
   for (const u of takumiUsersToSync) {
-    const existing = await prisma.expert.findUnique({ where: { userId: u.id } })
+    let existing = await prisma.expert.findUnique({ where: { userId: u.id } })
     if (!existing) {
-      await prisma.expert.create({
-        data: {
-          userId: u.id,
-          name: u.name,
-          avatar: (u.name && u.name.charAt(0).toUpperCase()) || "T",
-          email: u.email ?? "",
-          categorySlug: "dienstleistungen",
-          categoryName: "Dienstleistungen",
-          subcategory: "",
-          bio: "",
-          priceVideo15Min: 1,
-          priceVoice15Min: 1,
-          pricePerSession: 0,
-          rating: 0,
-          reviewCount: 0,
-          sessionCount: 0,
-          isLive: false,
-          isPro: false,
-          verified: false,
-          portfolio: [],
-          joinedDate: new Date().toISOString().slice(0, 10),
-          matchRate: 0,
-        },
-      })
+      // Fallback: Experten mit gleicher E-Mail verknüpfen (z.B. manuell angelegt)
+      const expertByEmail = u.email
+        ? await prisma.expert.findFirst({
+            where: {
+              userId: null,
+              email: { equals: u.email, mode: "insensitive" },
+            },
+          })
+        : null
+      if (expertByEmail) {
+        await prisma.expert.update({
+          where: { id: expertByEmail.id },
+          data: { userId: u.id, email: u.email ?? expertByEmail.email },
+        })
+        existing = { ...expertByEmail, userId: u.id }
+      } else {
+        await prisma.expert.create({
+          data: {
+            userId: u.id,
+            name: u.name,
+            avatar: (u.name && u.name.charAt(0).toUpperCase()) || "T",
+            email: u.email ?? "",
+            categorySlug: "dienstleistungen",
+            categoryName: "Dienstleistungen",
+            subcategory: "",
+            bio: "",
+            priceVideo15Min: 1,
+            priceVoice15Min: 1,
+            pricePerSession: 0,
+            rating: 0,
+            reviewCount: 0,
+            sessionCount: 0,
+            isLive: false,
+            isPro: false,
+            verified: false,
+            portfolio: [],
+            joinedDate: new Date().toISOString().slice(0, 10),
+            matchRate: 0,
+          },
+        })
+      }
     }
   }
 
