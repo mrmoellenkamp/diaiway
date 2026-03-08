@@ -713,7 +713,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           (booking.shugyoSkillLevel || (booking.shugyoProjects?.length ?? 0) > 0) && (
             <ShugyoInfoPanel
               userName={booking.userName}
-              skillLevel={booking.shugyoSkillLevel ?? null}
               projects={booking.shugyoProjects ?? []}
             />
           )}
