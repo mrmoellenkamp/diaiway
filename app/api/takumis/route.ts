@@ -11,10 +11,17 @@ function emailForName(name: string): string {
 
 export async function GET() {
   try {
-    const experts = await prisma.expert.findMany({ orderBy: { rating: "desc" } })
+    const experts = await prisma.expert.findMany({
+      include: { user: { select: { appRole: true } } },
+      orderBy: { rating: "desc" },
+    })
+    // Nur aktive Takumis: Experten ohne User (Seed) ODER verknüpfter User hat appRole=takumi
+    const active = experts.filter(
+      (e) => !e.userId || (e.user?.appRole === "takumi")
+    )
 
     return NextResponse.json(
-      experts.map((e) => ({
+      active.map((e) => ({
         id: e.id,
         name: e.name,
         email: e.email,

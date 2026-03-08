@@ -304,7 +304,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
   )
 }
 
-function UsersTab() {
+function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -344,6 +344,7 @@ function UsersTab() {
       if (res.ok) {
         toast.success("Gespeichert")
         setEditingId(null)
+        onDataChanged?.()
         void load()
       } else {
         toast.error("Fehler beim Speichern")
@@ -588,12 +589,12 @@ function BookingsTab() {
   )
 }
 
-function TakumisTab() {
+function TakumisTab({ refreshKey }: { refreshKey?: number }) {
   const [takumis, setTakumis] = useState<TopExpert[]>([])
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState<string | null>(null)
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch("/api/takumis")
@@ -602,9 +603,9 @@ function TakumisTab() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void load() }, [load, refreshKey])
 
   async function toggleLive(id: string, current: boolean) {
     setToggling(id)
@@ -866,6 +867,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+  const [dataRefreshKey, setDataRefreshKey] = useState(0)
 
   async function loadStats() {
     setStatsLoading(true)
@@ -951,7 +953,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="users" className="mt-4">
-              <UsersTab />
+              <UsersTab onDataChanged={() => { setDataRefreshKey(k => k + 1); void loadStats() }} />
             </TabsContent>
 
             <TabsContent value="bookings" className="mt-4">
@@ -959,7 +961,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="takumis" className="mt-4">
-              <TakumisTab />
+              <TakumisTab refreshKey={dataRefreshKey} />
             </TabsContent>
 
             <TabsContent value="database" className="mt-4">
