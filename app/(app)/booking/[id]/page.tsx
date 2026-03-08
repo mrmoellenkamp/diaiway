@@ -127,7 +127,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       toast.error(t("booking.durationInvalid"))
       return
     }
-    if (totalPrice < 1) {
+    if (totalPrice < 0) {
       toast.error(t("booking.priceInvalid"))
       return
     }
@@ -455,7 +455,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
           <Button
             type="submit"
-            disabled={!selectedDate || !selectedStart || totalPrice < 1 || isBooking}
+            disabled={!selectedDate || !selectedStart || totalPrice < 0 || isBooking}
             className="h-14 w-full rounded-xl bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90 shadow-lg disabled:opacity-50"
           >
             {isBooking ? (
