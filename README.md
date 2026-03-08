@@ -25,24 +25,30 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung
 ### Für Shugyo (Nutzer)
 - **diAIway intelligence**: AI-Mentor für Projektbeschreibung und Expertenempfehlung
 - **Kategorien durchsuchen**: Experten nach Fachgebiet finden
-- **Buchungen**: Termine mit Takumis buchen, Bestätigung/Ablehnung per E-Mail
+- **Buchungen**: Termine mit Takumis buchen; Vorauszahlung (Stripe oder Wallet) vor Bestätigung
 - **Video-Sessions**: 5 Min Handshake gratis, dann bezahlte Session (Daily.co)
-- **Benachrichtigungen**: Buchungsanfragen und -bestätigungen in Nachrichten mit Alert
-- **Profil**: Favoriten, Sessions, Konto pausieren/löschen (DSGVO)
+- **Wallet**: Guthaben für Rückerstattungen; Zahlung mit Wallet bei Buchung möglich
+- **Benachrichtigungen**: Buchungsbestätigungen in Nachrichten
+- **Profil**: Favoriten, Sessions, Profilnamen als Links zu `/user/[id]`, Konto pausieren/löschen (DSGVO)
+- **Safety**: Snapshot-Einwilligung für diAiway Safety Enforcement (Pre-Check, Live-Monitoring)
 
 ### Für Takumi (Experten)
 - **Profil & Verfügbarkeit**: 15-Min-Intervall-Kalender, Routinen, Ausnahmen
 - **Stornierungsrichtlinie**: Kostenlose Stornierung bis X Stunden vorher, danach X% Gebühr
 - **Social Media**: Instagram, TikTok, Facebook etc. verknüpfen
-- **Buchungsanfragen**: Per E-Mail mit Links zum Annehmen/Ablehnen/Rückfragen
+- **Buchungsanfragen**: E-Mail (nach Zahlung) + In-App unter „Nachrichten“ + Button „Annehmen, Ablehnen & Nachfrage“ bei pending-Buchungen in „Geplant“
+- **Rückfrage**: Vorab eine Nachricht an den Buchungssteller senden
 
 ### Für Admins
 - **Admin-Dashboard**: Nutzer, Buchungen, Experten, DB-Metriken verwalten
 - **DB-Tools**: Seed, Reset (mit Sicherheitsphrase)
+- **Safety Incidents**: Alert-Bilder bei Safety-Verstößen unter `/admin/safety/incidents`
+- **Expert-User-Sync**: Verknüpfung von Experten mit Nutzern per E-Mail (bei Admin-Besuch)
 
 ### Technisch
 - **i18n**: Deutsch (Master), Englisch, Spanisch
 - **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers
+- **Safety Enforcement**: Pre-Check (Vision API vor Daily-Join), Live-Monitoring, Vercel Blob für Incidents
 - **Rechtlich**: Impressum, AGB, Datenschutz, Hilfe-Seite
 
 ---
@@ -78,13 +84,16 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Video-Beratung
 │   │   ├── profile/        # Profil & Bearbeitung
 │   │   ├── search/         # Suche
 │   │   ├── sessions/       # Meine Sessions
-│   │   └── takumi/[id]/    # Takumi-Profil
+│   │   ├── takumi/[id]/    # Takumi-Profil
+│   │   └── user/[id]/      # Öffentliches Nutzerprofil
 │   ├── api/                # API-Routen
-│   │   ├── admin/          # Admin-APIs
+│   │   ├── admin/          # Admin-APIs, Safety Incidents
 │   │   ├── auth/           # Auth, Register, Reset
-│   │   ├── bookings/       # Buchungen
+│   │   ├── bookings/       # Buchungen, pay-with-wallet, notify-takumi
 │   │   ├── notifications/  # Benachrichtigungen
+│   │   ├── safety/         # Pre-Check, Alert-Snapshot
 │   │   ├── user/           # Profil, Takumi-Profil, Account
+│   │   ├── users/[id]/     # Öffentliches Profil pro User
 │   │   └── webhooks/       # Stripe
 │   ├── booking/respond/    # Takumi: Buchung annehmen/ablehnen
 │   ├── legal/              # Impressum, AGB, Datenschutz
@@ -146,8 +155,9 @@ App: [http://localhost:3000](http://localhost:3000)
 | `EMAIL_SERVER_PORT` | SMTP Port | `587` |
 | `EMAIL_SERVER_USER` | SMTP User | `user@domain.de` |
 | `EMAIL_SERVER_PASSWORD` | SMTP Passwort | `***` |
-| `EMAIL_FROM` | Absenderadresse | `info@diaiway.com` |
+| `EMAIL_FROM` | Absenderadresse (vollständige Domain) | `info@diaiway.com` |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini (diAIway intelligence) | `AIza...` |
+| `GOOGLE_CLOUD_VISION_API_KEY` | Vision API (Safety: Pre-Check, Live-Monitoring) | optional |
 
 Details: [docs/ENV.md](docs/ENV.md)
 
@@ -156,12 +166,13 @@ Details: [docs/ENV.md](docs/ENV.md)
 ## Datenbank
 
 ### Schema (Prisma)
-- **User**: Auth, Rolle (user/admin), AppRole (shugyo/takumi), Status (active/paused)
+- **User**: Auth, Rolle (user/admin), AppRole (shugyo/takumi), Status (active/paused), Wallet
 - **Expert**: Takumi-Profil, Kategorie, Preis, Social Links, Stornierungsrichtlinie
-- **Booking**: Buchung, Status, Zahlung, Video-Session, Stornierung
+- **Booking**: Buchung, Status, Zahlung, Video-Session, Stornierung, Safety-Einwilligung
 - **Review**: Bewertungen
 - **Availability**: Verfügbarkeit (15-Min-Slots, Routinen, Ausnahmen)
 - **Notification**: Buchungsbenachrichtigungen
+- **SafetyIncident**: Alert-Bilder bei Safety-Verstößen (Vercel Blob)
 
 ### Befehle
 

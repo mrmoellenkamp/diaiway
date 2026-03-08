@@ -17,10 +17,10 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 | Variable | Beschreibung |
 |----------|--------------|
 | `EMAIL_SERVER_HOST` / `SMTP_HOST` | SMTP-Server |
-| `EMAIL_SERVER_PORT` / `SMTP_PORT` | Port (z.B. 587) |
+| `EMAIL_SERVER_PORT` / `SMTP_PORT` | Port (587 oder 465 für TLS) |
 | `EMAIL_SERVER_USER` / `SMTP_USER` | SMTP-Benutzername |
 | `EMAIL_SERVER_PASSWORD` / `SMTP_PASSWORD` | SMTP-Passwort |
-| `EMAIL_FROM` / `SMTP_FROM` | Absenderadresse |
+| `EMAIL_FROM` / `SMTP_FROM` | Absenderadresse (vollständige Adresse, z.B. `info@diaiway.com`) |
 
 ## Stripe
 
@@ -34,19 +34,13 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API Key |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API Key für den AI-Chat |
 
-## Content Safety (Bild-Moderation)
-
-| Variable | Beschreibung |
-|----------|--------------|
-| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key (SafeSearch). Prüft hochgeladene Bilder auf explizite Inhalte. Ohne Key wird die Prüfung übersprungen. |
-
-## Content Safety (Bild-Moderation)
+## Safety Enforcement (Vision API)
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key (SafeSearch). Prüft hochgeladene Bilder auf explizite Inhalte. Ohne Key wird die Prüfung übersprungen. |
+| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für: Pre-Check vor Daily-Join (Shugyo-Bild), Live-Monitoring während des Calls. Ohne Key wird die Prüfung übersprungen. |
 
 ## Daily.co (Video)
 
@@ -55,11 +49,11 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 | `DAILY_API_KEY` | Daily.co API Key |
 | `NEXT_PUBLIC_DAILY_DOMAIN` | z.B. `https://diaiway.daily.co` |
 
-## Vercel Blob (Bilder)
+## Vercel Blob
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token. Wird verwendet für: Profilbilder, Safety-Incident-Alerts (bei Verstößen während Video-Sessions). |
 
 ## Admin
 
@@ -75,6 +69,13 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 | `VAPID_PRIVATE_KEY` | Privater VAPID-Key (nur serverseitig) |
 
 VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+v.publicKey);console.log('VAPID_PRIVATE_KEY='+v.privateKey);console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY='+v.publicKey);"`
+
+## Optional
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `CRON_SECRET` | Schützt `GET /api/cron/release-wallet` (24h-Freigabe). Bei Vercel Cron: `Authorization: Bearer <CRON_SECRET>` |
+| `TZ` | Timezone (z.B. `Europe/Berlin` für CET/CEST) |
 
 ---
 
