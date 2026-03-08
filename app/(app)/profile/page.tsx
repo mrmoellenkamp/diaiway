@@ -261,25 +261,7 @@ export default function ProfilePage() {
         <>
         {/* User header */}
         <div className="flex flex-col items-center gap-3 pt-2">
-            <button
-              onClick={() => { setEditImage(userImage); setIsEditingImage(true); setHasUnsavedChanges(true) }}
-              className="group relative"
-            >
-              <Avatar className="size-20 border-4 border-primary/10">
-                {userImage ? (
-                  <img src={userImage} alt={userName} className="size-full rounded-full object-cover" />
-                ) : (
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                    {userInitials}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <Edit3 className="size-4 text-white" />
-              </div>
-            </button>
-
-            {isEditingImage && (
+            {isEditingImage ? (
               <div className="flex flex-col items-center gap-2 w-full max-w-xs">
                 <ImageUpload
                   value={editImage}
@@ -297,6 +279,24 @@ export default function ProfilePage() {
                   {t("common.cancel")}
                 </Button>
               </div>
+            ) : (
+              <button
+                onClick={() => { setEditImage(userImage); setIsEditingImage(true); setHasUnsavedChanges(true) }}
+                className="group relative"
+              >
+                <Avatar className="size-20 border-4 border-primary/10">
+                  {userImage ? (
+                    <img src={userImage} alt={userName} className="size-full rounded-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                      {userInitials}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Edit3 className="size-4 text-white" />
+                </div>
+              </button>
             )}
 
             <div className="flex flex-col items-center gap-1 text-center">
