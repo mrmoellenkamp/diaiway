@@ -173,11 +173,12 @@ export default function AvailabilityPage() {
   const { t, locale } = useI18n()
 
   const userRole = (session?.user as { role?: string })?.role
+  const appRole = (session?.user as { appRole?: string })?.appRole
   useEffect(() => {
-    if (authStatus === "authenticated" && userRole !== "takumi" && userRole !== "admin") {
+    if (authStatus === "authenticated" && appRole !== "takumi" && userRole !== "admin") {
       router.replace("/home")
     }
-  }, [authStatus, userRole, router])
+  }, [authStatus, appRole, userRole, router])
 
   const DAY_NAMES = locale === "en"
     ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -222,7 +223,7 @@ export default function AvailabilityPage() {
     if (!session?.user?.id) return
     Promise.all([
       fetch(`/api/availability?takumiId=${session.user.id}&full=true`).then((r) => r.json()),
-      fetch("/api/bookings").then((r) => r.json()),
+      fetch("/api/bookings?view=takumi").then((r) => r.json()),
     ])
       .then(([availData, bookingsData]) => {
         setSlots(availData.slots || EMPTY_SLOTS)
@@ -413,7 +414,7 @@ export default function AvailabilityPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-400">
                   <AlertCircle className="size-4" />
-                  {pendingBookings.length === 1 ? t("avail.pendingRequests") : t("avail.pendingRequests") + "n"} ({pendingBookings.length})
+                  {t("avail.pendingRequests")} ({pendingBookings.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
