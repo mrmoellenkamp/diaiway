@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     if (view === "takumi" && userExpert) {
       whereClause = { expertId: userExpert.id }
     } else if (view === "takumi" && !userExpert) {
-      whereClause = { expertId: "none" }  // no expert → no takumi bookings
+      whereClause = { expertId: { in: [] } }  // no expert → no takumi bookings (leere Liste = 0 Treffer)
     } else if (view === "shugyo") {
       whereClause = { userId: session.user.id }
     } else {
