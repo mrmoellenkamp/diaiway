@@ -1,5 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    // www -> non-www: Vermeidet Origin-Mismatch (diaiway.com vs www.diaiway.com) bei Stripe/CORS
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.diaiway.com" }],
+        destination: "https://diaiway.com/:path*",
+        permanent: true,
+      },
+    ]
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
