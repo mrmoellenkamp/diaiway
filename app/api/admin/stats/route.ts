@@ -9,11 +9,11 @@ export async function GET() {
   }
 
   // Sync: Nutzer mit appRole=takumi müssen einen Expert haben (konsistente Anzeige)
-  const takumiUsers = await prisma.user.findMany({
+  const takumiUsersToSync = await prisma.user.findMany({
     where: { appRole: "takumi" },
     select: { id: true, name: true, email: true },
   })
-  for (const u of takumiUsers) {
+  for (const u of takumiUsersToSync) {
     const existing = await prisma.expert.findUnique({ where: { userId: u.id } })
     if (!existing) {
       await prisma.expert.create({
@@ -28,8 +28,6 @@ export async function GET() {
           bio: "",
           priceVideo15Min: 1,
           priceVoice15Min: 1,
-          priceVideo15Min: 0,
-          priceVoice15Min: 0,
           pricePerSession: 0,
           rating: 0,
           reviewCount: 0,
