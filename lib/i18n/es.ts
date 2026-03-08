@@ -227,6 +227,15 @@ const es = {
   "profile.deleteAccountDesc": "Esta acción no se puede deshacer. Todos los datos personales (perfil, imágenes, perfil de experto, disponibilidad, reseñas) se eliminarán permanentemente según el RGPD. El historial de reservas se anonimizará por razones fiscales (§ 147 AO).",
   "profile.deleteAccountConfirmBtn": "Sí, eliminar cuenta",
   "profile.accountPaused": "Cuenta pausada.",
+
+  // Settings
+  "settings.subtitle": "Gestión de cuenta y contraseña",
+  "settings.accountManagement": "Gestión de cuenta",
+  "settings.accountManagementDesc": "Pausar o eliminar permanentemente tu cuenta.",
+  "settings.passwordManagement": "Gestión de contraseña",
+  "settings.passwordManagementDesc": "¿Olvidaste o quieres cambiar tu contraseña?",
+  "settings.requestPasswordReset": "Restablecer contraseña",
+  "settings.passwordResetHint": "Te enviaremos un enlace por correo. Usa este enlace para establecer una nueva contraseña. El enlace es válido durante 1 hora.",
   "profile.pauseError": "Error al pausar la cuenta.",
   "profile.accountDeleted": "Cuenta eliminada.",
   "profile.deleteError": "Error al eliminar la cuenta.",

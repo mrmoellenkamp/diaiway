@@ -227,6 +227,15 @@ const en = {
   "profile.deleteAccountDesc": "This action cannot be undone. All personal data (profile, images, expert profile, availability, reviews) will be permanently deleted in accordance with GDPR. Booking history will be anonymized for tax reasons (§ 147 AO).",
   "profile.deleteAccountConfirmBtn": "Yes, delete account",
   "profile.accountPaused": "Account paused.",
+
+  // Settings
+  "settings.subtitle": "Account and password management",
+  "settings.accountManagement": "Account management",
+  "settings.accountManagementDesc": "Pause or permanently delete your account.",
+  "settings.passwordManagement": "Password management",
+  "settings.passwordManagementDesc": "Forgot or change your password.",
+  "settings.requestPasswordReset": "Reset password",
+  "settings.passwordResetHint": "We'll send you a link by email. Use this link to set a new password. The link is valid for 1 hour.",
   "profile.pauseError": "Error pausing account.",
   "profile.accountDeleted": "Account deleted.",
   "profile.deleteError": "Error deleting account.",
