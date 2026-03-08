@@ -252,7 +252,7 @@ export default function AvailabilityPage() {
       if (res.ok) toast.success(data.message || t("avail.saved"))
       else toast.error(data.error)
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setSaving(false)
     }
@@ -278,7 +278,7 @@ export default function AvailabilityPage() {
         )
       } else toast.error(data.error)
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     }
   }
 

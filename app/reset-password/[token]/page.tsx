@@ -173,12 +173,12 @@ export default function ResetPasswordPage({
               {isLoading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Wird gespeichert...
+                  {t("common.saving")}
                 </>
               ) : (
                 <>
                   <Lock className="size-4" />
-                  Passwort speichern
+                  {t("reset.saveButton")}
                 </>
               )}
             </Button>
@@ -190,7 +190,7 @@ export default function ResetPasswordPage({
           className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3.5" />
-          Zurueck zum Login
+          {t("reset.backToLogin")}
         </Link>
       </div>
     </div>

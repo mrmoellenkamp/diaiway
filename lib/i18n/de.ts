@@ -369,6 +369,13 @@ const de = {
   // Reset Password
   "reset.success": "Passwort erfolgreich geändert!",
   "reset.title": "Neues Passwort vergeben",
+  "reset.titleSuccess": "Passwort geändert",
+  "reset.desc": "Gib dein neues Passwort ein. Es muss mindestens 6 Zeichen lang sein.",
+  "reset.successDesc": "Dein Passwort wurde erfolgreich aktualisiert. Du kannst dich jetzt anmelden.",
+  "reset.successDetail": "Dein Passwort wurde geändert. Melde dich mit deinem neuen Passwort an.",
+  "reset.newPassword": "Neues Passwort",
+  "reset.passwordMinLength": "Mindestens 6 Zeichen erforderlich.",
+  "reset.resetError": "Link abgelaufen oder ungültig. Bitte fordere einen neuen an.",
   "reset.confirmPlaceholder": "Passwort erneut eingeben",
   "reset.confirmLabel": "Passwort bestätigen",
   "reset.minChars": "Mindestens 6 Zeichen",
@@ -377,6 +384,8 @@ const de = {
   "reset.strengthOk": "OK",
   "reset.strengthShort": "Zu kurz",
   "reset.loginNow": "Jetzt anmelden",
+  "reset.saveButton": "Passwort speichern",
+  "reset.backToLogin": "Zurück zum Login",
 
   // Paused
   "paused.reactivated": "Konto reaktiviert.",
@@ -513,6 +522,12 @@ const de = {
   "booking.cancelPolicyFreeWindow": "Kostenlose Stornierung bis {h} Stunden vor der Session.",
   "booking.cancelPolicyFull": "Kostenlose Stornierung bis {h} Stunden vor der Session. Danach werden {percent}% der Buchungsgebühr einbehalten.",
   // Cancel actions in BookingCard
+  "booking.statusPending": "Ausstehend",
+  "booking.statusConfirmed": "Bestätigt",
+  "booking.statusActive": "Live",
+  "booking.statusCompleted": "Abgeschlossen",
+  "booking.statusDeclined": "Abgelehnt",
+  "booking.statusCancelled": "Storniert",
   "booking.cancel": "Stornieren",
   "booking.cancelTitle": "Buchung stornieren?",
   "booking.cancelConfirm": "Möchtest du die Buchung mit {name} am {date} wirklich stornieren?",

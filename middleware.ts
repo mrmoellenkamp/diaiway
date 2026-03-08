@@ -38,13 +38,17 @@ export default authMiddleware((req) => {
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
-  // Protected app pages — any logged-in user
-  const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages"]
-  for (const prefix of protectedPrefixes) {
-    if (pathname.startsWith(prefix) && !isLoggedIn) {
-      return NextResponse.redirect(
-        new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
-      )
+  // Protected app pages — any logged-in user (except /booking/respond which uses token from email)
+  const isBookingRespond = pathname.startsWith("/booking/respond")
+  if (!isBookingRespond) {
+    const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages"]
+    for (const prefix of protectedPrefixes) {
+      if (pathname.startsWith(prefix) && !isLoggedIn) {
+        const callbackUrl = pathname + req.nextUrl.search
+        return NextResponse.redirect(
+          new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, req.url)
+        )
+      }
     }
   }
 
