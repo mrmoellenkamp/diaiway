@@ -108,6 +108,7 @@ export interface BookingRecord {
   cancelFeeAmount?: number
   cancelledAt?: string
   safetyAcceptedAt?: string | null
+  snapshotConsentAt?: string | null
   cancelPreview?: {
     isFree: boolean
     hoursUntilSession: number

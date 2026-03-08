@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -48,6 +49,7 @@ const FALLBACK_DAILY_DOMAIN = "https://diaiway.daily.co"
 
 export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const { t } = useI18n()
   const dailyDomain =
     (typeof window !== "undefined"
@@ -66,6 +68,8 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [isInCall, setIsInCall] = useState(false)
   const [safetyAccepted, setSafetyAccepted] = useState(false)
   const [showSafetyModal, setShowSafetyModal] = useState(false)
+  const [preCheckPhase, setPreCheckPhase] = useState<"idle" | "running" | "done" | "failed">("idle")
+  const [preCheckError, setPreCheckError] = useState("")
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -121,12 +125,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     return () => clearInterval(interval)
   }, [phase, timer, booking?.paymentStatus])
 
-  async function patchBooking(action: string, extra?: { rating?: number; reviewText?: string }) {
+  async function patchBooking(
+    action: string,
+    extra?: { rating?: number; reviewText?: string },
+    extraBody?: { snapshotConsent?: boolean }
+  ) {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...extra }),
+        body: JSON.stringify({ action, ...extra, ...extraBody }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -166,14 +174,143 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     return () => { cancelled = true }
   }, [isInCall, roomUrl, booking, fetchRoomUrl])
 
-  const handleSafetyConfirm = async () => {
-    const result = await patchBooking("accept-safety")
+  const handleSafetyConfirm = async (snapshotConsent: boolean) => {
+    const result = await patchBooking("accept-safety", undefined, { snapshotConsent })
     if (result) {
-      setSafetyAccepted(true)
       setShowSafetyModal(false)
+      const isBooker = session?.user?.id && booking?.userId && session.user.id === booking.userId
+      const needsPreCheck = booking?.callType !== "VOICE" && isBooker
+      if (needsPreCheck) {
+        setPreCheckPhase("running")
+        return
+      }
+      setSafetyAccepted(true)
       setBooking((b) => (b ? { ...b, safetyAcceptedAt: new Date().toISOString() } : null))
     }
   }
+
+  // Live-Monitoring: Zufällige Stichproben-Snapshots während des Video-Calls (nur Shugyo)
+  useEffect(() => {
+    if (
+      !isInCall ||
+      !roomUrl ||
+      !booking ||
+      booking.isExpert ||
+      booking.callType === "VOICE" ||
+      !booking.snapshotConsentAt
+    )
+      return
+
+    let stream: MediaStream | null = null
+    let timeoutId: ReturnType<typeof setTimeout>
+    let cancelled = false
+
+    const scheduleNext = () => {
+      const delay = 45000 + Math.random() * 45000
+      timeoutId = setTimeout(runSnapshot, delay)
+    }
+
+    async function runSnapshot() {
+      if (cancelled) return
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        if (cancelled) return
+        const video = document.createElement("video")
+        video.srcObject = stream
+        video.muted = true
+        video.playsInline = true
+        await video.play()
+        if (cancelled) return
+        await new Promise((r) => setTimeout(r, 500))
+        if (cancelled) return
+        const canvas = document.createElement("canvas")
+        canvas.width = video.videoWidth || 640
+        canvas.height = video.videoHeight || 480
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+        ctx.drawImage(video, 0, 0)
+        const base64 = canvas.toDataURL("image/jpeg", 0.85)
+        stream.getTracks().forEach((t) => t.stop())
+        stream = null
+        if (cancelled) return
+        await fetch("/api/safety/alert-snapshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, imageBase64: base64 }),
+        })
+      } catch {
+        // silent
+      } finally {
+        stream?.getTracks().forEach((t) => t.stop())
+        stream = null
+        if (!cancelled) scheduleNext()
+      }
+    }
+
+    scheduleNext()
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+      stream?.getTracks().forEach((t) => t.stop())
+    }
+  }, [isInCall, roomUrl, bookingId, booking?.isExpert, booking?.callType, booking?.snapshotConsentAt])
+
+  // Pre-Check: Shugyo-Video-Scan vor Daily-Join (Lobby)
+  useEffect(() => {
+    if (preCheckPhase !== "running" || !booking) return
+    let cancelled = false
+    let stream: MediaStream | null = null
+    ;(async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        if (cancelled) return
+        await new Promise((r) => setTimeout(r, 800))
+        if (cancelled) return
+        const video = document.createElement("video")
+        video.srcObject = stream
+        video.muted = true
+        video.playsInline = true
+        await video.play()
+        if (cancelled) return
+        const canvas = document.createElement("canvas")
+        canvas.width = video.videoWidth || 640
+        canvas.height = video.videoHeight || 480
+        const ctx = canvas.getContext("2d")
+        if (!ctx) throw new Error("No canvas context")
+        ctx.drawImage(video, 0, 0)
+        const base64 = canvas.toDataURL("image/jpeg", 0.85)
+        stream.getTracks().forEach((t) => t.stop())
+        stream = null
+        if (cancelled) return
+        const res = await fetch("/api/safety/pre-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, imageBase64: base64 }),
+        })
+        const data = await res.json()
+        if (cancelled) return
+        if (data.safe) {
+          setPreCheckPhase("done")
+          setSafetyAccepted(true)
+          setBooking((b) => (b ? { ...b, safetyAcceptedAt: new Date().toISOString() } : null))
+        } else {
+          setPreCheckPhase("failed")
+          setPreCheckError(data.reason || t("safety.preCheckFailed"))
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setPreCheckPhase("failed")
+          setPreCheckError(t("safety.preCheckError"))
+        }
+      } finally {
+        stream?.getTracks().forEach((t) => t.stop())
+      }
+    })()
+    return () => {
+      cancelled = true
+      stream?.getTracks().forEach((t) => t.stop())
+    }
+  }, [preCheckPhase, bookingId, booking, t])
 
   const handleStartTrial = async () => {
     if (!safetyAccepted) return
@@ -346,6 +483,34 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </button>
           </div>
 
+          {booking.isExpert && (
+            <div className="flex w-full items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
+              <Shield className="size-4 shrink-0 text-primary" />
+              <span>{t("safety.takumiNotice")}</span>
+            </div>
+          )}
+          {preCheckPhase === "running" && (
+            <div className="flex w-full items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-4 text-sm">
+              <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
+              <span>{t("safety.preCheckRunning")}</span>
+            </div>
+          )}
+          {preCheckPhase === "failed" && (
+            <div className="flex w-full flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>{preCheckError}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-fit border-destructive/30"
+                onClick={() => { setPreCheckPhase("running"); setPreCheckError("") }}
+              >
+                {t("common.retry")}
+              </Button>
+            </div>
+          )}
           {tooEarlyToJoin && (
             <div className="flex w-full items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <Clock className="size-4 shrink-0" />
@@ -363,7 +528,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
           <Button
             onClick={handleStartTrial}
-            disabled={tooEarlyToJoin || !safetyAccepted}
+            disabled={tooEarlyToJoin || !safetyAccepted || preCheckPhase === "running"}
             className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90 disabled:opacity-50"
             data-testid="join-session-btn"
           >
@@ -375,6 +540,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             open={showSafetyModal}
             onConfirm={handleSafetyConfirm}
             isVoiceCall={booking.callType === "VOICE"}
+            isBooker={session?.user?.id === booking.userId}
           />
 
           <p className="text-center text-xs text-muted-foreground">

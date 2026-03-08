@@ -190,6 +190,7 @@ model Booking {
 
   // diaiway Safety Enforcement: Pre-Call-Gateway-Zustimmung
   safetyAcceptedAt      DateTime?
+  snapshotConsentAt     DateTime?  // Shugyo: Einwilligung zu Stichproben-Snapshots bei Verstößen
 
   // Expert's rating of the user (Shugyo) — set when Takumi rates the booker
   expertRating    Float?
@@ -210,8 +211,9 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transaction   Transaction?
-  safetyReports SafetyReport[]
+  transaction     Transaction?
+  safetyReports   SafetyReport[]
+  safetyIncidents SafetyIncident[]
 
   @@index([expertId, date, status])
   @@index([userId])
@@ -304,6 +306,22 @@ model SafetyReport {
   @@index([bookingId])
   @@index([reporterId])
   @@index([reportedId])
+  @@index([status])
+}
+
+// diaiway Safety Enforcement: KI-Alert-Snapshots bei Richtlinienverstößen (Beweissicherung)
+model SafetyIncident {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  imageUrl    String   // Vercel Blob URL (bookingId_timestamp_ALARM.jpg)
+  reason      String   @default("")  // z.B. "adult: LIKELY"
+  status      String   @default("pending")  // pending | reviewed | blocked | refunded
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
   @@index([status])
 }
 

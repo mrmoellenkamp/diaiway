@@ -92,6 +92,7 @@ export async function GET(
         cancelPreview,
         isExpert, // true if current user is the Takumi (expert) for this booking
         safetyAcceptedAt: booking.safetyAcceptedAt,
+        snapshotConsentAt: booking.snapshotConsentAt,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       },
@@ -178,7 +179,9 @@ export async function PATCH(
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, rating, reviewText } = body as { action?: string; rating?: number; reviewText?: string }
+    const { action, rating, reviewText, snapshotConsent } = body as {
+      action?: string; rating?: number; reviewText?: string; snapshotConsent?: boolean
+    }
     if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "accept-safety", "report-and-leave"].includes(action)) {
       return NextResponse.json(
         { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, accept-safety, report-and-leave." },
@@ -213,13 +216,26 @@ export async function PATCH(
         return NextResponse.json({ error: "Ungültiger Buchungsstatus." }, { status: 409 })
       }
       if (booking.safetyAcceptedAt) {
-        return NextResponse.json({ success: true, safetyAcceptedAt: booking.safetyAcceptedAt })
+        return NextResponse.json({
+          success: true,
+          safetyAcceptedAt: booking.safetyAcceptedAt,
+          snapshotConsentAt: booking.snapshotConsentAt,
+        })
+      }
+      const now = new Date()
+      const updateData: { safetyAcceptedAt: Date; snapshotConsentAt?: Date } = { safetyAcceptedAt: now }
+      if (snapshotConsent === true && isBooker) {
+        updateData.snapshotConsentAt = now
       }
       const updated = await prisma.booking.update({
         where: { id },
-        data: { safetyAcceptedAt: new Date() },
+        data: updateData,
       })
-      return NextResponse.json({ success: true, safetyAcceptedAt: updated.safetyAcceptedAt })
+      return NextResponse.json({
+        success: true,
+        safetyAcceptedAt: updated.safetyAcceptedAt,
+        snapshotConsentAt: updated.snapshotConsentAt,
+      })
     }
 
     // ── report-and-leave (diaiway Safety Enforcement) ───────────────────────
