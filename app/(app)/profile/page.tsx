@@ -735,16 +735,12 @@ export default function ProfilePage() {
           <Card className="overflow-hidden border-border/60 gap-0 py-0">
             <CardContent className="flex flex-col p-0 divide-y divide-border">
               <MenuItem icon={Edit3} label={t("profile.editProfile")} href="/profile/edit" accent />
-              {!isTakumi && (
-                <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
-              )}
+              <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
               {isTakumi && (
-                <>
-                  <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
-                  <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
-                </>
+                <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
               )}
+              <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
               <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
               <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
               <MenuItem icon={Settings} label={t("common.settings")} />

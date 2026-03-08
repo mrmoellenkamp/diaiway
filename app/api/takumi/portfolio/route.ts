@@ -36,17 +36,9 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Own portfolio — Takumi only
+    // Own portfolio — any logged-in user can read (Daten bleiben bei Rollenwechsel erhalten)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { appRole: true },
-    })
-    if (user?.appRole !== "takumi") {
-      return NextResponse.json({ error: "Nur Takumi dürfen ihr Portfolio verwalten." }, { status: 403 })
     }
 
     const projects = await prisma.takumiPortfolioProject.findMany({
