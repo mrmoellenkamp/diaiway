@@ -271,6 +271,8 @@ const en = {
   "finances.creditNote": "Credit Note",
   "finances.downloadInvoice": "Download invoice",
   "finances.downloadCreditNote": "Download credit note",
+  "finances.downloadStornoInvoice": "Download credit note (invoice storno)",
+  "finances.downloadStornoCreditNote": "Download credit note (credit note storno)",
   "finances.noTransactions": "No transactions yet.",
   "finances.canWithdraw": "Withdrawal available",
 
@@ -370,6 +372,18 @@ const en = {
   "video.muteAria": "Mute",
   "video.unmuteAria": "Unmute",
   "video.bookingStatusError": "Booking has status \"{status}\" and cannot be started.",
+
+  // diaiway Safety Enforcement
+  "safety.gatewayTitle": "diaiway Safety Enforcement",
+  "safety.gatewayDesc": "Please confirm the following before entering the video room.",
+  "safety.checkLiability": "I acknowledge that this is a knowledge transfer service and no guaranteed outcome is promised.",
+  "safety.checkConduct": "I commit to respectful conduct and will follow diAiway's behavior guidelines.",
+  "safety.checkGoogleSafety": "I confirm the zero-tolerance policy on violence and sexual content (diaiway Safety Standards / Google Safety Compliance).",
+  "safety.confirm": "I confirm and want to join",
+  "safety.reportAndLeave": "Report & Leave",
+  "safety.reportAndLeaveDesc": "Ends the call immediately and creates a Safety Report for review.",
+  "safety.reportSubmitted": "Safety report created. The call has ended. We will review the case.",
+  "safety.reportFailed": "Report could not be sent.",
 
   // Handshake
   "handshake.close": "Close",
@@ -588,6 +602,7 @@ const en = {
   "booking.bookingInProgress": "Booking...",
   "booking.selectAppointmentError": "Please select an appointment.",
   "booking.pastSlotError": "This time slot is in the past and cannot be booked.",
+  "booking.max7DaysAhead": "Bookings can only be made up to 7 days in advance.",
   "booking.loginRequired": "Please sign in first.",
   "booking.networkError": "Network error. Please check your connection.",
   "booking.incompleteProfile": "The expert profile is incomplete. Please choose a different time or expert.",

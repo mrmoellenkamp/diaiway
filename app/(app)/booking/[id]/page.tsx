@@ -27,7 +27,7 @@ import {
 import {
   ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw,
 } from "lucide-react"
-import { parseBerlinDateTime } from "@/lib/date-utils"
+import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -91,6 +91,11 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       toast.error(t("booking.pastSlotError"))
       return
     }
+    // 7-Tage-Regel: Buchungen max. 7 Tage im Voraus
+    if (isBeyondMaxBookingDays(date, start)) {
+      toast.error(t("booking.max7DaysAhead"))
+      return
+    }
     setSelectedDate(date)
     setSelectedStart(start)
     setSelectedEnd(end)
@@ -109,6 +114,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       setSelectedDate("")
       setSelectedStart("")
       setSelectedEnd("")
+      return
+    }
+    if (isBeyondMaxBookingDays(selectedDate, selectedStart)) {
+      toast.error(t("booking.max7DaysAhead"))
       return
     }
     if (!session?.user) {

@@ -271,6 +271,8 @@ const es = {
   "finances.creditNote": "Nota de crédito",
   "finances.downloadInvoice": "Descargar factura",
   "finances.downloadCreditNote": "Descargar nota de crédito",
+  "finances.downloadStornoInvoice": "Descargar factura rectificativa",
+  "finances.downloadStornoCreditNote": "Descargar nota de crédito rectificativa",
   "finances.noTransactions": "Aún no hay transacciones.",
   "finances.canWithdraw": "Retiro disponible",
 
@@ -370,6 +372,18 @@ const es = {
   "video.muteAria": "Silenciar",
   "video.unmuteAria": "Activar sonido",
   "video.bookingStatusError": "La reserva tiene estado \"{status}\" y no puede iniciarse.",
+
+  // diaiway Safety Enforcement
+  "safety.gatewayTitle": "diaiway Safety Enforcement",
+  "safety.gatewayDesc": "Confirma lo siguiente antes de entrar en la sala de vídeo.",
+  "safety.checkLiability": "Reconozco que es un servicio de transferencia de conocimientos y no se promete ningún resultado garantizado.",
+  "safety.checkConduct": "Me comprometo a un trato respetuoso y seguiré las normas de conducta de diAiway.",
+  "safety.checkGoogleSafety": "Confirmo la política de tolerancia cero ante violencia y contenido sexual (diaiway Safety Standards / Google Safety Compliance).",
+  "safety.confirm": "Confirmo y quiero unirme",
+  "safety.reportAndLeave": "Reportar y salir",
+  "safety.reportAndLeaveDesc": "Termina la llamada de inmediato y crea un Safety Report para revisión.",
+  "safety.reportSubmitted": "Safety report creado. La llamada ha terminado. Revisaremos el caso.",
+  "safety.reportFailed": "No se pudo enviar el informe.",
 
   // Handshake
   "handshake.close": "Cerrar",
@@ -588,6 +602,7 @@ const es = {
   "booking.bookingInProgress": "Reservando...",
   "booking.selectAppointmentError": "Por favor selecciona una cita.",
   "booking.pastSlotError": "Este horario está en el pasado y no puede reservarse.",
+  "booking.max7DaysAhead": "Las reservas solo pueden hacerse con hasta 7 días de antelación.",
   "booking.loginRequired": "Por favor inicia sesión primero.",
   "booking.networkError": "Error de red. Por favor verifica tu conexión.",
   "booking.incompleteProfile": "El perfil del experto está incompleto. Elige otro horario o experto.",

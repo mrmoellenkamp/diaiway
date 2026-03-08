@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
@@ -929,6 +930,14 @@ export default function AdminPage() {
               <TabsTrigger value="takumis" className="text-xs"><Star className="size-3.5 mr-1" />Takumis</TabsTrigger>
               <TabsTrigger value="database" className="text-xs"><Database className="size-3.5 mr-1" />DB</TabsTrigger>
             </TabsList>
+            <div className="mt-2">
+              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                <Link href="/admin/safety">
+                  <Shield className="size-3.5" />
+                  diaiway Safety
+                </Link>
+              </Button>
+            </div>
 
             <TabsContent value="overview" className="mt-4">
               {statsLoading && <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin text-primary" /></div>}

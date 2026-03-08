@@ -24,8 +24,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
         }
 
-        const user = await prisma.user.findUnique({ where: { email } })
+        const user = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true } })
         if (!user) return null
+        if ((user as { isBanned?: boolean }).isBanned) return null // diaiway Safety: gesperrte Nutzer
 
         const isValid = await bcrypt.compare(credentials.password as string, user.password)
         if (!isValid) return null

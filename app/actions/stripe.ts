@@ -33,7 +33,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
-    payment_method_types: ["card"], // PayPal inkompatibel mit embedded + never
+    payment_method_types: ["card"],
     line_items: [
       {
         price_data: {
@@ -48,6 +48,9 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
       },
     ],
     mode: "payment",
+    payment_intent_data: {
+      capture_method: "manual", // Hold & Capture: Geld nur reservieren, erst bei Leistung einziehen
+    },
     metadata: { bookingId, type: "booking_payment" },
   })
 
@@ -74,7 +77,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
-    payment_method_types: ["card"], // PayPal inkompatibel mit embedded + never
+    payment_method_types: ["card"],
     line_items: [
       {
         price_data: {
@@ -89,6 +92,9 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
       },
     ],
     mode: "payment",
+    payment_intent_data: {
+      capture_method: "manual", // Hold & Capture
+    },
     metadata: { bookingId, type: "session_payment" },
   })
 

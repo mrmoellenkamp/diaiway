@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { releasePendingTransactions } from "@/lib/wallet-service"
+import { processPendingCompletions } from "@/app/actions/process-completion"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
 /**
- * Cron: 24h-Freigabe von pending Transaktionen.
- * Aufruf z.B. via Vercel Cron (vercel.json) oder externem Scheduler.
+ * Cron: 24h nach Session-Ende → Capture, RE/GS erzeugen, Takumi-Guthaben gutschreiben.
+ * Hold & Capture Modell: Verarbeitet AUTHORIZED Transaktionen.
  * Optional: CRON_SECRET zur Absicherung.
  */
 export async function GET(req: NextRequest) {
@@ -17,11 +17,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const results = await releasePendingTransactions()
+    const results = await processPendingCompletions()
     const ok = results.filter((r) => r.ok).length
     const failed = results.filter((r) => !r.ok)
     return NextResponse.json({
-      released: ok,
+      processed: ok,
       failed: failed.length,
       details: results,
     })

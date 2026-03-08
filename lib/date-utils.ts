@@ -88,3 +88,19 @@ export function parseBerlinDateTime(dateStr: string, timeStr: string): Date {
 export function nowBerlin(): Date {
   return new Date()
 }
+
+/** 7-Tage-Regel: Buchungen dürfen max. 7 Tage in der Zukunft liegen */
+const MAX_BOOKING_DAYS_AHEAD = 7
+
+/**
+ * Prüft, ob ein Termin (date + startTime) mehr als 7 Tage in der Zukunft liegt.
+ * Liefert true, wenn die Buchung NICHT erlaubt ist (zu weit in der Zukunft).
+ */
+export function isBeyondMaxBookingDays(dateStr: string, startTime: string): boolean {
+  const slotStart = parseBerlinDateTime(dateStr, startTime)
+  const now = new Date()
+  const maxDate = new Date(now)
+  maxDate.setDate(maxDate.getDate() + MAX_BOOKING_DAYS_AHEAD)
+  maxDate.setHours(23, 59, 59, 999)
+  return slotStart > maxDate
+}
