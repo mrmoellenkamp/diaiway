@@ -16,15 +16,6 @@ import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import { toast } from "sonner"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
   ArrowLeft, CheckCircle, Shield, Clock, Video, Mic, Info, Loader2, Calendar, CreditCard, RefreshCcw,
 } from "lucide-react"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
@@ -47,7 +38,6 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [callType, setCallType] = useState<"VIDEO" | "VOICE">("VIDEO")
   const [note, setNote] = useState("")
   const [isBooking, setIsBooking] = useState(false)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   useEffect(() => {
     if (step === "checkout" && session?.user) {
@@ -182,28 +172,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  function handleSuccessContinue() {
-    setShowSuccessDialog(false)
-    router.push("/sessions?tab=upcoming")
-  }
-
   return (
     <PageContainer>
-      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("booking.successTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("booking.successInfo", { name: takumi.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={handleSuccessContinue}>
-              {t("booking.successContinue")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -246,8 +216,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               priceInCents={Math.round(totalPrice * 100)}
               walletBalanceCents={walletBalanceCents}
               onSuccess={() => {
-                setStep("success")
-                setShowSuccessDialog(true)
+                toast.success(t("booking.successTitle"))
+                router.push("/sessions?tab=upcoming")
               }}
               onError={(err) => {
                 toast.error(err)
