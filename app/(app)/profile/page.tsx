@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
 
@@ -33,24 +32,9 @@ import {
   Loader2,
   Check,
   X,
-  PauseCircle,
-  Trash2,
-  AlertTriangle,
   FolderOpen,
   Images,
 } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -100,121 +84,6 @@ function MenuItem({
   )
 }
 
-function AccountManagement() {
-  const { t } = useI18n()
-  const [pausing, setPausing] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-
-  async function handlePause() {
-    setPausing(true)
-    try {
-      const res = await fetch("/api/user/account", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "pause" }),
-      })
-      if (res.ok) {
-        toast.success(t("profile.accountPaused"))
-        window.location.href = "/paused"
-      } else {
-        toast.error(t("profile.pauseError"))
-      }
-    } finally {
-      setPausing(false)
-    }
-  }
-
-  async function handleDelete() {
-    setDeleting(true)
-    try {
-      const res = await fetch("/api/user/account", { method: "DELETE" })
-      if (res.ok) {
-        toast.success(t("profile.accountDeleted"))
-        await signOut({ callbackUrl: "/" })
-      } else {
-        toast.error(t("profile.deleteError"))
-      }
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-2 border-t border-border/40 pt-4 mt-2">
-      <p className="text-[11px] text-muted-foreground text-center font-medium uppercase tracking-wide">
-        {t("profile.accountManagement")}
-      </p>
-
-      {/* Pause */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="outline" className="w-full gap-2 text-sm text-muted-foreground">
-            <PauseCircle className="size-4" />
-            {t("profile.pauseAccount")}
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <PauseCircle className="size-5 text-yellow-500" />
-              {t("profile.pauseAccountConfirm")}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-relaxed">
-              {t("profile.pauseAccountDesc")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handlePause}
-              disabled={pausing}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            >
-              {pausing ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              {t("profile.pauseNow")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full gap-2 text-xs text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5"
-          >
-            <Trash2 className="size-3.5" />
-            {t("profile.deleteAccount")}
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="size-5" />
-              {t("profile.deleteAccountConfirm")}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-relaxed">
-              {t("profile.deleteAccountDesc")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            >
-              {deleting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              {t("profile.deleteAccountConfirmBtn")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  )
-}
-
 export default function ProfilePage() {
   const { data: session, status, update: updateSession } = useSession()
   const { role, setRole, setIsLoggedIn } = useApp()
@@ -230,7 +99,6 @@ export default function ProfilePage() {
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
-  const [refundPreference, setRefundPreference] = useState<"payout" | "wallet">("payout")
   const [skillLevel, setSkillLevel] = useState<string | null>(null)
   const [projectCount, setProjectCount] = useState(0)
   const [completedSessions, setCompletedSessions] = useState(0)
@@ -263,7 +131,6 @@ export default function ProfilePage() {
           setDbEmail(data.email || "")
           setDbImage(data.image || "")
           setFavorites(data.favorites || [])
-          setRefundPreference((data.refundPreference === "wallet" ? "wallet" : "payout") as "payout" | "wallet")
           setSkillLevel(data.skillLevel ?? null)
         }
         if (!isTakumi && takumiOrProjectsRes?.ok) {
@@ -610,60 +477,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Refund preference (Shugyo only) */}
-          {!isTakumi && (
-            <Card className="border-border/60 gap-0 py-0">
-              <CardContent className="flex flex-col gap-3 p-4">
-                <div className="flex items-center gap-2">
-                  <Wallet className="size-4 text-muted-foreground" />
-                  <div>
-                    <span className="text-sm font-medium text-foreground">{t("profile.refundPreference")}</span>
-                    <p className="text-xs text-muted-foreground">{t("profile.refundPreferenceDesc")}</p>
-                  </div>
-                </div>
-                <RadioGroup
-                  value={refundPreference}
-                  onValueChange={async (v: "payout" | "wallet") => {
-                    setRefundPreference(v)
-                    try {
-                      const res = await fetch("/api/user/profile", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ refundPreference: v }),
-                      })
-                      if (res.ok) {
-                        toast.success(t("profile.refundPreferenceSaved"))
-                      } else {
-                        const data = await res.json()
-                        toast.error(data.error || t("profile.error"))
-                        setRefundPreference(refundPreference)
-                      }
-                    } catch {
-                      toast.error(t("common.networkError"))
-                      setRefundPreference(refundPreference)
-                    }
-                  }}
-                  className="grid gap-2"
-                >
-                  <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
-                    <RadioGroupItem value="payout" />
-                    <div>
-                      <span className="text-sm font-medium">{t("profile.refundPayout")}</span>
-                      <p className="text-xs text-muted-foreground">{t("profile.refundPayoutDesc")}</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
-                    <RadioGroupItem value="wallet" />
-                    <div>
-                      <span className="text-sm font-medium">{t("profile.refundWallet")}</span>
-                      <p className="text-xs text-muted-foreground">{t("profile.refundWalletDesc")}</p>
-                    </div>
-                  </label>
-                </RadioGroup>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Go Live toggle (Takumi only) */}
           {isTakumi && (
             <Card className="border-accent/30 bg-accent/5 gap-0 py-0">
@@ -743,7 +556,7 @@ export default function ProfilePage() {
               <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
               <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
               <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
-              <MenuItem icon={Settings} label={t("common.settings")} />
+              <MenuItem icon={Settings} label={t("common.settings")} href="/profile/settings" />
             </CardContent>
           </Card>
 
@@ -766,9 +579,6 @@ export default function ProfilePage() {
             <LogOut className="size-4" />
             {t("nav.logout")}
           </Button>
-
-          {/* Account management */}
-          <AccountManagement />
           </>
           )}
       </div>

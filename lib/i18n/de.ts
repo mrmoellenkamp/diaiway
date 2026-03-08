@@ -227,6 +227,15 @@ const de = {
   "profile.deleteAccountDesc": "Diese Aktion kann nicht rückgängig gemacht werden. Alle persönlichen Daten (Profil, Bilder, Experten-Profil, Verfügbarkeit, Bewertungen) werden gemäß DSGVO dauerhaft gelöscht. Buchungshistorie wird aus steuerrechtlichen Gründen (§ 147 AO) anonymisiert aufbewahrt.",
   "profile.deleteAccountConfirmBtn": "Ja, Konto löschen",
   "profile.accountPaused": "Konto pausiert.",
+
+  // Settings
+  "settings.subtitle": "Kontoverwaltung und Passwort",
+  "settings.accountManagement": "Kontoverwaltung",
+  "settings.accountManagementDesc": "Konto pausieren oder dauerhaft löschen.",
+  "settings.passwordManagement": "Passwortverwaltung",
+  "settings.passwordManagementDesc": "Passwort vergessen oder ändern.",
+  "settings.requestPasswordReset": "Passwort zurücksetzen",
+  "settings.passwordResetHint": "Wir senden dir einen Link per E-Mail. Mit diesem Link kannst du ein neues Passwort festlegen. Der Link gilt 1 Stunde.",
   "profile.pauseError": "Fehler beim Pausieren.",
   "profile.accountDeleted": "Konto gelöscht.",
   "profile.deleteError": "Fehler beim Löschen.",

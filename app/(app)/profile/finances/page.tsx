@@ -5,8 +5,10 @@ import Link from "next/link"
 import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, CreditCard } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { toast } from "sonner"
 import { formatDateBerlinShort } from "@/lib/date-utils"
 
 function formatCents(cents: number): string {
@@ -38,6 +40,8 @@ export default function FinancesPage() {
   const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<TxItem[]>([])
+  const [refundPreference, setRefundPreference] = useState<"payout" | "wallet">("payout")
+  const [appRole, setAppRole] = useState<string>("shugyo")
   const [wallet, setWallet] = useState<{
     balance: number
     pendingBalance: number
@@ -45,11 +49,17 @@ export default function FinancesPage() {
   } | null>(null)
 
   useEffect(() => {
-    fetch("/api/wallet/history")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.history) setHistory(data.history)
-        if (data.wallet) setWallet(data.wallet)
+    Promise.all([
+      fetch("/api/wallet/history").then((r) => r.json()),
+      fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([walletData, profileData]) => {
+        if (walletData?.history) setHistory(walletData.history)
+        if (walletData?.wallet) setWallet(walletData.wallet)
+        if (profileData?.refundPreference) {
+          setRefundPreference(profileData.refundPreference === "wallet" ? "wallet" : "payout")
+        }
+        if (profileData?.appRole) setAppRole(profileData.appRole)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -104,6 +114,61 @@ export default function FinancesPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Rückerstattung bei Ablehnung (nur Shugyo) */}
+            {appRole === "shugyo" && (
+              <Card className="border-border/60 gap-0 py-0">
+                <CardContent className="flex flex-col gap-3 p-4">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="size-4 text-muted-foreground" />
+                    <div>
+                      <span className="text-sm font-medium text-foreground">{t("profile.refundPreference")}</span>
+                      <p className="text-xs text-muted-foreground">{t("profile.refundPreferenceDesc")}</p>
+                    </div>
+                  </div>
+                  <RadioGroup
+                    value={refundPreference}
+                    onValueChange={async (v: "payout" | "wallet") => {
+                      const prev = refundPreference
+                      setRefundPreference(v)
+                      try {
+                        const res = await fetch("/api/user/profile", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ refundPreference: v }),
+                        })
+                        if (res.ok) {
+                          toast.success(t("profile.refundPreferenceSaved"))
+                        } else {
+                          const data = await res.json()
+                          toast.error(data.error || t("profile.error"))
+                          setRefundPreference(prev)
+                        }
+                      } catch {
+                        toast.error(t("common.networkError"))
+                        setRefundPreference(prev)
+                      }
+                    }}
+                    className="grid gap-2"
+                  >
+                    <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                      <RadioGroupItem value="payout" />
+                      <div>
+                        <span className="text-sm font-medium">{t("profile.refundPayout")}</span>
+                        <p className="text-xs text-muted-foreground">{t("profile.refundPayoutDesc")}</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                      <RadioGroupItem value="wallet" />
+                      <div>
+                        <span className="text-sm font-medium">{t("profile.refundWallet")}</span>
+                        <p className="text-xs text-muted-foreground">{t("profile.refundWalletDesc")}</p>
+                      </div>
+                    </label>
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Transaktionen & Rechnungen */}
             <Card>
