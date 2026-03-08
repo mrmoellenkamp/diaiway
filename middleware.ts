@@ -70,7 +70,7 @@ export default authMiddleware((req) => {
   )
   response.headers.set(
     "Permissions-Policy",
-    "camera=(self), microphone=(self), geolocation=(), payment=(self)"
+    "camera=(self \"https://newassets.hcaptcha.com\"), microphone=(self \"https://newassets.hcaptcha.com\"), geolocation=(), payment=(self)"
   )
   response.headers.set(
     "Strict-Transport-Security",

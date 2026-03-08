@@ -636,6 +636,7 @@ const de = {
   "booking.successTitle": "Buchungsanfrage gesendet",
   "booking.successInfo": "Wir leiten deine Buchungsanfrage an {name} weiter. Er wird sich schnellstmöglich melden oder die Buchung bestätigen.",
   "booking.successContinue": "Weiter zu Geplant",
+  "booking.redirectFallback": "Weiterleitung funktioniert nicht?",
 
   // Availability Dashboard
   "avail.title": "Meine Verfügbarkeit",
