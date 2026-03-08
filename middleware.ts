@@ -43,6 +43,16 @@ export default authMiddleware((req) => {
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
+  // Takumi Portfolio — nur Takumi (appRole) und Admin
+  if (pathname.startsWith("/dashboard/takumi")) {
+    if (!isLoggedIn)
+      return NextResponse.redirect(
+        new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
+      )
+    if (appRole !== "takumi" && role !== "admin")
+      return NextResponse.redirect(new URL("/home", req.url))
+  }
+
   // Protected app pages — any logged-in user (except /booking/respond which uses token from email)
   const isBookingRespond = pathname.startsWith("/booking/respond")
   if (!isBookingRespond) {

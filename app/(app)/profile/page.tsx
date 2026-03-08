@@ -37,6 +37,7 @@ import {
   Trash2,
   AlertTriangle,
   FolderOpen,
+  Images,
 } from "lucide-react"
 import {
   AlertDialog,
@@ -739,7 +740,10 @@ export default function ProfilePage() {
               )}
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
               {isTakumi && (
-                <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
+                <>
+                  <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
+                  <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
+                </>
               )}
               <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
               <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
