@@ -63,6 +63,15 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const now = new Date()
 
     // 4. PDF-Generierung
+    const durationMin = booking.sessionDuration ?? (() => {
+      if (booking.startTime && booking.endTime) {
+        const [sh, sm] = booking.startTime.split(":").map(Number)
+        const [eh, em] = booking.endTime.split(":").map(Number)
+        return (eh * 60 + em) - (sh * 60 + sm)
+      }
+      return 30
+    })()
+
     const invoiceBuf = await generateInvoicePdf({
       invoiceNumber,
       recipientName: booking.userName,
@@ -71,6 +80,8 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       expertName: booking.expertName,
       totalAmountCents: tx.totalAmount,
       date: now,
+      callType: booking.callType === "VOICE" ? "VOICE" : "VIDEO",
+      durationMinutes: durationMin,
     })
     const creditBuf = await generateCreditNotePdf({
       creditNumber: creditNoteNumber,

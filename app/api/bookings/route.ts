@@ -74,6 +74,8 @@ export async function GET(req: Request) {
         startTime: b.startTime,
         endTime: b.endTime,
         status: b.status,
+        callType: b.callType,
+        totalPrice: b.totalPrice != null ? Number(b.totalPrice) : null,
         price: b.price,
         note: b.note,
         dailyRoomUrl: b.dailyRoomUrl,
@@ -105,10 +107,17 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { takumiId, date, startTime, endTime, price, note, deferNotification } = body
+    const { takumiId, date, startTime, endTime, callType, totalPrice, price, note, deferNotification } = body
 
     if (!takumiId || !date || !startTime || !endTime) {
       return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
+    }
+
+    const [sh, sm] = startTime.split(":").map(Number)
+    const [eh, em] = endTime.split(":").map(Number)
+    const durationMin = (eh * 60 + em) - (sh * 60 + sm)
+    if (durationMin < 15 || durationMin % 15 !== 0) {
+      return NextResponse.json({ error: "Mindestdauer 15 Minuten, nur Vielfache von 15 möglich." }, { status: 400 })
     }
 
     // Reject bookings in the past (Berlin time)
@@ -160,6 +169,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dieser Zeitraum ist bereits belegt." }, { status: 409 })
     }
 
+    const effectiveCallType = callType === "VOICE" ? "VOICE" : "VIDEO"
+    const effectiveTotalPrice = totalPrice != null && totalPrice >= 1
+      ? totalPrice
+      : (price ?? (Number(expert.priceVideo15Min) || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)) * (durationMin / 15))
+
     const statusToken = randomBytes(32).toString("hex")
     const booking = await prisma.booking.create({
       data: {
@@ -172,7 +186,9 @@ export async function POST(req: Request) {
         date,
         startTime,
         endTime,
-        price: price ?? expert.pricePerSession ?? 0,
+        callType: effectiveCallType,
+        totalPrice: effectiveTotalPrice,
+        price: price ?? Math.round(effectiveTotalPrice),
         note: note || "",
         statusToken,
         paymentStatus: "unpaid",
@@ -196,7 +212,7 @@ export async function POST(req: Request) {
           date,
           startTime,
           endTime,
-          price: booking.price,
+          price: Number(booking.totalPrice ?? booking.price ?? 0),
           note: note || "",
           acceptUrl: `${respondBase}&action=confirmed`,
           declineUrl: `${respondBase}&action=declined`,

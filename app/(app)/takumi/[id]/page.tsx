@@ -302,7 +302,9 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-3">
         <div className="mx-auto flex max-w-lg items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">{takumi.pricePerSession}&euro;</span>
+            <span className="text-lg font-bold text-foreground">
+              ab {(takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)).toFixed(0)} €
+            </span>
             <span className="text-[10px] text-muted-foreground">{t("takumiPage.priceInfo")}</span>
           </div>
           <Button

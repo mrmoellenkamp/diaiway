@@ -72,6 +72,8 @@ export async function GET(
         startTime: booking.startTime,
         endTime: booking.endTime,
         status: booking.status,
+        callType: booking.callType,
+        totalPrice: booking.totalPrice != null ? Number(booking.totalPrice) : null,
         price: booking.price,
         note: booking.note,
         dailyRoomUrl: booking.dailyRoomUrl,
@@ -142,7 +144,7 @@ function computeCancelFee(
   // Fee is based on paid amount (EUR cents) or price (EUR) if not yet paid
   const baseAmount = booking.paymentStatus === "paid" && booking.paidAmount
     ? booking.paidAmount           // EUR cents
-    : booking.price * 100          // convert EUR → cents
+    : Math.round(Number(booking.totalPrice ?? booking.price ?? 0) * 100)  // EUR → cents
 
   const feeAmount = isFree ? 0 : Math.round(baseAmount * policy.feePercent / 100)
   const refundAmount = baseAmount - feeAmount

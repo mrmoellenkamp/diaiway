@@ -63,7 +63,9 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
   if (booking.paymentStatus === "paid") return { ok: true }
   if (!booking.expert?.userId) return { ok: false, error: "Expert has no user" }
 
-  const totalAmountCents = Math.round((booking.price || 0) * 100)
+  const totalAmountCents = Math.round(
+    (Number(booking.totalPrice ?? booking.price ?? 0)) * 100
+  )
   if (totalAmountCents <= 0) return { ok: false, error: "Invalid price" }
 
   const shugyo = await prisma.user.findUnique({
@@ -246,6 +248,7 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
       recipientName: t.booking.userName,
       recipientEmail: t.booking.userEmail,
       bookingId: t.bookingId,
+      callType: t.booking.callType === "VOICE" ? "VOICE" : "VIDEO",
       expertName: t.booking.expertName,
       totalAmountCents: t.totalAmount,
       date: now,
@@ -341,6 +344,7 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
       recipientName: t.booking.userName,
       recipientEmail: t.booking.userEmail,
       bookingId: t.bookingId,
+      callType: t.booking.callType === "VOICE" ? "VOICE" : "VIDEO",
       expertName: t.booking.expertName,
       totalAmountCents: t.totalAmount,
       date: now,

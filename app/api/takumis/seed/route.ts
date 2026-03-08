@@ -37,6 +37,8 @@ export async function POST() {
       reviewCount: t.reviewCount,
       sessionCount: t.sessionCount,
       responseTime: t.responseTime,
+      priceVideo15Min: t.pricePerSession / 2,
+      priceVoice15Min: t.pricePerSession / 2,
       pricePerSession: t.pricePerSession,
       isLive: t.isLive,
       isPro: t.isPro,

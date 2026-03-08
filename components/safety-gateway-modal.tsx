@@ -23,9 +23,11 @@ interface SafetyGatewayModalProps {
   open: boolean
   onConfirm: () => void
   disabled?: boolean
+  /** Bei Voice-Call: Video-Snapshot-/Video-Raum-Warnung weglassen */
+  isVoiceCall?: boolean
 }
 
-export function SafetyGatewayModal({ open, onConfirm, disabled }: SafetyGatewayModalProps) {
+export function SafetyGatewayModal({ open, onConfirm, disabled, isVoiceCall }: SafetyGatewayModalProps) {
   const { t } = useI18n()
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
@@ -50,7 +52,9 @@ export function SafetyGatewayModal({ open, onConfirm, disabled }: SafetyGatewayM
             <Shield className="size-6 text-primary" />
             <DialogTitle>{t("safety.gatewayTitle")}</DialogTitle>
           </div>
-          <DialogDescription>{t("safety.gatewayDesc")}</DialogDescription>
+          <DialogDescription>
+            {isVoiceCall ? t("safety.gatewayDescVoice") : t("safety.gatewayDesc")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-4">

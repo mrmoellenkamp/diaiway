@@ -134,7 +134,7 @@ export default function SessionDetailPage() {
               <div className="flex items-center gap-3 text-sm">
                 <Star className="size-4 text-amber-500" />
                 <div>
-                  <p className="font-medium text-foreground">Dann {takumi.pricePerSession}&euro; / 30 Min</p>
+                  <p className="font-medium text-foreground">Dann ab {(takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)).toFixed(0)} € / 15 Min</p>
                   <p className="text-xs text-muted-foreground">Entscheide nach der Probezeit</p>
                 </div>
               </div>

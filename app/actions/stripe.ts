@@ -30,6 +30,17 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Buchung bereits bezahlt")
 
+  const callType = booking.callType === "VOICE" ? "VOICE" : "VIDEO"
+  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const durationMin = (() => {
+    if (booking.startTime && booking.endTime) {
+      const [sh, sm] = booking.startTime.split(":").map(Number)
+      const [eh, em] = booking.endTime.split(":").map(Number)
+      return (eh * 60 + em) - (sh * 60 + sm)
+    }
+    return 30
+  })()
+
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
@@ -39,8 +50,8 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Buchung Video-Session mit ${takumiName}`,
-            description: `30 Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr`,
+            name: `Buchung ${serviceLabel} mit ${takumiName}`,
+            description: `${durationMin} Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr`,
           },
           unit_amount: priceInCents,
         },
@@ -74,6 +85,9 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Session already paid")
 
+  const callType = booking.callType === "VOICE" ? "VOICE" : "VIDEO"
+  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
@@ -83,7 +97,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Video-Session mit ${takumiName}`,
+            name: `${serviceLabel} mit ${takumiName}`,
             description: `${duration} Minuten Beratung`,
           },
           unit_amount: priceInCents,

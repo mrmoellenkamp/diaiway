@@ -25,9 +25,17 @@ export async function generateInvoicePdf(opts: {
   expertName: string
   totalAmountCents: number
   date: Date
+  /** VIDEO oder VOICE — bestimmt Leistungsbeschreibung */
+  callType?: "VIDEO" | "VOICE"
+  /** Dauer in Minuten — für ZUGFeRD Quantity (15-Min-Einheiten) */
+  durationMinutes?: number
 }): ArrayBuffer {
   const doc = new jsPDF()
-  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date } = opts
+  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, callType = "VIDEO", durationMinutes = 30 } = opts
+
+  const quantitySlots15 = Math.max(1, Math.round(durationMinutes / 15))
+  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const lineDesc = `${serviceLabel} mit ${expertName} (Buchung ${bookingId}), ${quantitySlots15} × 15 Min`
 
   doc.setFontSize(18)
   doc.text("Rechnung", 20, 25)
@@ -50,8 +58,8 @@ export async function generateInvoicePdf(opts: {
 
   doc.setFontSize(10)
   doc.text("Positionen:", 20, 110)
-  doc.text(`Video-Session mit ${expertName} (Buchung ${bookingId})`, 20, 120)
-  doc.text(`Gesamtbetrag: ${formatCents(totalAmountCents)}`, 20, 130)
+  doc.text(lineDesc, 20, 120)
+  doc.text(`Menge: ${quantitySlots15} × 15 Min · Gesamtbetrag: ${formatCents(totalAmountCents)}`, 20, 128)
 
   doc.text("Zahlbar sofort. Enthält 19% MwSt. (falls anwendbar).", 20, 150)
   doc.setFontSize(8)
@@ -59,6 +67,7 @@ export async function generateInvoicePdf(opts: {
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
   if (process.env.BILLING_ZUGFERD_ENABLED === "true") {
+    const unitPriceCents = Math.round(totalAmountCents / quantitySlots15)
     const xml = buildFacturXXml({
       invoiceNumber,
       issueDate: formatDateYyyyMmDd(date),
@@ -70,9 +79,9 @@ export async function generateInvoicePdf(opts: {
       sellerVatId: BILLING_SENDER.vatId || undefined,
       buyerName: recipientName,
       buyerEmail: recipientEmail,
-      lineItemDesc: `Video-Session mit ${expertName} (Buchung ${bookingId})`,
-      lineQuantity: 1,
-      lineUnitPriceCents: totalAmountCents,
+      lineItemDesc: lineDesc,
+      lineQuantity: quantitySlots15,
+      lineUnitPriceCents: unitPriceCents,
       lineAmountCents: totalAmountCents,
       totalAmountCents,
       currency: "EUR",
@@ -175,6 +184,7 @@ export function generateStornoInvoicePdf(opts: {
   expertName: string
   totalAmountCents: number
   date: Date
+  callType?: "VIDEO" | "VOICE"
 }): ArrayBuffer {
   const doc = new jsPDF()
   const { stornoNumber, originalInvoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date } = opts
@@ -199,9 +209,11 @@ export function generateStornoInvoicePdf(opts: {
   doc.text(recipientName, 20, 92)
   doc.text(recipientEmail, 20, 99)
 
+  const { callType: stornoCallType } = opts
+  const serviceLabel = stornoCallType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
   doc.setFontSize(10)
   doc.text("Stornierte Position:", 20, 115)
-  doc.text(`Video-Session mit ${expertName} (Buchung ${bookingId})`, 20, 125)
+  doc.text(`${serviceLabel} mit ${expertName} (Buchung ${bookingId})`, 20, 125)
   doc.text(`Storno-Betrag: -${formatCents(totalAmountCents)}`, 20, 135)
 
   doc.setFontSize(8)
