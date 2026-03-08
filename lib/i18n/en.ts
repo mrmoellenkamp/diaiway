@@ -43,7 +43,7 @@ const en = {
 
   // Landing
   "landing.heroTitle": "DIY help at the push of a button. Safe. Fast. Everywhere.",
-  "landing.heroDesc": "Individual support from people with experience. Live via video. From vegetable gardens to classic cars",
+  "landing.heroDesc": "Individual support from people with experience. Live via video or phone call. From vegetable gardens to classic cars",
   "landing.findExpert": "Ask AI and find experts (Takumi)",
   "landing.discoverCategories": "Ask AI & discover categories",
   "landing.becomeTakumi": "Become a Takumi",

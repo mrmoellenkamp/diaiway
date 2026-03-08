@@ -3,35 +3,18 @@
 import { useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, User, ImageIcon } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { useI18n } from "@/lib/i18n"
-
-const SKILL_COLORS: Record<string, string> = {
-  NEULING: "bg-emerald-500/20 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-300 border-emerald-500/40",
-  FORTGESCHRITTEN: "bg-blue-500/20 text-blue-700 dark:bg-blue-500/30 dark:text-blue-300 border-blue-500/40",
-  PROFI: "bg-violet-500/20 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300 border-violet-500/40",
-}
 
 interface ShugyoInfoPanelProps {
   userName: string
-  skillLevel: string | null
   projects: { id: string; title: string; description: string; imageUrl: string }[]
 }
 
-export function ShugyoInfoPanel({ userName, skillLevel, projects }: ShugyoInfoPanelProps) {
+export function ShugyoInfoPanel({ userName, projects }: ShugyoInfoPanelProps) {
   const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(false)
 
-  const skillLabel =
-    skillLevel === "NEULING"
-      ? t("shugyo.skillNeuling")
-      : skillLevel === "FORTGESCHRITTEN"
-        ? t("shugyo.skillFortgeschritten")
-        : skillLevel === "PROFI"
-          ? t("shugyo.skillProfi")
-          : null
-
-  if (!skillLabel && projects.length === 0) return null
+  if (projects.length === 0) return null
 
   return (
     <div
@@ -58,25 +41,10 @@ export function ShugyoInfoPanel({ userName, skillLevel, projects }: ShugyoInfoPa
             <span className="text-sm font-medium text-foreground truncate">{userName}</span>
           </div>
 
-          {skillLabel && (
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-                {t("shugyo.skillLevel")}
-              </p>
-              <Badge
-                variant="outline"
-                className={`text-[10px] font-medium ${SKILL_COLORS[skillLevel!] ?? "bg-muted"}`}
-              >
-                {skillLabel}
-              </Badge>
-            </div>
-          )}
-
-          {projects.length > 0 && (
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
-                {t("shugyo.projectImages")}
-              </p>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
+              {t("shugyo.projectImages")}
+            </p>
               <div className="flex flex-col gap-2">
                 {projects.map((p) => (
                   <div
@@ -108,9 +76,8 @@ export function ShugyoInfoPanel({ userName, skillLevel, projects }: ShugyoInfoPa
                     </div>
                   </div>
                 ))}
-              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

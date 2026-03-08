@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { useCategories } from "@/lib/categories-i18n"
 import {
-  Users, DollarSign, AlertTriangle, Database, Loader2, UserPlus,
+  Users, Euro, AlertTriangle, Database, Loader2, UserPlus,
   BarChart3, TrendingUp, TrendingDown, Activity, BookOpen,
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
@@ -158,7 +158,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
           sub={`${stats.experts.live} online`} color="green" />
         <StatCard icon={BookOpen} label="Buchungen" value={stats.bookings.total}
           sub={`${stats.bookings.last7Days} letzte 7 Tage`} color="purple" />
-        <StatCard icon={DollarSign} label="Umsatz gesamt" value={eur(stats.revenue.totalCents)}
+        <StatCard icon={Euro} label="Umsatz gesamt" value={eur(stats.revenue.totalCents)}
           sub={`${eur(stats.revenue.thisMonthCents)} diesen Monat`}
           trend={stats.revenue.growthPct} color="orange" />
       </div>
@@ -935,7 +935,7 @@ export default function AdminPage() {
                 { label: "Nutzer", value: stats.users.total, icon: Users, color: "text-blue-500" },
                 { label: "Takumis", value: stats.experts.live + "/" + stats.experts.total, icon: Activity, color: "text-green-500" },
                 { label: "Buchungen", value: stats.bookings.total, icon: CalendarDays, color: "text-purple-500" },
-                { label: "Umsatz", value: eur(stats.revenue.totalCents), icon: DollarSign, color: "text-orange-500" },
+                { label: "Umsatz", value: eur(stats.revenue.totalCents), icon: Euro, color: "text-orange-500" },
               ].map(({ label, value, icon: Icon, color }) => (
                 <div key={label} className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center">
                   <Icon className={`size-4 ${color} mb-1`} />

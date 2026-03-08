@@ -23,12 +23,9 @@ import {
   Briefcase,
   Tag,
   FileText,
-  DollarSign,
+  Euro,
   ChevronDown,
   Camera,
-  Clock,
-  Plus,
-  Trash2,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -36,10 +33,6 @@ import {
   Upload,
   ShieldCheck,
 } from "lucide-react"
-
-interface TimeSlot { start: string; end: string }
-type Slots = Record<number, TimeSlot[]>
-const EMPTY_SLOTS: Slots = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
 
 interface Booking {
   id: string
@@ -92,11 +85,6 @@ export default function EditProfilePage() {
   const [socialX, setSocialX]                 = useState("")
   const [socialWebsite, setSocialWebsite]     = useState("")
 
-  // Availability
-  const [slots, setSlots] = useState<Slots>(EMPTY_SLOTS)
-  const [loadingSlots, setLoadingSlots] = useState(true)
-  const [savingSlots, setSavingSlots] = useState(false)
-
   // Bookings
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loadingBookings, setLoadingBookings] = useState(true)
@@ -105,17 +93,6 @@ export default function EditProfilePage() {
   const initials = name
     ? name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
-
-  const DAY_NAMES = locale === "en"
-    ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    : locale === "es"
-      ? ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
-      : ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
-  const DAY_SHORT = locale === "en"
-    ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-    : locale === "es"
-      ? ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
-      : ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 
   useEffect(() => {
     async function load() {
@@ -166,15 +143,6 @@ export default function EditProfilePage() {
     }
     if (session?.user) load()
     else setLoadingTakumi(false)
-  }, [session])
-
-  useEffect(() => {
-    if (!session?.user?.id) { setLoadingSlots(false); return }
-    fetch(`/api/availability?takumiId=${session.user.id}`)
-      .then((r) => r.json())
-      .then((data) => setSlots(data.slots || EMPTY_SLOTS))
-      .catch(() => {})
-      .finally(() => setLoadingSlots(false))
   }, [session])
 
   useEffect(() => {
@@ -251,45 +219,6 @@ export default function EditProfilePage() {
       toast.error(t("editProfile.uploadNetworkError"))
     } finally {
       setUploading(false)
-    }
-  }
-
-  const handleAddSlot = useCallback((day: number) => {
-    setSlots((prev) => ({
-      ...prev,
-      [day]: [...(prev[day] || []), { start: "09:00", end: "12:00" }],
-    }))
-  }, [])
-
-  const handleRemoveSlot = useCallback((day: number, idx: number) => {
-    setSlots((prev) => ({
-      ...prev,
-      [day]: prev[day].filter((_, i) => i !== idx),
-    }))
-  }, [])
-
-  const handleSlotChange = useCallback((day: number, idx: number, field: "start" | "end", value: string) => {
-    setSlots((prev) => ({
-      ...prev,
-      [day]: prev[day].map((s, i) => (i === idx ? { ...s, [field]: value } : s)),
-    }))
-  }, [])
-
-  async function handleSaveAvailability() {
-    setSavingSlots(true)
-    try {
-      const res = await fetch("/api/availability", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slots }),
-      })
-      const data = await res.json()
-      if (res.ok) toast.success(t("editProfile.availabilitySaved"))
-      else toast.error(data.error)
-    } catch {
-      toast.error(t("common.networkError"))
-    } finally {
-      setSavingSlots(false)
     }
   }
 
@@ -592,7 +521,7 @@ export default function EditProfilePage() {
                     {/* Preise pro 15 Min (beide Pflicht, min 1 €) */}
                     <div className="flex flex-col gap-3">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <DollarSign className="size-3" /> {t("editProfile.prices15Min")}
+                        <Euro className="size-3" /> {t("editProfile.prices15Min")}
                       </label>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
@@ -895,86 +824,6 @@ export default function EditProfilePage() {
                   </Card>
                 )}
 
-                {/* ===== Availability / Weekly Schedule ===== */}
-                <Card className="border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Clock className="size-4 text-primary" />
-                      {t("editProfile.weeklyAvailability")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-4">
-                    {loadingSlots ? (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="size-5 animate-spin text-primary" />
-                      </div>
-                    ) : (
-                      <>
-                        {[1, 2, 3, 4, 5, 6, 0].map((day) => (
-                          <div key={day} className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold text-foreground">
-                                <span className="inline-block w-6 text-muted-foreground">{DAY_SHORT[day]}</span>{" "}
-                                {DAY_NAMES[day]}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 gap-1 text-xs text-primary"
-                                onClick={() => handleAddSlot(day)}
-                              >
-                                <Plus className="size-3" /> {t("editProfile.slot")}
-                              </Button>
-                            </div>
-                            {(slots[day] || []).length === 0 ? (
-                              <p className="pl-7 text-xs italic text-muted-foreground">{t("editProfile.notAvailable")}</p>
-                            ) : (
-                              (slots[day] || []).map((slot, idx) => (
-                                <div key={idx} className="flex items-center gap-2 pl-7">
-                                  <Input
-                                    type="time"
-                                    value={slot.start}
-                                    onChange={(e) => handleSlotChange(day, idx, "start", e.target.value)}
-                                    className="h-8 w-28 text-xs"
-                                  />
-                                  <span className="text-xs text-muted-foreground">{t("editProfile.to")}</span>
-                                  <Input
-                                    type="time"
-                                    value={slot.end}
-                                    onChange={(e) => handleSlotChange(day, idx, "end", e.target.value)}
-                                    className="h-8 w-28 text-xs"
-                                  />
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="size-7 text-destructive/60 hover:text-destructive"
-                                    onClick={() => handleRemoveSlot(day, idx)}
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </Button>
-                                </div>
-                              ))
-                            )}
-                            <div className="h-px bg-border/60" />
-                          </div>
-                        ))}
-
-                        <Button
-                          onClick={handleSaveAvailability}
-                          disabled={savingSlots}
-                          variant="outline"
-                          className="mt-1 w-full gap-2 rounded-xl font-medium"
-                        >
-                          {savingSlots ? (
-                            <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
-                          ) : (
-                            <><Clock className="size-4" /> {t("editProfile.saveAvailability")}</>
-                          )}
-                        </Button>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
               </>
             )}
 
