@@ -27,7 +27,7 @@ import {
   Loader2,
   Flag,
 } from "lucide-react"
-import { DailyVideoCall, DailyAudioCall } from "@/components/VideoConfig"
+import { CallEngine } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
 import { parseBerlinDateTime } from "@/lib/date-utils"
@@ -702,30 +702,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* DailyVideoCall oder DailyAudioCall je nach callType */}
+        {/* Einheitliche CallEngine für Video und Voice */}
         {isInCall && roomUrl ? (
-          booking.callType === "VOICE" ? (
-            <DailyAudioCall
-              roomUrl={roomUrl}
-              isMuted={isMuted}
-              otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
-              otherParticipantInitials={getInitials(
-                booking.isExpert ? booking.userName : booking.takumiName
-              )}
-              onRetry={handleRetryJoin}
-            />
-          ) : (
-            <DailyVideoCall
-              roomUrl={roomUrl}
-              isCameraOff={isCameraOff}
-              isMuted={isMuted}
-              otherParticipantName={booking.isExpert ? booking.userName : booking.takumiName}
-              otherParticipantInitials={getInitials(
-                booking.isExpert ? booking.userName : booking.takumiName
-              )}
-              onRetry={handleRetryJoin}
-            />
-          )
+          <CallEngine
+            roomUrl={roomUrl}
+            mode={booking.callType === "VOICE" ? "voice" : "video"}
+            onRetry={handleRetryJoin}
+          />
         ) : isInCall ? (
           roomFetchError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
