@@ -424,6 +424,8 @@ const en = {
   "video.joinFailed": "Failed to connect to the room.",
   "video.retryJoin": "Retry connection",
   "video.joinTimeout": "Connection timed out. Please try again.",
+  "video.placeholderTitle": "Video call in preparation",
+  "video.placeholderDesc": "API for video/voice integration is active. Technology ready for future connection.",
 
   // Release prompt (Shugyo after paid session)
   "release.title": "Release payment or report a problem?",

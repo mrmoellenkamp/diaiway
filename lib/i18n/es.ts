@@ -424,6 +424,8 @@ const es = {
   "video.joinFailed": "Error al conectar con la sala.",
   "video.retryJoin": "Reintentar conexión",
   "video.joinTimeout": "La conexión ha tardado demasiado. Por favor, inténtalo de nuevo.",
+  "video.placeholderTitle": "Videollamada en preparación",
+  "video.placeholderDesc": "La API para integración de video/voz está activa. Tecnología lista para futura conexión.",
 
   // Release prompt (Shugyo tras sesión de pago)
   "release.title": "¿Liberar pago o reportar un problema?",

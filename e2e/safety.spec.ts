@@ -44,7 +44,7 @@ test.describe("diaiway Safety Enforcement", () => {
     if (!modalVisible && !joinDisabled) {
       await joinBtn.click()
       // Nach Klick: Sollte keinen Raum betreten (kein Video-Container oder Fehler)
-      await expect(page.locator("[data-daily-container], .daily-container, [data-room-url]")).not.toBeVisible({ timeout: 3000 }).catch(() => {})
+      await expect(page.locator("text=Video-Call wird vorbereitet")).not.toBeVisible({ timeout: 3000 }).catch(() => {})
     }
   })
 
@@ -82,7 +82,7 @@ test.describe("diaiway Safety Enforcement", () => {
       await joinBtn.click()
       // Raum wird vorbereitet oder Video erscheint
       await expect(
-        page.locator("text=Video-Raum wird vorbereitet").or(page.locator("[data-daily-container], .daily-container"))
+        page.locator("text=Video-Call wird vorbereitet").or(page.locator("text=Video call in preparation"))
       ).toBeVisible({ timeout: 15000 })
     }
   })

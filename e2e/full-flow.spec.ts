@@ -137,7 +137,7 @@ test.describe("diaiway Vollständiger Flow", () => {
     if (!(await joinBtn.isDisabled())) {
       await joinBtn.click()
       await expect(
-        page.locator("text=Video-Raum wird vorbereitet").or(page.locator("[data-daily-container], .daily-container"))
+        page.locator("text=Video-Call wird vorbereitet").or(page.locator("text=Video call in preparation"))
       ).toBeVisible({ timeout: 15000 })
     }
 

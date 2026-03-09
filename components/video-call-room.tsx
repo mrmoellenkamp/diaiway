@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { DeviceSetup, type DeviceSetupRef } from "@/components/device-setup"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
@@ -28,7 +27,6 @@ import {
   Loader2,
   Flag,
 } from "lucide-react"
-import { CallEngine } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
 import { parseBerlinDateTime } from "@/lib/date-utils"
@@ -75,7 +73,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [preCheckPhase, setPreCheckPhase] = useState<"idle" | "running" | "done" | "failed">("idle")
   const [preCheckError, setPreCheckError] = useState("")
   const [roomFetchError, setRoomFetchError] = useState(false)
-  const deviceSetupRef = useRef<DeviceSetupRef>(null)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -347,9 +344,6 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const handleStartTrial = async () => {
     if (!safetyAccepted) return
-    // Kamera/Mikro aus Precheck freigeben – sonst kann Daily sie nicht nutzen (nur 1 Consumer gleichzeitig)
-    deviceSetupRef.current?.releaseTracks()
-    await new Promise((r) => setTimeout(r, 600))
     const url = await fetchRoomUrl()
     if (!url) return
     const result = await patchBooking("start-session")
@@ -509,10 +503,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </CardContent>
           </Card>
 
-          {/* Geräteauswahl: Kamera & Mikro vor dem Join */}
-          <DeviceSetup ref={deviceSetupRef} mode={booking.callType === "VOICE" ? "voice" : "video"} />
-
-          {/* Mic / Camera toggles (Mute/Stummschaltung) */}
+          {/* Mic / Camera toggles (für spätere Video-Integration) */}
           <div className="flex gap-4">
             <button
               onClick={() => setIsMuted(!isMuted)}
@@ -710,13 +701,22 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* Einheitliche CallEngine für Video und Voice */}
+        {/* Video-Call: Platzhalter – API /api/daily/room bleibt aktiv für zukünftige Integration */}
         {isInCall && roomUrl ? (
-          <CallEngine
-            roomUrl={roomUrl}
-            mode={booking.callType === "VOICE" ? "voice" : "video"}
-            onRetry={handleRetryJoin}
-          />
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
+            <div className="flex size-20 items-center justify-center rounded-full bg-white/20">
+              <Video className="size-10 text-primary-foreground" />
+            </div>
+            <p className="text-center text-sm font-medium text-primary-foreground">
+              {t("video.placeholderTitle")}
+            </p>
+            <p className="text-center text-xs text-primary-foreground/70">
+              {t("video.placeholderDesc")}
+            </p>
+            <code className="rounded bg-black/30 px-2 py-1 text-[10px] text-primary-foreground/80">
+              {roomUrl?.slice(0, 50)}…
+            </code>
+          </div>
         ) : isInCall ? (
           roomFetchError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
@@ -740,7 +740,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           )
         ) : null}
 
-        {/* Fallback while Daily is not yet in call */}
+        {/* Fallback vor Call-Start */}
         {!isInCall && (
           <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
             <div className="flex flex-col items-center gap-3">

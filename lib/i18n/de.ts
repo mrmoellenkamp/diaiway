@@ -425,6 +425,8 @@ const de = {
   "video.joinFailed": "Verbindung zum Raum fehlgeschlagen.",
   "video.retryJoin": "Erneut verbinden",
   "video.joinTimeout": "Verbindung hat zu lange gedauert. Bitte erneut versuchen.",
+  "video.placeholderTitle": "Video-Call wird vorbereitet",
+  "video.placeholderDesc": "Die API für Video/Voice-Integration ist aktiv. Technologie für zukünftige Anbindung.",
 
   // Release prompt (Shugyo nach bezahlter Session)
   "release.title": "Betrag freigeben oder Problem melden?",
