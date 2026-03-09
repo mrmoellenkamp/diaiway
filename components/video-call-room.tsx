@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
+import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
 import { ShugyoInfoPanel } from "@/components/shugyo-info-panel"
 import { toast } from "sonner"
@@ -32,7 +33,7 @@ import { useI18n } from "@/lib/i18n"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import { useHeartbeat } from "@/hooks/use-heartbeat"
 
-type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
+type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "release-prompt" | "rating" | "error"
 
 interface VideoCallRoomProps {
   bookingId: string
@@ -360,7 +361,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const handleEndCall = async () => {
     const result = await patchBooking("end-session")
     setIsInCall(false)
-    setPhase("rating")
+    const isBooker = session?.user?.id && booking?.userId && session.user.id === booking.userId
+    const wasPaid = booking?.paymentStatus === "paid" && !result?.isFreeSession
+    if (isBooker && wasPaid) {
+      setPhase("release-prompt")
+    } else {
+      setPhase("rating")
+    }
     if (result?.isFreeSession) {
       if (result?.autoRefunded) {
         toast.success(t("video.refundInfo"))
@@ -370,6 +377,16 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     } else {
       toast.info(t("video.sessionEnded"))
     }
+  }
+
+  const handleReleaseDone = () => {
+    toast.success(t("release.released"))
+    setPhase("rating")
+  }
+
+  const handleReportProblemDone = () => {
+    toast.info(t("release.problemReported"))
+    setPhase("rating")
   }
 
   const handleSubmitRating = async () => {
@@ -814,6 +831,13 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           }
           return 30
         })()}
+      />
+
+      <ReleasePromptOverlay
+        isOpen={phase === "release-prompt"}
+        bookingId={bookingId}
+        onRelease={handleReleaseDone}
+        onReportProblem={handleReportProblemDone}
       />
     </>
   )

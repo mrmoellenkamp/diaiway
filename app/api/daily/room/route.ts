@@ -120,6 +120,20 @@ export async function GET(req: NextRequest) {
     // Meeting-Token serverseitig generieren — ohne Token kein Zugang (private room)
     const userName = session.user.name || (isBooker ? booking.userName : booking.expertName) || "Teilnehmer"
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 2 // 2 Stunden
+    const isVoiceCall = booking.callType === "VOICE"
+    const tokenProperties: Record<string, unknown> = {
+      room_name: effectiveRoomName,
+      user_name: userName,
+      user_id: uid.slice(0, 36),
+      exp,
+      is_owner: true,
+    }
+    // Voice-Call: Video deaktivieren, nur Audio erlauben — verhindert Verbindungsprobleme
+    if (isVoiceCall) {
+      tokenProperties.start_video_off = true
+      tokenProperties.enable_screenshare = false
+      tokenProperties.permissions = { canSend: ["audio"] }
+    }
     const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
       method: "POST",
       headers: {
@@ -127,13 +141,7 @@ export async function GET(req: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        properties: {
-          room_name: effectiveRoomName,
-          user_name: userName,
-          user_id: uid.slice(0, 36),
-          exp,
-          is_owner: true,
-        },
+        properties: tokenProperties,
       }),
     })
 

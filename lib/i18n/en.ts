@@ -420,6 +420,16 @@ const en = {
   "video.unmuteAria": "Unmute",
   "video.bookingStatusError": "Booking has status \"{status}\" and cannot be started.",
 
+  // Release prompt (Shugyo after paid session)
+  "release.title": "Release payment or report a problem?",
+  "release.desc": "Was everything okay? You can release the payment immediately or report a problem.",
+  "release.releaseNow": "Release payment now",
+  "release.reportProblem": "There was a problem",
+  "release.released": "Payment released. The Takumi will receive the funds.",
+  "release.problemReported": "Problem reported. We will review the case.",
+  "release.releaseFailed": "Release failed.",
+  "release.problemFailed": "Could not report problem.",
+
   // diaiway Safety Enforcement
   "safety.gatewayTitle": "diaiway Safety Enforcement",
   "safety.gatewayDesc": "Please confirm the following before entering the video room.",

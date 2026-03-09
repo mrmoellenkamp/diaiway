@@ -420,6 +420,16 @@ const es = {
   "video.unmuteAria": "Activar sonido",
   "video.bookingStatusError": "La reserva tiene estado \"{status}\" y no puede iniciarse.",
 
+  // Release prompt (Shugyo tras sesión de pago)
+  "release.title": "¿Liberar pago o reportar un problema?",
+  "release.desc": "¿Todo estuvo bien? Puedes liberar el pago de inmediato o reportar un problema.",
+  "release.releaseNow": "Liberar pago ahora",
+  "release.reportProblem": "Hubo un problema",
+  "release.released": "Pago liberado. El Takumi recibirá el importe.",
+  "release.problemReported": "Problema reportado. Revisaremos el caso.",
+  "release.releaseFailed": "La liberación falló.",
+  "release.problemFailed": "No se pudo reportar el problema.",
+
   // diaiway Safety Enforcement
   "safety.gatewayTitle": "diaiway Safety Enforcement",
   "safety.gatewayDesc": "Confirma lo siguiente antes de entrar en la sala de vídeo.",

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { processCompletion } from "@/app/actions/process-completion"
 import {
   creditRefundToShugyoWallet,
   refundTransactionForBooking,
@@ -375,6 +376,60 @@ export async function PATCH(
         autoRefunded,
         isFreeSession,
       })
+    }
+
+    // ── release-payment (Shugyo gibt Zahlung sofort frei) ──────────────────
+    if (action === "release-payment") {
+      if (booking.status !== "completed") {
+        return NextResponse.json(
+          { error: "Freigabe nur nach abgeschlossener Session möglich." },
+          { status: 409 }
+        )
+      }
+      if (!isBooker) {
+        return NextResponse.json(
+          { error: "Nur der Shugyo kann die Zahlung freigeben." },
+          { status: 403 }
+        )
+      if (booking.paymentStatus !== "paid") {
+        return NextResponse.json(
+          { error: "Keine bezahlte Session zum Freigeben." },
+          { status: 400 }
+        )
+      const result = await processCompletion(id)
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error ?? "Freigabe fehlgeschlagen." }, { status: 500 })
+      }
+      return NextResponse.json({ success: true, released: true })
+    }
+
+    // ── report-problem (Shugyo meldet Problem, Zahlung bleibt geprüft) ─────
+    if (action === "report-problem") {
+      if (booking.status !== "completed") {
+        return NextResponse.json(
+          { error: "Problem kann nur nach abgeschlossener Session gemeldet werden." },
+          { status: 409 }
+        )
+      }
+      if (!isBooker) {
+        return NextResponse.json(
+          { error: "Nur der Shugyo kann ein Problem melden." },
+          { status: 403 }
+        )
+      const reportedId = booking.expert?.userId
+      if (!reportedId) return NextResponse.json({ error: "Experte nicht gefunden." }, { status: 400 })
+      await prisma.safetyReport.create({
+        data: {
+          bookingId: id,
+          reporterId: uid,
+          reportedId,
+          reporterRole: "shugyo",
+          reason: "session_problem",
+          details: "Shugyo hat nach der Session ein Problem gemeldet. Betrag wird geprüft.",
+        },
+      })
+      await setTransactionOnHoldForBooking(id)
+      return NextResponse.json({ success: true, reportCreated: true })
     }
 
     // ── submit-review (Shugyo bewertet Takumi) ─────────────────────────────
