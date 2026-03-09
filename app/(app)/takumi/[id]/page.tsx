@@ -115,6 +115,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   if (!takumi) notFound()
 
   function handleContact() {
+    if (!takumi) return
     setIsContacting(true)
     setTimeout(() => {
       openMentorWithTakumi(takumi.id, takumi.name)
@@ -123,6 +124,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   }
 
   function handleDirectMessage() {
+    if (!takumi) return
     setIsDmSending(true)
     setTimeout(() => {
       const firstName = takumi.name.split(" ")[0]

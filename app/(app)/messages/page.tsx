@@ -37,7 +37,7 @@ export default function MessagesPage() {
     const data = r.ok ? await r.json() : null
     if (data?.notifications) {
       setNotifications(data.notifications)
-      refreshNotificationCount()
+      refreshNotificationCount?.()
     }
   }
 

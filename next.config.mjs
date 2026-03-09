@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     // Allow images from Vercel Blob storage (*.public.blob.vercel-storage.com)
@@ -17,7 +17,6 @@ const nextConfig = {
       },
     ],
   },
-  transpilePackages: ["jotai"],
 }
 
 export default nextConfig

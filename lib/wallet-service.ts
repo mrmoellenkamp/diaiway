@@ -60,7 +60,8 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
   })
   if (!booking) return { ok: false, error: "Booking not found" }
   if (booking.paymentStatus === "paid") return { ok: true }
-  if (!booking.expert?.userId) return { ok: false, error: "Expert has no user" }
+  const expertUserId = booking.expert?.userId
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
 
   const totalAmountCents = Math.round(
     (Number(booking.totalPrice ?? booking.price ?? 0)) * 100
@@ -84,7 +85,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
       data: { balance: { decrement: totalAmountCents } },
     })
     await tx.user.update({
-      where: { id: booking.expert.userId },
+      where: { id: expertUserId },
       data: { pendingBalance: { increment: totalAmountCents } }, // Escrow bis processCompletion
     })
     await tx.transaction.create({

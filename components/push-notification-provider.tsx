@@ -20,7 +20,7 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
 
     async function setupPush() {
       try {
-        if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !publicKey) return
 
         const reg = await navigator.serviceWorker.register("/sw.js")
         await reg.update()

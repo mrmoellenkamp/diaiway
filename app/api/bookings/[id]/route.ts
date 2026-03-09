@@ -147,7 +147,7 @@ function parseCancelPolicy(raw: unknown): CancelPolicy {
 }
 
 function computeCancelFee(
-  booking: { date: string; startTime: string; price: number; paymentStatus: string; paidAmount: number | null },
+  booking: { date: string; startTime: string; price?: number | null; totalPrice?: unknown; paymentStatus: string; paidAmount: number | null },
   expert: { cancelPolicy: unknown } | null
 ): CancelPreview {
   const policy = parseCancelPolicy(expert?.cancelPolicy)
@@ -482,7 +482,7 @@ export async function PATCH(
     const preview = computeCancelFee(booking, booking.expert)
     const feeApplies = !preview.isFree && cancelledBy === "user"
     const feeAmount    = feeApplies ? preview.feeAmount    : 0
-    const refundAmount = feeApplies ? preview.refundAmount : (booking.paidAmount ?? booking.price * 100)
+    const refundAmount = feeApplies ? preview.refundAmount : (booking.paidAmount ?? (booking.price ?? 0) * 100)
 
     let refundResult: {
       refunded: boolean

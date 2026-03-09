@@ -42,7 +42,7 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
         date: booking.date,
         startTime: booking.startTime,
         endTime: booking.endTime,
-        price: booking.price,
+        price: booking.price ?? 0,
         note: booking.note || "",
         acceptUrl: `${respondBase.replace("action=confirmed", "")}&action=confirmed`,
         declineUrl: `${respondBase.replace("action=confirmed", "")}&action=declined`,

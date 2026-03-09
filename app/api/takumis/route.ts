@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { emailForName } from "@/lib/email-utils"
+import { requireAdmin } from "@/lib/api-auth"
 
 export const runtime = "nodejs"
-
-function emailForName(name: string): string {
-  const local = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "")
-  return `${local || "expert"}@diaiway.test`
-}
 
 export async function GET() {
   try {
@@ -69,13 +66,9 @@ export async function GET() {
 
 /** POST — create a single expert (admin only) */
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
-    return NextResponse.json(
-      { error: "Nicht autorisiert. Nur Admins koennen Experten erstellen." },
-      { status: 401 }
-    )
-  }
+  const authResult = await requireAdmin()
+  if (authResult.response) return authResult.response
+  const { session } = authResult
 
   try {
     const body = await req.json()
@@ -125,10 +118,8 @@ export async function POST(req: Request) {
 
 /** PATCH — update expert (admin only, e.g. isLive toggle) */
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
-    return NextResponse.json({ error: "Nicht autorisiert. Nur Admins." }, { status: 401 })
-  }
+  const authResult = await requireAdmin()
+  if (authResult.response) return authResult.response
 
   try {
     const body = await req.json()

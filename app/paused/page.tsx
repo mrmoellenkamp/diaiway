@@ -5,8 +5,10 @@ import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { PauseCircle, Loader2, LogOut } from "lucide-react"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 export default function PausedPage() {
+  const { t } = useI18n()
   const [resuming, setResuming] = useState(false)
 
   async function handleResume() {

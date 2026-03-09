@@ -18,12 +18,12 @@ async function resolveBookingAuth(id: string, token: string | null) {
   if (!booking) return { error: "Buchung nicht gefunden." as const, booking: null }
   if (token?.trim()) {
     if (booking.statusToken !== token) return { error: "Ungültiger Token." as const, booking: null }
-    return { error: null as const, booking }
+    return { error: null, booking }
   }
   const session = await auth()
   if (!session?.user?.id) return { error: "Token fehlt oder nicht eingeloggt." as const, booking: null }
   if (!booking.expert?.userId || booking.expert.userId !== session.user.id) return { error: "Keine Berechtigung." as const, booking: null }
-  return { error: null as const, booking }
+  return { error: null, booking }
 }
 
 /** GET — load booking info (token from email link, or session for logged-in expert) */

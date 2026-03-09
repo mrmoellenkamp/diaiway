@@ -40,7 +40,7 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   es: "Siempre respondes en español.",
 }
 
-const USER_CONTEXT: Record<string, string> = {
+const USER_CONTEXT: Record<string, (name: string) => string> = {
   de: (name: string) => `Der aktuelle Nutzer heisst "${name}". Sprich ihn gelegentlich mit seinem Namen an.`,
   en: (name: string) => `The current user is named "${name}". Address them by name occasionally.`,
   es: (name: string) => `El usuario actual se llama "${name}". Dirígete a él/ella por su nombre ocasionalmente.`,

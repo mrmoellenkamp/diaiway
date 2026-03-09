@@ -27,7 +27,7 @@ export async function generateInvoicePdf(opts: {
   date: Date
   /** Dauer in Minuten — für ZUGFeRD Quantity (15-Min-Einheiten) */
   durationMinutes?: number
-}): ArrayBuffer {
+}): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, durationMinutes = 30 } = opts
 
@@ -103,7 +103,7 @@ export async function generateCreditNotePdf(opts: {
   platformFeeCents: number
   totalAmountCents: number
   date: Date
-}): ArrayBuffer {
+}): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const {
     creditNumber,
