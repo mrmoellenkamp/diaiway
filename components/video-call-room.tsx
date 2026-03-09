@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { CallInterface } from "@/components/call-interface"
+import { DailyCallBlock } from "@/components/daily-call-block"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
@@ -73,6 +73,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [preCheckPhase, setPreCheckPhase] = useState<"idle" | "running" | "done" | "failed">("idle")
   const [preCheckError, setPreCheckError] = useState("")
   const [roomFetchError, setRoomFetchError] = useState(false)
+  const [hasJoinedDaily, setHasJoinedDaily] = useState(false)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -114,19 +115,19 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     load()
   }, [bookingId])
 
-  // Trial / paid countdown
+  // Trial / paid countdown — startet erst wenn joined-meeting gefeuert hat
   useEffect(() => {
     if (phase !== "trial" && phase !== "paid") return
+    if (!hasJoinedDaily) return
     if (timer <= 0) {
       if (phase === "trial") {
-        // Bereits bei Buchung bezahlt? → direkt zu "paid", kein Handshake
         setPhase(booking?.paymentStatus === "paid" ? "paid" : "handshake")
       }
       return
     }
     const interval = setInterval(() => setTimer((t) => t - 1), 1000)
     return () => clearInterval(interval)
-  }, [phase, timer, booking?.paymentStatus])
+  }, [phase, timer, hasJoinedDaily, booking?.paymentStatus])
 
   // Heartbeat während Video-/Audio-Call — verhindert Lockout (15-Min-Inaktivität)
   const isCallActive = phase === "trial" || phase === "paid"
@@ -361,6 +362,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
       setPhase("trial")
       setTimer(300)
       setIsInCall(true)
+      setHasJoinedDaily(false)
       toast.success(t("video.sessionStarted"))
     }
   }
@@ -393,6 +395,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const handleEndCall = async () => {
     const result = await patchBooking("end-session")
     setIsInCall(false)
+    setHasJoinedDaily(false)
     const isBooker = session?.user?.id && booking?.userId && session.user.id === booking.userId
     const wasPaid = booking?.paymentStatus === "paid" && !result?.isFreeSession
     if (isBooker && wasPaid) {
@@ -711,11 +714,11 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
         {isInCall && roomUrl ? (
-          <CallInterface
+          <DailyCallBlock
             roomUrl={roomUrl}
             callMode={booking.callType === "VOICE" ? "voice" : "video"}
             takumiName={booking.takumiName}
-            isVoice={booking.callType === "VOICE"}
+            onJoined={() => setHasJoinedDaily(true)}
             onLeave={handleEndCall}
             onReportAndLeave={handleReportAndLeave}
           />
