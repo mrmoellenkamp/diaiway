@@ -427,6 +427,9 @@ const de = {
   "video.joinTimeout": "Verbindung hat zu lange gedauert. Bitte erneut versuchen.",
   "video.placeholderTitle": "Video-Call wird vorbereitet",
   "video.placeholderDesc": "Die API für Video/Voice-Integration ist aktiv. Technologie für zukünftige Anbindung.",
+  "video.flipCamera": "Kamera wechseln",
+  "video.partnerSpeaking": "Spricht…",
+  "video.waitingForVideo": "Warte auf Video…",
 
   // Release prompt (Shugyo nach bezahlter Session)
   "release.title": "Betrag freigeben oder Problem melden?",

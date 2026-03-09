@@ -426,6 +426,9 @@ const en = {
   "video.joinTimeout": "Connection timed out. Please try again.",
   "video.placeholderTitle": "Video call in preparation",
   "video.placeholderDesc": "API for video/voice integration is active. Technology ready for future connection.",
+  "video.flipCamera": "Switch camera",
+  "video.partnerSpeaking": "Speaking…",
+  "video.waitingForVideo": "Waiting for video…",
 
   // Release prompt (Shugyo after paid session)
   "release.title": "Release payment or report a problem?",
