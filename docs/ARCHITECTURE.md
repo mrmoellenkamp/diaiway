@@ -31,15 +31,17 @@ diAIway ist eine Next.js 16 App mit App Router, PostgreSQL (Prisma), NextAuth.js
 - **Wallet**: Shugyo kann mit Guthaben zahlen; Takumi erhält `pendingBalance` bis `processCompletion`
 
 ### Video- und Voice-Session
-- **Daily.co**: Raum-URL `https://diaiway.daily.co/{bookingId}`; bei `callType: VIDEO` → DailyVideoCall (Pre-built), bei `callType: VOICE` → DailyAudioCall (Audio-only, kein Video)
+- **Daily.co**: Custom-UI mit CallObject (createCallObject), Lobby-Architektur (startCamera vor join)
+- **Lobby**: Kamera-Vorschau (Video) oder Avatar (Voice), „Beitreten“-Button; Timer startet erst bei joined-meeting
+- **Raum**: `GET/POST /api/daily/meeting-room` mit callMode (voice|video), Token is_owner: false
 - **Voice-only**: Kein Pre-Check (kein Bild nötig), kein Live-Monitoring; Safety-Gateway vereinfacht
 - Start nur 5 Min vor Termin (Backend-Validierung)
 - Trial 5 Min → **Handshake-Overlay** (Zahlungsdialog) → Stripe Embedded Checkout oder Wallet; bei Erfolg Session fortsetzen
 - Unter 5 Min Session + bereits bezahlt → automatische Rückerstattung
 
 ### Call-Typen (Booking.callType)
-- **VIDEO**: Vollbild-Video via DailyVideoCall (daily-prebuilt-call); Pre-Check + Live-Monitoring
-- **VOICE**: Audio-only via DailyAudioCall (audio-call-interface); kein Pre-Check, kein Monitoring; Takumi hat `priceVoice15Min` (€/15 Min)
+- **VIDEO**: Vollbild-Video via Daily CallObject; Lobby mit Kamera-Vorschau; Pre-Check + Live-Monitoring; cycleCamera für Front/Back
+- **VOICE**: Audio-only, Lobby ohne Kamera; kein Pre-Check, kein Monitoring; Takumi hat `priceVoice15Min` (€/15 Min)
 
 ### Safety Enforcement
 - **Pre-Check**: Vor Daily-Join prüft Vision API ein Shugyo-Bild auf Verstöße (nur bei Video)
@@ -60,7 +62,8 @@ diAIway ist eine Next.js 16 App mit App Router, PostgreSQL (Prisma), NextAuth.js
 | `/api/bookings/[id]/status` | GET | Buchungsstatus abfragen |
 | `/api/bookings/slots` | GET | Verfügbare Slots für Takumi+Datum |
 | `/api/booking-respond/[id]` | GET, POST | Token oder Session: bestätigen/ablehnen/rückfragen |
-| `/api/daily/room` | GET | Daily.co Raum-URL für Buchung |
+| `/api/daily/room` | GET | Daily.co Raum-URL (Legacy) |
+| `/api/daily/meeting-room` | GET, POST | Daily Raum + Token, callMode voice|video; Lobby-Architektur |
 | `/api/notifications` | GET, PATCH | Benachrichtigungen, als gelesen markieren |
 | `/api/user/*` | - | Profil, Takumi-Profil, Account, Favoriten |
 | `/api/users/[id]` | GET | Öffentliches Profil eines Nutzers |

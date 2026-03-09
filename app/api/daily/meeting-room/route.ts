@@ -6,27 +6,22 @@ export const runtime = "nodejs"
 
 type CallMode = "voice" | "video"
 
+function parseCallMode(val: string | null): CallMode {
+  if (val === "voice" || val === "video") return val
+  return "video"
+}
+
 /**
  * GET /api/daily/meeting-room?bookingId=xxx&callMode=voice|video
- * Erzeugt Daily-Raum + Token für Custom-UI-Modus (createCallObject).
- * callMode: voice → enable_video: false; video → enable_video: true, start_video_off: true (Privatsphäre).
+ * POST /api/daily/meeting-room { bookingId, callMode }
+ * Erzeugt Daily-Raum + Token für Custom-UI-Modus (createCallObject, Lobby-Architektur).
+ * Token: is_owner: false. callMode: voice → Nur Audio; video → Kamera möglich.
  */
-export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
-  }
-
-  const bookingId = req.nextUrl.searchParams.get("bookingId")
-  const callMode = (req.nextUrl.searchParams.get("callMode") || "video") as CallMode
-
-  if (!bookingId || !/^[a-zA-Z0-9_-]{1,50}$/.test(bookingId)) {
-    return NextResponse.json({ error: "Ungültige Buchungs-ID." }, { status: 400 })
-  }
-
-  if (callMode !== "voice" && callMode !== "video") {
-    return NextResponse.json({ error: "callMode muss 'voice' oder 'video' sein." }, { status: 400 })
-  }
+async function handleMeetingRoom(
+  bookingId: string,
+  callMode: CallMode,
+  session: { user: { id: string; name?: string } }
+) {
 
   const apiKey = process.env.DAILY_API_KEY
   if (!apiKey?.trim()) {
@@ -123,7 +118,7 @@ export async function GET(req: NextRequest) {
       user_name: userName,
       user_id: uid.slice(0, 36),
       exp,
-      is_owner: true,
+      is_owner: false,
     }
 
     if (callMode === "voice") {
@@ -166,4 +161,36 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+  const bookingId = req.nextUrl.searchParams.get("bookingId")
+  const callMode = parseCallMode(req.nextUrl.searchParams.get("callMode"))
+  if (!bookingId || !/^[a-zA-Z0-9_-]{1,50}$/.test(bookingId)) {
+    return NextResponse.json({ error: "Ungültige Buchungs-ID." }, { status: 400 })
+  }
+  return handleMeetingRoom(bookingId, callMode, session)
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+  let body: { bookingId?: string; callMode?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Ungültiger Request-Body." }, { status: 400 })
+  }
+  const bookingId = body?.bookingId
+  const callMode = parseCallMode(body?.callMode ?? null)
+  if (!bookingId || !/^[a-zA-Z0-9_-]{1,50}$/.test(bookingId)) {
+    return NextResponse.json({ error: "Ungültige Buchungs-ID." }, { status: 400 })
+  }
+  return handleMeetingRoom(bookingId, callMode, session)
 }
