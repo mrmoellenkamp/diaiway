@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Mic, MicOff, PhoneOff } from "lucide-react"
+import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff } from "lucide-react"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -26,7 +26,6 @@ interface DailyCallContainerProps {
   bookingId: string
   callMode: CallMode
   userRole: UserRole
-  /** Profilbild-URL des Partners (für Voice-Mode Adaptive UI) */
   partnerImageUrl?: string | null
   partnerName?: string
 }
@@ -37,7 +36,7 @@ interface MediaDevice {
   kind: "videoinput" | "audioinput"
 }
 
-const TIMER_DURATION_SEC = 5 * 60 // 5 Minuten
+const TIMER_DURATION_SEC = 5 * 60
 const AUDIO_LEVEL_SPEAKING_THRESHOLD = 0.02
 
 export function DailyCallContainer({
@@ -47,34 +46,31 @@ export function DailyCallContainer({
   partnerImageUrl,
   partnerName = "Partner",
 }: DailyCallContainerProps) {
-  // State Machine
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
 
-  // Lobby: Lokale Vorschau
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [micLevel, setMicLevel] = useState(0)
-  const [devices, setDevices] = useState<{
-    cameras: MediaDevice[]
-    mics: MediaDevice[]
-  }>({ cameras: [], mics: [] })
+  const [devices, setDevices] = useState<{ cameras: MediaDevice[]; mics: MediaDevice[] }>({
+    cameras: [],
+    mics: [],
+  })
   const [selectedCameraId, setSelectedCameraId] = useState<string>("")
   const [selectedMicId, setSelectedMicId] = useState<string>("")
 
-  // In-Call
   const [remoteParticipant, setRemoteParticipant] = useState<{
     sessionId: string
     userName?: string
+    hasVideo?: boolean
   } | null>(null)
   const [partnerSpeaking, setPartnerSpeaking] = useState(false)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [cameraFlipRotation, setCameraFlipRotation] = useState(0)
 
-  // Refs für Cleanup & Guard
   const callObjectRef = useRef<DailyCall | null>(null)
-  const localVideoRef = useRef<HTMLVideoElement>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const localVideoRef = useRef<HTMLVideoElement>(null)
   const localPiPVideoRef = useRef<HTMLVideoElement>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -82,14 +78,38 @@ export function DailyCallContainer({
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const micLevelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const initGuardRef = useRef(false)
+  const remoteSessionIdRef = useRef<string | null>(null)
 
-  // --- LOBBY: Lokale Vorschau mit getUserMedia (da URL erst beim Klick kommt) ---
+  // --- Hardware-Kill-Switch: forceCleanup ---
+  const forceCleanup = useCallback(() => {
+    localStreamRef.current?.getTracks().forEach((t) => t.stop())
+    localStreamRef.current = null
+    micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
+    micLevelIntervalRef.current = null
+    audioContextRef.current?.close()
+    timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+    timerIntervalRef.current = null
+
+    const call = callObjectRef.current
+    if (call) {
+      try {
+        call.leave()
+        call.destroy()
+      } catch (e) {
+        console.warn("[DailyCall] forceCleanup leave/destroy:", e)
+      }
+      callObjectRef.current = null
+    }
+    initGuardRef.current = false
+    window.location.href = "/sessions"
+  }, [])
+
+  // --- LOBBY: getUserMedia ---
   const startLobbyPreview = useCallback(async () => {
     if (initGuardRef.current) return
     try {
       const cameras: MediaDevice[] = []
       const mics: MediaDevice[] = []
-
       const devs = await navigator.mediaDevices.enumerateDevices()
       devs.forEach((d) => {
         if (d.kind === "videoinput")
@@ -105,7 +125,6 @@ export function DailyCallContainer({
             kind: "audioinput",
           })
       })
-
       setDevices({ cameras, mics })
       const defaultCam = cameras[0]?.deviceId ?? ""
       const defaultMic = mics[0]?.deviceId ?? ""
@@ -123,7 +142,6 @@ export function DailyCallContainer({
       setLocalStream(stream)
       localStreamRef.current = stream
 
-      // Mikrofonpegel via AudioContext
       const ctx = new AudioContext()
       const analyser = ctx.createAnalyser()
       const source = ctx.createMediaStreamSource(stream)
@@ -137,8 +155,7 @@ export function DailyCallContainer({
       const tick = () => {
         if (!analyserRef.current) return
         analyserRef.current.getByteFrequencyData(dataArray)
-        const avg =
-          dataArray.reduce((a, b) => a + b, 0) / dataArray.length / 255
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length / 255
         setMicLevel(Math.min(1, avg * 3))
       }
       const id = setInterval(tick, 100)
@@ -148,8 +165,7 @@ export function DailyCallContainer({
         micLevelIntervalRef.current = null
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setError(`Gerätezugriff fehlgeschlagen: ${msg}`)
+      setError(e instanceof Error ? e.message : String(e))
     }
   }, [callMode])
 
@@ -162,22 +178,17 @@ export function DailyCallContainer({
     return () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
-      if (audioContextRef.current) audioContextRef.current.close()
-      if (micLevelIntervalRef.current) {
-        clearInterval(micLevelIntervalRef.current)
-        micLevelIntervalRef.current = null
-      }
+      audioContextRef.current?.close()
+      micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
       cleanup?.()
     }
   }, [phase, startLobbyPreview])
 
-  // Lokales Video anzeigen
   useEffect(() => {
     if (!localVideoRef.current || !localStream) return
     localVideoRef.current.srcObject = localStream
   }, [localStream])
 
-  // Gerätewechsel in Lobby
   const switchLobbyDevice = useCallback(
     async (kind: "videoinput" | "audioinput", deviceId: string) => {
       if (!localStream) return
@@ -192,9 +203,7 @@ export function DailyCallContainer({
           if (newTrack) {
             localStream.removeTrack(videoTrack)
             localStream.addTrack(newTrack)
-            newStream.getTracks().forEach((t) => {
-              if (t.kind === "audio") t.stop()
-            })
+            newStream.getTracks().forEach((t) => (t.kind === "audio" ? t.stop() : undefined))
           }
         }
       } else {
@@ -216,43 +225,25 @@ export function DailyCallContainer({
     [localStream, callMode]
   )
 
-  // --- JOINING: API aufrufen, CallObject erstellen, join() ---
+  // --- JOIN ---
   const handleJoin = useCallback(async () => {
     if (phase !== "LOBBY" || initGuardRef.current) return
     setPhase("JOINING")
     setError(null)
-
     try {
       const res = await fetch("/api/daily/meeting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId,
-          callMode,
-          userRole,
-        }),
+        body: JSON.stringify({ bookingId, callMode, userRole }),
       })
-      const data = (await res.json()) as {
-        url?: string
-        token?: string
-        error?: string
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error ?? "API-Fehler")
-      }
-
+      const data = (await res.json()) as { url?: string; token?: string; error?: string }
+      if (!res.ok) throw new Error(data.error ?? "API-Fehler")
       const { url, token } = data
-      if (!url || !token) {
-        throw new Error("Keine URL oder Token erhalten.")
-      }
+      if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
 
-      // CallObject erstellen (nur einmal)
       let call = callObjectRef.current
       if (!call) {
-        call = Daily.createCallObject({
-          subscribeToTracksAutomatically: true,
-        })
+        call = Daily.createCallObject({ subscribeToTracksAutomatically: true })
         callObjectRef.current = call
       }
 
@@ -263,39 +254,25 @@ export function DailyCallContainer({
         audioSource: selectedMicId || true,
         startVideoOff: callMode === "voice",
       })
-
       setPhase("IN_CALL")
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setError(msg)
+      setError(e instanceof Error ? e.message : String(e))
       setPhase("LOBBY")
     }
-  }, [
-    phase,
-    bookingId,
-    callMode,
-    userRole,
-    selectedCameraId,
-    selectedMicId,
-  ])
+  }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId])
 
-  // --- IN_CALL: Event-Listener, Timer, Remote-Track-Anzeige ---
+  // --- IN_CALL: Events ---
   useEffect(() => {
     const call = callObjectRef.current
     if (!call || phase !== "IN_CALL") return
-
     initGuardRef.current = true
 
     const handleJoinedMeeting = () => {
-      // 5-Minuten-Timer starten
       setTimerSecondsLeft(TIMER_DURATION_SEC)
       timerIntervalRef.current = setInterval(() => {
         setTimerSecondsLeft((prev) => {
           if (prev === null || prev <= 1) {
-            if (timerIntervalRef.current) {
-              clearInterval(timerIntervalRef.current)
-              timerIntervalRef.current = null
-            }
+            timerIntervalRef.current && clearInterval(timerIntervalRef.current)
             return 0
           }
           return prev - 1
@@ -306,10 +283,31 @@ export function DailyCallContainer({
     const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
       const p = ev.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
+        remoteSessionIdRef.current = p.session_id
+        const part = call.participants()[p.session_id]
         setRemoteParticipant({
           sessionId: p.session_id,
           userName: p.user_name,
+          hasVideo: !!part?.tracks?.video?.persistentTrack,
         })
+      }
+    }
+
+    const handleParticipantUpdated = (ev: { participant?: { session_id?: string } }) => {
+      const p = ev.participant
+      if (!p?.session_id || p.session_id === call.participants()?.local?.session_id) return
+      const part = call.participants()[p.session_id] as { tracks?: { video?: { persistentTrack?: unknown } } } | undefined
+      setRemoteParticipant((prev) =>
+        prev?.sessionId === p.session_id
+          ? { ...prev, hasVideo: !!part?.tracks?.video?.persistentTrack }
+          : prev
+      )
+    }
+
+    const handleParticipantLeft = (ev: { participant?: { session_id?: string } }) => {
+      if (ev.participant?.session_id === remoteSessionIdRef.current) {
+        remoteSessionIdRef.current = null
+        setRemoteParticipant(null)
       }
     }
 
@@ -321,113 +319,107 @@ export function DailyCallContainer({
       setPartnerSpeaking(maxLevel >= AUDIO_LEVEL_SPEAKING_THRESHOLD)
     }
 
+    const handleTrackStarted = (ev: import("@daily-co/daily-js").DailyEventObjectTrack) => {
+      if (ev.participant?.session_id === remoteSessionIdRef.current && ev.track?.kind === "video") {
+        setRemoteParticipant((prev) => (prev ? { ...prev, hasVideo: true } : prev))
+      }
+    }
+
     call.on("joined-meeting", handleJoinedMeeting)
     call.on("participant-joined", handleParticipantJoined)
+    call.on("participant-updated", handleParticipantUpdated)
+    call.on("participant-left", handleParticipantLeft)
     call.on("remote-participants-audio-level", handleRemoteAudioLevel)
-    const handleLeftMeeting = () => {
+    call.on("track-started", handleTrackStarted)
+    call.on("left-meeting", () => {
+      remoteSessionIdRef.current = null
       setPhase("LOBBY")
       setRemoteParticipant(null)
       setIsMuted(false)
       initGuardRef.current = false
-    }
-    call.on("left-meeting", handleLeftMeeting)
+    })
 
     call.startRemoteParticipantsAudioLevelObserver?.(200)
 
-    // Bereits joined? (falls Event schon gefeuert)
-    if (call.meetingState() === "joined-meeting") {
-      handleJoinedMeeting()
-    }
+    if (call.meetingState() === "joined-meeting") handleJoinedMeeting()
 
     const participants = call.participants()
     const localSessionId = participants?.local?.session_id
-    if (participants) {
-      for (const [_, p] of Object.entries(participants)) {
-        if (p.session_id !== localSessionId) {
-          setRemoteParticipant({
-            sessionId: p.session_id,
-            userName: (p as { user_name?: string }).user_name,
-          })
-          break
-        }
+    for (const [, p] of Object.entries(participants ?? {})) {
+      if (p.session_id !== localSessionId) {
+        setRemoteParticipant({
+          sessionId: p.session_id,
+          userName: (p as { user_name?: string }).user_name,
+          hasVideo: !!p?.tracks?.video?.persistentTrack,
+        })
+        break
       }
     }
 
     return () => {
       call.off("joined-meeting", handleJoinedMeeting)
       call.off("participant-joined", handleParticipantJoined)
+      call.off("participant-updated", handleParticipantUpdated)
+      call.off("participant-left", handleParticipantLeft)
       call.off("remote-participants-audio-level", handleRemoteAudioLevel)
-      call.off("left-meeting", handleLeftMeeting)
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current)
-        timerIntervalRef.current = null
-      }
+      call.off("track-started", handleTrackStarted)
+      timerIntervalRef.current && clearInterval(timerIntervalRef.current)
     }
   }, [phase])
 
-  // Remote-Video-Track anzeigen
+  // --- Video-Mapping: Remote + Fallback ---
   useEffect(() => {
     const call = callObjectRef.current
     const videoEl = remoteVideoRef.current
-    if (!call || !videoEl || phase !== "IN_CALL" || !remoteParticipant)
+    if (!call || !videoEl || phase !== "IN_CALL") return
+    if (!remoteParticipant) {
+      videoEl.srcObject = null
       return
-
+    }
     const participant = call.participants()[remoteParticipant.sessionId]
     const videoTrack = participant?.tracks?.video?.persistentTrack
     if (videoTrack && callMode === "video") {
-      const stream = new MediaStream([videoTrack])
-      videoEl.srcObject = stream
+      videoEl.srcObject = new MediaStream([videoTrack])
+    } else {
+      videoEl.srcObject = null
     }
-
     return () => {
       videoEl.srcObject = null
     }
-  }, [phase, callMode, remoteParticipant])
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo])
 
-  // Lokales Video (PiP) aus CallObject in IN_CALL
+  // --- Lokales PiP (Video-Mode) ---
   useEffect(() => {
     const call = callObjectRef.current
     const videoEl = localPiPVideoRef.current
-    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video")
-      return
-
+    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video") return
     const local = call.participants().local
     const videoTrack = local?.tracks?.video?.persistentTrack
-    if (videoTrack) {
-      videoEl.srcObject = new MediaStream([videoTrack])
-    }
+    if (videoTrack) videoEl.srcObject = new MediaStream([videoTrack])
 
-    const onTrackStarted = (
-      ev: import("@daily-co/daily-js").DailyEventObjectTrack
-    ) => {
-      if (
-        ev.participant?.local &&
-        ev.track?.kind === "video"
-      ) {
+    const onTrackStarted = (ev: import("@daily-co/daily-js").DailyEventObjectTrack) => {
+      if (ev.participant?.local && ev.track?.kind === "video") {
         videoEl.srcObject = new MediaStream([ev.track])
       }
     }
     call.on("track-started", onTrackStarted)
-
     return () => {
       call.off("track-started", onTrackStarted)
       videoEl.srcObject = null
     }
   }, [phase, callMode])
 
-  // --- cycleCamera (Mobile-Flip) ---
   const handleCycleCamera = useCallback(async () => {
     const call = callObjectRef.current
     if (!call || phase !== "IN_CALL") return
     try {
-      setCameraFlipRotation((prev) => prev + 180)
+      setCameraFlipRotation((p) => p + 180)
       await call.cycleCamera({ preferDifferentFacingMode: true })
     } catch {
-      setCameraFlipRotation((prev) => prev - 180)
+      setCameraFlipRotation((p) => p - 180)
     }
   }, [phase])
 
-  // --- Mute toggle ---
   const handleToggleMute = useCallback(() => {
     const call = callObjectRef.current
     if (!call || phase !== "IN_CALL") return
@@ -436,179 +428,168 @@ export function DailyCallContainer({
   }, [phase, isMuted])
 
   // --- Cleanup on unmount ---
-  useEffect(() => {
-    return () => {
-      localStreamRef.current?.getTracks().forEach((t) => t.stop())
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current)
-      }
-      const call = callObjectRef.current
-      if (call) {
-        call.leave()
-        call.destroy()
-        callObjectRef.current = null
-      }
-      initGuardRef.current = false
-    }
-  }, [])
+  useEffect(() => () => forceCleanup(), [forceCleanup])
 
-  // --- Render ---
+  // --- App Shell (unzerstörbare Struktur) ---
+  const shellClass = "fixed inset-0 h-[100dvh] w-full flex flex-col bg-background overflow-hidden"
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-        <p className="text-sm text-destructive">{error}</p>
-        <Button variant="outline" onClick={() => setError(null)}>
-          Erneut versuchen
-        </Button>
+      <div className={cn(shellClass, "items-center justify-center p-6")}>
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-destructive/50 bg-destructive/10 p-6">
+          <p className="text-center text-destructive">{error}</p>
+          <Button variant="outline" onClick={() => setError(null)}>
+            Erneut versuchen
+          </Button>
+          <Button variant="ghost" onClick={forceCleanup}>
+            Zurück zu Sessions
+          </Button>
+        </div>
       </div>
     )
   }
 
   if (phase === "LOBBY") {
     return (
-      <div className="flex max-h-[80vh] flex-col gap-4 overflow-hidden rounded-lg border bg-card p-4">
-        <h3 className="shrink-0 text-lg font-medium">Bereit zum Beitreten</h3>
-
-        {/* Vorschau: aspect-video (16:9), kein max-h, Video füllt mit object-cover */}
-        <div className="relative w-full overflow-hidden rounded-lg bg-muted aspect-video shrink-0">
-          {callMode === "video" && localStream ? (
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
-              <Avatar className="size-24">
-                <AvatarFallback className="text-2xl">
-                  {partnerName?.charAt(0) ?? "?"}
-                </AvatarFallback>
-              </Avatar>
+      <div className={shellClass}>
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 overflow-y-auto p-4">
+          <h3 className="text-lg font-semibold">Bereit zum Beitreten</h3>
+          <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-black aspect-video shrink-0">
+            {callMode === "video" && localStream ? (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted">
+                <Avatar className="size-20">
+                  <AvatarFallback className="text-2xl">{partnerName?.charAt(0) ?? "?"}</AvatarFallback>
+                </Avatar>
+              </div>
+            )}
+            <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/40">
+              <div
+                className="h-full rounded-full bg-green-500/90 transition-all"
+                style={{ width: `${Math.round(micLevel * 100)}%` }}
+              />
             </div>
-          )}
-          {/* Mikrofonpegel */}
-          <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/30">
-            <div
-              className="h-full rounded-full bg-green-500/90 transition-all"
-              style={{ width: `${Math.round(micLevel * 100)}%` }}
-            />
           </div>
-        </div>
-
-        {/* Device Selector + Button - immer sichtbar */}
-        <div className="flex shrink-0 flex-col gap-2">
-          {callMode === "video" && devices.cameras.length > 1 && (
+          <div className="flex w-full max-w-md shrink-0 flex-col gap-3">
+            {callMode === "video" && devices.cameras.length > 1 && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Kamera</label>
+                <Select value={selectedCameraId} onValueChange={(v) => switchLobbyDevice("videoinput", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {devices.cameras.map((d) => (
+                      <SelectItem key={d.deviceId} value={d.deviceId}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Kamera
-              </label>
-              <Select
-                value={selectedCameraId}
-                onValueChange={(v) => switchLobbyDevice("videoinput", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <label className="mb-1 block text-xs text-muted-foreground">Mikrofon</label>
+              <Select value={selectedMicId} onValueChange={(v) => switchLobbyDevice("audioinput", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {devices.cameras.map((d) => (
-                    <SelectItem key={d.deviceId} value={d.deviceId}>
-                      {d.label}
-                    </SelectItem>
+                  {devices.mics.map((d) => (
+                    <SelectItem key={d.deviceId} value={d.deviceId}>{d.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">
-              Mikrofon
-            </label>
-            <Select
-              value={selectedMicId}
-              onValueChange={(v) => switchLobbyDevice("audioinput", v)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {devices.mics.map((d) => (
-                  <SelectItem key={d.deviceId} value={d.deviceId}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Button onClick={handleJoin} className="h-12">Beitreten</Button>
+            <Button variant="ghost" onClick={() => (window.location.href = "/sessions")}>
+              Abbrechen
+            </Button>
           </div>
         </div>
-
-        <Button className="shrink-0" onClick={handleJoin}>Beitreten</Button>
       </div>
     )
   }
 
   if (phase === "JOINING") {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-card p-8">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Beitreten...</p>
+      <div className={cn(shellClass, "items-center justify-center")}>
+        <Loader2 className="size-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Beitreten...</p>
       </div>
     )
   }
 
-  // Timer-Farb-Logik: > 2 min grün, < 2 min gelb, < 30 sec rot + blinken
+  // IN_CALL: App Shell mit Video + Steuerungsleiste
   const secs = timerSecondsLeft ?? 0
   const timerColorClass =
-    secs > 120
-      ? "text-emerald-600 dark:text-emerald-400"
-      : secs > 30
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-red-600 dark:text-red-400"
+    secs > 120 ? "text-emerald-400" : secs > 30 ? "text-amber-400" : "text-red-400"
   const timerBlink = secs > 0 && secs <= 30
 
-  // IN_CALL: max-h-[80vh] damit Bedienelemente immer im Sichtfeld
+  const hasRemoteVideo =
+    callMode === "video" && remoteParticipant?.hasVideo
+  const showVideoFallback = callMode === "video" && !hasRemoteVideo
+
   return (
-    <div className="relative flex max-h-[80vh] flex-col overflow-hidden rounded-lg border bg-card">
-      {/* Video-Bereich: aspect-video Container, overflow-hidden, Videos object-cover w-full h-full */}
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-t-lg bg-muted">
-        <div className="absolute inset-0 overflow-hidden bg-muted">
-          {callMode === "video" ? (
+    <div className={shellClass}>
+      {/* Video-Bereich (Top): flex-1 relative bg-black */}
+      <div className="relative flex-1 bg-black">
+        {callMode === "video" ? (
+          <>
             <video
               ref={remoteVideoRef}
               autoPlay
               playsInline
-              className="h-full w-full object-cover"
+              className={cn(
+                "absolute inset-0 h-full w-full",
+                "sm:object-cover",
+                "object-contain" // Nichts abgeschnitten auf Mobile
+              )}
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center p-8">
-              {/* Voice: großes Profilbild (size-40/48) mit sanft pulsierendem Ring */}
-              <div className="relative flex items-center justify-center">
-                {partnerSpeaking && (
-                <div
-                  className="absolute left-1/2 top-1/2 size-[11rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/50 md:size-[13rem] animate-voice-pulse-ring"
-                  aria-hidden
-                />
-                )}
-                <Avatar className="relative z-10 size-40 transition-transform duration-300 ease-out md:size-48">
+            {showVideoFallback && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                <Avatar className="size-24 sm:size-32">
                   {partnerImageUrl ? (
                     <AvatarImage src={partnerImageUrl} alt={partnerName} />
                   ) : null}
-                  <AvatarFallback className="text-5xl md:text-6xl">
+                  <AvatarFallback className="text-4xl sm:text-5xl">
                     {partnerName?.charAt(0) ?? "?"}
                   </AvatarFallback>
                 </Avatar>
               </div>
+            )}
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className={cn(
+                "relative rounded-full",
+                partnerSpeaking && "animate-voice-pulse-ring"
+              )}
+            >
+              {partnerSpeaking && (
+                <div
+                  className="absolute left-1/2 top-1/2 size-[10rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/50 sm:size-[12rem] animate-voice-pulse-ring"
+                  aria-hidden
+                />
+              )}
+              <Avatar className="relative z-10 size-32 sm:size-40">
+                {partnerImageUrl ? (
+                  <AvatarImage src={partnerImageUrl} alt={partnerName} />
+                ) : null}
+                <AvatarFallback className="text-5xl sm:text-6xl">
+                  {partnerName?.charAt(0) ?? "?"}
+                </AvatarFallback>
+              </Avatar>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* 5-Minuten-Timer: dezentes Overlay oben */}
         {timerSecondsLeft !== null && (
           <div
             className={cn(
-              "absolute left-4 top-4 z-10 rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium tabular-nums backdrop-blur-sm",
+              "absolute left-3 top-3 z-10 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:py-1.5",
               timerColorClass,
               timerBlink && "animate-timer-blink"
             )}
@@ -617,9 +598,8 @@ export function DailyCallContainer({
           </div>
         )}
 
-        {/* Lokales Video als PiP (Video-Mode) */}
         {callMode === "video" && (
-          <div className="absolute bottom-2 right-2 z-10 aspect-video w-24 overflow-hidden rounded-lg border-2 border-white/20 shadow-lg">
+          <div className="absolute bottom-3 right-3 z-10 aspect-video w-20 overflow-hidden rounded-lg border-2 border-white/20 shadow-lg sm:bottom-4 sm:right-4 sm:w-24">
             <video
               ref={localPiPVideoRef}
               autoPlay
@@ -631,37 +611,33 @@ export function DailyCallContainer({
         )}
       </div>
 
-      {/* Steuerungsleiste: fixiert unten, immer sichtbar, Safe Area */}
+      {/* Steuerungsleiste (Bottom): h-20 sm:h-24, Safe Area */}
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center gap-3 border-t bg-card/95 px-4 py-4 backdrop-blur-sm",
-          "pb-[max(1rem,env(safe-area-inset-bottom))]"
+          "flex h-20 flex-shrink-0 items-center justify-center gap-3 border-t bg-card px-4 sm:h-24 sm:gap-4",
+          "pb-[env(safe-area-inset-bottom)]"
         )}
       >
         <Button
           variant={isMuted ? "destructive" : "outline"}
           size="icon"
-          className="size-12 transition-transform active:scale-95 md:size-14"
+          className="size-10 sm:size-12 transition-transform active:scale-95"
           onClick={handleToggleMute}
-          title={isMuted ? "Mikrofon einschalten" : "Mikrofon stummschalten"}
+          title={isMuted ? "Mikrofon an" : "Mikrofon aus"}
         >
-          {isMuted ? (
-            <MicOff className="size-5 md:size-6" />
-          ) : (
-            <Mic className="size-5 md:size-6" />
-          )}
+          {isMuted ? <MicOff className="size-5 sm:size-6" /> : <Mic className="size-5 sm:size-6" />}
         </Button>
 
         {callMode === "video" && (
           <Button
             variant="outline"
             size="icon"
-            className="size-12 transition-transform active:scale-95 md:size-14"
+            className="size-10 sm:size-12 transition-transform active:scale-95"
             onClick={handleCycleCamera}
-            title="Kamera wechseln (Front/Rück)"
+            title="Kamera wechseln"
           >
             <FlipHorizontal
-              className="size-5 transition-transform duration-300 md:size-6"
+              className="size-5 sm:size-6 transition-transform duration-300"
               style={{ transform: `rotate(${cameraFlipRotation}deg)` }}
             />
           </Button>
@@ -670,11 +646,11 @@ export function DailyCallContainer({
         <Button
           variant="destructive"
           size="icon"
-          className="size-12 transition-transform active:scale-95 md:size-14"
-          onClick={() => callObjectRef.current?.leave()}
+          className="size-10 sm:size-12 transition-transform active:scale-95"
+          onClick={forceCleanup}
           title="Auflegen"
         >
-          <PhoneOff className="size-5 md:size-6" />
+          <PhoneOff className="size-5 sm:size-6" />
         </Button>
       </div>
     </div>
