@@ -97,6 +97,7 @@ export function useDailyCall({
     const call = Daily.createCallObject({
       url: roomUrl,
       subscribeToTracksAutomatically: true,
+      allowMultipleCallInstances: true, // Prevents "Duplicate DailyIframe" in React Strict Mode
       ...(callMode === "voice" ? { videoSource: false } : {}),
     })
     callObjectRef.current = call
