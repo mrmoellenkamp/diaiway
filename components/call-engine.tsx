@@ -2,8 +2,7 @@
 
 /**
  * CallEngine — Einheitliche Video- und Voice-Call-Engine.
- * Nutzt Daily Prebuilt (createFrame) mit direktem Join (enable_prejoin_ui: false).
- * Unser Precheck in der Lobby ersetzt Daily-Prejoin → zuverlässige Verbindung.
+ * Daily Prebuilt mit Prejoin (enable_prejoin_ui: true) für Geräteauswahl.
  */
 
 import { useEffect, useRef, useState } from "react"
@@ -12,7 +11,7 @@ import { useI18n } from "@/lib/i18n"
 import { AlertTriangle, Loader2 } from "lucide-react"
 
 const ACCENT_HEX = "#22c55e"
-const JOIN_TIMEOUT_MS = 30000
+const JOIN_TIMEOUT_MS = 90000 // Mit Prejoin: Nutzer braucht Zeit für Geräteauswahl
 
 const CAMERA_SWITCH_ICON =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTEgMTlINGEyIDIgMCAwIDEtMi0yVjdhMiAyIDAgMCAxIDItMmg1Ii8+PHBhdGggZD0iTTEzIDVoN2EyIDIgMCAwIDEgMiAydjEwYTIgMiAwIDAgMS0yIDJoLTUiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIi8+PHBhdGggZD0ibTE4IDIyLTMtMyAzLTMiLz48cGF0aCBkPSJtNiAyIDMgMy0zIDMiLz48L3N2Zz4="
@@ -149,9 +148,9 @@ export default function CallEngine({ roomUrl, mode, onRetry }: CallEngineProps) 
     return (
       <div className="relative flex flex-1 flex-col">
         {container}
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/90 to-emerald-800/90">
-          <Loader2 className="size-10 animate-spin text-primary-foreground" />
-          <p className="mt-3 text-sm text-primary-foreground">{t("video.roomPreparing")}</p>
+        {/* Kein Blocking-Overlay: Daily-Prejoin muss sichtbar sein für Kamera/Mikro-Auswahl */}
+        <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm text-white backdrop-blur-sm">
+          {t("video.prejoinHint")}
         </div>
       </div>
     )

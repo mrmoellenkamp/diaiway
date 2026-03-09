@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { DeviceSetup } from "@/components/device-setup"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
@@ -504,7 +505,10 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
             </CardContent>
           </Card>
 
-          {/* Mic / Camera toggles */}
+          {/* Geräteauswahl: Kamera & Mikro vor dem Join */}
+          <DeviceSetup mode={booking.callType === "VOICE" ? "voice" : "video"} />
+
+          {/* Mic / Camera toggles (Mute/Stummschaltung) */}
           <div className="flex gap-4">
             <button
               onClick={() => setIsMuted(!isMuted)}
