@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Video, Clock, Calendar, Phone, X, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
+import { Video, Clock, Calendar, Phone, PhoneCall, X, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
@@ -178,7 +178,17 @@ export function BookingCard({
             <p className="text-xs text-muted-foreground">{booking.takumiSubcategory}</p>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            {booking.callType && (
+              <span className="flex items-center gap-1 font-medium text-foreground/80">
+                {booking.callType === "VOICE" ? (
+                  <PhoneCall className="size-3" />
+                ) : (
+                  <Video className="size-3" />
+                )}
+                {booking.callType === "VOICE" ? t("booking.voiceCall") : t("booking.videoSession")}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Calendar className="size-3" />
               {formatDateBerlinShort(new Date(booking.date + "T12:00:00Z"))}
