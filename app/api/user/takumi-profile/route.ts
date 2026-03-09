@@ -91,7 +91,9 @@ export async function PUT(req: Request) {
       where: { userId: session.user.id },
       update: data,
       create: {
-        // Required fields with safe fallbacks for first-save
+        userId: session.user.id,
+        name: data.name as string,
+        avatar: data.avatar as string,
         categorySlug:    (data.categorySlug    as string)  || "dienstleistungen",
         categoryName:    (data.categoryName    as string)  || "Dienstleistungen",
         subcategory:     (data.subcategory     as string)  || "",
@@ -100,7 +102,6 @@ export async function PUT(req: Request) {
         priceVoice15Min: (data.priceVoice15Min as number) ?? 0,
         pricePerSession: (data.pricePerSession as number) ?? 0,
         email:           "",
-        ...data,
         rating: 0,
         reviewCount: 0,
         sessionCount: 0,
@@ -110,7 +111,7 @@ export async function PUT(req: Request) {
         portfolio: [],
         joinedDate: new Date().toISOString().slice(0, 10),
         matchRate: 0,
-      } as Parameters<typeof prisma.expert.create>[0]["data"],
+      },
     })
 
     // Ensure user's appRole is set to takumi

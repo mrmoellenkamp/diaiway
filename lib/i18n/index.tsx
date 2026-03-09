@@ -6,7 +6,7 @@ import en from "./en"
 import es from "./es"
 
 export type Locale = "de" | "en" | "es"
-type Dictionary = typeof de
+type Dictionary = Record<string, string>
 
 const dictionaries: Record<Locale, Dictionary> = { de, en, es }
 

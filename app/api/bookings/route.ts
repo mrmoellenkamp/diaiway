@@ -5,23 +5,19 @@ import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
+import { emailForName } from "@/lib/email-utils"
+import { requireAuth } from "@/lib/api-auth"
 
 export const runtime = "nodejs"
-
-function emailForName(name: string): string {
-  const local = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "")
-  return `${local || "expert"}@diaiway.test`
-}
 
 /** GET — list bookings for the current user (as booker or as expert)
  * Query: view=takumi — only bookings where user is the expert (for availability dashboard)
  *        view=shugyo — only bookings where user is the booker (default: both)
  */
 export async function GET(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
-  }
+  const authResult = await requireAuth()
+  if (authResult.response) return authResult.response
+  const { session } = authResult
 
   const { searchParams } = new URL(req.url)
   const view = searchParams.get("view")
@@ -33,7 +29,7 @@ export async function GET(req: Request) {
       select: { id: true },
     })
 
-    let whereClause: { userId?: string; expertId?: string; OR?: Array<{ userId: string } | { expertId: string }> }
+    let whereClause: { userId?: string; expertId?: string | { in: string[] }; OR?: Array<{ userId: string } | { expertId: string }> }
     if (view === "takumi" && userExpert) {
       whereClause = { expertId: userExpert.id }
     } else if (view === "takumi" && !userExpert) {
@@ -99,10 +95,9 @@ export async function GET(req: Request) {
 
 /** POST — create a new booking (status: pending) */
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
-  }
+  const authResult = await requireAuth()
+  if (authResult.response) return authResult.response
+  const { session } = authResult
 
   try {
     const body = await req.json()

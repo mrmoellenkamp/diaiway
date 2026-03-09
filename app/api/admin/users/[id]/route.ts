@@ -41,8 +41,6 @@ export async function PATCH(
           categoryName:    "Dienstleistungen",
           subcategory:     "",
           bio:             "",
-          priceVideo15Min: 1,
-          priceVoice15Min: 1,
           priceVideo15Min: 0,
           priceVoice15Min: 0,
           pricePerSession: 0,

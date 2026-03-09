@@ -147,8 +147,9 @@ export async function embedFacturXInPdf(pdfBuffer: ArrayBuffer | Buffer, facturX
   doc.attach(xmlBytes, "factur-x.xml", {
     mimeType: "application/xml",
     description: "Factur-X invoice data",
-    afRelationship: "Alternative", // PDF/A-3 Associated File
+    // @ts-expect-error - pdf-lib AFRelationship type may not include "Alternative"
+    afRelationship: "Alternative",
   })
   const outBytes = await doc.save()
-  return outBytes.buffer
+  return outBytes.buffer as ArrayBuffer
 }

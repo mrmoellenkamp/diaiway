@@ -98,9 +98,9 @@ export async function PUT(req: Request) {
       update: data,
       create: {
         userId: session.user.id,
-        slots: slots ?? EMPTY_WEEKLY_SLOTS,
-        yearlyRules: yearlyRules ?? [],
-        exceptions: exceptions ?? [],
+        slots: (slots ?? EMPTY_WEEKLY_SLOTS) as object,
+        yearlyRules: (yearlyRules ?? []) as object[],
+        exceptions: (exceptions ?? []) as object[],
       },
     })
 

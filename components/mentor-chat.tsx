@@ -110,7 +110,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
   const { messages, sendMessage, status, error } = useChat({
     id: "diaiway-mentor",
     transport: chatTransport,
-    initialMessages: storedMessages.length > 0 ? storedMessages : undefined,
+    messages: storedMessages.length > 0 ? storedMessages : undefined,
   })
 
   const isStreaming = status === "streaming" || status === "submitted"

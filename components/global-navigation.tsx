@@ -19,7 +19,7 @@ function shouldShowBottomNav(pathname: string): boolean {
   )
 }
 
-function titleForPath(pathname: string, t: (key: string, params?: Record<string, unknown>) => string) {
+function titleForPath(pathname: string, t: (key: string, params?: Record<string, string | number>) => string) {
   if (pathname.startsWith("/sessions")) return t("sessions.title")
   if (pathname.startsWith("/projects")) return t("projects.title")
   if (pathname.startsWith("/messages")) return t("messages.title")

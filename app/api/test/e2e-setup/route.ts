@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
       const dateStr = formatDate(pastDate)
       const startTime = "10:00"
       const endTime = "10:30"
-      const price = expert.pricePerSession
+      const price = expert.pricePerSession ?? 0
       const paidAmount = price * 100
       const platformFee = Math.round(paidAmount * 0.15)
       const netPayout = paidAmount - platformFee
