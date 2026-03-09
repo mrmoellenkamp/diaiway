@@ -80,8 +80,8 @@ export function DailyCallContainer({
   const initGuardRef = useRef(false)
   const remoteSessionIdRef = useRef<string | null>(null)
 
-  // --- Hardware-Kill-Switch: forceCleanup ---
-  const forceCleanup = useCallback(() => {
+  // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
+  const performCleanup = useCallback(() => {
     localStreamRef.current?.getTracks().forEach((t) => t.stop())
     localStreamRef.current = null
     micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
@@ -96,13 +96,28 @@ export function DailyCallContainer({
         call.leave()
         call.destroy()
       } catch (e) {
-        console.warn("[DailyCall] forceCleanup leave/destroy:", e)
+        console.warn("[DailyCall] performCleanup leave/destroy:", e)
       }
       callObjectRef.current = null
     }
     initGuardRef.current = false
-    window.location.href = "/sessions"
   }, [])
+
+  // --- Redirect: NUR bei expliziter User-Aktion, mit Sicherheitsabfrage ---
+  const redirectToSessions = useCallback((triggeredBy: string) => {
+    if (typeof window === "undefined") return
+    if (phase == null || phase === undefined) {
+      console.warn("[DailyCall] Redirect SKIPPED – phase was null/undefined | triggered by:", triggeredBy)
+      return
+    }
+    console.log("[DailyCall] Redirect triggered by:", triggeredBy)
+    window.location.href = "/sessions"
+  }, [phase])
+
+  const forceCleanupAndRedirect = useCallback((triggeredBy: string) => {
+    performCleanup()
+    redirectToSessions(triggeredBy)
+  }, [performCleanup, redirectToSessions])
 
   // --- LOBBY: getUserMedia ---
   const startLobbyPreview = useCallback(async () => {
@@ -433,8 +448,13 @@ export function DailyCallContainer({
     setIsMuted(!isMuted)
   }, [phase, isMuted])
 
-  // --- Cleanup on unmount ---
-  useEffect(() => () => forceCleanup(), [forceCleanup])
+  // --- Cleanup NUR bei echtem Unmount (nicht bei Re-Render/Strict Mode Remount) ---
+  useEffect(() => {
+    return () => {
+      console.log("[DailyCall] Cleanup: Komponente unmountet – performCleanup (KEIN Redirect)")
+      performCleanup()
+    }
+  }, [performCleanup])
 
   // --- App Shell (unzerstörbare Struktur) ---
   const shellClass = "fixed inset-0 h-[100dvh] w-full flex flex-col bg-background overflow-hidden"
@@ -447,7 +467,7 @@ export function DailyCallContainer({
           <Button variant="outline" onClick={() => setError(null)}>
             Erneut versuchen
           </Button>
-          <Button variant="ghost" onClick={forceCleanup}>
+          <Button variant="ghost" onClick={() => forceCleanupAndRedirect("error-ZurückButton")}>
             Zurück zu Sessions
           </Button>
         </div>
@@ -509,7 +529,7 @@ export function DailyCallContainer({
               </Select>
             </div>
             <Button onClick={handleJoin} className="h-12">Beitreten</Button>
-            <Button variant="ghost" onClick={() => (window.location.href = "/sessions")}>
+            <Button variant="ghost" onClick={() => forceCleanupAndRedirect("Lobby-Abbrechen")}>
               Abbrechen
             </Button>
           </div>
@@ -653,7 +673,7 @@ export function DailyCallContainer({
           variant="destructive"
           size="icon"
           className="size-10 sm:size-12 transition-transform active:scale-95"
-          onClick={forceCleanup}
+          onClick={() => forceCleanupAndRedirect("Auflegen-Button")}
           title="Auflegen"
         >
           <PhoneOff className="size-5 sm:size-6" />
