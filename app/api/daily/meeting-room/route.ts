@@ -64,15 +64,17 @@ export async function GET(req: NextRequest) {
     let effectiveRoomName: string
 
     if (booking.dailyRoomUrl?.trim()) {
-      baseRoomUrl = booking.dailyRoomUrl
-      effectiveRoomName = baseRoomUrl.split("/").pop()?.split("?")[0] || roomName
+      baseRoomUrl = booking.dailyRoomUrl.replace(/\?.*$/, "").replace(/\/+$/, "")
+      const pathSegment = baseRoomUrl.split("/").pop()
+      effectiveRoomName = pathSegment?.split("?")[0]?.trim() || roomName
     } else {
       const getRes = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       })
       if (getRes.ok) {
-        const existing = (await getRes.json()) as { url?: string }
+        const existing = (await getRes.json()) as { url?: string; name?: string }
         baseRoomUrl = existing?.url ?? ""
+        effectiveRoomName = existing?.name ?? roomName
       }
       if (!baseRoomUrl?.trim()) {
         const res = await fetch("https://api.daily.co/v1/rooms", {
@@ -99,13 +101,14 @@ export async function GET(req: NextRequest) {
             { status: 502 }
           )
         }
-        const room = (await res.json()) as { url?: string }
+        const room = (await res.json()) as { url?: string; name?: string }
         baseRoomUrl = room?.url ?? ""
+        effectiveRoomName = room?.name ?? roomName
       }
       if (!baseRoomUrl?.trim()) {
         return NextResponse.json({ error: "Ungültige Antwort vom Video-Service." }, { status: 502 })
       }
-      effectiveRoomName = roomName
+      if (!effectiveRoomName) effectiveRoomName = roomName
 
       await prisma.booking.updateMany({
         where: { id: bookingId, dailyRoomUrl: "" },
