@@ -470,33 +470,31 @@ export function DailyCallContainer({
       <div className="flex max-h-[80vh] flex-col gap-4 overflow-hidden rounded-lg border bg-card p-4">
         <h3 className="shrink-0 text-lg font-medium">Bereit zum Beitreten</h3>
 
-        {/* Vorschau: aspect-video + overflow-hidden */}
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-muted">
-          <div className="relative w-full overflow-hidden rounded-lg bg-muted aspect-video">
-            {callMode === "video" && localStream ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-muted">
-                <Avatar className="size-24">
-                  <AvatarFallback className="text-2xl">
-                    {partnerName?.charAt(0) ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            )}
-            {/* Mikrofonpegel */}
-            <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/30">
+        {/* Vorschau: aspect-video (16:9), kein max-h, Video füllt mit object-cover */}
+        <div className="relative w-full overflow-hidden rounded-lg bg-muted aspect-video shrink-0">
+          {callMode === "video" && localStream ? (
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-muted">
+              <Avatar className="size-24">
+                <AvatarFallback className="text-2xl">
+                  {partnerName?.charAt(0) ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+          {/* Mikrofonpegel */}
+          <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/30">
             <div
               className="h-full rounded-full bg-green-500/90 transition-all"
               style={{ width: `${Math.round(micLevel * 100)}%` }}
             />
-            </div>
           </div>
         </div>
 

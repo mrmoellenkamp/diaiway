@@ -135,9 +135,8 @@ export async function POST(req: Request) {
 
     const tokenPayload = {
       properties: {
-        room_name: resolvedRoomName,
+        room_name: roomData.name ?? roomName,
         is_owner: userRole === "takumi",
-        user_name: userRole,
         exp: Math.round(Date.now() / 1000) + 3600,
       },
     }
