@@ -160,14 +160,16 @@ export default function DailyPrebuiltCall({
     )
   }
 
-  // Beim Joinen: Loading-Overlay über dem Container (Daily-iframe lädt)
+  // Kein Blocking-Overlay: Daily Prejoin-UI muss sichtbar sein (Kamera/Mikro-Check, "Beitreten").
+  // Overlay würde die Interaktion blockieren → Join käme nie zustande.
   if (isJoining) {
     return (
       <div className="relative flex flex-1 flex-col">
         {container}
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/95 to-emerald-800/95">
-          <Loader2 className="size-10 animate-spin text-primary-foreground" />
-          <p className="mt-3 text-sm text-primary-foreground">{t("video.roomPreparing")}</p>
+        {/* Nur dezenter Hinweis, kein Blocking — Nutzer muss Daily-UI (inkl. „Beitreten“) bedienen können */}
+        <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur-sm">
+          <Loader2 className="size-4 animate-spin" />
+          {t("video.roomPreparing")}
         </div>
       </div>
     )
