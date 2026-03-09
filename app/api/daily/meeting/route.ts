@@ -133,11 +133,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const exp = Math.floor(Date.now() / 1000) + 60 * 60
     const tokenPayload = {
-      room_name: resolvedRoomName,
-      is_owner: userRole === "takumi",
-      exp,
+      properties: {
+        room_name: resolvedRoomName,
+        is_owner: userRole === "takumi",
+        user_name: userRole,
+        exp: Math.round(Date.now() / 1000) + 3600,
+      },
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
 
