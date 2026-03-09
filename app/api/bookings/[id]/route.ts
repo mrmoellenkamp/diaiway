@@ -202,9 +202,9 @@ export async function PATCH(
     const { action, rating, reviewText, snapshotConsent } = body as {
       action?: string; rating?: number; reviewText?: string; snapshotConsent?: boolean
     }
-    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "accept-safety", "report-and-leave"].includes(action)) {
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "accept-safety", "report-and-leave", "release-payment", "report-problem"].includes(action)) {
       return NextResponse.json(
-        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, accept-safety, report-and-leave." },
+        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, accept-safety, report-and-leave, release-payment, report-problem." },
         { status: 400 }
       )
     }
@@ -391,11 +391,13 @@ export async function PATCH(
           { error: "Nur der Shugyo kann die Zahlung freigeben." },
           { status: 403 }
         )
+      }
       if (booking.paymentStatus !== "paid") {
         return NextResponse.json(
           { error: "Keine bezahlte Session zum Freigeben." },
           { status: 400 }
         )
+      }
       const result = await processCompletion(id)
       if (!result.ok) {
         return NextResponse.json({ error: result.error ?? "Freigabe fehlgeschlagen." }, { status: 500 })
@@ -416,6 +418,7 @@ export async function PATCH(
           { error: "Nur der Shugyo kann ein Problem melden." },
           { status: 403 }
         )
+      }
       const reportedId = booking.expert?.userId
       if (!reportedId) return NextResponse.json({ error: "Experte nicht gefunden." }, { status: 400 })
       await prisma.safetyReport.create({
@@ -491,6 +494,9 @@ export async function PATCH(
     }
 
     // ── cancel ─────────────────────────────────────────────────────────────
+    if (action !== "cancel") {
+      return NextResponse.json({ error: "Ungueltige Aktion." }, { status: 400 })
+    }
     if (!["pending", "confirmed", "active"].includes(booking.status)) {
       return NextResponse.json(
         { error: `Nur "pending", "confirmed" oder "active" Buchungen koennen storniert werden (aktuell: "${booking.status}").` },
@@ -566,7 +572,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json({
+    const cancelResponse = NextResponse.json({
       success: true,
       status: "cancelled",
       cancelledBy,
@@ -576,6 +582,7 @@ export async function PATCH(
       refundAmount,
       sessionDuration: updated.sessionDuration || 0,
     })
+    return cancelResponse
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
