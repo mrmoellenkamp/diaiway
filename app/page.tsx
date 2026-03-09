@@ -187,7 +187,7 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col gap-0.5">
                 <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
-                {item.desc ? <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p> : null}
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             </div>
           ))}
