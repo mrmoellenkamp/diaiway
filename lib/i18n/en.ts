@@ -419,6 +419,9 @@ const en = {
   "video.muteAria": "Mute",
   "video.unmuteAria": "Unmute",
   "video.bookingStatusError": "Booking has status \"{status}\" and cannot be started.",
+  "video.roomPreparing": "Preparing room...",
+  "video.joinFailed": "Failed to connect to the room.",
+  "video.retryJoin": "Retry connection",
 
   // Release prompt (Shugyo after paid session)
   "release.title": "Release payment or report a problem?",
@@ -468,6 +471,8 @@ const en = {
   "handshake.checkoutError": "Checkout could not be initialized.",
   "handshake.redirectFallback": "Redirect stuck? Check payment & continue",
   "handshake.checkingPayment": "Checking...",
+  "handshake.paymentSuccess": "Payment successful!",
+  "handshake.sessionContinuing": "Session will continue...",
 
   // Review
   "review.starsAria": "{rating} of {max} stars",
