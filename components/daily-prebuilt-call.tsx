@@ -22,11 +22,9 @@ export type DailyVideoCallProps = DailyPrebuiltCallProps
 /** diaiway Primärfarbe (accent aus globals.css) */
 const ACCENT_HEX = "#22c55e"
 
-/** Icon-URL für Kamera-Wechsel (Front/Rück) auf Mobilgeräten */
-function getCameraSwitchIconUrl(): string {
-  if (typeof window === "undefined") return ""
-  return `${window.location.origin}/icons/camera-switch.svg`
-}
+/** Kamera-Wechsel Icon (Data-URL) — zuverlässig ohne CORS-Probleme */
+const CAMERA_SWITCH_ICON =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTEgMTlINGEyIDIgMCAwIDEtMi0yVjdhMiAyIDAgMCAxIDItMmg1Ii8+PHBhdGggZD0iTTEzIDVoN2EyIDIgMCAwIDEgMiAydjEwYTIgMiAwIDAgMS0yIDJoLTUiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIi8+PHBhdGggZD0ibTE4IDIyLTMtMyAzLTMiLz48cGF0aCBkPSJtNiAyIDMgMy0zIDMiLz48L3N2Zz4="
 
 export default function DailyPrebuiltCall({
   roomUrl,
@@ -40,12 +38,11 @@ export default function DailyPrebuiltCall({
 
     async function init() {
       const Daily = (await import("@daily-co/daily-js")).default
-      const iconUrl = getCameraSwitchIconUrl()
 
       frame = Daily.createFrame(containerRef.current!, {
         url: roomUrl,
         lang: "de",
-        theme: { accent: ACCENT_HEX },
+        theme: { colors: { accent: ACCENT_HEX } },
         iframeStyle: {
           width: "100%",
           height: "100%",
@@ -53,18 +50,14 @@ export default function DailyPrebuiltCall({
           borderRadius: "0",
         },
         showLeaveButton: false, // Wir nutzen eigene End-Call-Steuerung
-        ...(iconUrl
-          ? {
-              customTrayButtons: {
-                cameraSwitch: {
-                  iconPath: iconUrl,
-                  iconPathDarkMode: iconUrl,
-                  label: "Kamera wechseln",
-                  tooltip: "Front- und Rückkamera wechseln (falls verfügbar)",
-                },
-              },
-            }
-          : {}),
+        customTrayButtons: {
+          cameraSwitch: {
+            iconPath: CAMERA_SWITCH_ICON,
+            iconPathDarkMode: CAMERA_SWITCH_ICON,
+            label: "Kamera wechseln",
+            tooltip: "Front- und Rückkamera wechseln (falls verfügbar)",
+          },
+        },
       }) as typeof frame
 
       frame.on("custom-button-click", (ev: { button_id: string }) => {

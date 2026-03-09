@@ -81,6 +81,7 @@ export async function GET(req: NextRequest) {
             properties: {
               max_participants: 2,
               exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+              enable_prejoin_ui: true, // Lobby mit Kamera-/Mikro-Check vor dem Beitritt
             },
           }),
         })
@@ -128,11 +129,16 @@ export async function GET(req: NextRequest) {
       exp,
       is_owner: true,
     }
-    // Voice-Call: Video deaktivieren, nur Audio erlauben — verhindert Verbindungsprobleme
     if (isVoiceCall) {
+      // Voice-Call: Video deaktivieren, nur Audio erlauben
       tokenProperties.start_video_off = true
       tokenProperties.enable_screenshare = false
       tokenProperties.permissions = { canSend: ["audio"] }
+    } else {
+      // Video-Call: Kamera und Mikro explizit einschalten, Prejoin-UI für Geräteprüfung
+      tokenProperties.start_video_off = false
+      tokenProperties.start_audio_off = false
+      tokenProperties.enable_prejoin_ui = true
     }
     const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
       method: "POST",
