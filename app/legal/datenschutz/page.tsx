@@ -80,7 +80,7 @@ export default function DatenschutzPage() {
               <li><strong className="text-foreground">Buchungsdaten:</strong> Datum, Uhrzeit, Gesprächspartner, Preis, Notizen</li>
               <li><strong className="text-foreground">Zahlungsdaten:</strong> werden direkt von Stripe verarbeitet; wir speichern nur Stripe-Referenzen</li>
               <li><strong className="text-foreground">Kommunikation:</strong> Direktnachrichten zwischen Nutzern auf der Plattform</li>
-              <li><strong className="text-foreground">Video-Session-Daten:</strong> Verbindungsdaten, Session-Dauer (kein Video-Inhalt wird gespeichert)</li>
+              <li><strong className="text-foreground">Session-Daten:</strong> Session-Dauer, Buchungsverknüpfung</li>
               <li><strong className="text-foreground">KI-Interaktionen:</strong> Eingaben im AI-Guide, verarbeitet durch <Todo>KI-Anbieter eintragen (z.B. OpenAI / Vercel AI)</Todo></li>
               <li><strong className="text-foreground">Technische Daten:</strong> IP-Adresse, Browser-Typ, Geräteinformationen, Zugriffszeitpunkte</li>
               <li><strong className="text-foreground">Nutzungsanalyse:</strong> aggregierte Nutzungsdaten via Vercel Analytics</li>
@@ -105,7 +105,7 @@ export default function DatenschutzPage() {
                     ["Steuerliche Aufbewahrungspflichten", "Art. 6 I c DSGVO (rechtliche Verpflichtung)"],
                     ["Plattformverbesserung / Analyse", "Art. 6 I f DSGVO"],
                     ["Marketing-E-Mails (optional)", "Art. 6 I a DSGVO (Einwilligung)"],
-                    ["Video-Sessions (Daily.co)", "Art. 6 I b DSGVO"],
+                    ["Sessions (Beratung)", "Art. 6 I b DSGVO"],
                     ["KI-Guide-Nutzung", "Art. 6 I b / f DSGVO"],
                   ].map(([z, r]) => (
                     <tr key={z}>

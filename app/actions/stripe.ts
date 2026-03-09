@@ -29,8 +29,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Buchung bereits bezahlt")
 
-  const callType = booking.callType === "VOICE" ? "VOICE" : "VIDEO"
-  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const serviceLabel = "Expertensitzung"
   const durationMin = (() => {
     if (booking.startTime && booking.endTime) {
       const [sh, sm] = booking.startTime.split(":").map(Number)
@@ -85,8 +84,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Session already paid")
 
-  const callType = booking.callType === "VOICE" ? "VOICE" : "VIDEO"
-  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const serviceLabel = "Expertensitzung"
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",

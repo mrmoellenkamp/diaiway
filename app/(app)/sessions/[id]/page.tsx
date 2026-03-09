@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReviewStars } from "@/components/review-stars"
-import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { useTakumis } from "@/hooks/use-takumis"
 import { toast } from "sonner"
 import {
@@ -24,7 +23,7 @@ import {
   Star,
 } from "lucide-react"
 
-type Phase = "pre-call" | "trial" | "handshake" | "paid" | "rating"
+type Phase = "pre-call" | "trial" | "paid" | "rating"
 
 export default function SessionDetailPage() {
   const params = useParams()
@@ -50,7 +49,7 @@ export default function SessionDetailPage() {
     if (phase !== "trial" && phase !== "paid") return
     if (timer <= 0) {
       if (phase === "trial") {
-        setPhase("handshake")
+        setPhase("rating")
       }
       return
     }
@@ -71,12 +70,6 @@ export default function SessionDetailPage() {
   const handleStartTrial = () => {
     setPhase("trial")
     setTimer(300)
-  }
-
-  const handleHandshakeContinue = () => {
-    setPhase("paid")
-    setTimer(1800) // 30 min
-    toast.success("Session verlangert! Viel Erfolg.")
   }
 
   const handleEndCall = () => {
@@ -282,15 +275,6 @@ export default function SessionDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Handshake overlay */}
-      <HandshakeOverlay
-        isOpen={phase === "handshake"}
-        onContinue={handleHandshakeContinue}
-        onEnd={handleEndCall}
-        price={takumi.pricePerSession}
-        duration={30}
-      />
     </>
   )
 }

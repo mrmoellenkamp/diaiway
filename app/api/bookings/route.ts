@@ -78,7 +78,6 @@ export async function GET(req: Request) {
         totalPrice: b.totalPrice != null ? Number(b.totalPrice) : null,
         price: b.price,
         note: b.note,
-        dailyRoomUrl: b.dailyRoomUrl,
         sessionStartedAt: b.sessionStartedAt,
         sessionEndedAt: b.sessionEndedAt,
         sessionDuration: b.sessionDuration,

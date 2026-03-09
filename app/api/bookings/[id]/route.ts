@@ -94,7 +94,6 @@ export async function GET(
         totalPrice: booking.totalPrice != null ? Number(booking.totalPrice) : null,
         price: booking.price,
         note: booking.note,
-        dailyRoomUrl: booking.dailyRoomUrl,
         sessionStartedAt: booking.sessionStartedAt,
         sessionEndedAt: booking.sessionEndedAt,
         sessionDuration: booking.sessionDuration,
@@ -111,8 +110,6 @@ export async function GET(
         isExpert, // true if current user is the Takumi (expert) for this booking
         shugyoSkillLevel,
         shugyoProjects,
-        safetyAcceptedAt: booking.safetyAcceptedAt,
-        snapshotConsentAt: booking.snapshotConsentAt,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       },
@@ -199,12 +196,12 @@ export async function PATCH(
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, rating, reviewText, snapshotConsent } = body as {
-      action?: string; rating?: number; reviewText?: string; snapshotConsent?: boolean
+    const { action, rating, reviewText } = body as {
+      action?: string; rating?: number; reviewText?: string
     }
-    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "accept-safety", "report-and-leave", "release-payment", "report-problem"].includes(action)) {
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "report-and-leave", "release-payment", "report-problem"].includes(action)) {
       return NextResponse.json(
-        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, accept-safety, report-and-leave, release-payment, report-problem." },
+        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, report-and-leave, release-payment, report-problem." },
         { status: 400 }
       )
     }
@@ -230,35 +227,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Dein Zugang wurde gesperrt (diaiway Safety)." }, { status: 403 })
     }
 
-    // ── accept-safety (diaiway Safety Enforcement) ──────────────────────────
-    if (action === "accept-safety") {
-      if (booking.status !== "confirmed" && booking.status !== "active") {
-        return NextResponse.json({ error: "Ungültiger Buchungsstatus." }, { status: 409 })
-      }
-      if (booking.safetyAcceptedAt) {
-        return NextResponse.json({
-          success: true,
-          safetyAcceptedAt: booking.safetyAcceptedAt,
-          snapshotConsentAt: booking.snapshotConsentAt,
-        })
-      }
-      const now = new Date()
-      const updateData: { safetyAcceptedAt: Date; snapshotConsentAt?: Date } = { safetyAcceptedAt: now }
-      if (snapshotConsent === true && isBooker) {
-        updateData.snapshotConsentAt = now
-      }
-      const updated = await prisma.booking.update({
-        where: { id },
-        data: updateData,
-      })
-      return NextResponse.json({
-        success: true,
-        safetyAcceptedAt: updated.safetyAcceptedAt,
-        snapshotConsentAt: updated.snapshotConsentAt,
-      })
-    }
-
-    // ── report-and-leave (diaiway Safety Enforcement) ───────────────────────
+    // ── report-and-leave ───────────────────────────────────────────────────
     if (action === "report-and-leave") {
       if (booking.status !== "active") {
         return NextResponse.json({ error: "Nur während eines aktiven Calls." }, { status: 409 })
@@ -302,13 +271,6 @@ export async function PATCH(
           sessionStartedAt: booking.sessionStartedAt,
         })
       }
-      if (!booking.safetyAcceptedAt) {
-        return NextResponse.json(
-          { error: "diaiway Safety Enforcement: Bitte bestätige zuerst die Safety-Richtlinien." },
-          { status: 403 }
-        )
-      }
-
       // Allow joining max 5 minutes before the scheduled start time (Berlin time)
       const scheduledStart = parseBerlinDateTime(booking.date, booking.startTime)
       const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)

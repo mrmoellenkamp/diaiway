@@ -80,7 +80,6 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       expertName: booking.expertName,
       totalAmountCents: tx.totalAmount,
       date: now,
-      callType: booking.callType === "VOICE" ? "VOICE" : "VIDEO",
       durationMinutes: durationMin,
     })
     const creditBuf = await generateCreditNotePdf({
