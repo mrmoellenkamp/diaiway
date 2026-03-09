@@ -288,11 +288,19 @@ export async function PATCH(
 
     // ── start-session ──────────────────────────────────────────────────────
     if (action === "start-session") {
-      if (booking.status !== "confirmed") {
+      if (booking.status !== "confirmed" && booking.status !== "active") {
         return NextResponse.json(
-          { error: `Session kann nur aus Status "confirmed" gestartet werden (aktuell: "${booking.status}").` },
+          { error: `Session kann nur aus Status "confirmed" oder "active" gestartet werden (aktuell: "${booking.status}").` },
           { status: 409 }
         )
+      }
+      // Wenn bereits active (z.B. Partner hat gestartet), idempotent erfolgreich zurückgeben
+      if (booking.status === "active") {
+        return NextResponse.json({
+          success: true,
+          status: "active",
+          sessionStartedAt: booking.sessionStartedAt,
+        })
       }
       if (!booking.safetyAcceptedAt) {
         return NextResponse.json(
