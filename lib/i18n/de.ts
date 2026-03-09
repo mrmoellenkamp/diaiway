@@ -423,6 +423,7 @@ const de = {
   "video.roomPreparing": "Raum wird vorbereitet...",
   "video.joinFailed": "Verbindung zum Raum fehlgeschlagen.",
   "video.retryJoin": "Erneut verbinden",
+  "video.joinTimeout": "Verbindung hat zu lange gedauert. Bitte erneut versuchen.",
 
   // Release prompt (Shugyo nach bezahlter Session)
   "release.title": "Betrag freigeben oder Problem melden?",
