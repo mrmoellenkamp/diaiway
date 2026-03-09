@@ -10,6 +10,8 @@ import { GlobalNavigation } from '@/components/global-navigation'
 import { GlobalFooter } from '@/components/global-footer'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PushNotificationProvider } from '@/components/push-notification-provider'
+import { SessionActivityProvider } from '@/components/session-activity-provider'
+import { SessionTimeoutWarning } from '@/components/session-timeout-warning'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -63,16 +65,19 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ErrorBoundary>
           <SessionProvider>
-            <I18nProvider>
-              <AppProvider>
-                <PushNotificationProvider>
-                  <GlobalNavigation />
-                  {children}
-                  <GlobalFooter />
-                  <AiMentorFab />
-                </PushNotificationProvider>
-              </AppProvider>
-            </I18nProvider>
+            <SessionActivityProvider>
+              <I18nProvider>
+                <AppProvider>
+                  <PushNotificationProvider>
+                    <GlobalNavigation />
+                    {children}
+                    <GlobalFooter />
+                    <AiMentorFab />
+                    <SessionTimeoutWarning />
+                  </PushNotificationProvider>
+                </AppProvider>
+              </I18nProvider>
+            </SessionActivityProvider>
           </SessionProvider>
         </ErrorBoundary>
         <Toaster position="top-center" richColors />

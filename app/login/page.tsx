@@ -30,6 +30,7 @@ function LoginContent() {
   const searchParams = useSearchParams()
   // Only use callbackUrl if explicitly set (user was redirected from a protected page)
   const explicitCallback = searchParams.get("callbackUrl")
+  const reasonTimeout = searchParams.get("reason") === "timeout"
   const { setIsLoggedIn } = useApp()
   const { t } = useI18n()
 
@@ -132,6 +133,11 @@ function LoginContent() {
           </div>
           <h1 className="text-2xl font-bold text-foreground text-balance">{t("login.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("login.subtitle")}</p>
+          {reasonTimeout && (
+            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-center text-sm font-medium text-amber-700 dark:text-amber-400">
+              {t("login.timeoutMessage")}
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4" noValidate>

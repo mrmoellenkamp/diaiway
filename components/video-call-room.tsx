@@ -30,6 +30,7 @@ import { DailyVideoCall, DailyAudioCall } from "@/components/VideoConfig"
 import type { BookingRecord } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { useHeartbeat } from "@/hooks/use-heartbeat"
 
 type Phase = "loading" | "pre-call" | "trial" | "handshake" | "paid" | "rating" | "error"
 
@@ -125,6 +126,10 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     const interval = setInterval(() => setTimer((t) => t - 1), 1000)
     return () => clearInterval(interval)
   }, [phase, timer, booking?.paymentStatus])
+
+  // Heartbeat während Video-/Audio-Call — verhindert Lockout (15-Min-Inaktivität)
+  const isCallActive = phase === "trial" || phase === "paid"
+  useHeartbeat(isCallActive)
 
   async function patchBooking(
     action: string,

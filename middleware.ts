@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { authMiddleware } from "@/lib/auth-edge"
+import { INACTIVITY_TIMEOUT_SEC, LAST_ACTIVITY_COOKIE } from "@/lib/session-activity"
 
 export default authMiddleware((req) => {
   // CORS: OPTIONS (Preflight) darf nicht mit 307 redirected werden – sonst Fehler "Preflight response is not successful"
@@ -13,6 +14,26 @@ export default authMiddleware((req) => {
   const role   = (token?.user as { role?: string })?.role   || "user"
   const appRole = (token?.user as { appRole?: string })?.appRole || "shugyo"
   const status = (token?.user as { status?: string })?.status || "active"
+
+  // ── Inactivity Lockout (15 min) ───────────────────────────────────────────
+  // Heartbeat bypasses expiry so user can extend session from warning modal
+  const isHeartbeat = pathname === "/api/auth/heartbeat"
+  if (isLoggedIn && !isHeartbeat) {
+    const lastActivity = req.cookies.get(LAST_ACTIVITY_COOKIE)?.value
+    const lastTs = lastActivity ? parseInt(lastActivity, 10) : 0
+    const now = Math.floor(Date.now() / 1000)
+    const elapsed = now - lastTs
+
+    if (lastTs > 0 && elapsed >= INACTIVITY_TIMEOUT_SEC) {
+      // Session expired — clear auth cookie and redirect
+      const redirect = NextResponse.redirect(new URL("/login?reason=timeout", req.url))
+      const secure = req.nextUrl.protocol === "https:"
+      redirect.cookies.set(LAST_ACTIVITY_COOKIE, "", { maxAge: 0, path: "/" })
+      redirect.cookies.set("authjs.session-token", "", { maxAge: 0, path: "/" })
+      if (secure) redirect.cookies.set("__Secure-authjs.session-token", "", { maxAge: 0, path: "/" })
+      return redirect
+    }
+  }
 
   // Paused accounts — block all app routes except /paused and auth routes
   if (
@@ -67,6 +88,18 @@ export default authMiddleware((req) => {
 
   const response = NextResponse.next()
 
+  // Update lastActivity cookie on each valid request (keeps 15-min timer alive)
+  if (isLoggedIn) {
+    const now = Math.floor(Date.now() / 1000).toString()
+    response.cookies.set(LAST_ACTIVITY_COOKIE, now, {
+      path: "/",
+      maxAge: INACTIVITY_TIMEOUT_SEC + 60, // Slightly longer than timeout
+      sameSite: "lax",
+      secure: req.nextUrl.protocol === "https:",
+      httpOnly: true,
+    })
+  }
+
   // ── Security headers ──────────────────────────────────────────────────────
   response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
@@ -97,6 +130,7 @@ export const config = {
     "/sessions/:path*",
     "/session/:path*",
     "/messages/:path*",
+    "/api/auth/heartbeat",
     // Apply security headers to all non-static routes
     "/((?!_next/static|_next/image|favicon.ico|images/|icon|apple-icon|manifest).*)",
   ],
