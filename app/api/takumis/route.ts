@@ -20,8 +20,15 @@ export async function GET() {
       (e) => !e.userId || (e.user?.appRole === "takumi")
     )
 
+    const now = Date.now()
+    const ONLINE_MS = 5 * 60 * 1000
+
     return NextResponse.json(
-      active.map((e) => ({
+      active.map((e) => {
+        const lastSeen = e.lastSeenAt?.getTime()
+        const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
+        const isLive = e.isLive && isActuallyOnline
+        return {
         id: e.id,
         name: e.name,
         email: e.email,
@@ -37,7 +44,7 @@ export async function GET() {
         priceVideo15Min: Number(e.priceVideo15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)),
         priceVoice15Min: Number(e.priceVoice15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)),
         pricePerSession: e.pricePerSession,
-        isLive: e.isLive,
+        isLive,
         isPro: e.isPro,
         verified: e.verified,
         portfolio: e.portfolio,
@@ -46,7 +53,8 @@ export async function GET() {
         matchRate: e.matchRate,
         socialLinks: e.socialLinks ?? {},
         cancelPolicy: e.cancelPolicy ?? { freeHours: 24, feePercent: 0 },
-      }))
+      }
+      })
     )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "DB-Fehler"

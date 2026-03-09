@@ -158,7 +158,8 @@ model Expert {
   priceVideo15Min Decimal  @default(0) @db.Decimal(10, 2)
   priceVoice15Min Decimal  @default(0) @db.Decimal(10, 2)
   pricePerSession Int?     // Legacy: EUR pro 30 Min, Fallback wenn neue Preise fehlen
-  isLive          Boolean  @default(false)
+  isLive          Boolean  @default(false)  // Sichtbar für Buchungen (manual)
+  lastSeenAt      DateTime?                // Echte Präsenz; online = isLive && lastSeenAt < 5 min
   isPro           Boolean  @default(false)
   verified        Boolean  @default(false)
   portfolio       String[]

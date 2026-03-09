@@ -154,7 +154,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({
       success: true,
       isLive: body.isLive,
-      message: body.isLive ? "Du bist jetzt live." : "Du bist jetzt offline.",
+      message: body.isLive ? "Du bist jetzt sichtbar." : "Du verbergst dich jetzt.",
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
