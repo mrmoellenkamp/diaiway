@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
             properties: {
               max_participants: 2,
               exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
-              enable_prejoin_ui: false, // Eigenes Precheck vor Join → direkter Einstieg
+              enable_prejoin_ui: true, // Geräteauswahl und Preview vor Join
             },
           }),
         })
@@ -135,10 +135,10 @@ export async function GET(req: NextRequest) {
       tokenProperties.enable_screenshare = false
       tokenProperties.permissions = { canSend: ["audio"] }
     } else {
-      // Video-Call: Kamera und Mikro an, direkter Join (Precheck erfolgt vorher in unserer Lobby)
+      // Video-Call: Kamera/Mikro an, Daily-Prejoin für Geräteauswahl
       tokenProperties.start_video_off = false
       tokenProperties.start_audio_off = false
-      tokenProperties.enable_prejoin_ui = false
+      tokenProperties.enable_prejoin_ui = true
     }
     const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
       method: "POST",
