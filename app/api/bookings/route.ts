@@ -103,6 +103,14 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { takumiId, date, startTime, endTime, callType, totalPrice, price, note, deferNotification } = body
 
+    // callType: VIDEO | VOICE, Default VIDEO
+    if (callType != null && callType !== "VIDEO" && callType !== "VOICE") {
+      return NextResponse.json({
+        error: "callType muss 'VIDEO' oder 'VOICE' sein.",
+      }, { status: 400 })
+    }
+    const effectiveCallType = callType === "VIDEO" || callType === "VOICE" ? callType : "VIDEO"
+
     if (!takumiId || !date || !startTime || !endTime) {
       return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
     }
@@ -163,7 +171,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dieser Zeitraum ist bereits belegt." }, { status: 409 })
     }
 
-    const effectiveCallType = callType === "VOICE" ? "VOICE" : "VIDEO"
     const effectiveTotalPrice = totalPrice != null && totalPrice >= 1
       ? totalPrice
       : (price ?? (Number(expert.priceVideo15Min) || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)) * (durationMin / 15))

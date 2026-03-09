@@ -467,39 +467,41 @@ export function DailyCallContainer({
 
   if (phase === "LOBBY") {
     return (
-      <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
-        <h3 className="text-lg font-medium">Bereit zum Beitreten</h3>
+      <div className="flex max-h-[80vh] flex-col gap-4 overflow-hidden rounded-lg border bg-card p-4">
+        <h3 className="shrink-0 text-lg font-medium">Bereit zum Beitreten</h3>
 
-        {/* Vorschau */}
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-          {callMode === "video" && localStream ? (
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <Avatar className="size-24">
-                <AvatarFallback className="text-2xl">
-                  {partnerName?.charAt(0) ?? "?"}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-          {/* Mikrofonpegel */}
-          <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/30">
+        {/* Vorschau: aspect-video + overflow-hidden */}
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-muted">
+          <div className="relative w-full overflow-hidden rounded-lg bg-muted aspect-video">
+            {callMode === "video" && localStream ? (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted">
+                <Avatar className="size-24">
+                  <AvatarFallback className="text-2xl">
+                    {partnerName?.charAt(0) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            )}
+            {/* Mikrofonpegel */}
+            <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/30">
             <div
               className="h-full rounded-full bg-green-500/90 transition-all"
               style={{ width: `${Math.round(micLevel * 100)}%` }}
             />
+            </div>
           </div>
         </div>
 
-        {/* Device Selector */}
-        <div className="flex flex-col gap-2">
+        {/* Device Selector + Button - immer sichtbar */}
+        <div className="flex shrink-0 flex-col gap-2">
           {callMode === "video" && devices.cameras.length > 1 && (
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
@@ -544,7 +546,7 @@ export function DailyCallContainer({
           </div>
         </div>
 
-        <Button onClick={handleJoin}>Beitreten</Button>
+        <Button className="shrink-0" onClick={handleJoin}>Beitreten</Button>
       </div>
     )
   }
@@ -568,45 +570,47 @@ export function DailyCallContainer({
         : "text-red-600 dark:text-red-400"
   const timerBlink = secs > 0 && secs <= 30
 
-  // IN_CALL
+  // IN_CALL: max-h-[80vh] damit Bedienelemente immer im Sichtfeld
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-      {/* Remote-Anzeige: Video oder Voice (Profilbild + Puls) */}
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-muted">
-        {callMode === "video" ? (
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full min-h-[200px] w-full items-center justify-center p-8">
-            {/* Voice: großes Profilbild (size-40/48) mit sanft pulsierendem Ring */}
-            <div className="relative flex items-center justify-center">
-              {partnerSpeaking && (
+    <div className="relative flex max-h-[80vh] flex-col overflow-hidden rounded-lg border bg-card">
+      {/* Video-Bereich: aspect-video Container, overflow-hidden, Videos object-cover w-full h-full */}
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-t-lg bg-muted">
+        <div className="absolute inset-0 overflow-hidden bg-muted">
+          {callMode === "video" ? (
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center p-8">
+              {/* Voice: großes Profilbild (size-40/48) mit sanft pulsierendem Ring */}
+              <div className="relative flex items-center justify-center">
+                {partnerSpeaking && (
                 <div
                   className="absolute left-1/2 top-1/2 size-[11rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/50 md:size-[13rem] animate-voice-pulse-ring"
                   aria-hidden
                 />
-              )}
-              <Avatar className="relative z-10 size-40 transition-transform duration-300 ease-out md:size-48">
-                {partnerImageUrl ? (
-                  <AvatarImage src={partnerImageUrl} alt={partnerName} />
-                ) : null}
-                <AvatarFallback className="text-5xl md:text-6xl">
-                  {partnerName?.charAt(0) ?? "?"}
-                </AvatarFallback>
-              </Avatar>
+                )}
+                <Avatar className="relative z-10 size-40 transition-transform duration-300 ease-out md:size-48">
+                  {partnerImageUrl ? (
+                    <AvatarImage src={partnerImageUrl} alt={partnerName} />
+                  ) : null}
+                  <AvatarFallback className="text-5xl md:text-6xl">
+                    {partnerName?.charAt(0) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 5-Minuten-Timer: dezentes Overlay oben */}
         {timerSecondsLeft !== null && (
           <div
             className={cn(
-              "absolute left-4 top-4 rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium tabular-nums backdrop-blur-sm",
+              "absolute left-4 top-4 z-10 rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium tabular-nums backdrop-blur-sm",
               timerColorClass,
               timerBlink && "animate-timer-blink"
             )}
@@ -617,7 +621,7 @@ export function DailyCallContainer({
 
         {/* Lokales Video als PiP (Video-Mode) */}
         {callMode === "video" && (
-          <div className="absolute bottom-2 right-2 w-24 overflow-hidden rounded-lg border-2 border-white/20 shadow-lg">
+          <div className="absolute bottom-2 right-2 z-10 aspect-video w-24 overflow-hidden rounded-lg border-2 border-white/20 shadow-lg">
             <video
               ref={localPiPVideoRef}
               autoPlay
@@ -629,7 +633,7 @@ export function DailyCallContainer({
         )}
       </div>
 
-      {/* Steuerungsleiste: fixiert unten, Safe Area */}
+      {/* Steuerungsleiste: fixiert unten, immer sichtbar, Safe Area */}
       <div
         className={cn(
           "flex shrink-0 items-center justify-center gap-3 border-t bg-card/95 px-4 py-4 backdrop-blur-sm",

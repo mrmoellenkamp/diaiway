@@ -16,10 +16,11 @@ import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import { toast } from "sonner"
 import {
-  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw, Mic,
 } from "lucide-react"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"
+import { cn } from "@/lib/utils"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -36,6 +37,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [selectedStart, setSelectedStart] = useState("")
   const [selectedEnd, setSelectedEnd] = useState("")
   const [note, setNote] = useState("")
+  const [callType, setCallType] = useState<"VIDEO" | "VOICE">("VIDEO")
   const [isBooking, setIsBooking] = useState(false)
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
   const priceVideo15 = takumi.priceVideo15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
   const priceVoice15 = takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
+  const pricePer15 = callType === "VOICE" ? priceVoice15 : priceVideo15
   const durationMin = selectedStart && selectedEnd
     ? (() => {
         const [sh, sm] = selectedStart.split(":").map(Number)
@@ -84,7 +87,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
       })()
     : 0
   const slots15 = durationMin / 15
-  const totalPrice = Math.round(slots15 * priceVideo15 * 100) / 100
+  const totalPrice = Math.round(slots15 * pricePer15 * 100) / 100
 
   function handleTimeSelect(date: string, start: string, end: string) {
     // Guard: never allow selecting a slot in the past (Berlin time)
@@ -145,7 +148,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           date: selectedDate,
           startTime: selectedStart,
           endTime: selectedEnd,
-          callType: "VIDEO",
+          callType,
           totalPrice,
           note,
           deferNotification: true,
@@ -277,10 +280,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {t("booking.session")} · {durationMin} Min
+                    {t("booking.session")} · {durationMin} Min ({callType === "VIDEO" ? "Video" : "Voice"})
                   </span>
                   <span className="text-foreground">
-                    {slots15} × {priceVideo15.toFixed(2)} €
+                    {slots15} × {pricePer15.toFixed(2)} €
                   </span>
                 </div>
                 <div className="h-px bg-border" />
@@ -379,6 +382,50 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               </div>
             )
           })()}
+
+          {/* Gesprächs-Modus */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-foreground">Gesprächs-Modus</h3>
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setCallType("VIDEO")}
+                className={cn(
+                  "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
+                  "hover:bg-accent/50 active:scale-95",
+                  callType === "VIDEO"
+                    ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                    : "scale-[0.98] border-border bg-card hover:border-primary/40"
+                )}
+              >
+                <Video className={cn("size-5", callType === "VIDEO" && "text-primary")} />
+                <span className="text-sm font-medium text-foreground">Video-Call</span>
+                <span className="text-[11px] text-muted-foreground">
+                  Persönliche Beratung mit Kamera.
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCallType("VOICE")}
+                className={cn(
+                  "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
+                  "hover:bg-accent/50 active:scale-95",
+                  callType === "VOICE"
+                    ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                    : "scale-[0.98] border-border bg-card hover:border-primary/40"
+                )}
+              >
+                <Mic className={cn("size-5", callType === "VOICE" && "text-primary")} />
+                <span className="text-sm font-medium text-foreground">Voice-Call</span>
+                <span className="text-[11px] text-muted-foreground">
+                  Anonym & diskret (nur Audio).
+                </span>
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Der Modus kann später nicht mehr geändert werden.
+            </p>
+          </div>
 
           <Button
             type="submit"
