@@ -422,6 +422,7 @@ const en = {
   "video.roomPreparing": "Preparing room...",
   "video.joinFailed": "Failed to connect to the room.",
   "video.retryJoin": "Retry connection",
+  "video.joinTimeout": "Connection timed out. Please try again.",
 
   // Release prompt (Shugyo after paid session)
   "release.title": "Release payment or report a problem?",

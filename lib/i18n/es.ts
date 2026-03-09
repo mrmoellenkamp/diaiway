@@ -422,6 +422,7 @@ const es = {
   "video.roomPreparing": "Preparando sala...",
   "video.joinFailed": "Error al conectar con la sala.",
   "video.retryJoin": "Reintentar conexión",
+  "video.joinTimeout": "La conexión ha tardado demasiado. Por favor, inténtalo de nuevo.",
 
   // Release prompt (Shugyo tras sesión de pago)
   "release.title": "¿Liberar pago o reportar un problema?",

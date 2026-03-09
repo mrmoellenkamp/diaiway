@@ -40,12 +40,28 @@ export default function DailyPrebuiltCall({
   const [joinError, setJoinError] = useState<Error | null>(null)
   const [isJoining, setIsJoining] = useState(true)
 
+  const JOIN_TIMEOUT_MS = 45000
+
   useEffect(() => {
     if (!roomUrl || !containerRef.current) return
 
     setJoinError(null)
     setIsJoining(true)
-    let frame: { destroy: () => void; on: (e: string, h: (ev: { button_id: string }) => void) => void; cycleCamera: (opts: { preferDifferentFacingMode: boolean }) => Promise<unknown> } | null = null
+    let frame: { destroy: () => void; on: (e: string, h: (ev?: unknown) => void) => void; cycleCamera?: (opts: { preferDifferentFacingMode: boolean }) => Promise<unknown> } | null = null
+    let joinFailed = false
+
+    function failJoin(err: Error) {
+      if (joinFailed) return
+      joinFailed = true
+      if (frame && typeof frame.destroy === "function") {
+        frame.destroy()
+        frame = null
+      }
+      setJoinError(err)
+      setIsJoining(false)
+      onJoinError?.(err)
+      console.error("[Daily Prebuilt] Join failed:", err)
+    }
 
     async function init() {
       const Daily = (await import("@daily-co/daily-js")).default
@@ -71,28 +87,34 @@ export default function DailyPrebuiltCall({
         },
       }) as typeof frame
 
+      frame.on("error", (ev?: { errorMsg?: string }) => {
+        failJoin(new Error(ev?.errorMsg ?? "Verbindungsfehler"))
+      })
+      frame.on("load-attempt-failed", (ev?: { errorMsg?: string }) => {
+        console.warn("[Daily Prebuilt] load-attempt-failed:", ev?.errorMsg)
+      })
+
       frame.on("custom-button-click", (ev: { button_id: string }) => {
-        if (ev.button_id === "cameraSwitch") {
-          frame?.cycleCamera?.({ preferDifferentFacingMode: true }).catch((err) =>
+        if (ev.button_id === "cameraSwitch" && frame?.cycleCamera) {
+          frame.cycleCamera({ preferDifferentFacingMode: true }).catch((err) =>
             console.warn("[Daily] Kamera-Wechsel:", err)
           )
         }
       })
 
       try {
-        await frame.join()
-        setIsJoining(false)
-        onJoinSuccess?.()
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err))
-        if (frame && typeof frame.destroy === "function") {
-          frame.destroy()
-          frame = null
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("join-timeout")), JOIN_TIMEOUT_MS)
+        )
+        await Promise.race([frame.join(), timeoutPromise])
+        if (!joinFailed) {
+          setIsJoining(false)
+          onJoinSuccess?.()
         }
-        setJoinError(error)
-        setIsJoining(false)
-        onJoinError?.(error)
-        console.error("[Daily Prebuilt] Join failed:", err)
+      } catch (err) {
+        if (!joinFailed) {
+          failJoin(err instanceof Error ? err : new Error(String(err)))
+        }
       }
     }
 
@@ -125,7 +147,7 @@ export default function DailyPrebuiltCall({
         <AlertTriangle className="size-12 text-primary-foreground/90" />
         <p className="text-center text-sm text-primary-foreground/90">{t("video.joinFailed")}</p>
         <p className="text-center text-xs text-primary-foreground/60">
-          {joinError.message}
+          {joinError.message === "join-timeout" ? t("video.joinTimeout") : joinError.message}
         </p>
         <Button
           variant="secondary"

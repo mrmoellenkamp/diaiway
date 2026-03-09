@@ -33,12 +33,28 @@ export default function AudioCallInterface({
   const [joinError, setJoinError] = useState<Error | null>(null)
   const [isJoining, setIsJoining] = useState(true)
 
+  const JOIN_TIMEOUT_MS = 45000
+
   useEffect(() => {
     if (!roomUrl || !containerRef.current) return
 
     setJoinError(null)
     setIsJoining(true)
-    let frame: { destroy: () => void } | null = null
+    let frame: { destroy: () => void; on: (e: string, h: (ev?: unknown) => void) => void; join: () => Promise<unknown> } | null = null
+    let joinFailed = false
+
+    function failJoin(err: Error) {
+      if (joinFailed) return
+      joinFailed = true
+      if (frame && typeof frame.destroy === "function") {
+        frame.destroy()
+        frame = null
+      }
+      setJoinError(err)
+      setIsJoining(false)
+      onJoinError?.(err)
+      console.error("[Daily Audio] Join failed:", err)
+    }
 
     async function init() {
       const Daily = (await import("@daily-co/daily-js")).default
@@ -56,20 +72,27 @@ export default function AudioCallInterface({
         },
       }) as typeof frame
 
+      frame.on("error", (ev?: { errorMsg?: string }) => {
+        failJoin(new Error(ev?.errorMsg ?? "Verbindungsfehler"))
+      })
+      frame.on("load-attempt-failed", (ev?: { errorMsg?: string }) => {
+        console.warn("[Daily Audio] load-attempt-failed:", ev?.errorMsg)
+      })
+
       try {
-        await frame.join()
-        setIsJoining(false)
-        onJoinSuccess?.()
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err))
-        if (frame && typeof (frame as { destroy?: () => void }).destroy === "function") {
-          ;(frame as { destroy: () => void }).destroy()
-          frame = null
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("join-timeout")), JOIN_TIMEOUT_MS)
+        )
+        await Promise.race([frame.join(), timeoutPromise])
+        if (!joinFailed) {
+          setIsJoining(false)
+          onJoinSuccess?.()
         }
-        setJoinError(error)
-        setIsJoining(false)
-        onJoinError?.(error)
-        console.error("[Daily Audio] Join failed:", err)
+      } catch (err) {
+        if (!joinFailed) {
+          const msg = err instanceof Error ? err : new Error(String(err))
+          failJoin(msg)
+        }
       }
     }
 
@@ -100,7 +123,9 @@ export default function AudioCallInterface({
       <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
         <AlertTriangle className="size-12 text-primary-foreground/90" />
         <p className="text-center text-sm text-primary-foreground/90">{t("video.joinFailed")}</p>
-        <p className="text-center text-xs text-primary-foreground/60">{joinError.message}</p>
+        <p className="text-center text-xs text-primary-foreground/60">
+          {joinError.message === "join-timeout" ? t("video.joinTimeout") : joinError.message}
+        </p>
         <Button
           variant="secondary"
           className="bg-white/20 text-primary-foreground hover:bg-white/30"
