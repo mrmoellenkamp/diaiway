@@ -55,51 +55,66 @@ export async function GET(req: NextRequest) {
     let baseRoomUrl: string
     let effectiveRoomName: string
 
-    // Use existing room URL if we have one, otherwise create room
+    // Use existing room URL if we have one
     if (booking.dailyRoomUrl?.trim()) {
       baseRoomUrl = booking.dailyRoomUrl
-      // Extract room name from URL (e.g. https://domain.daily.co/roomname -> roomname)
       effectiveRoomName = baseRoomUrl.split("/").pop()?.split("?")[0] || roomName
     } else {
-      const res = await fetch("https://api.daily.co/v1/rooms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          name: roomName,
-          privacy: "private", // Nur mit gültigem Token beitretbar
-          properties: {
-            max_participants: 2,
-            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Raum läuft nach 7 Tagen ab
-          },
-        }),
+      // Try GET first — vermeidet Doppel-Erstellung bei parallelen Requests (Shugyo + Takumi)
+      const getRes = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
       })
-
-      if (!res.ok) {
-        const errBody = await res.text()
-        console.error("[Daily] Room creation failed:", res.status, errBody)
-        return NextResponse.json(
-          { error: "Video-Raum konnte nicht erstellt werden. Bitte später erneut versuchen." },
-          { status: 502 }
-        )
+      if (getRes.ok) {
+        const existing = (await getRes.json()) as { url?: string }
+        baseRoomUrl = existing?.url ?? ""
       }
-
-      const room = (await res.json()) as { url?: string }
-      baseRoomUrl = room?.url
-      if (!baseRoomUrl) {
+      if (!baseRoomUrl?.trim()) {
+        const res = await fetch("https://api.daily.co/v1/rooms", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            name: roomName,
+            privacy: "private",
+            properties: {
+              max_participants: 2,
+              exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+            },
+          }),
+        })
+        if (!res.ok) {
+          const errBody = await res.text()
+          console.error("[Daily] Room creation failed:", res.status, errBody)
+          return NextResponse.json(
+            { error: "Video-Raum konnte nicht erstellt werden. Bitte später erneut versuchen." },
+            { status: 502 }
+          )
+        }
+        const room = (await res.json()) as { url?: string }
+        baseRoomUrl = room?.url ?? ""
+      }
+      if (!baseRoomUrl?.trim()) {
         return NextResponse.json(
           { error: "Ungültige Antwort vom Video-Service." },
           { status: 502 }
         )
       }
+      effectiveRoomName = roomName
 
-      await prisma.booking.update({
-        where: { id: bookingId },
+      // Nur aktualisieren wenn noch leer — verhindert Race: zweiter Request nutzt DB-Wert
+      const updated = await prisma.booking.updateMany({
+        where: { id: bookingId, dailyRoomUrl: "" },
         data: { dailyRoomUrl: baseRoomUrl },
       })
-      effectiveRoomName = roomName
+      if (updated.count === 0) {
+        const fresh = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          select: { dailyRoomUrl: true },
+        })
+        if (fresh?.dailyRoomUrl?.trim()) baseRoomUrl = fresh.dailyRoomUrl
+      }
     }
 
     // Meeting-Token serverseitig generieren — ohne Token kein Zugang (private room)
