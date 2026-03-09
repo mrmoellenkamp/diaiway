@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { CallInterface } from "@/components/call-interface"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
@@ -157,13 +158,14 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   // Fetch room URL when we need to join (pre-call or already in call)
   const ROOM_FETCH_TIMEOUT_MS = 20000
 
-  const fetchRoomUrl = useCallback(async (): Promise<string | null> => {
+  const fetchRoomUrl = useCallback(async (callMode: "voice" | "video"): Promise<string | null> => {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), ROOM_FETCH_TIMEOUT_MS)
-      const res = await fetch(`/api/daily/room?bookingId=${encodeURIComponent(bookingId)}`, {
-        signal: controller.signal,
-      })
+      const res = await fetch(
+        `/api/daily/meeting-room?bookingId=${encodeURIComponent(bookingId)}&callMode=${callMode}`,
+        { signal: controller.signal }
+      )
       clearTimeout(timeoutId)
       const data = await res.json()
       if (!res.ok) {
@@ -181,27 +183,35 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
     }
   }, [bookingId, t])
 
+  const getCallMode = useCallback((): "voice" | "video" => {
+    return booking?.callType === "VOICE" ? "voice" : "video"
+  }, [booking?.callType])
+
+  const fetchRoomUrlWithMode = useCallback(async (): Promise<string | null> => {
+    return fetchRoomUrl(getCallMode())
+  }, [fetchRoomUrl, getCallMode])
+
   useEffect(() => {
     if (!isInCall || roomUrl || !booking) return
     if (booking.status !== "confirmed" && booking.status !== "active") return
     setRoomFetchError(false)
     let cancelled = false
-    fetchRoomUrl().then((url) => {
+    fetchRoomUrlWithMode().then((url) => {
       if (!cancelled) {
         if (url) setRoomUrl(url)
         else setRoomFetchError(true)
       }
     })
     return () => { cancelled = true }
-  }, [isInCall, roomUrl, booking, fetchRoomUrl])
+  }, [isInCall, roomUrl, booking, fetchRoomUrlWithMode])
 
   const handleRetryJoin = useCallback(async () => {
     setRoomFetchError(false)
     setRoomUrl(null) // Force fresh fetch
-    const url = await fetchRoomUrl()
+    const url = await fetchRoomUrlWithMode()
     if (url) setRoomUrl(url)
     else setRoomFetchError(true)
-  }, [fetchRoomUrl])
+  }, [fetchRoomUrlWithMode])
 
   const handleSafetyConfirm = async (snapshotConsent: boolean) => {
     const result = await patchBooking("accept-safety", undefined, { snapshotConsent })
@@ -343,7 +353,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const handleStartTrial = async () => {
     if (!safetyAccepted) return
-    const url = await fetchRoomUrl()
+    const url = await fetchRoomUrlWithMode()
     if (!url) return
     const result = await patchBooking("start-session")
     if (result) {
@@ -700,22 +710,15 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   return (
     <>
       <div className="relative flex h-screen flex-col bg-foreground">
-        {/* Video-Call: Platzhalter – API /api/daily/room bleibt aktiv für zukünftige Integration */}
         {isInCall && roomUrl ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
-            <div className="flex size-20 items-center justify-center rounded-full bg-white/20">
-              <Video className="size-10 text-primary-foreground" />
-            </div>
-            <p className="text-center text-sm font-medium text-primary-foreground">
-              {t("video.placeholderTitle")}
-            </p>
-            <p className="text-center text-xs text-primary-foreground/70">
-              {t("video.placeholderDesc")}
-            </p>
-            <code className="rounded bg-black/30 px-2 py-1 text-[10px] text-primary-foreground/80">
-              {roomUrl?.slice(0, 50)}…
-            </code>
-          </div>
+          <CallInterface
+            roomUrl={roomUrl}
+            callMode={booking.callType === "VOICE" ? "voice" : "video"}
+            takumiName={booking.takumiName}
+            isVoice={booking.callType === "VOICE"}
+            onLeave={handleEndCall}
+            onReportAndLeave={handleReportAndLeave}
+          />
         ) : isInCall ? (
           roomFetchError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
@@ -784,57 +787,59 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent pb-8 pt-12">
-          <div className="mx-auto flex max-w-xs items-center justify-around">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${
-                isMuted ? "bg-destructive" : "bg-white/20"
-              }`}
-              aria-label={isMuted ? t("video.unmuteAria") : t("video.muteAria")}
-            >
-              {isMuted ? (
-                <MicOff className="size-5 text-destructive-foreground" />
-              ) : (
-                <Mic className="size-5 text-primary-foreground" />
-              )}
-            </button>
-
-            {booking.callType !== "VOICE" && (
+        {/* Controls: only when CallInterface is not shown (loading/error/fallback) */}
+        {!roomUrl && (
+          <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent pb-8 pt-12">
+            <div className="mx-auto flex max-w-xs items-center justify-around">
               <button
-                onClick={() => setIsCameraOff(!isCameraOff)}
+                onClick={() => setIsMuted(!isMuted)}
                 className={`flex size-12 items-center justify-center rounded-full transition-colors ${
-                  isCameraOff ? "bg-destructive" : "bg-white/20"
+                  isMuted ? "bg-destructive" : "bg-white/20"
                 }`}
-                aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
+                aria-label={isMuted ? t("video.unmuteAria") : t("video.muteAria")}
               >
-                {isCameraOff ? (
-                  <VideoOff className="size-5 text-destructive-foreground" />
+                {isMuted ? (
+                  <MicOff className="size-5 text-destructive-foreground" />
                 ) : (
-                  <Video className="size-5 text-primary-foreground" />
+                  <Mic className="size-5 text-primary-foreground" />
                 )}
               </button>
-            )}
 
-            <button
-              onClick={handleEndCall}
-              className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
-              aria-label={t("video.endCall")}
-            >
-              <PhoneOff className="size-6 text-destructive-foreground" />
-            </button>
+              {booking.callType !== "VOICE" && (
+                <button
+                  onClick={() => setIsCameraOff(!isCameraOff)}
+                  className={`flex size-12 items-center justify-center rounded-full transition-colors ${
+                    isCameraOff ? "bg-destructive" : "bg-white/20"
+                  }`}
+                  aria-label={isCameraOff ? t("video.camOn") : t("video.camOff")}
+                >
+                  {isCameraOff ? (
+                    <VideoOff className="size-5 text-destructive-foreground" />
+                  ) : (
+                    <Video className="size-5 text-primary-foreground" />
+                  )}
+                </button>
+              )}
 
-            <button
-              onClick={handleReportAndLeave}
-              className="flex size-12 items-center justify-center rounded-full bg-white/20"
-              aria-label={t("safety.reportAndLeave")}
-              title={t("safety.reportAndLeaveDesc")}
-            >
-              <Flag className="size-5 text-primary-foreground" />
-            </button>
+              <button
+                onClick={handleEndCall}
+                className="flex size-14 items-center justify-center rounded-full bg-destructive shadow-lg transition-transform active:scale-95"
+                aria-label={t("video.endCall")}
+              >
+                <PhoneOff className="size-6 text-destructive-foreground" />
+              </button>
+
+              <button
+                onClick={handleReportAndLeave}
+                className="flex size-12 items-center justify-center rounded-full bg-white/20"
+                aria-label={t("safety.reportAndLeave")}
+                title={t("safety.reportAndLeaveDesc")}
+              >
+                <Flag className="size-5 text-primary-foreground" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <HandshakeOverlay
