@@ -33,7 +33,7 @@ export async function GET(
       where: { id },
       include: {
         expert: true,
-        user: { select: { skillLevel: true } },
+        user: { select: { skillLevel: true, image: true } },
       },
     })
     if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
@@ -86,6 +86,7 @@ export async function GET(
         userId: booking.userId,
         userName: booking.userName,
         userEmail: booking.userEmail,
+        userImageUrl: booking.user?.image || "",
         date: booking.date,
         startTime: booking.startTime,
         endTime: booking.endTime,
