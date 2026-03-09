@@ -421,6 +421,16 @@ const de = {
   "video.unmuteAria": "Stummschaltung aufheben",
   "video.bookingStatusError": "Buchung hat Status \"{status}\" und kann nicht gestartet werden.",
 
+  // Release prompt (Shugyo nach bezahlter Session)
+  "release.title": "Betrag freigeben oder Problem melden?",
+  "release.desc": "War alles in Ordnung? Du kannst den Betrag sofort freigeben oder ein Problem melden.",
+  "release.releaseNow": "Betrag sofort freigeben",
+  "release.reportProblem": "Es gab ein Problem",
+  "release.released": "Betrag freigegeben. Der Takumi erhält die Zahlung.",
+  "release.problemReported": "Problem gemeldet. Wir prüfen den Vorgang.",
+  "release.releaseFailed": "Freigabe fehlgeschlagen.",
+  "release.problemFailed": "Problem konnte nicht gemeldet werden.",
+
   // diaiway Safety Enforcement
   "safety.gatewayTitle": "diaiway Safety Enforcement",
   "safety.gatewayDesc": "Bitte bestätige die folgenden Punkte, bevor du den Video-Raum betrittst.",
