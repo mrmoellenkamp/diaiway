@@ -81,7 +81,6 @@ export async function POST(req: Request) {
     "Content-Type": "application/json",
   }
 
-  const enableVideo = callMode === "video"
   const roomName = (
     "call-" +
     bookingId.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "") +
@@ -91,9 +90,12 @@ export async function POST(req: Request) {
 
   const roomPayload = {
     name: roomName,
-    privacy: "private",
+    privacy: "public",
     properties: {
-      enable_video: enableVideo,
+      enable_chat: true,
+      enable_screenshare: true,
+      start_video_off: callMode === "voice",
+      exp: Math.round(Date.now() / 1000) + 3600,
     },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
