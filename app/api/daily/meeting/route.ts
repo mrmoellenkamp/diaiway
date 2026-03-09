@@ -29,6 +29,8 @@ function isValidUserRole(v: unknown): v is UserRole {
  * Body: { bookingId, callMode, userRole }
  */
 export async function POST(req: Request) {
+  console.log("[Daily Meeting] Daily API Key Check:", !!process.env.DAILY_API_KEY)
+
   const apiKey = process.env.DAILY_API_KEY
   if (!apiKey?.trim()) {
     console.error("[Daily Meeting] DAILY_API_KEY fehlt oder ist leer.")
@@ -80,28 +82,42 @@ export async function POST(req: Request) {
   }
 
   const enableVideo = callMode === "video"
-  const roomName = `diaiway-${bookingId.replace(/[^A-Za-z0-9_-]/g, "-")}-${Date.now()}`
+  const roomName = (
+    "call-" +
+    bookingId.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "") +
+    "-" +
+    Math.random().toString(36).substring(7)
+  ).replace(/[^a-z0-9-]/g, "")
+
+  const roomPayload = {
+    name: roomName,
+    privacy: "private",
+    properties: {
+      enable_video: enableVideo,
+    },
+  }
+  console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
 
   try {
     const roomRes = await fetch(`${DAILY_API_BASE}/rooms`, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        name: roomName,
-        privacy: "private",
-        properties: {
-          enable_video: enableVideo,
-        },
-      }),
+      body: JSON.stringify(roomPayload),
     })
 
     if (!roomRes.ok) {
       const errText = await roomRes.text()
+      let errorData: { info?: string; error?: string } = {}
+      try {
+        errorData = JSON.parse(errText) as { info?: string; error?: string }
+      } catch {
+        // errText bleibt als Fallback
+      }
       console.error("[Daily Meeting] Raum-Erstellung fehlgeschlagen:", roomRes.status, errText)
-      return NextResponse.json(
-        { error: "Raum konnte nicht erstellt werden." },
-        { status: 502 }
-      )
+      console.error("[Daily Meeting] Daily API Error Detail:", errorData)
+      const errorMsg =
+        errorData?.info ?? errorData?.error ?? "Raum konnte nicht erstellt werden."
+      return NextResponse.json({ error: errorMsg }, { status: 502 })
     }
 
     const roomData = (await roomRes.json()) as { url?: string; name?: string }
@@ -116,23 +132,32 @@ export async function POST(req: Request) {
     }
 
     const exp = Math.floor(Date.now() / 1000) + 60 * 60
+    const tokenPayload = {
+      room_name: resolvedRoomName,
+      is_owner: userRole === "takumi",
+      exp,
+    }
+    console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
+
     const tokenRes = await fetch(`${DAILY_API_BASE}/meeting-tokens`, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        room_name: resolvedRoomName,
-        is_owner: userRole === "takumi",
-        exp,
-      }),
+      body: JSON.stringify(tokenPayload),
     })
 
     if (!tokenRes.ok) {
       const errText = await tokenRes.text()
+      let errorData: { info?: string; error?: string } = {}
+      try {
+        errorData = JSON.parse(errText) as { info?: string; error?: string }
+      } catch {
+        // errText bleibt als Fallback
+      }
       console.error("[Daily Meeting] Token-Erstellung fehlgeschlagen:", tokenRes.status, errText)
-      return NextResponse.json(
-        { error: "Meeting-Token konnte nicht erstellt werden." },
-        { status: 502 }
-      )
+      console.error("[Daily Meeting] Daily API Error Detail:", errorData)
+      const errorMsg =
+        errorData?.info ?? errorData?.error ?? "Meeting-Token konnte nicht erstellt werden."
+      return NextResponse.json({ error: errorMsg }, { status: 502 })
     }
 
     const tokenData = (await tokenRes.json()) as { token?: string }
@@ -152,6 +177,9 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error("[Daily Meeting] Fehler:", msg)
+    if (err instanceof Error && err.cause) {
+      console.error("[Daily Meeting] Fehler-Cause:", err.cause)
+    }
     return NextResponse.json(
       { error: "Video-Service vorübergehend nicht erreichbar." },
       { status: 503 }
