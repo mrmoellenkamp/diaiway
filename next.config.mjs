@@ -17,7 +17,7 @@ const nextConfig = {
       },
     ],
   },
-  transpilePackages: ["@daily-co/daily-js", "jotai"],
+  transpilePackages: ["jotai"],
 }
 
 export default nextConfig

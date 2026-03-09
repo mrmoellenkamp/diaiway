@@ -45,20 +45,13 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für: Pre-Check vor Daily-Join (Shugyo-Bild), Live-Monitoring während des Calls. Ohne Key wird die Prüfung übersprungen. |
-
-## Daily.co (Video & Voice)
-
-| Variable | Beschreibung |
-|----------|--------------|
-| `DAILY_API_KEY` | Daily.co API Key (Raum-Erstellung) |
-| `NEXT_PUBLIC_DAILY_DOMAIN` | z.B. `https://diaiway.daily.co` (für Video- und Voice-Calls) |
+| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für Live-Monitoring und Incident-Speicherung. Ohne Key wird die Prüfung übersprungen. |
 
 ## Vercel Blob
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token. Wird verwendet für: Profilbilder, Safety-Incident-Alerts (bei Verstößen während Video-Sessions). |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token. Wird verwendet für: Profilbilder, Safety-Incident-Alerts. |
 
 ## Admin
 

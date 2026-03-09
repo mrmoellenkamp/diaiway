@@ -179,16 +179,6 @@ export function BookingCard({
           )}
 
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {booking.callType && (
-              <span className="flex items-center gap-1 font-medium text-foreground/80">
-                {booking.callType === "VOICE" ? (
-                  <PhoneCall className="size-3" />
-                ) : (
-                  <Video className="size-3" />
-                )}
-                {booking.callType === "VOICE" ? t("booking.voiceCall") : t("booking.videoSession")}
-              </span>
-            )}
             <span className="flex items-center gap-1">
               <Calendar className="size-3" />
               {formatDateBerlinShort(new Date(booking.date + "T12:00:00Z"))}

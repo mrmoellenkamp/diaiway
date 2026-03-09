@@ -81,7 +81,6 @@ export interface BookingRecord {
   totalPrice?: number
   price?: number
   note?: string
-  dailyRoomUrl?: string
   sessionStartedAt?: string
   sessionEndedAt?: string
   sessionDuration?: number
@@ -110,8 +109,6 @@ export interface BookingRecord {
   cancelledBy?: string
   cancelFeeAmount?: number
   cancelledAt?: string
-  safetyAcceptedAt?: string | null
-  snapshotConsentAt?: string | null
   cancelPreview?: {
     isFree: boolean
     hoursUntilSession: number

@@ -25,16 +25,14 @@ export async function generateInvoicePdf(opts: {
   expertName: string
   totalAmountCents: number
   date: Date
-  /** VIDEO oder VOICE — bestimmt Leistungsbeschreibung */
-  callType?: "VIDEO" | "VOICE"
   /** Dauer in Minuten — für ZUGFeRD Quantity (15-Min-Einheiten) */
   durationMinutes?: number
 }): ArrayBuffer {
   const doc = new jsPDF()
-  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, callType = "VIDEO", durationMinutes = 30 } = opts
+  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, durationMinutes = 30 } = opts
 
   const quantitySlots15 = Math.max(1, Math.round(durationMinutes / 15))
-  const serviceLabel = callType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const serviceLabel = "Expertensitzung"
   const lineDesc = `${serviceLabel} mit ${expertName} (Buchung ${bookingId}), ${quantitySlots15} × 15 Min`
 
   doc.setFontSize(18)
@@ -184,7 +182,6 @@ export function generateStornoInvoicePdf(opts: {
   expertName: string
   totalAmountCents: number
   date: Date
-  callType?: "VIDEO" | "VOICE"
 }): ArrayBuffer {
   const doc = new jsPDF()
   const { stornoNumber, originalInvoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date } = opts
@@ -209,8 +206,7 @@ export function generateStornoInvoicePdf(opts: {
   doc.text(recipientName, 20, 92)
   doc.text(recipientEmail, 20, 99)
 
-  const { callType: stornoCallType } = opts
-  const serviceLabel = stornoCallType === "VOICE" ? "Voice-Expertensitzung" : "Video-Expertensitzung"
+  const serviceLabel = "Expertensitzung"
   doc.setFontSize(10)
   doc.text("Stornierte Position:", 20, 115)
   doc.text(`${serviceLabel} mit ${expertName} (Buchung ${bookingId})`, 20, 125)
