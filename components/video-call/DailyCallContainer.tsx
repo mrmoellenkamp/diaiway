@@ -297,11 +297,14 @@ export function DailyCallContainer({
       const p = ev.participant
       if (!p?.session_id || p.session_id === call.participants()?.local?.session_id) return
       const part = call.participants()[p.session_id] as { tracks?: { video?: { persistentTrack?: unknown } } } | undefined
-      setRemoteParticipant((prev) =>
-        prev?.sessionId === p.session_id
-          ? { ...prev, hasVideo: !!part?.tracks?.video?.persistentTrack }
-          : prev
-      )
+      setRemoteParticipant((prev) => {
+        if (!prev || prev.sessionId !== p.session_id) return prev
+        return {
+          ...prev,
+          sessionId: prev.sessionId,
+          hasVideo: !!part?.tracks?.video?.persistentTrack,
+        }
+      })
     }
 
     const handleParticipantLeft = (ev: { participant?: { session_id?: string } }) => {
@@ -321,7 +324,10 @@ export function DailyCallContainer({
 
     const handleTrackStarted = (ev: import("@daily-co/daily-js").DailyEventObjectTrack) => {
       if (ev.participant?.session_id === remoteSessionIdRef.current && ev.track?.kind === "video") {
-        setRemoteParticipant((prev) => (prev ? { ...prev, hasVideo: true } : prev))
+        setRemoteParticipant((prev) => {
+          if (!prev) return prev
+          return { ...prev, sessionId: prev.sessionId, hasVideo: true }
+        })
       }
     }
 
