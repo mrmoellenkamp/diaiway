@@ -73,6 +73,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [showSafetyModal, setShowSafetyModal] = useState(false)
   const [preCheckPhase, setPreCheckPhase] = useState<"idle" | "running" | "done" | "failed">("idle")
   const [preCheckError, setPreCheckError] = useState("")
+  const [roomFetchError, setRoomFetchError] = useState(false)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -174,12 +175,24 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   useEffect(() => {
     if (!isInCall || roomUrl || !booking) return
     if (booking.status !== "confirmed" && booking.status !== "active") return
+    setRoomFetchError(false)
     let cancelled = false
     fetchRoomUrl().then((url) => {
-      if (!cancelled && url) setRoomUrl(url)
+      if (!cancelled) {
+        if (url) setRoomUrl(url)
+        else setRoomFetchError(true)
+      }
     })
     return () => { cancelled = true }
   }, [isInCall, roomUrl, booking, fetchRoomUrl])
+
+  const handleRetryJoin = useCallback(async () => {
+    setRoomFetchError(false)
+    setRoomUrl(null) // Force fresh fetch
+    const url = await fetchRoomUrl()
+    if (url) setRoomUrl(url)
+    else setRoomFetchError(true)
+  }, [fetchRoomUrl])
 
   const handleSafetyConfirm = async (snapshotConsent: boolean) => {
     const result = await patchBooking("accept-safety", undefined, { snapshotConsent })
@@ -688,6 +701,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               otherParticipantInitials={getInitials(
                 booking.isExpert ? booking.userName : booking.takumiName
               )}
+              onRetry={handleRetryJoin}
             />
           ) : (
             <DailyVideoCall
@@ -698,15 +712,30 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
               otherParticipantInitials={getInitials(
                 booking.isExpert ? booking.userName : booking.takumiName
               )}
+              onRetry={handleRetryJoin}
             />
           )
         ) : isInCall ? (
-          <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="size-10 animate-spin text-primary-foreground/60" />
-              <p className="text-sm text-primary-foreground/80">Video-Raum wird vorbereitet...</p>
+          roomFetchError ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
+              <AlertTriangle className="size-12 text-primary-foreground/90" />
+              <p className="text-center text-sm text-primary-foreground/90">{t("video.joinFailed")}</p>
+              <Button
+                variant="secondary"
+                className="bg-white/20 text-primary-foreground hover:bg-white/30"
+                onClick={handleRetryJoin}
+              >
+                {t("video.retryJoin")}
+              </Button>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="size-10 animate-spin text-primary-foreground/60" />
+                <p className="text-sm text-primary-foreground/80">{t("video.roomPreparing")}</p>
+              </div>
+            </div>
+          )
         ) : null}
 
         {/* Fallback while Daily is not yet in call */}

@@ -2,32 +2,42 @@
 
 /**
  * AudioCallInterface — Voice-Only Call mit Daily Prebuilt (createFrame).
- * Nutzt createFrame wie Video, aber mit videoSource: false für Audio-only.
- * Beide Teilnehmer verbinden zuverlässig über dieselbe Daily-Raum-URL.
+ * Theme wie Video, Fehlerbehandlung + Retry.
  */
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n"
+import { AlertTriangle, Loader2 } from "lucide-react"
 
 export interface AudioCallInterfaceProps {
   roomUrl: string
   isMuted?: boolean
   otherParticipantName: string
   otherParticipantInitials: string
+  onJoinError?: (err: Error) => void
+  onJoinSuccess?: () => void
+  onRetry?: () => void
 }
 
 const ACCENT_HEX = "#22c55e"
 
 export default function AudioCallInterface({
   roomUrl,
-  isMuted = false,
-  otherParticipantName,
-  otherParticipantInitials,
+  onJoinError,
+  onJoinSuccess,
+  onRetry,
 }: AudioCallInterfaceProps) {
+  const { t } = useI18n()
   const containerRef = useRef<HTMLDivElement>(null)
+  const [joinError, setJoinError] = useState<Error | null>(null)
+  const [isJoining, setIsJoining] = useState(true)
 
   useEffect(() => {
     if (!roomUrl || !containerRef.current) return
 
+    setJoinError(null)
+    setIsJoining(true)
     let frame: { destroy: () => void } | null = null
 
     async function init() {
@@ -35,8 +45,8 @@ export default function AudioCallInterface({
       frame = Daily.createFrame(containerRef.current!, {
         url: roomUrl,
         lang: "de",
-        theme: { accent: ACCENT_HEX },
-        startVideoOff: true, // Audio-only: Kamera aus (videoSource wird von Prebuilt ignoriert)
+        theme: { colors: { accent: ACCENT_HEX } },
+        startVideoOff: true,
         showLeaveButton: false,
         iframeStyle: {
           width: "100%",
@@ -46,19 +56,32 @@ export default function AudioCallInterface({
         },
       }) as typeof frame
 
-      await frame.join()
+      try {
+        await frame.join()
+        setIsJoining(false)
+        onJoinSuccess?.()
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err))
+        if (frame && typeof (frame as { destroy?: () => void }).destroy === "function") {
+          ;(frame as { destroy: () => void }).destroy()
+          frame = null
+        }
+        setJoinError(error)
+        setIsJoining(false)
+        onJoinError?.(error)
+        console.error("[Daily Audio] Join failed:", err)
+      }
     }
 
-    init().catch((err) => console.error("[Daily Audio] Join failed:", err))
-
+    init()
     return () => {
       if (frame && typeof (frame as { destroy?: () => void }).destroy === "function") {
         ;(frame as { destroy: () => void }).destroy()
       }
     }
-  }, [roomUrl])
+  }, [roomUrl, onJoinError, onJoinSuccess])
 
-  return (
+  const container = (
     <div
       ref={containerRef}
       className="flex flex-1 min-h-0"
@@ -71,4 +94,35 @@ export default function AudioCallInterface({
       }}
     />
   )
+
+  if (joinError) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary to-emerald-800 p-6">
+        <AlertTriangle className="size-12 text-primary-foreground/90" />
+        <p className="text-center text-sm text-primary-foreground/90">{t("video.joinFailed")}</p>
+        <p className="text-center text-xs text-primary-foreground/60">{joinError.message}</p>
+        <Button
+          variant="secondary"
+          className="bg-white/20 text-primary-foreground hover:bg-white/30"
+          onClick={() => (onRetry ? onRetry() : window.location.reload())}
+        >
+          {t("video.retryJoin")}
+        </Button>
+      </div>
+    )
+  }
+
+  if (isJoining) {
+    return (
+      <div className="relative flex flex-1 flex-col">
+        {container}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/95 to-emerald-800/95">
+          <Loader2 className="size-10 animate-spin text-primary-foreground" />
+          <p className="mt-3 text-sm text-primary-foreground">{t("video.roomPreparing")}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return container
 }

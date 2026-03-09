@@ -188,10 +188,10 @@ export function HandshakeOverlay({
 
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-white">
-              Zahlung erfolgreich!
+              {t("handshake.paymentSuccess")}
             </h2>
             <p className="text-sm text-white/80">
-              Session wird fortgesetzt...
+              {t("handshake.sessionContinuing")}
             </p>
           </div>
 
