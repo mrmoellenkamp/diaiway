@@ -88,7 +88,15 @@ function SessionsContent() {
   ]
 
   const bookings = data?.bookings || []
-  const filtered = bookings.filter((b) => tabForStatus(b.status) === activeTab)
+  const filtered = bookings
+    .filter((b) => tabForStatus(b.status) === activeTab)
+    .sort((a, b) => {
+      const key = (x: BookingRecord) => `${x.date}T${x.startTime || "00:00"}`
+      if (activeTab === "upcoming" || activeTab === "active") {
+        return key(a).localeCompare(key(b))
+      }
+      return key(b).localeCompare(key(a))
+    })
 
   // Count for tab badges
   const activeCount = bookings.filter((b) => tabForStatus(b.status) === "active").length
@@ -129,7 +137,7 @@ function SessionsContent() {
           <EmptyState tab={activeTab} />
         ) : (
           filtered.map((booking) => (
-            <BookingCard key={booking._id} booking={booking} onCancelled={handleCancelled} />
+            <BookingCard key={booking.id || booking._id} booking={booking} onCancelled={handleCancelled} />
           ))
         )}
       </div>
