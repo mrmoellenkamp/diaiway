@@ -157,17 +157,28 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   }
 
   // Fetch room URL when we need to join (pre-call or already in call)
+  const ROOM_FETCH_TIMEOUT_MS = 20000
+
   const fetchRoomUrl = useCallback(async (): Promise<string | null> => {
     try {
-      const res = await fetch(`/api/daily/room?bookingId=${encodeURIComponent(bookingId)}`)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), ROOM_FETCH_TIMEOUT_MS)
+      const res = await fetch(`/api/daily/room?bookingId=${encodeURIComponent(bookingId)}`, {
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
       const data = await res.json()
       if (!res.ok) {
         toast.error(data.error || t("video.loadError"))
         return null
       }
       return data.roomUrl ?? null
-    } catch {
-      toast.error(t("common.networkError"))
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") {
+        toast.error(t("video.joinTimeout"))
+      } else {
+        toast.error(t("common.networkError"))
+      }
       return null
     }
   }, [bookingId, t])
