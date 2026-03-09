@@ -98,6 +98,12 @@ const de = {
   "login.errorInvalid": "E-Mail oder Passwort ist falsch.",
   "login.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "login.tooManyAttempts": "Zu viele fehlgeschlagene Versuche. Bitte warte {min} Minuten.",
+  "login.timeoutMessage": "Deine Sitzung wurde wegen Inaktivität beendet. Bitte melde dich erneut an.",
+
+  // Session Timeout Warning
+  "sessionTimeout.title": "Sitzung läuft bald ab",
+  "sessionTimeout.desc": "Du wirst in Kürze wegen Inaktivität abgemeldet. Verbleibende Zeit:",
+  "sessionTimeout.extend": "Sitzung verlängern",
 
   // Register
   "register.title": "Konto erstellen",

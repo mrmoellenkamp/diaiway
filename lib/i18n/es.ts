@@ -98,6 +98,12 @@ const es = {
   "login.errorInvalid": "Correo o contraseña incorrectos.",
   "login.errorNetwork": "Error de conexión. Inténtalo de nuevo.",
   "login.tooManyAttempts": "Demasiados intentos fallidos. Espera {min} minutos.",
+  "login.timeoutMessage": "Tu sesión ha terminado por inactividad. Por favor, inicia sesión de nuevo.",
+
+  // Session Timeout Warning
+  "sessionTimeout.title": "La sesión expira pronto",
+  "sessionTimeout.desc": "Se cerrará la sesión pronto por inactividad. Tiempo restante:",
+  "sessionTimeout.extend": "Prolongar sesión",
 
   // Register
   "register.title": "Crear cuenta",

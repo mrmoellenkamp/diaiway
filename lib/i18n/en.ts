@@ -98,6 +98,12 @@ const en = {
   "login.errorInvalid": "Email or password is incorrect.",
   "login.errorNetwork": "Connection error. Please try again.",
   "login.tooManyAttempts": "Too many failed attempts. Please wait {min} minutes.",
+  "login.timeoutMessage": "Your session has ended due to inactivity. Please sign in again.",
+
+  // Session Timeout Warning
+  "sessionTimeout.title": "Session expiring soon",
+  "sessionTimeout.desc": "You will be logged out soon due to inactivity. Time remaining:",
+  "sessionTimeout.extend": "Extend session",
 
   // Register
   "register.title": "Create account",
