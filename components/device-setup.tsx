@@ -2,10 +2,10 @@
 
 /**
  * DeviceSetup — Kamera- und Mikrofon-Auswahl im Precheck.
- * Berechtigungen werden hier angefordert, Nutzer kann Geräte testen.
+ * releaseTracks() muss VOR dem Join aufgerufen werden, damit Daily die Geräte nutzen kann.
  */
 
-import { useState, useEffect, useRef } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import { useI18n } from "@/lib/i18n"
 import { Video, Mic, AlertTriangle, Loader2 } from "lucide-react"
 
@@ -14,12 +14,17 @@ export interface DeviceSetupProps {
   onReady?: (hasDevices: boolean) => void
 }
 
+export interface DeviceSetupRef {
+  releaseTracks: () => void
+}
+
 interface DeviceInfo {
   deviceId: string
   label: string
 }
 
-export function DeviceSetup({ mode, onReady }: DeviceSetupProps) {
+export const DeviceSetup = forwardRef<DeviceSetupRef, DeviceSetupProps>(
+  function DeviceSetup({ mode, onReady }, ref) {
   const { t } = useI18n()
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -84,6 +89,13 @@ export function DeviceSetup({ mode, onReady }: DeviceSetupProps) {
       streamRef.current = null
     }
   }, [mode])
+
+  useImperativeHandle(ref, () => ({
+    releaseTracks: () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
+    },
+  }), [])
 
   useEffect(() => {
     if (status !== "ready") return
@@ -204,4 +216,4 @@ export function DeviceSetup({ mode, onReady }: DeviceSetupProps) {
       </div>
     </div>
   )
-}
+})

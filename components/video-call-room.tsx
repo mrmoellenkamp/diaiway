@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { DeviceSetup } from "@/components/device-setup"
+import { DeviceSetup, type DeviceSetupRef } from "@/components/device-setup"
 import { HandshakeOverlay } from "@/components/handshake-overlay"
 import { ReleasePromptOverlay } from "@/components/release-prompt-overlay"
 import { SafetyGatewayModal } from "@/components/safety-gateway-modal"
@@ -75,6 +75,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
   const [preCheckPhase, setPreCheckPhase] = useState<"idle" | "running" | "done" | "failed">("idle")
   const [preCheckError, setPreCheckError] = useState("")
   const [roomFetchError, setRoomFetchError] = useState(false)
+  const deviceSetupRef = useRef<DeviceSetupRef>(null)
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60)
@@ -346,6 +347,9 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
 
   const handleStartTrial = async () => {
     if (!safetyAccepted) return
+    // Kamera/Mikro aus Precheck freigeben – sonst kann Daily sie nicht nutzen (nur 1 Consumer gleichzeitig)
+    deviceSetupRef.current?.releaseTracks()
+    await new Promise((r) => setTimeout(r, 600))
     const url = await fetchRoomUrl()
     if (!url) return
     const result = await patchBooking("start-session")
@@ -506,7 +510,7 @@ export function VideoCallRoom({ bookingId }: VideoCallRoomProps) {
           </Card>
 
           {/* Geräteauswahl: Kamera & Mikro vor dem Join */}
-          <DeviceSetup mode={booking.callType === "VOICE" ? "voice" : "video"} />
+          <DeviceSetup ref={deviceSetupRef} mode={booking.callType === "VOICE" ? "voice" : "video"} />
 
           {/* Mic / Camera toggles (Mute/Stummschaltung) */}
           <div className="flex gap-4">
