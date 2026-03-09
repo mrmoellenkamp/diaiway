@@ -12,6 +12,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { PushNotificationProvider } from '@/components/push-notification-provider'
 import { SessionActivityProvider } from '@/components/session-activity-provider'
 import { SessionTimeoutWarning } from '@/components/session-timeout-warning'
+import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -74,6 +75,7 @@ export default function RootLayout({
                     <GlobalFooter />
                     <AiMentorFab />
                     <SessionTimeoutWarning />
+                    <TakumiPresenceUpdater />
                   </PushNotificationProvider>
                 </AppProvider>
               </I18nProvider>
