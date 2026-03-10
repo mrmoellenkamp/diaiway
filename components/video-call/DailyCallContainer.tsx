@@ -311,13 +311,22 @@ export function DailyCallContainer({
     const handleParticipantUpdated = (ev: { participant?: { session_id?: string } }) => {
       const p = ev.participant
       if (!p?.session_id || p.session_id === call.participants()?.local?.session_id) return
-      const part = call.participants()[p.session_id] as { tracks?: { video?: { persistentTrack?: unknown } } } | undefined
+      const part = call.participants()[p.session_id] as {
+        tracks?: { video?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } }
+      } | undefined
+      const videoTrackObj = part?.tracks?.video
+      const videoTrack = videoTrackObj?.track ?? videoTrackObj?.persistentTrack
+      const isPlayable = videoTrackObj?.state === "playable"
+      if (isPlayable && videoTrack && remoteVideoRef.current && p.session_id === remoteSessionIdRef.current) {
+        remoteVideoRef.current.srcObject = new MediaStream([videoTrack])
+        remoteVideoRef.current.play().catch(() => {})
+      }
       setRemoteParticipant((prev) => {
         if (!prev || prev.sessionId !== p.session_id) return prev
         return {
           ...prev,
           sessionId: prev.sessionId,
-          hasVideo: !!part?.tracks?.video?.persistentTrack,
+          hasVideo: !!videoTrack,
         }
       })
     }
@@ -391,7 +400,31 @@ export function DailyCallContainer({
     }
   }, [phase])
 
-  // --- Video-Mapping: Remote + Fallback ---
+  // --- Zuweisung: Remote-Video-Track → remoteVideoRef (wird mehrfach verwendet) ---
+  const assignRemoteVideoTrack = useCallback(() => {
+    const call = callObjectRef.current
+    const videoEl = remoteVideoRef.current
+    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video" || !remoteParticipant) return
+    const participant = call.participants()[remoteParticipant.sessionId] as
+      | {
+          tracks?: {
+            video?: {
+              state?: string
+              persistentTrack?: MediaStreamTrack
+              track?: MediaStreamTrack
+            }
+          }
+        }
+      | undefined
+    const videoTrackObj = participant?.tracks?.video
+    const videoTrack = videoTrackObj?.track ?? videoTrackObj?.persistentTrack
+    if (videoTrack) {
+      videoEl.srcObject = new MediaStream([videoTrack])
+      videoEl.play().catch(() => {})
+    }
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo])
+
+  // --- Video-Mapping useEffect: reagiert auf remoteParticipant + track ---
   useEffect(() => {
     const call = callObjectRef.current
     const videoEl = remoteVideoRef.current
@@ -400,20 +433,18 @@ export function DailyCallContainer({
       videoEl.srcObject = null
       return
     }
-    const participant = call.participants()[remoteParticipant.sessionId] as
-      | { tracks?: { video?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } } }
-      | undefined
-    const videoTrack = participant?.tracks?.video?.track ?? participant?.tracks?.video?.persistentTrack
-    if (videoTrack) {
-      videoEl.srcObject = new MediaStream([videoTrack])
-      videoEl.play().catch(() => {})
-    } else {
-      videoEl.srcObject = null
-    }
+    assignRemoteVideoTrack()
     return () => {
       videoEl.srcObject = null
     }
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo])
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
+
+  // --- Force-Update: Nach 2 Sekunden erneut zuweisen, falls Video schwarz bleibt ---
+  useEffect(() => {
+    if (phase !== "IN_CALL" || callMode !== "video" || !remoteParticipant?.hasVideo) return
+    const t = setTimeout(() => assignRemoteVideoTrack(), 2000)
+    return () => clearTimeout(t)
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
 
   // --- Lokales PiP (Video-Mode) ---
   useEffect(() => {
@@ -576,14 +607,16 @@ export function DailyCallContainer({
               ref={remoteVideoRef}
               autoPlay
               playsInline
+              muted={false}
               className={cn(
                 "absolute inset-0 h-full w-full",
                 hasRemoteVideo ? "z-10" : "z-0",
                 "sm:object-cover object-contain"
               )}
             />
+            {/* Platzhalter NUR wenn !hasRemoteVideo – z-10 damit über leeres Video */}
             {showVideoFallback && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80" aria-hidden>
                 <Avatar className="size-24 sm:size-32">
                   {partnerImageUrl ? (
                     <AvatarImage src={partnerImageUrl} alt={partnerName} />
