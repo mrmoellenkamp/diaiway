@@ -109,3 +109,49 @@ export function isWithinInstantSlots(
   }
   return false
 }
+
+/**
+ * Resolve instant slots (Sprechzeiten) for a specific date.
+ * instantSlots only has weekly structure, no yearly rules or exceptions.
+ */
+export function resolveInstantSlots(
+  instantSlots: WeeklySlots | null | undefined,
+  dateStr: string
+): ITimeSlot[] {
+  if (!instantSlots) return []
+  const date = new Date(dateStr + "T00:00:00")
+  const dayOfWeek = date.getDay() as 0 | 1 | 2 | 3 | 4 | 5 | 6
+  return instantSlots[dayOfWeek] || []
+}
+
+/** Check if a time window [start, start+duration) overlaps with any slot */
+function overlapsSlot(
+  startTime: string,
+  durationMin: number,
+  slots: ITimeSlot[]
+): boolean {
+  const s = parseTimeToMinutes(startTime)
+  const e = s + durationMin
+  for (const slot of slots) {
+    const bs = parseTimeToMinutes(slot.start)
+    const be = parseTimeToMinutes(slot.end)
+    if (s < be && e > bs) return true
+  }
+  return false
+}
+
+function parseTimeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number)
+  return h * 60 + m
+}
+
+/**
+ * Check if startTime (with duration) falls within any of the given slots.
+ */
+export function isTimeInSlots(
+  startTime: string,
+  durationMin: number,
+  slots: ITimeSlot[]
+): boolean {
+  return overlapsSlot(startTime, durationMin, slots)
+}

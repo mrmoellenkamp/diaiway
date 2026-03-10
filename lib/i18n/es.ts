@@ -645,6 +645,9 @@ const es = {
   "booking.successInfo": "Estamos reenviando tu solicitud de reserva a {name}. Se pondrá en contacto contigo lo antes posible o confirmará la reserva.",
   "booking.successContinue": "Continuar a Planificadas",
   "booking.redirectFallback": "¿La redirección no funciona?",
+  "booking.sprechzeitHint": "En este momento hay consulta abierta. Puede contactar directamente.",
+  "booking.sprechzeitSelectedHint": "Consulta abierta seleccionada. Use el botón de arriba para contactar – o elija una cita reservable.",
+  "booking.takumiInCall": "Takumi está en una llamada. Inténtelo más tarde o reserve una cita.",
 
   // Availability Dashboard
   "avail.title": "Mi disponibilidad",

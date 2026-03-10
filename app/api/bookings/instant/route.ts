@@ -57,6 +57,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Experte oder Nutzer nicht gefunden." }, { status: 404 })
     }
 
+    if (expert.liveStatus === "in_call") {
+      return NextResponse.json(
+        { error: "Takumi ist im Gespräch. Versuchen Sie es später noch einmal oder vereinbaren Sie einen Termin." },
+        { status: 400 }
+      )
+    }
     if (expert.liveStatus !== "available") {
       return NextResponse.json(
         { error: "Takumi ist gerade nicht verfügbar. Bitte später erneut versuchen." },

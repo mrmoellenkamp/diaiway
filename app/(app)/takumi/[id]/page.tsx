@@ -323,12 +323,19 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-8 text-base font-bold text-white shadow-lg shadow-emerald/20"
             />
           ) : (
-            <Button
-              asChild
-              className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
-            >
-              <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              {takumi.liveStatus === "in_call" && (
+                <p className="text-[11px] text-muted-foreground text-right max-w-[200px]">
+                  {t("booking.takumiInCall")}
+                </p>
+              )}
+              <Button
+                asChild
+                className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
+              >
+                <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>

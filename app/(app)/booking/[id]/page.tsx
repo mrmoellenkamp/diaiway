@@ -20,7 +20,9 @@ import {
 } from "lucide-react"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"
+import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { cn } from "@/lib/utils"
+import type { SlotSelectMeta } from "@/components/booking-calendar"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -39,6 +41,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [note, setNote] = useState("")
   const [callType, setCallType] = useState<"VIDEO" | "VOICE">("VIDEO")
   const [isBooking, setIsBooking] = useState(false)
+  const [selectedInSprechzeit, setSelectedInSprechzeit] = useState(false)
+  const [selectedSprechzeit, setSelectedSprechzeit] = useState<{ date: string; startTime: string } | null>(null)
 
   useEffect(() => {
     if (step === "checkout" && session?.user) {
@@ -89,7 +93,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const slots15 = durationMin / 15
   const totalPrice = Math.round(slots15 * pricePer15 * 100) / 100
 
-  function handleTimeSelect(date: string, start: string, end: string) {
+  function handleTimeSelect(
+    date: string,
+    start: string,
+    end: string,
+    meta?: SlotSelectMeta
+  ) {
     // Guard: never allow selecting a slot in the past (Berlin time)
     const slotDateTime = parseBerlinDateTime(date, start)
     if (slotDateTime <= new Date()) {
@@ -104,6 +113,16 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     setSelectedDate(date)
     setSelectedStart(start)
     setSelectedEnd(end)
+    setSelectedInSprechzeit(meta?.inSprechzeit ?? false)
+    setSelectedSprechzeit(null)
+  }
+
+  function handleSelectSprechzeit(date: string, startTime: string) {
+    setSelectedSprechzeit({ date, startTime })
+    setSelectedDate("")
+    setSelectedStart("")
+    setSelectedEnd("")
+    setSelectedInSprechzeit(false)
   }
 
   async function handleBook(e: React.FormEvent) {
@@ -328,6 +347,15 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
+        {/* Hinweis: Takumi im Gespräch */}
+        {takumi.liveStatus === "in_call" && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              {t("booking.takumiInCall")}
+            </p>
+          </div>
+        )}
+
         {/* Date & Time Selection */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -336,10 +364,33 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           <BookingCalendar
             takumiId={id}
             onSelect={handleTimeSelect}
+            onSelectSprechzeit={handleSelectSprechzeit}
             selectedDate={selectedDate}
             selectedTime={selectedStart}
+            selectedSprechzeit={selectedSprechzeit}
           />
         </div>
+
+        {/* Sprechstunde-Hinweis: wenn Sprechzeit-Slot gewählt */}
+        {(selectedInSprechzeit || selectedSprechzeit) && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col gap-3">
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">
+              {t("booking.sprechzeitHint")}
+            </p>
+            {takumi.liveStatus === "available" && (
+              <InstantCallTrigger
+                takumi={takumi}
+                variant="profile"
+                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+              />
+            )}
+            {takumi.liveStatus === "in_call" && (
+              <p className="text-xs text-muted-foreground">
+                {t("booking.takumiInCall")}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Termindetails – Buchungszusammenfassung unterhalb des Kalenders (aktualisiert bei jedem Klick) */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
@@ -371,6 +422,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 </span>
               </div>
             </div>
+          ) : selectedSprechzeit ? (
+            <p className="text-sm text-muted-foreground py-2">
+              {t("booking.sprechzeitSelectedHint")}
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground py-2">
               Wähle einen Termin im Kalender – die Zusammenfassung und der Preis werden hier angezeigt.

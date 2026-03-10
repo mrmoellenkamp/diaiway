@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import {
   resolveSlots,
+  resolveInstantSlots,
   EMPTY_WEEKLY_SLOTS,
   type IAvailabilityData,
   type IWeeklyRule,
@@ -56,7 +57,13 @@ export async function GET(req: Request) {
     const instantSlots = (avail?.instantSlots as WeeklySlots | null) ?? null
 
     if (date) {
-      return NextResponse.json({ date, slots: resolveSlots(availData, date) })
+      const slots = resolveSlots(availData, date)
+      const instantSlotsForDate = resolveInstantSlots(instantSlots, date)
+      return NextResponse.json({
+        date,
+        slots,
+        instantSlots: instantSlotsForDate,
+      })
     }
     if (full) {
       return NextResponse.json({
