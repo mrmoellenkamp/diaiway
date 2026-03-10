@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DailyCallContainer } from "@/components/video-call/DailyCallContainer"
@@ -15,6 +16,7 @@ type UserRole = "shugyo" | "takumi"
 interface BookingData {
   booking: {
     id: string
+    expertId: string
     callType: "VIDEO" | "VOICE"
     isExpert: boolean
     userName: string
@@ -23,18 +25,23 @@ interface BookingData {
     userImageUrl: string
     status: string
     paymentStatus?: string
+    safetyAcceptedAt?: string | null
   }
 }
 
 function PostCallScreen({
   bookingId,
+  expertId,
   isExpert,
   partnerName,
+  paymentStatus,
   onDone,
 }: {
   bookingId: string
+  expertId: string
   isExpert: boolean
   partnerName: string
+  paymentStatus?: string
   onDone: () => void
 }) {
   const [rating, setRating] = useState(0)
@@ -84,12 +91,14 @@ function PostCallScreen({
     }
   }, [bookingId, onDone])
 
+  const canReleasePayment = !isExpert && paymentStatus === "paid"
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4 py-8">
       <div className="text-center">
         <h2 className="text-xl font-bold text-foreground">Session beendet</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Wie war deine Erfahrung mit {partnerName}?
+          Bewerte {partnerName} – ihr habt euch gegenseitig unterstützt.
         </p>
       </div>
 
@@ -111,7 +120,7 @@ function PostCallScreen({
         >
           Bewertung abgeben
         </Button>
-        {!isExpert && (
+        {canReleasePayment && (
           <Button
             onClick={handleReleasePayment}
             disabled={submitting}
@@ -121,13 +130,18 @@ function PostCallScreen({
             Geld freigeben & überspringen
           </Button>
         )}
+        {!canReleasePayment && (
+          <Button asChild variant="outline" className="h-12 w-full rounded-xl">
+            <Link href={`/takumi/${expertId}`}>Zurück zum Profil</Link>
+          </Button>
+        )}
         <Button
           onClick={onDone}
           variant="ghost"
           disabled={submitting}
           className="h-12 w-full rounded-xl"
         >
-          Nur zur Übersicht
+          Zur Übersicht
         </Button>
       </div>
     </div>
@@ -206,8 +220,10 @@ function SessionCallContent() {
     return (
       <PostCallScreen
         bookingId={booking.id}
+        expertId={booking.expertId}
         isExpert={booking.isExpert}
         partnerName={partnerName}
+        paymentStatus={booking.paymentStatus}
         onDone={goToSessions}
       />
     )
@@ -222,6 +238,7 @@ function SessionCallContent() {
           userRole={userRole}
           partnerImageUrl={partnerImageUrl || undefined}
           partnerName={partnerName}
+          safetyAcceptedAt={booking.safetyAcceptedAt}
           onCallEnded={() => setViewMode("post-call")}
         />
       </div>
