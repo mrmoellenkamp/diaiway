@@ -28,6 +28,7 @@ import {
   type IAvailabilityData,
 } from "@/lib/availability-utils"
 import { useI18n } from "@/lib/i18n"
+import { TakumiStatusCard } from "@/components/takumi-status-card"
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -408,6 +409,9 @@ export default function AvailabilityPage() {
               </p>
             </div>
           </div>
+
+          {/* Instant-Connect Status */}
+          <TakumiStatusCard />
 
           {/* Pending bookings alert */}
           {pendingBookings.length > 0 && (

@@ -42,6 +42,8 @@ export async function GET() {
         priceVoice15Min: Number(e.priceVoice15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)),
         pricePerSession: e.pricePerSession,
         isLive,
+        liveStatus: e.liveStatus ?? null,
+        pricePerMinute: Math.round((Number(e.priceVideo15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)) * 100 / 15)),
         isPro: e.isPro,
         verified: e.verified,
         portfolio: e.portfolio,

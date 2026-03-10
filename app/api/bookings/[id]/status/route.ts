@@ -95,7 +95,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Ungueltige Anfrage." }, { status: 400 })
     }
 
-    const booking = await prisma.booking.findUnique({ where: { id } })
+    const booking = await prisma.booking.findUnique({ where: { id }, include: { expert: true } })
     if (!booking || booking.statusToken !== token) {
       return NextResponse.json({ error: "Nicht gefunden oder ungueltig." }, { status: 404 })
     }
@@ -107,6 +107,13 @@ export async function PATCH(
       where: { id },
       data: { status: action as BookingStatus },
     })
+
+    if (action === "confirmed" && booking.bookingMode === "instant" && booking.expertId) {
+      await prisma.expert.update({
+        where: { id: booking.expertId },
+        data: { liveStatus: "in_call" },
+      })
+    }
 
     try {
       await sendBookingStatusEmail({
