@@ -19,7 +19,7 @@ import {
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
-  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, FolderOpen,
+  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, FolderOpen, Send,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
@@ -1021,6 +1021,7 @@ function FinanceTab() {
   const [refunding, setRefunding] = useState(false)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
   const [refundTarget, setRefundTarget] = useState<FinanceItem | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
   const [pendingReleases, setPendingReleases] = useState<PendingRelease[]>([])
   const [releasingId, setReleasingId] = useState<string | null>(null)
 
@@ -1113,6 +1114,25 @@ function FinanceTab() {
   function openRefundConfirm(tx: FinanceItem) {
     setRefundTarget(tx)
     setRefundConfirmOpen(true)
+  }
+
+  async function handleResendInvoice(tx: FinanceItem) {
+    setResendingId(tx.id)
+    try {
+      const res = await fetch("/api/admin/finance/resend-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId: tx.id, type: "both" }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success(json.message)
+        void load()
+      } else {
+        toast.error(json.results?.invoice?.error ?? json.results?.credit?.error ?? json.error ?? "Fehler")
+      }
+    } catch { toast.error("E-Mail-Versand fehlgeschlagen.") }
+    finally { setResendingId(null) }
   }
 
   async function handleRefundConfirm() {
@@ -1401,6 +1421,23 @@ function FinanceTab() {
                     )}
                   </div>
                 </div>
+                {selected.status === "CAPTURED" && selected.invoiceNumber && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    disabled={resendingId === selected.id}
+                    onClick={() => handleResendInvoice(selected)}
+                    title="Rechnung an Shugyo und Gutschrift an Takumi erneut per E-Mail senden"
+                  >
+                    {resendingId === selected.id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Send className="size-4" />
+                    )}
+                    Rechnung per E-Mail erneut senden
+                  </Button>
+                )}
                 {selected.status === "CAPTURED" && (
                   <Button
                     variant="destructive"
