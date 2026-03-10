@@ -249,10 +249,66 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {/* Service Details */}
+        {/* Gesprächsmodus – über Termin-Auswahl */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">{t("booking.sessionDetails")}</h2>
+          <h2 className="text-sm font-semibold text-foreground">Gesprächsmodus</h2>
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setCallType("VIDEO")}
+              className={cn(
+                "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
+                "hover:bg-accent/50 active:scale-95",
+                callType === "VIDEO"
+                  ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                  : "scale-[0.98] border-border bg-card hover:border-primary/40"
+              )}
+            >
+              <Video className={cn("size-5", callType === "VIDEO" && "text-primary")} />
+              <span className="text-sm font-medium text-foreground">Video-Call</span>
+              <span className="text-[11px] text-muted-foreground">
+                {priceVideo15.toFixed(2)} € / 15 Min
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCallType("VOICE")}
+              className={cn(
+                "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
+                "hover:bg-accent/50 active:scale-95",
+                callType === "VOICE"
+                  ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                  : "scale-[0.98] border-border bg-card hover:border-primary/40"
+              )}
+            >
+              <Mic className={cn("size-5", callType === "VOICE" && "text-primary")} />
+              <span className="text-sm font-medium text-foreground">Voice-Call</span>
+              <span className="text-[11px] text-muted-foreground">
+                {priceVoice15.toFixed(2)} € / 15 Min
+              </span>
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Der Modus kann später nicht mehr geändert werden.
+          </p>
+        </div>
+
+        {/* Preisaufstellung – Tariffierung Video/Voice */}
+        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+          <h2 className="text-sm font-semibold text-foreground">{t("booking.priceBreakdown")}</h2>
           <div className="flex flex-col gap-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Video className="size-4" /> Video-Call
+              </span>
+              <span className="text-foreground">{priceVideo15.toFixed(2)} € / 15 Min</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Mic className="size-4" /> Voice-Call
+              </span>
+              <span className="text-foreground">{priceVoice15.toFixed(2)} € / 15 Min</span>
+            </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="size-4" /> {t("booking.minDuration")}
@@ -260,41 +316,9 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               <span className="text-foreground">15 Min</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-muted-foreground">
-                <Video className="size-4" /> {t("booking.session")}
-              </span>
-              <span className="text-foreground">{priceVideo15.toFixed(2)} € / 15 Min</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Price Breakdown – dynamisch */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">{t("booking.priceBreakdown")}</h2>
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("booking.trialMinutes")}</span>
               <span className="text-accent font-medium">{t("booking.free")}</span>
             </div>
-            {selectedDate && selectedStart && durationMin > 0 ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">
-                    {t("booking.session")} · {durationMin} Min ({callType === "VIDEO" ? "Video" : "Voice"})
-                  </span>
-                  <span className="text-foreground">
-                    {slots15} × {pricePer15.toFixed(2)} €
-                  </span>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="flex items-center justify-between font-semibold">
-                  <span className="text-foreground">{t("booking.total")}</span>
-                  <span className="text-foreground">{totalPrice.toFixed(2)} €</span>
-                </div>
-              </>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t("booking.selectSlotForPrice")}</p>
-            )}
           </div>
           <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3">
             <Info className="size-4 shrink-0 text-accent mt-0.5" />
@@ -317,30 +341,42 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           />
         </div>
 
-        {/* Selected slot summary */}
-        {selectedDate && selectedStart && (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
-            <Calendar className="size-4 text-primary shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">
-                {t("booking.selectedSlot")
-                  .replace("{date}", selectedDate.split("-").reverse().join("."))
-                  .replace("{time}", selectedStart)}
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                {(() => {
-                  const [sh, sm] = selectedStart.split(":").map(Number)
-                  const [eh, em] = (selectedEnd || selectedStart).split(":").map(Number)
-                  const duration = (eh * 60 + em) - (sh * 60 + sm)
-                  return t("booking.selectedSlotRange")
-                    .replace("{start}", selectedStart)
-                    .replace("{end}", selectedEnd || selectedStart)
-                    .replace("{duration}", String(duration))
-                })()}
-              </span>
+        {/* Termindetails – Buchungszusammenfassung unterhalb des Kalenders (aktualisiert bei jedem Klick) */}
+        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+          <h2 className="text-sm font-semibold text-foreground">Termindetails</h2>
+          {selectedDate && selectedStart && selectedEnd ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <Calendar className="size-4 text-primary shrink-0" />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-foreground">
+                    {t("booking.selectedSlot")
+                      .replace("{date}", selectedDate.split("-").reverse().join("."))
+                      .replace("{time}", selectedStart)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("booking.selectedSlotRange")
+                      .replace("{start}", selectedStart)
+                      .replace("{end}", selectedEnd)
+                      .replace("{duration}", String(durationMin))}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <span className="text-sm text-muted-foreground">
+                  {durationMin} Min · {callType === "VIDEO" ? "Video" : "Voice"} ({slots15} × {pricePer15.toFixed(2)} €)
+                </span>
+                <span className="text-base font-bold text-foreground">
+                  {totalPrice.toFixed(2)} €
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground py-2">
+              Wähle einen Termin im Kalender – die Zusammenfassung und der Preis werden hier angezeigt.
+            </p>
+          )}
+        </div>
 
         {/* Note + Book */}
         <form onSubmit={handleBook} className="flex flex-col gap-4">
@@ -382,50 +418,6 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               </div>
             )
           })()}
-
-          {/* Gesprächs-Modus */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-foreground">Gesprächs-Modus</h3>
-            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
-              <button
-                type="button"
-                onClick={() => setCallType("VIDEO")}
-                className={cn(
-                  "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
-                  "hover:bg-accent/50 active:scale-95",
-                  callType === "VIDEO"
-                    ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
-                    : "scale-[0.98] border-border bg-card hover:border-primary/40"
-                )}
-              >
-                <Video className={cn("size-5", callType === "VIDEO" && "text-primary")} />
-                <span className="text-sm font-medium text-foreground">Video-Call</span>
-                <span className="text-[11px] text-muted-foreground">
-                  Persönliche Beratung mit Kamera.
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCallType("VOICE")}
-                className={cn(
-                  "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
-                  "hover:bg-accent/50 active:scale-95",
-                  callType === "VOICE"
-                    ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
-                    : "scale-[0.98] border-border bg-card hover:border-primary/40"
-                )}
-              >
-                <Mic className={cn("size-5", callType === "VOICE" && "text-primary")} />
-                <span className="text-sm font-medium text-foreground">Voice-Call</span>
-                <span className="text-[11px] text-muted-foreground">
-                  Anonym & diskret (nur Audio).
-                </span>
-              </button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Der Modus kann später nicht mehr geändert werden.
-            </p>
-          </div>
 
           <Button
             type="submit"
