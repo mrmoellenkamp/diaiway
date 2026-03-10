@@ -80,6 +80,7 @@ export function DailyCallContainer({
   const micLevelIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const initGuardRef = useRef(false)
   const remoteSessionIdRef = useRef<string | null>(null)
+  const joinUrlRef = useRef<string | null>(null)
 
   // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
   const performCleanup = useCallback(() => {
@@ -260,6 +261,7 @@ export function DailyCallContainer({
       console.log("--- JOIN ATTEMPT ---")
       console.log("URL:", url)
       console.log("TOKEN-PREFIX:", token?.substring(0, 20))
+      joinUrlRef.current = url
 
       let call = callObjectRef.current
       if (!call) {
@@ -287,9 +289,32 @@ export function DailyCallContainer({
     if (!call || phase !== "IN_CALL") return
     initGuardRef.current = true
 
+    const syncRemoteParticipant = () => {
+      const participants = call.participants()
+      const localSessionId = participants?.local?.session_id
+      for (const [, p] of Object.entries(participants ?? {})) {
+        if (p.session_id !== localSessionId) {
+          const pTracks = (p as { tracks?: { video?: { persistentTrack?: unknown; track?: unknown } } })?.tracks?.video
+          remoteSessionIdRef.current = p.session_id
+          setRemoteParticipant({
+            sessionId: p.session_id,
+            userName: (p as { user_name?: string }).user_name,
+            hasVideo: !!(pTracks?.persistentTrack ?? pTracks?.track),
+          })
+          return true
+        }
+      }
+      return false
+    }
+
     const handleJoinedMeeting = () => {
       const participants = call.participants()
-      console.log("INTERNER RAUM-NAME:", (participants?.local as any)?.room_name)
+      console.log("participants.local (vollständig):", participants?.local)
+      const currentRoom =
+        (participants?.local as { room_name?: string } | undefined)?.room_name ||
+        joinUrlRef.current?.split("/").pop() ||
+        "(unbekannt)"
+      console.log("INTERNER RAUM-NAME:", currentRoom)
       setTimerSecondsLeft(TIMER_DURATION_SEC)
       timerIntervalRef.current = setInterval(() => {
         setTimerSecondsLeft((prev) => {
@@ -300,6 +325,7 @@ export function DailyCallContainer({
           return prev - 1
         })
       }, 1000)
+      syncRemoteParticipant()
     }
 
     const handleParticipantJoined = (ev: any) => {
@@ -386,21 +412,14 @@ export function DailyCallContainer({
 
     if (call.meetingState() === "joined-meeting") handleJoinedMeeting()
 
-    const participants = call.participants()
-    const localSessionId = participants?.local?.session_id
-    for (const [, p] of Object.entries(participants ?? {})) {
-      if (p.session_id !== localSessionId) {
-        const pTracks = (p as { tracks?: { video?: { persistentTrack?: unknown; track?: unknown } } })?.tracks?.video
-        setRemoteParticipant({
-          sessionId: p.session_id,
-          userName: (p as { user_name?: string }).user_name,
-          hasVideo: !!(pTracks?.persistentTrack ?? pTracks?.track),
-        })
-        break
-      }
-    }
+    const participantsRefreshInterval = setInterval(() => {
+      if (remoteSessionIdRef.current) return
+      if (call.meetingState() !== "joined-meeting") return
+      syncRemoteParticipant()
+    }, 2000)
 
     return () => {
+      clearInterval(participantsRefreshInterval)
       call.off("error", handleError)
       call.off("joined-meeting", handleJoinedMeeting)
       call.off("participant-joined", handleParticipantJoined)
