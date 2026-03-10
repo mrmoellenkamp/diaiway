@@ -81,6 +81,13 @@ export async function POST(
       data: { status: action as BookingStatus },
     })
 
+    // booking_request Benachrichtigungen beim Takumi löschen (nur bei Bestätigung/Ablehnung, nicht bei Nachfrage)
+    if (booking.expert?.userId) {
+      await prisma.notification.deleteMany({
+        where: { bookingId: id, type: "booking_request", userId: booking.expert.userId },
+      })
+    }
+
     // Bei Ablehnung + bereits bezahlt: Refund an Shugyo (Auszahlung oder Wallet-Gutschrift)
     if (action === "declined" && booking.paymentStatus === "paid") {
       try {

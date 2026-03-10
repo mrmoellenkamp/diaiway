@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff } from "lucide-react"
+import { AlertTriangle, FlipHorizontal, Loader2, Mic, MicOff, PhoneOff } from "lucide-react"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -28,6 +28,10 @@ interface DailyCallContainerProps {
   userRole: UserRole
   partnerImageUrl?: string | null
   partnerName?: string
+  /** Called when user successfully joins (after start-session); optional. */
+  onSessionStarted?: () => void
+  /** Called when call ends (Auflegen/report-and-leave); parent can show post-call screen instead of redirect. */
+  onCallEnded?: () => void
 }
 
 interface MediaDevice {
@@ -45,6 +49,8 @@ export function DailyCallContainer({
   userRole,
   partnerImageUrl,
   partnerName = "Partner",
+  onSessionStarted,
+  onCallEnded,
 }: DailyCallContainerProps) {
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
@@ -127,6 +133,46 @@ export function DailyCallContainer({
     performCleanup()
     redirectToSessions(triggeredBy)
   }, [performCleanup, redirectToSessions])
+
+  // --- IN_CALL: Auflegen (end-session) ---
+  const handleAuflegen = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "end-session" }),
+      })
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        console.warn("[DailyCall] end-session failed:", data.error)
+      }
+    } catch (e) {
+      console.warn("[DailyCall] end-session error:", e)
+    }
+    performCleanup()
+    if (onCallEnded) onCallEnded()
+    else redirectToSessions("Auflegen-Button")
+  }, [bookingId, performCleanup, onCallEnded, redirectToSessions])
+
+  // --- IN_CALL: Report and leave ---
+  const handleReportAndLeave = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "report-and-leave" }),
+      })
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        console.warn("[DailyCall] report-and-leave failed:", data.error)
+      }
+    } catch (e) {
+      console.warn("[DailyCall] report-and-leave error:", e)
+    }
+    performCleanup()
+    if (onCallEnded) onCallEnded()
+    else redirectToSessions("report-and-leave")
+  }, [bookingId, performCleanup, onCallEnded, redirectToSessions])
 
   // --- LOBBY: getUserMedia ---
   const startLobbyPreview = useCallback(async () => {
@@ -301,11 +347,36 @@ export function DailyCallContainer({
         startVideoOff: callMode === "voice",
       })
       setPhase("IN_CALL")
+
+      // start-session: Mark booking as active (idempotent; 5-min window enforced by API)
+      try {
+        const patchRes = await fetch(`/api/bookings/${bookingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "start-session" }),
+        })
+        const patchData = (await patchRes.json()) as { error?: string }
+        if (!patchRes.ok) {
+          if (patchRes.status === 425) {
+            await call.leave()
+            call.destroy()
+            callObjectRef.current = null
+            setPhase("LOBBY")
+            setError(patchData.error ?? "Raum öffnet erst 5 Minuten vor dem Termin.")
+            return
+          }
+          console.warn("[DailyCall] start-session failed:", patchData.error)
+        } else {
+          onSessionStarted?.()
+        }
+      } catch (startErr) {
+        console.warn("[DailyCall] start-session error:", startErr)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
       setPhase("LOBBY")
     }
-  }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId])
+  }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId, onSessionStarted])
 
   // --- IN_CALL: Events ---
   useEffect(() => {
@@ -851,10 +922,19 @@ export function DailyCallContainer({
         )}
 
         <Button
+          variant="outline"
+          size="icon"
+          className="size-10 sm:size-12 transition-transform active:scale-95 border-destructive/50 text-destructive hover:bg-destructive/10"
+          onClick={handleReportAndLeave}
+          title="Problem melden & auflegen"
+        >
+          <AlertTriangle className="size-5 sm:size-6" />
+        </Button>
+        <Button
           variant="destructive"
           size="icon"
           className="size-10 sm:size-12 transition-transform active:scale-95"
-          onClick={() => forceCleanupAndRedirect("Auflegen-Button")}
+          onClick={handleAuflegen}
           title="Auflegen"
         >
           <PhoneOff className="size-5 sm:size-6" />
