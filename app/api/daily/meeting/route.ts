@@ -96,6 +96,9 @@ export async function POST(req: Request) {
       enable_screenshare: true,
       start_video_off: callMode === "voice",
       exp: Math.round(Date.now() / 1000) + 3600,
+      geo: "eu-central-1",
+      force_relay: true,
+      enable_network_ui: true, // Verbindungsfehler sichtbar machen (Prebuilt-only)
     },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
@@ -135,9 +138,10 @@ export async function POST(req: Request) {
 
     const tokenPayload = {
       properties: {
-        room_name: roomData.name ?? roomName,
+        room_name: resolvedRoomName,
         is_owner: userRole === "takumi",
         exp: Math.round(Date.now() / 1000) + 3600,
+        permissions: { hasPresence: true, canSend: true },
       },
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
