@@ -210,7 +210,7 @@ export default function FinancesPage() {
                                 {tx.invoicePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
                                     <a
-                                      href={tx.invoicePdfUrl}
+                                      href={`/api/billing/download/${tx.id}?type=invoice`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       aria-label={t("finances.downloadInvoice")}
@@ -223,7 +223,7 @@ export default function FinancesPage() {
                                 {tx.stornoInvoicePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
                                     <a
-                                      href={tx.stornoInvoicePdfUrl}
+                                      href={`/api/billing/download/${tx.id}?type=storno-invoice`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       aria-label={t("finances.downloadStornoInvoice")}
@@ -239,7 +239,7 @@ export default function FinancesPage() {
                                 {tx.creditNotePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
                                     <a
-                                      href={tx.creditNotePdfUrl}
+                                      href={`/api/billing/download/${tx.id}?type=credit`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       aria-label={t("finances.downloadCreditNote")}
@@ -252,7 +252,7 @@ export default function FinancesPage() {
                                 {tx.stornoCreditNotePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
                                     <a
-                                      href={tx.stornoCreditNotePdfUrl}
+                                      href={`/api/billing/download/${tx.id}?type=storno-credit`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       aria-label={t("finances.downloadStornoCreditNote")}

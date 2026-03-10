@@ -66,7 +66,7 @@ export async function generateInvoicePdf(opts: {
   doc.text("Vielen Dank für Ihr Vertrauen. — diAiway", 20, 270)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
-  if (process.env.BILLING_ZUGFERD_ENABLED === "true") {
+  if (useZugferd) {
     const unitPriceCents = Math.round(totalAmountCents / quantitySlots15)
     const xml = buildFacturXXml({
       invoiceNumber,
