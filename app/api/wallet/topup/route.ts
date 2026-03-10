@@ -2,18 +2,32 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { stripe } from "@/lib/stripe"
 
-const TOPUP_AMOUNT_CENTS = 2000 // 20 €
+const MIN_AMOUNT_CENTS = 2000 // 20 €
 
 /**
  * POST /api/wallet/topup
- * Erstellt eine Stripe-Checkout-Session für Wallet-Aufladung (20 €).
- * Return: { url } für Redirect oder { clientSecret, sessionId } für Embedded.
+ * Erstellt eine Stripe-Checkout-Session für Wallet-Aufladung.
+ * Body: { amountCents?: number } – frei wählbar, mindestens 20 €.
  */
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
+
+  let amountCents = MIN_AMOUNT_CENTS
+  try {
+    const body = await req.json().catch(() => ({}))
+    const requested = body?.amountCents ?? body?.amount
+    if (typeof requested === "number" && requested >= MIN_AMOUNT_CENTS) {
+      amountCents = Math.round(requested)
+    } else if (typeof requested === "string") {
+      const parsed = parseFloat(requested)
+      if (!isNaN(parsed) && parsed * 100 >= MIN_AMOUNT_CENTS) {
+        amountCents = Math.round(parsed * 100)
+      }
+    }
+  } catch { /* use default */ }
 
   try {
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -28,7 +42,7 @@ export async function POST() {
               name: "diAiway Wallet-Aufladung",
               description: "Guthaben für Instant-Connect & Buchungen",
             },
-            unit_amount: TOPUP_AMOUNT_CENTS,
+            unit_amount: amountCents,
           },
           quantity: 1,
         },
@@ -43,7 +57,7 @@ export async function POST() {
     return NextResponse.json({
       clientSecret: checkoutSession.client_secret,
       sessionId: checkoutSession.id,
-      amountCents: TOPUP_AMOUNT_CENTS,
+      amountCents,
     })
   } catch (err) {
     console.error("[wallet/topup] Stripe error:", err)

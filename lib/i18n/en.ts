@@ -323,6 +323,7 @@ const en = {
   "finances.downloadStornoCreditNote": "Download credit note (credit note storno)",
   "finances.noTransactions": "No transactions yet.",
   "finances.canWithdraw": "Withdrawal available",
+  "finances.topup": "Top up wallet",
 
   // Invoice Data
   "invoice.title": "Invoice Data",
