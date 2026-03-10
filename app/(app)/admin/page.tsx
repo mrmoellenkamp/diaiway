@@ -19,9 +19,10 @@ import {
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
-  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2,
+  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, FolderOpen,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
+import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -343,6 +344,8 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<{ role: string; appRole: string }>({ role: "", appRole: "" })
   const [saving, setSaving] = useState(false)
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const [profileUserName, setProfileUserName] = useState("")
   const limit = 20
 
   const load = useCallback(async () => {
@@ -486,12 +489,21 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                     <p className="text-[10px] text-muted-foreground">{u._count.bookings} Buchungen · {relDate(u.createdAt)}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-7"
+                      title="Vollständiges Profil anzeigen & bearbeiten"
+                      onClick={() => { setProfileUserId(u.id); setProfileUserName(u.name) }}
+                    >
+                      <FolderOpen className="size-3.5" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="size-7"
-                      onClick={() => { setEditingId(u.id); setEditForm({ role: u.role, appRole: u.appRole }) }}>
+                      onClick={(e) => { e.stopPropagation(); setEditingId(u.id); setEditForm({ role: u.role, appRole: u.appRole }) }}>
                       <Edit2 className="size-3.5" />
                     </Button>
                     <Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(u.id, u.name)}>
+                      onClick={(e) => { e.stopPropagation(); handleDelete(u.id, u.name) }}>
                       <Trash2 className="size-3.5" />
                     </Button>
                   </div>
@@ -513,6 +525,13 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
           </Button>
         </div>
       )}
+
+      <AdminUserProfileSheet
+        userId={profileUserId}
+        userName={profileUserName}
+        onClose={() => setProfileUserId(null)}
+        onSaved={() => { onDataChanged?.(); void load() }}
+      />
     </div>
   )
 }
