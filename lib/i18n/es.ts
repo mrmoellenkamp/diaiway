@@ -649,6 +649,7 @@ const es = {
   // Availability Dashboard
   "avail.title": "Mi disponibilidad",
   "avail.tabWeekly": "Plan semanal",
+  "avail.tabInstant": "Llamada instantánea",
   "avail.tabSeasonal": "Reglas estacionales",
   "avail.tabCalendar": "Calendario",
   "avail.saveAll": "Guardar todos los cambios",
@@ -657,6 +658,7 @@ const es = {
   "avail.notAvailable": "No disponible",
   "avail.timeBlock": "Bloque de tiempo",
   "avail.weeklyHint": "Establece tu horario semanal regular. Estos tiempos aplican por defecto para todas las semanas.",
+  "avail.instantHint": "Horarios en que aceptas llamadas instantáneas sin reserva. Vacío = siempre que el estado sea „Disponible“.",
   "avail.noRules": "Aún no hay reglas estacionales.",
   "avail.addRule": "Añadir regla",
   "avail.ruleName": "Nombre de la regla",

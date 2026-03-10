@@ -53,6 +53,7 @@ export async function GET(req: Request) {
           exceptions: avail.exceptions as unknown as IDateException[],
         }
       : null
+    const instantSlots = (avail?.instantSlots as WeeklySlots | null) ?? null
 
     if (date) {
       return NextResponse.json({ date, slots: resolveSlots(availData, date) })
@@ -62,9 +63,13 @@ export async function GET(req: Request) {
         slots: availData?.slots || EMPTY_WEEKLY_SLOTS,
         yearlyRules: availData?.yearlyRules || [],
         exceptions: availData?.exceptions || [],
+        instantSlots: instantSlots || EMPTY_WEEKLY_SLOTS,
       })
     }
-    return NextResponse.json({ slots: availData?.slots || EMPTY_WEEKLY_SLOTS })
+    return NextResponse.json({
+      slots: availData?.slots || EMPTY_WEEKLY_SLOTS,
+      instantSlots: instantSlots || EMPTY_WEEKLY_SLOTS,
+    })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
@@ -82,16 +87,18 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json()
-    const { slots, yearlyRules, exceptions } = body as {
+    const { slots, yearlyRules, exceptions, instantSlots } = body as {
       slots?: WeeklySlots
       yearlyRules?: IWeeklyRule[]
       exceptions?: IDateException[]
+      instantSlots?: WeeklySlots
     }
 
     const data: Record<string, unknown> = {}
     if (slots !== undefined) data.slots = slots
     if (yearlyRules !== undefined) data.yearlyRules = yearlyRules
     if (exceptions !== undefined) data.exceptions = exceptions
+    if (instantSlots !== undefined) data.instantSlots = instantSlots
 
     await prisma.availability.upsert({
       where: { userId: session.user.id },
@@ -101,6 +108,7 @@ export async function PUT(req: Request) {
         slots: (slots ?? EMPTY_WEEKLY_SLOTS) as object,
         yearlyRules: (yearlyRules ?? []) as object[],
         exceptions: (exceptions ?? []) as object[],
+        instantSlots: (instantSlots ?? EMPTY_WEEKLY_SLOTS) as object,
       },
     })
 

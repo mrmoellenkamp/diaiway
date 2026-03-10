@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { isWithinInstantSlots } from "@/lib/availability-utils"
+import type { WeeklySlots } from "@/lib/availability-utils"
 
 /**
  * GET /api/bookings/instant-check?expertId=xxx
@@ -24,15 +26,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [expert, user, paidBooking] = await Promise.all([
-      prisma.expert.findUnique({
-        where: { id: expertId },
-        select: {
-          priceVideo15Min: true,
-          pricePerSession: true,
-          liveStatus: true,
-        },
-      }),
+    const expertPromise = prisma.expert.findUnique({
+      where: { id: expertId },
+      select: {
+        userId: true,
+        priceVideo15Min: true,
+        pricePerSession: true,
+        liveStatus: true,
+      },
+    })
+    const availabilityPromise = expertPromise.then(async (e) =>
+      e?.userId ? prisma.availability.findUnique({ where: { userId: e.userId } }) : null
+    )
+
+    const [expert, user, paidBooking, availability] = await Promise.all([
+      expertPromise,
       prisma.user.findUnique({
         where: { id: session.user.id },
         select: { balance: true },
@@ -45,6 +53,7 @@ export async function GET(req: NextRequest) {
         },
         select: { id: true },
       }),
+      availabilityPromise,
     ])
 
     if (!expert) {
@@ -59,12 +68,18 @@ export async function GET(req: NextRequest) {
     const userBalanceCents = user?.balance ?? 0
     const hasPaidBefore = !!paidBooking
 
+    const instantSlots = availability?.instantSlots as WeeklySlots | null | undefined
+    const hasInstantRestriction = instantSlots && Object.values(instantSlots).some((arr) => arr && arr.length > 0)
+    const instantAvailableNow = expert.liveStatus === "available" &&
+      (!hasInstantRestriction || isWithinInstantSlots(instantSlots, new Date()))
+
     return NextResponse.json({
       hasPaidBefore,
       minBalanceCents,
       userBalanceCents,
       pricePerMinuteCents,
       hasSufficientBalance: userBalanceCents >= minBalanceCents,
+      instantAvailableNow,
     })
   } catch {
     return NextResponse.json({ error: "Fehler beim Prüfen." }, { status: 500 })

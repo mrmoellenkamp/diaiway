@@ -15,7 +15,7 @@ import { toast } from "sonner"
 import {
   ArrowLeft, Plus, Trash2, Loader2, Save, Clock, Calendar,
   CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight,
-  CalendarX2, CalendarDays, Info, Wallet,
+  CalendarX2, CalendarDays, Info, Wallet, Phone,
 } from "lucide-react"
 import {
   resolveSlots,
@@ -217,6 +217,7 @@ export default function AvailabilityPage() {
   const [selectedDate, setSelectedDate] = useState("")
 
   // New rule form
+  const [instantSlots, setInstantSlots] = useState<Slots>(EMPTY_SLOTS)
   const [showNewRule, setShowNewRule] = useState(false)
   const [newRule, setNewRule] = useState<IWeeklyRule>({
     name: "", startWeek: 1, endWeek: 52, slots: { ...EMPTY_WEEKLY_SLOTS },
@@ -233,6 +234,7 @@ export default function AvailabilityPage() {
         setSlots(availData.slots || EMPTY_SLOTS)
         setYearlyRules(availData.yearlyRules || [])
         setExceptions(availData.exceptions || [])
+        setInstantSlots(availData.instantSlots || EMPTY_SLOTS)
         setBookings(
           (bookingsData.bookings || []).filter(
             (b: Booking) => !["cancelled", "declined"].includes(b.status)
@@ -250,7 +252,7 @@ export default function AvailabilityPage() {
       const res = await fetch("/api/availability", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slots, yearlyRules, exceptions }),
+        body: JSON.stringify({ slots, yearlyRules, exceptions, instantSlots }),
       })
       const data = await res.json()
       if (res.ok) toast.success(data.message || t("avail.saved"))
@@ -407,7 +409,7 @@ export default function AvailabilityPage() {
             <div>
               <h1 className="text-lg font-bold text-foreground">{t("avail.title")}</h1>
               <p className="text-xs text-muted-foreground">
-                {t("avail.tabWeekly")} · {t("avail.tabSeasonal")} · {t("avail.tabCalendar")}
+                {t("avail.tabWeekly")} · {t("avail.tabInstant")} · {t("avail.tabSeasonal")} · {t("avail.tabCalendar")}
               </p>
             </div>
           </div>
@@ -479,9 +481,12 @@ export default function AvailabilityPage() {
 
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="schedule" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="schedule" className="gap-1 text-xs">
                 <Clock className="size-3" /> {t("avail.tabWeekly")}
+              </TabsTrigger>
+              <TabsTrigger value="instant" className="gap-1 text-xs">
+                <Phone className="size-3" /> {t("avail.tabInstant")}
               </TabsTrigger>
               <TabsTrigger value="calendar" className="gap-1 text-xs">
                 <Calendar className="size-3" /> {t("avail.tabCalendar")}
@@ -491,7 +496,7 @@ export default function AvailabilityPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* ── Tab: Standard Weekly Schedule ─────────────────────────── */}
+            {/* ── Tab: Buchbare Zeiten (geplante Termine) ─────────────────── */}
             <TabsContent value="schedule">
               <Card>
                 <CardHeader className="pb-2">
@@ -505,6 +510,24 @@ export default function AvailabilityPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <WeeklySlotsEditor slots={slots} onChange={setSlots} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Tab: Instant-Call Zeiten (ohne Buchung) ────────────────── */}
+            <TabsContent value="instant">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Phone className="size-4 text-primary" />
+                    {t("avail.tabInstant")}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {t("avail.instantHint")}
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <WeeklySlotsEditor slots={instantSlots} onChange={setInstantSlots} />
                 </CardContent>
               </Card>
             </TabsContent>

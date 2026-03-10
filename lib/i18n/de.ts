@@ -654,6 +654,7 @@ const de = {
   // Availability Dashboard
   "avail.title": "Meine Verfügbarkeit",
   "avail.tabWeekly": "Wochenplan",
+  "avail.tabInstant": "Instant-Call",
   "avail.tabSeasonal": "Saisonale Regeln",
   "avail.tabCalendar": "Kalender",
   "avail.saveAll": "Alle Änderungen speichern",
@@ -662,6 +663,7 @@ const de = {
   "avail.notAvailable": "Nicht verfügbar",
   "avail.timeBlock": "Zeitblock",
   "avail.weeklyHint": "Lege deinen regulären Wochenplan fest. Diese Zeiten gelten als Standard für alle Wochen.",
+  "avail.instantHint": "Zeiten, zu denen du Instant-Calls ohne Buchung annimmst. Leer = immer, wenn Status auf „Verfügbar“ steht.",
   "avail.noRules": "Noch keine saisonalen Regeln.",
   "avail.addRule": "Regel hinzufügen",
   "avail.ruleName": "Regelname",
