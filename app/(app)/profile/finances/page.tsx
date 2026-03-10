@@ -134,6 +134,7 @@ export default function FinancesPage() {
                 {wallet?.canWithdraw && (
                   <p className="mt-2 text-xs text-primary">{t("finances.canWithdraw")}</p>
                 )}
+                {/* Wallet aufladen: Shugyo & Takumi (Takumi kann andere Takumis buchen) */}
                 <Button
                   onClick={() => openWalletTopup(refetchWallet)}
                   className="mt-3 w-full gap-2"

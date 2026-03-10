@@ -15,7 +15,7 @@ import { toast } from "sonner"
 import {
   ArrowLeft, Plus, Trash2, Loader2, Save, Clock, Calendar,
   CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight,
-  CalendarX2, CalendarDays, Info,
+  CalendarX2, CalendarDays, Info, Wallet,
 } from "lucide-react"
 import {
   resolveSlots,
@@ -28,6 +28,7 @@ import {
   type IAvailabilityData,
 } from "@/lib/availability-utils"
 import { useI18n } from "@/lib/i18n"
+import { useWalletTopup } from "@/lib/wallet-topup-context"
 import { TakumiStatusCard } from "@/components/takumi-status-card"
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -173,6 +174,7 @@ export default function AvailabilityPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const { t, locale } = useI18n()
+  const { openWalletTopup } = useWalletTopup()
 
   const userRole = (session?.user as { role?: string })?.role
   const appRole = (session?.user as { appRole?: string })?.appRole
@@ -412,6 +414,16 @@ export default function AvailabilityPage() {
 
           {/* Instant-Connect Status */}
           <TakumiStatusCard />
+
+          {/* Wallet aufladen — Takumi kann andere Takumis buchen */}
+          <Button
+            onClick={() => openWalletTopup()}
+            variant="outline"
+            className="w-full gap-2"
+          >
+            <Wallet className="size-4" />
+            {t("finances.topup")}
+          </Button>
 
           {/* Pending bookings alert */}
           {pendingBookings.length > 0 && (
