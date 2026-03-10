@@ -437,10 +437,10 @@ export async function canTakumiWithdraw(userId: string): Promise<boolean> {
 
 /**
  * Transaktionshistorie für den Nutzer.
- * Als Shugyo: gezahlte Buchungen. Als Takumi: erhaltene Buchungen.
+ * Enthält: Buchungen (paid/earned) + Wallet-Transaktionen (topup, deduction, refund).
  */
 export async function getWalletHistory(userId: string, limit = 50) {
-  const [asPayer, asExpert] = await Promise.all([
+  const [asPayer, asExpert, walletTx] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId },
       take: limit,
@@ -457,7 +457,42 @@ export async function getWalletHistory(userId: string, limit = 50) {
           })
         : []
     ),
+    prisma.walletTransaction.findMany({
+      where: { userId },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
   ])
+  const walletItems = walletTx.map((wt) => {
+    const txType = wt.type === "topup" ? "topup" : wt.type === "refund" ? "refund" : "deduction"
+    return {
+      id: wt.id,
+      type: txType as "topup" | "deduction" | "refund",
+      amount: wt.amountCents,
+      status: "COMPLETED",
+      bookingId: null as string | null,
+      label:
+        wt.type === "topup"
+          ? "Wallet-Aufladung"
+          : wt.type === "refund"
+            ? "Rückerstattung"
+            : "Belastung",
+      date: new Date(wt.createdAt).toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+      createdAt: wt.createdAt,
+      invoiceNumber: null,
+      invoicePdfUrl: null,
+      stornoInvoiceNumber: null,
+      stornoInvoicePdfUrl: null,
+      creditNoteNumber: null,
+      creditNotePdfUrl: null,
+      stornoCreditNoteNumber: null,
+      stornoCreditNotePdfUrl: null,
+    }
+  })
   const combined = [
     ...asPayer.map((t) => ({
       id: t.id,
@@ -472,6 +507,10 @@ export async function getWalletHistory(userId: string, limit = 50) {
       invoicePdfUrl: t.invoicePdfUrl,
       stornoInvoiceNumber: t.stornoInvoiceNumber,
       stornoInvoicePdfUrl: t.stornoInvoicePdfUrl,
+      creditNoteNumber: null as string | null,
+      creditNotePdfUrl: null as string | null,
+      stornoCreditNoteNumber: null as string | null,
+      stornoCreditNotePdfUrl: null as string | null,
     })),
     ...asExpert.map((t) => ({
       id: t.id,
@@ -482,11 +521,16 @@ export async function getWalletHistory(userId: string, limit = 50) {
       label: t.booking.userName,
       date: t.booking.date,
       createdAt: t.createdAt,
+      invoiceNumber: null as string | null,
+      invoicePdfUrl: null as string | null,
+      stornoInvoiceNumber: null as string | null,
+      stornoInvoicePdfUrl: null as string | null,
       creditNoteNumber: t.creditNoteNumber,
       creditNotePdfUrl: t.creditNotePdfUrl,
       stornoCreditNoteNumber: t.stornoCreditNoteNumber,
       stornoCreditNotePdfUrl: t.stornoCreditNotePdfUrl,
     })),
+    ...walletItems,
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   return combined.slice(0, limit)
 }

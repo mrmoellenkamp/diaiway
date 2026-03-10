@@ -324,6 +324,9 @@ const en = {
   "finances.noTransactions": "No transactions yet.",
   "finances.canWithdraw": "Withdrawal available",
   "finances.topup": "Top up",
+  "finances.topupTx": "Wallet top-up",
+  "finances.refundTx": "Refund",
+  "finances.deductionTx": "Deduction",
 
   // Invoice Data
   "invoice.title": "Invoice Data",

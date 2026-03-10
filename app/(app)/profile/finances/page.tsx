@@ -20,10 +20,10 @@ function formatCents(cents: number): string {
 
 type TxItem = {
   id: string
-  type: "paid" | "earned"
+  type: "paid" | "earned" | "topup" | "deduction" | "refund"
   amount: number
   status: string
-  bookingId: string
+  bookingId: string | null
   label: string
   date: string
   createdAt: string
@@ -218,27 +218,45 @@ export default function FinancesPage() {
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {history.map((tx) => (
+                    {history.map((tx) => {
+                      const typeLabel =
+                        tx.type === "paid"
+                          ? t("finances.paid")
+                          : tx.type === "earned"
+                            ? t("finances.earned")
+                            : tx.type === "topup"
+                              ? t("finances.topupTx")
+                              : tx.type === "refund"
+                                ? t("finances.refundTx")
+                                : t("finances.deductionTx")
+                      const displayLabel =
+                        tx.type === "topup" || tx.type === "refund" || tx.type === "deduction"
+                          ? typeLabel
+                          : tx.label
+                      const isCredit =
+                        tx.type === "earned" || tx.type === "topup" || tx.type === "refund"
+                      return (
                       <div
                         key={tx.id}
                         className="flex items-center justify-between gap-2 rounded-lg border border-border/60 p-3"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{tx.label}</p>
+                          <p className="truncate text-sm font-medium text-foreground">{displayLabel}</p>
                           <p className="text-xs text-muted-foreground">
-                            {tx.date} · {tx.type === "paid" ? t("finances.paid") : t("finances.earned")}
+                            {tx.date}
+                            {(tx.type === "paid" || tx.type === "earned") && ` · ${typeLabel}`}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <span
                             className={`text-sm font-bold ${
-                              tx.type === "paid" ? "text-destructive" : "text-primary"
+                              isCredit ? "text-primary" : "text-destructive"
                             }`}
                           >
                             {formatCents(tx.amount)}
                           </span>
                           <div className="flex items-center gap-1">
-                            {tx.type === "paid" ? (
+                            {tx.type === "paid" && (
                               <>
                                 {tx.invoicePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
@@ -267,7 +285,8 @@ export default function FinancesPage() {
                                   </Button>
                                 )}
                               </>
-                            ) : (
+                            )}
+                            {tx.type === "earned" && (
                               <>
                                 {tx.creditNotePdfUrl && (
                                   <Button variant="ghost" size="icon" className="size-8" asChild>
@@ -302,7 +321,7 @@ export default function FinancesPage() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 )}
               </CardContent>
