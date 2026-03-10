@@ -338,18 +338,12 @@ export function DailyCallContainer({
     }
 
     const handleTrackStarted = (ev: import("@daily-co/daily-js").DailyEventObjectTrack) => {
-      const p = ev.participant
-      if (!p || p.local || p.session_id !== remoteSessionIdRef.current) return
-      if (ev.track?.kind !== "video") return
-
-      const t = ev.track as MediaStreamTrack | { persistentTrack?: MediaStreamTrack }
-      const mediaTrack = t instanceof MediaStreamTrack ? t : t?.persistentTrack
-      if (mediaTrack && remoteVideoRef.current) {
-        const el = remoteVideoRef.current
-        el.srcObject = new MediaStream([mediaTrack])
-        el.play().catch(() => {}) // Autoplay-Fallback falls Browser blockiert
+      if (ev.participant?.session_id === remoteSessionIdRef.current && ev.track?.kind === "video") {
+        setRemoteParticipant((prev) => {
+          if (!prev) return prev
+          return { ...prev, sessionId: prev.sessionId, hasVideo: true }
+        })
       }
-      setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasVideo: true } : prev)
     }
 
     call.on("joined-meeting", handleJoinedMeeting)
@@ -394,22 +388,19 @@ export function DailyCallContainer({
     }
   }, [phase])
 
-  // --- Video-Mapping: Remote-Track → remoteVideoRef (Main-Video) ---
+  // --- Video-Mapping: Remote + Fallback ---
   useEffect(() => {
     const call = callObjectRef.current
     const videoEl = remoteVideoRef.current
-    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video") return
+    if (!call || !videoEl || phase !== "IN_CALL") return
     if (!remoteParticipant) {
       videoEl.srcObject = null
       return
     }
-    const participant = call.participants()[remoteParticipant.sessionId] as
-      | { tracks?: { video?: { persistentTrack?: MediaStreamTrack } } }
-      | undefined
+    const participant = call.participants()[remoteParticipant.sessionId]
     const videoTrack = participant?.tracks?.video?.persistentTrack
-    if (videoTrack) {
+    if (videoTrack && callMode === "video") {
       videoEl.srcObject = new MediaStream([videoTrack])
-      videoEl.play().catch(() => {})
     } else {
       videoEl.srcObject = null
     }
@@ -578,12 +569,12 @@ export function DailyCallContainer({
               playsInline
               className={cn(
                 "absolute inset-0 h-full w-full",
-                hasRemoteVideo ? "z-10" : "z-0",
-                "sm:object-cover object-contain"
+                "sm:object-cover",
+                "object-contain" // Nichts abgeschnitten auf Mobile
               )}
             />
             {showVideoFallback && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                 <Avatar className="size-24 sm:size-32">
                   {partnerImageUrl ? (
                     <AvatarImage src={partnerImageUrl} alt={partnerName} />
