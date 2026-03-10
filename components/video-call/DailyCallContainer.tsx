@@ -303,7 +303,7 @@ export function DailyCallContainer({
         setRemoteParticipant({
           sessionId: p.session_id,
           userName: p.user_name,
-          hasVideo: !!part?.tracks?.video?.persistentTrack,
+          hasVideo: !!(part?.tracks?.video?.persistentTrack ?? part?.tracks?.video?.track),
         })
       }
     }
@@ -315,7 +315,7 @@ export function DailyCallContainer({
         tracks?: { video?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } }
       } | undefined
       const videoTrackObj = part?.tracks?.video
-      const videoTrack = videoTrackObj?.track ?? videoTrackObj?.persistentTrack
+      const videoTrack = videoTrackObj?.persistentTrack ?? videoTrackObj?.track
       const isPlayable = videoTrackObj?.state === "playable"
       if (isPlayable && videoTrack && remoteVideoRef.current && p.session_id === remoteSessionIdRef.current) {
         remoteVideoRef.current.srcObject = new MediaStream([videoTrack])
@@ -380,10 +380,11 @@ export function DailyCallContainer({
     const localSessionId = participants?.local?.session_id
     for (const [, p] of Object.entries(participants ?? {})) {
       if (p.session_id !== localSessionId) {
+        const pTracks = (p as { tracks?: { video?: { persistentTrack?: unknown; track?: unknown } } })?.tracks?.video
         setRemoteParticipant({
           sessionId: p.session_id,
           userName: (p as { user_name?: string }).user_name,
-          hasVideo: !!p?.tracks?.video?.persistentTrack,
+          hasVideo: !!(pTracks?.persistentTrack ?? pTracks?.track),
         })
         break
       }
@@ -417,7 +418,7 @@ export function DailyCallContainer({
         }
       | undefined
     const videoTrackObj = participant?.tracks?.video
-    const videoTrack = videoTrackObj?.track ?? videoTrackObj?.persistentTrack
+    const videoTrack = videoTrackObj?.persistentTrack ?? videoTrackObj?.track
     if (videoTrack) {
       videoEl.srcObject = new MediaStream([videoTrack])
       videoEl.play().catch(() => {})
@@ -433,6 +434,8 @@ export function DailyCallContainer({
       videoEl.srcObject = null
       return
     }
+    const participant = call.participants()[remoteParticipant.sessionId]
+    console.log("[DailyCall] Tracks von Partner:", participant?.tracks)
     assignRemoteVideoTrack()
     return () => {
       videoEl.srcObject = null
@@ -603,6 +606,9 @@ export function DailyCallContainer({
       <div className="relative flex-1 bg-black">
         {callMode === "video" ? (
           <>
+            <div className="absolute left-2 top-14 z-20 rounded bg-black/80 px-2 py-1 font-mono text-xs text-white">
+              {remoteParticipant?.hasVideo ? "Video erkannt" : "Kein Video-Signal"} | sessionId: {remoteParticipant?.sessionId ?? "–"}
+            </div>
             <video
               ref={remoteVideoRef}
               autoPlay
