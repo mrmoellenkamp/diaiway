@@ -13,6 +13,87 @@ import {
 const PLATFORM_FEE_PERCENT = 15
 
 /**
+ * Wallet aufladen (nach erfolgreicher Stripe-Zahlung).
+ * Idempotent bei Webhook-Wiederholung (prüft stripeSessionId).
+ */
+export async function creditWalletTopup(
+  userId: string,
+  amountCents: number,
+  stripeSessionId: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (amountCents <= 0) return { ok: false, error: "Betrag muss positiv sein" }
+
+  try {
+    const existing = await prisma.walletTransaction.findFirst({
+      where: { userId, referenceId: stripeSessionId, type: "topup" },
+    })
+    if (existing) return { ok: true } // Idempotenz
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { balance: { increment: amountCents } },
+      })
+      await tx.walletTransaction.create({
+        data: {
+          userId,
+          amountCents,
+          type: "topup",
+          referenceId: stripeSessionId,
+        },
+      })
+    })
+    return { ok: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error"
+    console.error("[creditWalletTopup] Error:", msg)
+    return { ok: false, error: msg }
+  }
+}
+
+/**
+ * Atomar Betrag vom Wallet abziehen.
+ * Für Instant-Connect und andere Belastungen.
+ */
+export async function deductFromWallet(
+  userId: string,
+  amountCents: number,
+  opts?: { type?: string; referenceId?: string }
+): Promise<{ ok: boolean; error?: string }> {
+  if (amountCents <= 0) return { ok: false, error: "Betrag muss positiv sein" }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { balance: true },
+      })
+      if (!user) return { ok: false as const, error: "User nicht gefunden" }
+      if (user.balance < amountCents) return { ok: false as const, error: "Insufficient wallet balance" }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { balance: { decrement: amountCents } },
+      })
+      await tx.walletTransaction.create({
+        data: {
+          userId,
+          amountCents: -amountCents,
+          type: opts?.type ?? "deduction",
+          referenceId: opts?.referenceId ?? undefined,
+        },
+      })
+      return { ok: true as const }
+    })
+    return result
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error"
+    console.error("[deductFromWallet] Error:", msg)
+    return { ok: false, error: msg }
+  }
+}
+
+/**
  * Schritt 1: Authorization (Hold & Capture Modell)
  * Wenn ein Shugyo zahlt, wird das Geld bei Stripe reserviert (capture_method: manual).
  * Wir erstellen eine Transaction mit status AUTHORIZED. Das Guthaben wird dem Takumi

@@ -55,6 +55,14 @@ enum SkillLevel {
   PROFI
 }
 
+// Instant-Connect: Takumi-Status für spontane Calls
+enum LiveStatus {
+  offline   // Nicht erreichbar
+  available // Online, bereit für Instant-Call
+  in_call   // Im Gespräch
+  busy      // Beschäftigt (nicht verfügbar)
+}
+
 enum TransactionStatus {
   PENDING    // @deprecated Legacy, wird als AUTHORIZED behandelt
   COMPLETED  // @deprecated Legacy, wird als CAPTURED behandelt
@@ -84,9 +92,9 @@ model User {
   // Kundennummer für Belege (Format KD-10000)
   customerNumber   String?   @unique
 
-  // Wallet (für Takumis: Verdienst; für Shugyos: Guthaben aus Rückerstattungen)
-  balance          Int       @default(0)  // EUR cents
-  pendingBalance   Int       @default(0)  // EUR cents, bei Hold-Modell nicht genutzt (Stripe hält)
+  // Wallet: balance = verfügbares Guthaben (Shugyo: Aufladung/Rückerstattung; Takumi: Verdienst)
+  balance          Int       @default(0)  // EUR cents (walletBalance)
+  pendingBalance   Int       @default(0)  // EUR cents, Escrow bis processCompletion
 
   // Shugyo: Bei Rückerstattung — "payout" = Auszahlung auf Karte, "wallet" = Guthaben
   refundPreference String    @default("payout")
@@ -109,8 +117,24 @@ model User {
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
   transactionsPaid   Transaction[]     @relation("UserPaidTransactions")
+  walletTransactions WalletTransaction[]
   shugyoProjects      ShugyoProject[]
   takumiPortfolio     TakumiPortfolioProject[]
+}
+
+// Wallet-Bewegungen (Aufladung, Buchung, Rückerstattung) für Instant-Connect & Buchhaltung
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents Int      // Positiv = Gutschrift, Negativ = Belastung
+  type        String   // topup | deduction | booking_payment | refund | payout
+  referenceId String?  // bookingId, stripeSessionId, etc.
+  metadata    Json?    @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model ShugyoProject {
@@ -160,6 +184,7 @@ model Expert {
   pricePerSession Int?     // Legacy: EUR pro 30 Min, Fallback wenn neue Preise fehlen
   isLive          Boolean  @default(false)  // Sichtbar für Buchungen (manual)
   lastSeenAt      DateTime?                // Echte Präsenz; online = isLive && lastSeenAt < 5 min
+  liveStatus      LiveStatus?              // Instant-Connect: offline | available | in_call | busy
   isPro           Boolean  @default(false)
   verified        Boolean  @default(false)
   portfolio       String[]

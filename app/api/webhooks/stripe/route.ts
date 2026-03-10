@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
-import { onPaymentReceived } from "@/lib/wallet-service"
+import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notify-takumi"
 import type Stripe from "stripe"
 
@@ -79,6 +79,25 @@ export async function POST(req: Request) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const paymentType = session.metadata?.type
+
+  // Wallet-Aufladung (Instant-Connect)
+  if (paymentType === "wallet_topup") {
+    const userId = session.metadata?.userId
+    if (!userId) {
+      console.error("[Stripe Webhook] wallet_topup: missing userId")
+      return
+    }
+    const amountTotal = session.amount_total ?? 0
+    try {
+      await creditWalletTopup(userId, amountTotal, session.id)
+      console.log(`[Stripe Webhook] Wallet topup: ${amountTotal / 100} € für User ${userId}`)
+    } catch (err) {
+      console.error("[Stripe Webhook] creditWalletTopup failed:", err)
+    }
+    return
+  }
+
   const bookingId = session.metadata?.bookingId
   if (!bookingId) {
     console.error("[Stripe Webhook] No bookingId in session metadata")
@@ -112,7 +131,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Bei Vorauszahlung (booking_payment): E-Mail + Notification an Takumi senden
-  const paymentType = session.metadata?.type
   if (paymentType === "booking_payment") {
     try {
       await notifyTakumiAfterPayment(bookingId)
