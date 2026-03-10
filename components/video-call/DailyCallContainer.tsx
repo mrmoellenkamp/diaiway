@@ -62,6 +62,8 @@ export function DailyCallContainer({
     sessionId: string
     userName?: string
     hasVideo?: boolean
+    hasAudio?: boolean
+    audioTrack?: MediaStreamTrack
   } | null>(null)
   const [partnerSpeaking, setPartnerSpeaking] = useState(false)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number | null>(null)
@@ -71,6 +73,7 @@ export function DailyCallContainer({
 
   const callObjectRef = useRef<DailyCall | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const localPiPVideoRef = useRef<HTMLVideoElement>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
@@ -101,6 +104,10 @@ export function DailyCallContainer({
         console.warn("[DailyCall] performCleanup leave/destroy:", e)
       }
       callObjectRef.current = null
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null
+      remoteAudioRef.current.pause()
     }
     initGuardRef.current = false
   }, [])
@@ -311,12 +318,17 @@ export function DailyCallContainer({
       const localSessionId = participants?.local?.session_id
       for (const [, p] of Object.entries(participants ?? {})) {
         if (p.session_id !== localSessionId) {
-          const pTracks = (p as { tracks?: { video?: { persistentTrack?: unknown; track?: unknown } } })?.tracks?.video
+          const tracks = (p as { tracks?: { video?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }; audio?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } } })?.tracks
+          const videoTrack = tracks?.video?.persistentTrack ?? tracks?.video?.track
+          const audioTrack = tracks?.audio?.persistentTrack ?? tracks?.audio?.track
+          const pTyped = p as { user_name?: string; audio?: boolean }
           remoteSessionIdRef.current = p.session_id
           setRemoteParticipant({
             sessionId: p.session_id,
-            userName: (p as { user_name?: string }).user_name,
-            hasVideo: !!(pTracks?.persistentTrack ?? pTracks?.track),
+            userName: pTyped.user_name,
+            hasVideo: !!videoTrack,
+            hasAudio: !!audioTrack,
+            audioTrack: audioTrack ?? undefined,
           })
           return true
         }
@@ -350,11 +362,16 @@ export function DailyCallContainer({
       const p = ev?.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
         remoteSessionIdRef.current = p.session_id
-        const part = call.participants()[p.session_id]
+        const part = call.participants()[p.session_id] as { tracks?: { video?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }; audio?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } }; user_name?: string; audio?: boolean } | undefined
+        const videoTrack = part?.tracks?.video?.persistentTrack ?? part?.tracks?.video?.track
+        const audioTrack = part?.tracks?.audio?.persistentTrack ?? part?.tracks?.audio?.track
+        console.log("Partner Audio State:", part?.audio)
         setRemoteParticipant({
           sessionId: p.session_id,
           userName: p.user_name,
-          hasVideo: !!(part?.tracks?.video?.persistentTrack ?? part?.tracks?.video?.track),
+          hasVideo: !!videoTrack,
+          hasAudio: !!audioTrack,
+          audioTrack: audioTrack ?? undefined,
         })
       }
     }
@@ -363,21 +380,45 @@ export function DailyCallContainer({
       const p = ev.participant
       if (!p?.session_id || p.session_id === call.participants()?.local?.session_id) return
       const part = call.participants()[p.session_id] as {
-        tracks?: { video?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } }
+        tracks?: {
+          video?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }
+          audio?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }
+        }
+        audio?: boolean
       } | undefined
       const videoTrackObj = part?.tracks?.video
+      const audioTrackObj = part?.tracks?.audio
       const videoTrack = videoTrackObj?.persistentTrack ?? videoTrackObj?.track
-      const isPlayable = videoTrackObj?.state === "playable"
-      if (isPlayable && videoTrack && remoteVideoRef.current && p.session_id === remoteSessionIdRef.current) {
-        remoteVideoRef.current.srcObject = new MediaStream([videoTrack])
-        remoteVideoRef.current.play().catch(() => {})
+      const audioTrack = audioTrackObj?.persistentTrack ?? audioTrackObj?.track
+      const isVideoPlayable = videoTrackObj?.state === "playable"
+
+      if (p.session_id === remoteSessionIdRef.current) {
+        console.log("Partner Audio State:", part?.audio)
+
+        if (isVideoPlayable && remoteVideoRef.current) {
+          const tracks: MediaStreamTrack[] = []
+          if (videoTrack) tracks.push(videoTrack)
+          if (audioTrack) tracks.push(audioTrack)
+          if (tracks.length > 0) {
+            remoteVideoRef.current.srcObject = new MediaStream(tracks)
+            remoteVideoRef.current.play().catch(() => {})
+          }
+        }
+
+        if (audioTrack && remoteAudioRef.current && callMode === "voice") {
+          remoteAudioRef.current.srcObject = new MediaStream([audioTrack])
+          remoteAudioRef.current.play().catch((e) => console.error("Audio Play Error:", e))
+        }
       }
+
       setRemoteParticipant((prev) => {
         if (!prev || prev.sessionId !== p.session_id) return prev
         return {
           ...prev,
           sessionId: prev.sessionId,
           hasVideo: !!videoTrack,
+          hasAudio: !!audioTrack,
+          audioTrack: audioTrack ?? undefined,
         }
       })
     }
@@ -386,6 +427,10 @@ export function DailyCallContainer({
       if (ev.participant?.session_id === remoteSessionIdRef.current) {
         remoteSessionIdRef.current = null
         setRemoteParticipant(null)
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = null
+          remoteAudioRef.current.pause()
+        }
       }
     }
 
@@ -398,15 +443,36 @@ export function DailyCallContainer({
     }
 
     const handleTrackStarted = (ev: import("@daily-co/daily-js").DailyEventObjectTrack) => {
-      if (ev.participant?.session_id !== remoteSessionIdRef.current || ev.track?.kind !== "video") return
+      if (ev.participant?.session_id !== remoteSessionIdRef.current) return
       const t = ev.track as MediaStreamTrack | { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }
       const mediaTrack = t instanceof MediaStreamTrack ? t : t?.persistentTrack ?? t?.track
-      if (mediaTrack && remoteVideoRef.current) {
-        const el = remoteVideoRef.current
-        el.srcObject = new MediaStream([mediaTrack])
-        el.play().catch(() => {})
+      if (!mediaTrack) return
+      if (ev.track?.kind === "video" && remoteVideoRef.current) {
+        const part = call.participants()[ev.participant.session_id] as { tracks?: { video?: { track?: MediaStreamTrack }; audio?: { track?: MediaStreamTrack } } } | undefined
+        const videoTrack = mediaTrack
+        const audioTrack = part?.tracks?.audio?.track ?? (part as { tracks?: { audio?: { persistentTrack?: MediaStreamTrack } } })?.tracks?.audio?.persistentTrack
+        const tracks: MediaStreamTrack[] = [videoTrack]
+        if (audioTrack) tracks.push(audioTrack)
+        remoteVideoRef.current.srcObject = new MediaStream(tracks)
+        remoteVideoRef.current.play().catch(() => {})
+        setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasVideo: true } : prev)
       }
-      setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasVideo: true } : prev)
+      if (ev.track?.kind === "audio") {
+        if (callMode === "voice" && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = new MediaStream([mediaTrack])
+          remoteAudioRef.current.play().catch((e) => console.error("Audio Play Error:", e))
+        }
+        if (callMode === "video" && remoteVideoRef.current) {
+          const part = call.participants()[ev.participant.session_id] as { tracks?: { video?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }; audio?: { persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack } } } | undefined
+          const vidTrack = part?.tracks?.video?.persistentTrack ?? part?.tracks?.video?.track
+          const tracks: MediaStreamTrack[] = []
+          if (vidTrack) tracks.push(vidTrack)
+          tracks.push(mediaTrack)
+          remoteVideoRef.current.srcObject = new MediaStream(tracks)
+          remoteVideoRef.current.play().catch(() => {})
+        }
+        setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasAudio: true, audioTrack: mediaTrack } : prev)
+      }
     }
 
     const handleError = (err: any) => console.error("DAILY AUTH ERROR:", err)
@@ -447,48 +513,57 @@ export function DailyCallContainer({
       call.off("track-started", handleTrackStarted)
       timerIntervalRef.current && clearInterval(timerIntervalRef.current)
     }
-  }, [phase])
+  }, [phase, callMode])
 
-  // --- Zuweisung: Remote-Video-Track → remoteVideoRef (wird mehrfach verwendet) ---
+  // --- Zuweisung: Remote-Video+Audio-Tracks → remoteVideoRef / remoteAudioRef ---
   const assignRemoteVideoTrack = useCallback(() => {
     const call = callObjectRef.current
     const videoEl = remoteVideoRef.current
-    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video" || !remoteParticipant) return
+    const audioEl = remoteAudioRef.current
+    if (!call || !remoteParticipant || phase !== "IN_CALL") return
     const participant = call.participants()[remoteParticipant.sessionId] as
       | {
           tracks?: {
-            video?: {
-              state?: string
-              persistentTrack?: MediaStreamTrack
-              track?: MediaStreamTrack
-            }
+            video?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }
+            audio?: { state?: string; persistentTrack?: MediaStreamTrack; track?: MediaStreamTrack }
           }
         }
       | undefined
     const videoTrackObj = participant?.tracks?.video
+    const audioTrackObj = participant?.tracks?.audio
     const videoTrack = videoTrackObj?.persistentTrack ?? videoTrackObj?.track
-    if (videoTrack) {
-      videoEl.srcObject = new MediaStream([videoTrack])
+    const audioTrack = audioTrackObj?.persistentTrack ?? audioTrackObj?.track
+
+    if (videoEl && callMode === "video" && videoTrack) {
+      const tracks: MediaStreamTrack[] = [videoTrack]
+      if (audioTrack) tracks.push(audioTrack)
+      videoEl.srcObject = new MediaStream(tracks)
       videoEl.play().catch(() => {})
     }
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo])
 
-  // --- Video-Mapping useEffect: reagiert auf remoteParticipant + track ---
+    if (audioTrack && audioEl && callMode === "voice") {
+      audioEl.srcObject = new MediaStream([audioTrack])
+      audioEl.play().catch((e) => console.error("Audio Play Error:", e))
+    }
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, remoteParticipant?.audioTrack])
+
+  // --- Video+Audio-Mapping useEffect: reagiert auf remoteParticipant + tracks ---
   useEffect(() => {
     const call = callObjectRef.current
     const videoEl = remoteVideoRef.current
-    if (!call || !videoEl || phase !== "IN_CALL" || callMode !== "video") return
+    if (!call || phase !== "IN_CALL") return
     if (!remoteParticipant) {
-      videoEl.srcObject = null
+      if (videoEl) videoEl.srcObject = null
       return
     }
     const participant = call.participants()[remoteParticipant.sessionId]
     console.log("[DailyCall] Tracks von Partner:", participant?.tracks)
+    console.log("Partner Audio State:", (participant as { audio?: boolean })?.audio)
     assignRemoteVideoTrack()
     return () => {
-      videoEl.srcObject = null
+      if (videoEl) videoEl.srcObject = null
     }
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
+  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, remoteParticipant?.hasAudio, remoteParticipant?.audioTrack, assignRemoteVideoTrack])
 
   // --- Warnung: remoteParticipant fehlt (sofort prüfen, kein Timeout) ---
   useEffect(() => {
@@ -652,6 +727,9 @@ export function DailyCallContainer({
 
   return (
     <div className={shellClass}>
+      {/* Verstecktes Audio-Element für Remote-Ton (Video + Voice) */}
+      <audio ref={remoteAudioRef} autoPlay playsInline className="sr-only" aria-hidden />
+
       {/* Video-Bereich (Top): flex-1 relative bg-black */}
       <div className="relative flex-1 bg-black">
         {callMode === "video" ? (
