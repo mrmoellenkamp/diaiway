@@ -15,11 +15,11 @@ type TabId = "active" | "upcoming" | "completed"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-/** Map booking status to tab category */
+/** Map booking status to tab category (aktiv | geplant | fertig) */
 function tabForStatus(status: string): TabId {
-  if (status === "active") return "active"
-  if (status === "pending" || status === "confirmed") return "upcoming"
-  return "completed" // completed, declined, cancelled
+  if (status === "active") return "active"             // Aktiv: laufender Call
+  if (status === "pending" || status === "confirmed") return "upcoming"  // Geplant
+  return "completed"  // Fertig: completed, declined, cancelled
 }
 
 function EmptyState({ tab }: { tab: TabId }) {

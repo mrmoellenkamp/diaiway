@@ -478,6 +478,13 @@ export async function PATCH(
     const cancelledBy = isExpert ? "expert" : "user"
     const now = new Date()
 
+    // booking_request Benachrichtigungen für Takumi entfernen (Anfrage erledigt durch Stornierung)
+    if (booking.expert?.userId) {
+      await prisma.notification.deleteMany({
+        where: { bookingId: id, type: "booking_request", userId: booking.expert.userId },
+      })
+    }
+
     // Compute cancellation fee
     // Experts who cancel always give a full refund (they bear the cost)
     const preview = computeCancelFee(booking, booking.expert)
