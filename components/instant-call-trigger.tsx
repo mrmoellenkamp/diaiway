@@ -25,6 +25,7 @@ export function InstantCallTrigger({
   const [instantCheck, setInstantCheck] = useState<{
     hasPaidBefore?: boolean
     hasSufficientBalance?: boolean
+    instantAvailableNow?: boolean
   } | null>(null)
 
   useEffect(() => {
@@ -39,10 +40,12 @@ export function InstantCallTrigger({
 
   if (takumi.liveStatus !== "available") return null
 
+  const instantAvailableNow = instantCheck?.instantAvailableNow ?? true
+
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (loading || checking) return
+    if (loading || checking || !instantAvailableNow) return
 
     setChecking(true)
     try {
@@ -96,7 +99,8 @@ export function InstantCallTrigger({
   return (
     <Button
       onClick={handleClick}
-      disabled={loading || checking}
+      disabled={loading || checking || !instantAvailableNow}
+      title={!instantAvailableNow ? "Aktuell außerhalb der Instant-Call-Sprechzeiten" : undefined}
       className={`gap-2 ${variant === "card" ? "h-9 text-sm" : "h-12 w-full"} ${className}`}
       size={variant === "card" ? "sm" : "lg"}
     >

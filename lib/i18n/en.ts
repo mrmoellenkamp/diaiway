@@ -649,6 +649,7 @@ const en = {
   // Availability Dashboard
   "avail.title": "My Availability",
   "avail.tabWeekly": "Weekly Schedule",
+  "avail.tabInstant": "Instant Call",
   "avail.tabSeasonal": "Seasonal Rules",
   "avail.tabCalendar": "Calendar",
   "avail.saveAll": "Save all changes",
@@ -657,6 +658,7 @@ const en = {
   "avail.notAvailable": "Not available",
   "avail.timeBlock": "Time block",
   "avail.weeklyHint": "Set your regular weekly schedule. These times apply as default for all weeks.",
+  "avail.instantHint": "Times when you accept instant calls without booking. Empty = always when status is „Available“.",
   "avail.noRules": "No seasonal rules yet.",
   "avail.addRule": "Add rule",
   "avail.ruleName": "Rule name",

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { isWithinInstantSlots } from "@/lib/availability-utils"
+import type { WeeklySlots } from "@/lib/availability-utils"
 
 /**
  * POST /api/bookings/instant
@@ -37,6 +39,7 @@ export async function POST(req: Request) {
         where: { id: expertId },
         select: {
           id: true,
+          userId: true,
           name: true,
           email: true,
           liveStatus: true,
@@ -57,6 +60,19 @@ export async function POST(req: Request) {
     if (expert.liveStatus !== "available") {
       return NextResponse.json(
         { error: "Takumi ist gerade nicht verfügbar. Bitte später erneut versuchen." },
+        { status: 400 }
+      )
+    }
+
+    const takumiUserId = expert.userId
+    const availRow = takumiUserId
+      ? await prisma.availability.findUnique({ where: { userId: takumiUserId } })
+      : null
+    const instantSlotsData = availRow?.instantSlots as WeeklySlots | null | undefined
+    const hasInstantRestriction = instantSlotsData && Object.values(instantSlotsData).some((arr) => arr && arr.length > 0)
+    if (hasInstantRestriction && !isWithinInstantSlots(instantSlotsData, new Date())) {
+      return NextResponse.json(
+        { error: "Instant-Calls sind außerhalb der angegebenen Sprechzeiten momentan nicht möglich." },
         { status: 400 }
       )
     }

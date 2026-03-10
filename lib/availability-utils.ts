@@ -84,3 +84,28 @@ export function resolveSlots(
   // 4. Fall back to default weekly slots
   return avail.slots[dayOfWeek] || []
 }
+
+/**
+ * Prüft ob die aktuelle Uhrzeit in einem der Instant-Slots für den Wochentag liegt.
+ * Wenn instantSlots für den Tag leer ist → true (keine Einschränkung).
+ */
+export function isWithinInstantSlots(
+  instantSlots: WeeklySlots | null | undefined,
+  date: Date = new Date()
+): boolean {
+  if (!instantSlots) return true
+  const dayOfWeek = date.getDay() as 0 | 1 | 2 | 3 | 4 | 5 | 6
+  const slots = instantSlots[dayOfWeek]
+  if (!slots || slots.length === 0) return true
+
+  const nowMinutes = date.getHours() * 60 + date.getMinutes()
+
+  for (const slot of slots) {
+    const [sH, sM] = slot.start.split(":").map(Number)
+    const [eH, eM] = slot.end.split(":").map(Number)
+    const startMin = sH * 60 + sM
+    const endMin = eH * 60 + eM
+    if (nowMinutes >= startMin && nowMinutes < endMin) return true
+  }
+  return false
+}

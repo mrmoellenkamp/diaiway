@@ -303,14 +303,16 @@ model Review {
 }
 
 model Availability {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // JSON fields: WeeklySlots, IWeeklyRule[], IDateException[]
-  slots       Json     @default("{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}")
-  yearlyRules Json     @default("[]")
-  exceptions  Json     @default("[]")
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Buchbare Zeiten (geplante Termine)
+  slots         Json     @default("{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}")
+  yearlyRules   Json     @default("[]")
+  exceptions    Json     @default("[]")
+  // Instant-Call Zeiten (ohne Buchung) – wenn leer: immer wenn liveStatus=available
+  instantSlots  Json     @default("{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}")
+  updatedAt     DateTime @updatedAt
 }
 
 model Notification {
