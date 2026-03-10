@@ -63,7 +63,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const [shugyo, takumiUser] = await Promise.all([
       prisma.user.findUnique({
         where: { id: booking.userId },
-        select: { customerNumber: true, invoiceData: true },
+        select: { customerNumber: true, invoiceData: true, email: true },
       }),
       prisma.user.findUnique({
         where: { id: expertUserId },
@@ -150,15 +150,28 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const invoiceDownloadUrl = getBillingDownloadUrl(tx.id, "invoice")
     const creditDownloadUrl = getBillingDownloadUrl(tx.id, "credit")
 
-    const invoiceEmailPromise = sendInvoiceReadyEmail({
-      to: booking.userEmail,
-      userName: booking.userName,
+    const shugyoEmail = (
+      booking.userEmail?.trim() ||
+      (booking.user as { email?: string } | null)?.email?.trim() ||
+      shugyo?.email?.trim() ||
+      ""
+    ).toLowerCase()
+    if (!shugyoEmail || !shugyoEmail.includes("@")) {
+      console.warn(`[processCompletion] Keine gültige E-Mail für Shugyo (${booking.userName}). Rechnung kann nicht per E-Mail versendet werden. Nutzer-ID: ${booking.userId}`)
+    }
+
+    const invoiceEmailPromise = shugyoEmail && shugyoEmail.includes("@")
+      ? sendInvoiceReadyEmail({
+          to: shugyoEmail,
+          userName: booking.userName,
       downloadUrl: invoiceDownloadUrl,
       isBusiness: shugyoIsGeschaeftskunde,
       invoiceNumber,
       expertName: booking.expertName,
       date: booking.date,
     })
+      : Promise.resolve({ sent: false, error: "Keine gültige E-Mail-Adresse für Shugyo" })
+
     const takumiEmail = booking.expert!.email?.trim()
     const creditEmailPromise = takumiEmail
       ? sendCreditNoteReadyEmail({
@@ -175,9 +188,9 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const [invoiceEmail, creditEmail] = await Promise.all([invoiceEmailPromise, creditEmailPromise])
 
     if (invoiceEmail.sent) {
-      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${booking.userEmail} versendet. Link: ${invoiceDownloadUrl}`)
+      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${shugyoEmail} versendet. Link: ${invoiceDownloadUrl}`)
     } else {
-      console.warn(`[processCompletion] Rechnungs-E-Mail an ${booking.userEmail} fehlgeschlagen:`, invoiceEmail.error)
+      console.warn(`[processCompletion] Rechnungs-E-Mail für ${booking.userName} fehlgeschlagen (E-Mail: ${shugyoEmail || "keine"}):`, invoiceEmail.error)
     }
     if (creditEmail.sent) {
       console.log(`[processCompletion] Gutschrift ${creditNoteNumber} per E-Mail an ${takumiEmail} versendet. Link: ${creditDownloadUrl}`)
