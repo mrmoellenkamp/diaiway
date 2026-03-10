@@ -255,3 +255,101 @@ export async function sendBookingStatusEmail(opts: {
     html: emailWrapper(title, body),
   })
 }
+
+/* ----- Rechnung bereit (Shugyo) ----- */
+export async function sendInvoiceReadyEmail(opts: {
+  to: string
+  userName: string
+  downloadUrl: string
+  isBusiness: boolean
+  invoiceNumber: string
+  expertName: string
+  date: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const hint = opts.isBusiness
+    ? "Ihre Rechnung liegt im ZUGFeRD-Format (E-Rechnung B2B) im diAiway-Portal für Sie bereit."
+    : "Ihr Beleg ist im diAiway-Portal für Sie abrufbar."
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.userName}</strong>,<br/>
+      die Zahlung für Ihre Session mit <strong style="color:#1c1917;">${opts.expertName}</strong> (${opts.date}) wurde abgeschlossen.
+    </p>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#78716c;">
+      ${hint}
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0 24px;">
+          <a href="${opts.downloadUrl}" target="_blank" style="display:inline-block;padding:14px 36px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            Rechnung herunterladen
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:#a8a29e;">
+      Rechnungsnummer: ${opts.invoiceNumber}
+    </p>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: `diAiway – Ihre Rechnung ${opts.invoiceNumber} ist bereit`,
+      html: emailWrapper("Rechnung bereit", body),
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown"
+    return { sent: false, error: msg }
+  }
+}
+
+/* ----- Gutschrift bereit (Takumi) ----- */
+export async function sendCreditNoteReadyEmail(opts: {
+  to: string
+  takumiName: string
+  downloadUrl: string
+  isBusiness: boolean
+  creditNoteNumber: string
+  userName: string
+  date: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const hint = opts.isBusiness
+    ? "Ihre Gutschrift liegt im ZUGFeRD-Format (E-Rechnung B2B) im diAiway-Portal für Sie bereit."
+    : "Ihr Beleg ist im diAiway-Portal für Sie abrufbar."
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.takumiName}</strong>,<br/>
+      die Gutschrift für die Session mit <strong style="color:#1c1917;">${opts.userName}</strong> (${opts.date}) wurde erstellt.
+    </p>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#78716c;">
+      ${hint}
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0 24px;">
+          <a href="${opts.downloadUrl}" target="_blank" style="display:inline-block;padding:14px 36px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            Gutschrift herunterladen
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:#a8a29e;">
+      Gutschriftsnummer: ${opts.creditNoteNumber}
+    </p>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: `diAiway – Ihre Gutschrift ${opts.creditNoteNumber} ist bereit`,
+      html: emailWrapper("Gutschrift bereit", body),
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown"
+    return { sent: false, error: msg }
+  }
+}

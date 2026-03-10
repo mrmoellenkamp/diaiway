@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
 import { put } from "@vercel/blob"
 import { generateInvoicePdf, generateCreditNotePdf } from "@/lib/pdf-invoice"
+import { sendInvoiceReadyEmail, sendCreditNoteReadyEmail } from "@/lib/email"
+import { getBillingDownloadUrl } from "@/lib/billing-download"
 
 const PLATFORM_FEE_PERCENT = 15
 const RELEASE_DELAY_HOURS = 24
@@ -143,6 +145,47 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
         },
       })
     })
+
+    // 6. E-Mail-Versand: Rechnung an Shugyo, Gutschrift an Takumi
+    const invoiceDownloadUrl = getBillingDownloadUrl(tx.id, "invoice")
+    const creditDownloadUrl = getBillingDownloadUrl(tx.id, "credit")
+
+    const invoiceEmailPromise = sendInvoiceReadyEmail({
+      to: booking.userEmail,
+      userName: booking.userName,
+      downloadUrl: invoiceDownloadUrl,
+      isBusiness: shugyoIsGeschaeftskunde,
+      invoiceNumber,
+      expertName: booking.expertName,
+      date: booking.date,
+    })
+    const takumiEmail = booking.expert!.email?.trim()
+    const creditEmailPromise = takumiEmail
+      ? sendCreditNoteReadyEmail({
+          to: takumiEmail,
+          takumiName: booking.expert!.name,
+          downloadUrl: creditDownloadUrl,
+          isBusiness: takumiIsGeschaeftskunde,
+          creditNoteNumber,
+          userName: booking.userName,
+          date: booking.date,
+        })
+      : Promise.resolve({ sent: false, error: "Keine E-Mail-Adresse" })
+
+    const [invoiceEmail, creditEmail] = await Promise.all([invoiceEmailPromise, creditEmailPromise])
+
+    if (invoiceEmail.sent) {
+      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${booking.userEmail} versendet. Link: ${invoiceDownloadUrl}`)
+    } else {
+      console.warn(`[processCompletion] Rechnungs-E-Mail an ${booking.userEmail} fehlgeschlagen:`, invoiceEmail.error)
+    }
+    if (creditEmail.sent) {
+      console.log(`[processCompletion] Gutschrift ${creditNoteNumber} per E-Mail an ${takumiEmail} versendet. Link: ${creditDownloadUrl}`)
+    } else if (takumiEmail) {
+      console.warn(`[processCompletion] Gutschriften-E-Mail an ${takumiEmail} fehlgeschlagen:`, creditEmail.error)
+    } else {
+      console.log(`[processCompletion] Gutschrift ${creditNoteNumber}: Keine E-Mail-Adresse für Takumi, übersprungen.`)
+    }
 
     return { ok: true }
   } catch (err) {
