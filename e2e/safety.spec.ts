@@ -64,12 +64,12 @@ test.describe("diaiway Safety Enforcement", () => {
     await page.goto(`/session/${bookingId}`)
     await expect(page.locator("text=diaiway Safety Enforcement").or(page.locator("text=Session starten"))).toBeVisible({ timeout: 8000 })
 
-    // Safety-Modal: Alle 3 Checkboxen aktivieren
+    // Safety-Modal: Alle 5 Checkboxen aktivieren
     const modal = page.getByRole("dialog")
     if (await modal.isVisible()) {
       const checks = page.locator('input[type="checkbox"]')
       const count = await checks.count()
-      for (let i = 0; i < Math.min(count, 3); i++) {
+      for (let i = 0; i < Math.min(count, 5); i++) {
         await checks.nth(i).check()
       }
       await page.getByRole("button", { name: /bestätigen|confirm|Ich bestätige/i }).click()
