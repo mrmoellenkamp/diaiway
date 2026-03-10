@@ -89,13 +89,19 @@ export async function POST(req: Request) {
   ).replace(/[^a-z0-9-]/g, "")
 
   const ONE_DAY_FROM_NOW = Math.floor(Date.now() / 1000) + 86400
+  const expValue = Number.isInteger(ONE_DAY_FROM_NOW) && ONE_DAY_FROM_NOW > 0
+    ? Number(ONE_DAY_FROM_NOW)
+    : Math.floor(Date.now() / 1000) + 86400
 
   const roomPayload = {
     name: roomName,
     privacy: "public",
+    properties: {
+      exp: expValue,
+    },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
-  console.log("API SENDING EXP:", ONE_DAY_FROM_NOW)
+  console.log("API SENDING EXP:", expValue)
 
   try {
     const roomRes = await fetch(`${DAILY_API_BASE}/rooms`, {
@@ -131,15 +137,13 @@ export async function POST(req: Request) {
     }
 
     const tokenPayload = {
-      properties: {
-        room_name: resolvedRoomName,
-        is_owner: userRole === "takumi",
-        user_name: session.user?.name ?? "Teilnehmer",
-      },
-      exp: Number(ONE_DAY_FROM_NOW),
+      room_name: resolvedRoomName,
+      is_owner: userRole === "takumi",
+      user_name: session.user?.name ?? "Teilnehmer",
+      exp: expValue,
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
-    console.log("API SENDING EXP:", ONE_DAY_FROM_NOW)
+    console.log("API SENDING EXP:", expValue)
 
     const tokenRes = await fetch(`${DAILY_API_BASE}/meeting-tokens`, {
       method: "POST",
