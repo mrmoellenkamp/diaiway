@@ -93,9 +93,6 @@ export async function POST(req: Request) {
   const roomPayload = {
     name: roomName,
     privacy: "public",
-    properties: {
-      exp: Number(ONE_DAY_FROM_NOW),
-    },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
   console.log("API SENDING EXP:", ONE_DAY_FROM_NOW)
@@ -138,8 +135,8 @@ export async function POST(req: Request) {
         room_name: resolvedRoomName,
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
-        exp: Number(ONE_DAY_FROM_NOW),
       },
+      exp: Number(ONE_DAY_FROM_NOW),
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
     console.log("API SENDING EXP:", ONE_DAY_FROM_NOW)

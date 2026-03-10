@@ -288,7 +288,7 @@ export function DailyCallContainer({
 
       await call.join({
         url,
-        token,
+        token: token,
         videoSource: selectedCameraId || true,
         audioSource: selectedMicId || true,
         startVideoOff: callMode === "voice",
@@ -429,11 +429,12 @@ export function DailyCallContainer({
 
     if (call.meetingState() === "joined-meeting") handleJoinedMeeting()
 
+    syncRemoteParticipant()
     const participantsRefreshInterval = setInterval(() => {
       if (remoteSessionIdRef.current) return
       if (call.meetingState() !== "joined-meeting") return
       syncRemoteParticipant()
-    }, 2000)
+    }, 500)
 
     return () => {
       clearInterval(participantsRefreshInterval)
@@ -489,21 +490,13 @@ export function DailyCallContainer({
     }
   }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
 
-  // --- Force-Update: Nach 2 Sekunden erneut zuweisen, falls Video schwarz bleibt ---
-  useEffect(() => {
-    if (phase !== "IN_CALL" || callMode !== "video" || !remoteParticipant?.hasVideo) return
-    const t = setTimeout(() => assignRemoteVideoTrack(), 2000)
-    return () => clearTimeout(t)
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
-
-  // --- Warnung: remoteParticipant nach 5 Sekunden immer noch null ---
+  // --- Warnung: remoteParticipant fehlt (sofort prüfen, kein Timeout) ---
   useEffect(() => {
     if (phase !== "IN_CALL" || remoteParticipant) {
       setShowPartnerSearchWarning(false)
       return
     }
-    const t = setTimeout(() => setShowPartnerSearchWarning(true), 5000)
-    return () => clearTimeout(t)
+    setShowPartnerSearchWarning(true)
   }, [phase, remoteParticipant])
 
   // --- Lokales PiP (Video-Mode) ---
