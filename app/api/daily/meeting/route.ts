@@ -97,7 +97,7 @@ export async function POST(req: Request) {
       start_video_off: callMode === "voice",
       exp: Math.round(Date.now() / 1000) + 3600,
       geo: "eu-central-1",
-      force_relay: true,
+      is_p2p: false,
       enable_network_ui: true, // Verbindungsfehler sichtbar machen (Prebuilt-only)
     },
   }
