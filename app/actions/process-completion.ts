@@ -53,12 +53,21 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       getNextDocumentNumber("GS"),
     ])
 
-    // 3. Kundennummern sicherstellen
-    await ensureCustomerNumber(booking.userId)
-    const shugyo = await prisma.user.findUnique({
-      where: { id: booking.userId },
-      select: { customerNumber: true, invoiceData: true },
-    })
+    // 3. Kundennummern sicherstellen (Shugyo + Takumi)
+    await Promise.all([
+      ensureCustomerNumber(booking.userId),
+      ensureCustomerNumber(expertUserId),
+    ])
+    const [shugyo, takumiUser] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: booking.userId },
+        select: { customerNumber: true, invoiceData: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: expertUserId },
+        select: { invoiceData: true },
+      }),
+    ])
 
     const now = new Date()
 
@@ -72,6 +81,11 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       return 30
     })()
 
+    const shugyoInvoiceData = shugyo?.invoiceData as { type?: string } | null
+    const takumiInvoiceData = takumiUser?.invoiceData as { type?: string } | null
+    const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
+    const takumiIsGeschaeftskunde = takumiInvoiceData?.type === "unternehmen"
+
     const invoiceBuf = await generateInvoicePdf({
       invoiceNumber,
       recipientName: booking.userName,
@@ -81,6 +95,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       totalAmountCents: tx.totalAmount,
       date: now,
       durationMinutes: durationMin,
+      useZugferd: shugyoIsGeschaeftskunde,
     })
     const creditBuf = await generateCreditNotePdf({
       creditNumber: creditNoteNumber,
@@ -91,6 +106,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       platformFeeCents: tx.platformFee,
       totalAmountCents: tx.totalAmount,
       date: now,
+      useZugferd: takumiIsGeschaeftskunde,
     })
 
     const [invoiceBlob, creditBlob] = await Promise.all([

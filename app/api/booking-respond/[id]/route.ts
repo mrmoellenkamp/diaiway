@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { ensureCustomerNumber } from "@/lib/billing"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
@@ -80,6 +81,11 @@ export async function POST(
       where: { id },
       data: { status: action as BookingStatus },
     })
+
+    // Kundennummer bei erstmaliger Buchung (Takumi)
+    if (action === "confirmed" && booking.expert?.userId) {
+      ensureCustomerNumber(booking.expert.userId).catch(() => {})
+    }
 
     // booking_request Benachrichtigungen beim Takumi löschen (nur bei Bestätigung/Ablehnung, nicht bei Nachfrage)
     if (booking.expert?.userId) {
