@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
+import { useWalletTopup } from "@/lib/wallet-topup-context"
 import { formatDateBerlinShort } from "@/lib/date-utils"
 
 function formatCents(cents: number): string {
@@ -38,6 +39,7 @@ type TxItem = {
 
 export default function FinancesPage() {
   const { t } = useI18n()
+  const { openWalletTopup } = useWalletTopup()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<TxItem[]>([])
   const [refundPreference, setRefundPreference] = useState<"payout" | "wallet">("payout")
@@ -49,11 +51,13 @@ export default function FinancesPage() {
   } | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     Promise.all([
       fetch("/api/wallet/history").then((r) => r.json()),
       fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
     ])
       .then(([walletData, profileData]) => {
+        if (cancelled) return
         if (walletData?.history) setHistory(walletData.history)
         if (walletData?.wallet) setWallet(walletData.wallet)
         if (profileData?.refundPreference) {
@@ -62,8 +66,26 @@ export default function FinancesPage() {
         if (profileData?.appRole) setAppRole(profileData.appRole)
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
   }, [])
+
+  const refetchWallet = async () => {
+    try {
+      const [walletData, profileData] = await Promise.all([
+        fetch("/api/wallet/history").then((r) => r.json()),
+        fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
+      ])
+      if (walletData?.history) setHistory(walletData.history)
+      if (walletData?.wallet) setWallet(walletData.wallet)
+      if (profileData?.refundPreference) {
+        setRefundPreference(profileData.refundPreference === "wallet" ? "wallet" : "payout")
+      }
+      if (profileData?.appRole) setAppRole(profileData.appRole)
+    } catch { /* ignore */ }
+  }
 
   return (
     <PageContainer>
@@ -111,6 +133,16 @@ export default function FinancesPage() {
                 </div>
                 {wallet?.canWithdraw && (
                   <p className="mt-2 text-xs text-primary">{t("finances.canWithdraw")}</p>
+                )}
+                {appRole === "shugyo" && (
+                  <Button
+                    onClick={() => openWalletTopup(refetchWallet)}
+                    className="mt-3 w-full gap-2"
+                    variant="outline"
+                  >
+                    <Wallet className="size-4" />
+                    {t("finances.topup")}
+                  </Button>
                 )}
               </CardContent>
             </Card>

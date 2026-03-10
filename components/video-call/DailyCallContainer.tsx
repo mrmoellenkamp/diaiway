@@ -1243,7 +1243,7 @@ export function DailyCallContainer({
                 className="w-full gap-2 rounded-xl bg-primary font-semibold"
               >
                 <Wallet className="size-4" />
-                20 € Aufladen
+                Wallet aufladen
               </Button>
             </div>
           </div>
@@ -1293,7 +1293,7 @@ export function DailyCallContainer({
               className="h-12 gap-2 rounded-xl bg-primary px-6 text-base font-semibold"
             >
               <Wallet className="size-5" />
-              20 € Aufladen
+              Wallet aufladen
             </Button>
           </div>
         )}
