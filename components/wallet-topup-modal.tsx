@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Wallet } from "lucide-react"
+import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const MIN_EUR = 20
@@ -30,10 +33,14 @@ export function WalletTopupModal({
   onOpenChange,
   onSuccess,
 }: WalletTopupModalProps) {
+  const { t } = useI18n()
+  const router = useRouter()
   const [step, setStep] = useState<"amount" | "checkout">("amount")
   const [amountEur, setAmountEur] = useState(20)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -41,6 +48,7 @@ export function WalletTopupModal({
       setStep("amount")
       setAmountEur(20)
       setClientSecret(null)
+      setSessionId(null)
       setError(null)
       return
     }
@@ -64,6 +72,7 @@ export function WalletTopupModal({
       const data = await res.json()
       if (data.clientSecret) {
         setClientSecret(data.clientSecret)
+        setSessionId(data.sessionId ?? null)
         setStep("checkout")
       } else {
         setError(data.error || "Checkout konnte nicht gestartet werden.")
@@ -75,13 +84,44 @@ export function WalletTopupModal({
     }
   }
 
-  const handleComplete = () => {
-    onSuccess?.()
-    onOpenChange(false)
-    // Webhook verarbeitet asynchron – Balance nach kurzer Verzögerung erneut laden
-    if (onSuccess) {
-      setTimeout(() => onSuccess(), 2000)
-      setTimeout(() => onSuccess(), 4000)
+  const confirmTopup = useCallback(async (): Promise<boolean> => {
+    if (!sessionId) return false
+    try {
+      const res = await fetch("/api/wallet/topup/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+        credentials: "include",
+      })
+      const data = await res.json()
+      if (data.ok) return true
+      if (data.status === "pending") return false
+      toast.error(data.error || "Gutschrift fehlgeschlagen.")
+      return false
+    } catch {
+      return false
+    }
+  }, [sessionId])
+
+  const handleComplete = async () => {
+    setConfirming(true)
+    let ok = false
+    for (let i = 0; i < 8; i++) {
+      ok = await confirmTopup()
+      if (ok) break
+      await new Promise((r) => setTimeout(r, 1000))
+    }
+    setConfirming(false)
+    if (ok) {
+      toast.success(t("finances.topupSuccess"))
+      onOpenChange(false)
+      onSuccess?.()
+      router.push("/profile/finances")
+    } else {
+      toast.error("Zahlung konnte nicht bestätigt werden. Bitte prüfe dein Guthaben in Kürze.")
+      onOpenChange(false)
+      onSuccess?.()
+      router.push("/profile/finances")
     }
   }
 
@@ -91,7 +131,7 @@ export function WalletTopupModal({
         <DialogHeader>
           <DialogTitle>Wallet aufladen</DialogTitle>
         </DialogHeader>
-        <div className="min-h-[300px]">
+        <div className="relative min-h-[300px]">
           {step === "amount" && (
             <div className="flex flex-col gap-4 py-2">
               <p className="text-sm text-muted-foreground">
@@ -152,6 +192,14 @@ export function WalletTopupModal({
                   <Loader2 className="size-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">
                     Zahlungsformular wird geladen...
+                  </p>
+                </div>
+              )}
+              {confirming && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/95">
+                  <Loader2 className="size-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    Zahlung wird bestätigt...
                   </p>
                 </div>
               )}

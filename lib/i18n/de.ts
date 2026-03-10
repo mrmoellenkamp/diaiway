@@ -329,6 +329,7 @@ const de = {
   "finances.topupTx": "Wallet-Aufladung",
   "finances.refundTx": "Rückerstattung",
   "finances.deductionTx": "Belastung",
+  "finances.topupSuccess": "Zahlung erfolgreich! Dein Guthaben wurde gutgeschrieben.",
 
   // Invoice Data (Rechnungsdaten)
   "invoice.title": "Rechnungsdaten",

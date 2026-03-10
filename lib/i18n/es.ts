@@ -327,6 +327,7 @@ const es = {
   "finances.topupTx": "Recarga de wallet",
   "finances.refundTx": "Reembolso",
   "finances.deductionTx": "Deducción",
+  "finances.topupSuccess": "¡Pago exitoso! Tu saldo ha sido acreditado.",
 
   // Invoice Data
   "invoice.title": "Datos de facturación",
