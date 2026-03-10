@@ -248,8 +248,20 @@ export function DailyCallContainer({
     setPhase("JOINING")
     setError(null)
     try {
+      const existingCall = callObjectRef.current
+      if (existingCall) {
+        try {
+          await existingCall.leave()
+          existingCall.destroy()
+        } catch (e) {
+          console.warn("[DailyCall] Pre-join cleanup:", e)
+        }
+        callObjectRef.current = null
+      }
+
       const res = await fetch("/api/daily/meeting", {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, callMode, userRole }),
       })
@@ -258,16 +270,21 @@ export function DailyCallContainer({
       const { url, token } = data
       if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
 
+      if (!token) {
+        console.error("CRITICAL: No token provided to join!")
+        setError("CRITICAL: No token provided to join!")
+        setPhase("LOBBY")
+        return
+      }
+
       console.log("--- JOIN ATTEMPT ---")
       console.log("URL:", url)
       console.log("TOKEN-PREFIX:", token?.substring(0, 20))
+      console.log("Token Length:", token.length)
       joinUrlRef.current = url
 
-      let call = callObjectRef.current
-      if (!call) {
-        call = Daily.createCallObject({ subscribeToTracksAutomatically: true })
-        callObjectRef.current = call
-      }
+      const call = Daily.createCallObject({ subscribeToTracksAutomatically: true })
+      callObjectRef.current = call
 
       await call.join({
         url,
