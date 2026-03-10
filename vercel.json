@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/experts-offline",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
