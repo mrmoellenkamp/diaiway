@@ -326,6 +326,9 @@ const de = {
   "finances.noTransactions": "Noch keine Transaktionen.",
   "finances.canWithdraw": "Auszahlung möglich",
   "finances.topup": "Aufladen",
+  "finances.topupTx": "Wallet-Aufladung",
+  "finances.refundTx": "Rückerstattung",
+  "finances.deductionTx": "Belastung",
 
   // Invoice Data (Rechnungsdaten)
   "invoice.title": "Rechnungsdaten",

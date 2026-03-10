@@ -78,6 +78,11 @@ export function WalletTopupModal({
   const handleComplete = () => {
     onSuccess?.()
     onOpenChange(false)
+    // Webhook verarbeitet asynchron – Balance nach kurzer Verzögerung erneut laden
+    if (onSuccess) {
+      setTimeout(() => onSuccess(), 2000)
+      setTimeout(() => onSuccess(), 4000)
+    }
   }
 
   return (
