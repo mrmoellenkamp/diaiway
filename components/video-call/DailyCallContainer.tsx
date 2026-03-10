@@ -67,6 +67,7 @@ export function DailyCallContainer({
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [cameraFlipRotation, setCameraFlipRotation] = useState(0)
+  const [showPartnerSearchWarning, setShowPartnerSearchWarning] = useState(false)
 
   const callObjectRef = useRef<DailyCall | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
@@ -256,6 +257,8 @@ export function DailyCallContainer({
       const { url, token } = data
       if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
 
+      console.log("[DailyCall] Joining Room:", url, "with Token:", token?.slice(0, 20) + "...")
+
       let call = callObjectRef.current
       if (!call) {
         call = Daily.createCallObject({ subscribeToTracksAutomatically: true })
@@ -296,6 +299,7 @@ export function DailyCallContainer({
     }
 
     const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
+      console.log("[DailyCall] New Participant Joined:", ev)
       const p = ev.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
         remoteSessionIdRef.current = p.session_id
@@ -448,6 +452,16 @@ export function DailyCallContainer({
     const t = setTimeout(() => assignRemoteVideoTrack(), 2000)
     return () => clearTimeout(t)
   }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, assignRemoteVideoTrack])
+
+  // --- Warnung: remoteParticipant nach 5 Sekunden immer noch null ---
+  useEffect(() => {
+    if (phase !== "IN_CALL" || remoteParticipant) {
+      setShowPartnerSearchWarning(false)
+      return
+    }
+    const t = setTimeout(() => setShowPartnerSearchWarning(true), 5000)
+    return () => clearTimeout(t)
+  }, [phase, remoteParticipant])
 
   // --- Lokales PiP (Video-Mode) ---
   useEffect(() => {
@@ -660,6 +674,11 @@ export function DailyCallContainer({
           </div>
         )}
 
+        {showPartnerSearchWarning && (
+          <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-medium text-black">
+            Suche Partner im Raum…
+          </div>
+        )}
         {timerSecondsLeft !== null && (
           <div
             className={cn(
