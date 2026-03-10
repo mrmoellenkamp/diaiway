@@ -49,17 +49,22 @@ export async function POST(req: Request) {
       (tx.user as { email?: string } | null)?.email?.trim() ||
       ""
     ).toLowerCase()
-    const takumiEmail = booking.expert?.email?.trim() || ""
-
-    const shugyoInvoiceData = tx.user?.invoiceData as { type?: string } | null
-    const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
-
     const takumiUser = tx.expert?.userId
       ? await prisma.user.findUnique({
           where: { id: tx.expert.userId },
-          select: { invoiceData: true },
+          select: { invoiceData: true, email: true },
         })
       : null
+
+    const takumiEmail = (
+      booking.expertEmail?.trim() ||
+      booking.expert?.email?.trim() ||
+      takumiUser?.email?.trim() ||
+      ""
+    ).toLowerCase()
+
+    const shugyoInvoiceData = tx.user?.invoiceData as { type?: string } | null
+    const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
     const takumiIsGeschaeftskunde = (takumiUser?.invoiceData as { type?: string } | null)?.type === "unternehmen"
 
     const invoiceUrl = getBillingDownloadUrl(tx.id, "invoice")
