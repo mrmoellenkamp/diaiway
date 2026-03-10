@@ -1267,7 +1267,7 @@ function FinanceTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[90px]">Datum</TableHead>
+                <TableHead className="w-[115px]">Datum & Zeit</TableHead>
                 <TableHead>Shugyo / Experte</TableHead>
                 <TableHead>Beleg</TableHead>
                 <TableHead>Steuer</TableHead>
@@ -1282,7 +1282,17 @@ function FinanceTab() {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setSelected(row)}
                 >
-                  <TableCell className="text-xs">{row.date}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">
+                    {row.createdAt
+                      ? new Date(row.createdAt).toLocaleString("de-DE", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : row.date}
+                  </TableCell>
                   <TableCell>
                     <div className="text-xs">
                       <p className="font-medium truncate max-w-[140px]">{row.userName}</p>
