@@ -134,16 +134,14 @@ export default function FinancesPage() {
                 {wallet?.canWithdraw && (
                   <p className="mt-2 text-xs text-primary">{t("finances.canWithdraw")}</p>
                 )}
-                {appRole === "shugyo" && (
-                  <Button
-                    onClick={() => openWalletTopup(refetchWallet)}
-                    className="mt-3 w-full gap-2"
-                    variant="outline"
-                  >
-                    <Wallet className="size-4" />
-                    {t("finances.topup")}
-                  </Button>
-                )}
+                <Button
+                  onClick={() => openWalletTopup(refetchWallet)}
+                  className="mt-3 w-full gap-2"
+                  variant="outline"
+                >
+                  <Wallet className="size-4" />
+                  {t("finances.topup")}
+                </Button>
               </CardContent>
             </Card>
 
