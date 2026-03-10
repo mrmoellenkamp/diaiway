@@ -257,7 +257,9 @@ export function DailyCallContainer({
       const { url, token } = data
       if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
 
-      console.log("[DailyCall] Joining Room:", url, "with Token:", token?.slice(0, 20) + "...")
+      console.log("--- JOIN ATTEMPT ---")
+      console.log("URL:", url)
+      console.log("TOKEN-PREFIX:", token?.substring(0, 20))
 
       let call = callObjectRef.current
       if (!call) {
@@ -285,7 +287,9 @@ export function DailyCallContainer({
     if (!call || phase !== "IN_CALL") return
     initGuardRef.current = true
 
-    const handleJoinedMeeting = () => {
+    const handleJoinedMeeting = (evt?: { participants?: { local?: { room_name?: string } } }) => {
+      const roomName = (evt as { participants?: { local?: { room_name?: string } } } | undefined)?.participants?.local?.room_name
+      console.log("INTERNER RAUM-NAME:", roomName ?? evt ?? "(no evt)")
       setTimerSecondsLeft(TIMER_DURATION_SEC)
       timerIntervalRef.current = setInterval(() => {
         setTimerSecondsLeft((prev) => {
@@ -299,7 +303,7 @@ export function DailyCallContainer({
     }
 
     const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
-      console.log("[DailyCall] New Participant Joined:", ev)
+      console.log("PARTICIPANT DETECTED:", ev.participant?.session_id)
       const p = ev.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
         remoteSessionIdRef.current = p.session_id
@@ -362,6 +366,8 @@ export function DailyCallContainer({
       setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasVideo: true } : prev)
     }
 
+    const handleError = (err: unknown) => console.error("DAILY AUTH ERROR:", err)
+    call.on("error", handleError)
     call.on("joined-meeting", handleJoinedMeeting)
     call.on("participant-joined", handleParticipantJoined)
     call.on("participant-updated", handleParticipantUpdated)
@@ -395,6 +401,7 @@ export function DailyCallContainer({
     }
 
     return () => {
+      call.off("error", handleError)
       call.off("joined-meeting", handleJoinedMeeting)
       call.off("participant-joined", handleParticipantJoined)
       call.off("participant-updated", handleParticipantUpdated)
