@@ -88,11 +88,14 @@ export async function POST(req: Request) {
     Math.random().toString(36).substring(7)
   ).replace(/[^a-z0-9-]/g, "")
 
+  const nowSec = Math.floor(Date.now() / 1000)
+  const exp = nowSec > 0 ? nowSec + 3600 : nowSec + 86400
+
   const roomPayload = {
     name: roomName,
     privacy: "public",
     properties: {
-      exp: Math.round(Date.now() / 1000) + 3600,
+      exp,
     },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
@@ -135,6 +138,7 @@ export async function POST(req: Request) {
         room_name: resolvedRoomName,
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
+        exp,
       },
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
