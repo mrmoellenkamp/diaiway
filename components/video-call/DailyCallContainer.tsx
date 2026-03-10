@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { AlertTriangle, FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
+import { useWalletTopup } from "@/lib/wallet-topup-context"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -66,11 +67,12 @@ function calculateRemainingTime(
   sessionStartMs: number,
   hasPaidBefore: boolean,
   userBalanceCents: number,
-  pricePerMinuteCents: number
+  pricePerMinuteCents: number,
+  frozenDurationMs = 0
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
   const freePeriodSec = hasPaidBefore ? 30 : 5 * 60
-  const elapsedSec = (Date.now() - sessionStartMs) / 1000
+  const elapsedSec = (Date.now() - sessionStartMs - frozenDurationMs) / 1000
   const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
   const balanceMinutes = userBalanceCents / pricePerMinuteCents
   const remainingSec = Math.max(0, balanceMinutes * 60 - billingElapsedSec)
@@ -170,12 +172,24 @@ export function DailyCallContainer({
   const joinUrlRef = useRef<string | null>(null)
   const sessionStartMsRef = useRef<number | null>(null)
   const lowBalanceWarningShownRef = useRef(false)
+  const frozenAtMsRef = useRef<number | null>(null)
+  const frozenDurationMsRef = useRef<number>(0)
+  const balanceCentsRef = useRef<number | null>(null)
+
+  const [isFrozen, setIsFrozen] = useState(false)
+  const [isShugyoFrozen, setIsShugyoFrozen] = useState(false)
+  const [balanceCentsForTimer, setBalanceCentsForTimer] = useState<number | null>(null)
+  const { openWalletTopup } = useWalletTopup()
 
   const useBillingTimer =
     bookingMode === "instant" &&
     userRole === "shugyo" &&
     pricePerMinuteCents > 0 &&
     (userBalanceCents > 0 || sessionStartedAt)
+
+  useEffect(() => {
+    balanceCentsRef.current = balanceCentsForTimer
+  }, [balanceCentsForTimer])
 
   // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
   const performCleanup = useCallback(() => {
@@ -505,11 +519,13 @@ export function DailyCallContainer({
 
       const tick = () => {
         if (useBillingTimer && sessionStartMsRef.current) {
+          const balance = balanceCentsRef.current ?? userBalanceCents
           const remaining = calculateRemainingTime(
             sessionStartMsRef.current,
             hasPaidBefore,
-            userBalanceCents,
-            pricePerMinuteCents
+            balance,
+            pricePerMinuteCents,
+            frozenDurationMsRef.current
           )
           setTimerSecondsLeft(remaining)
           if (remaining <= 60 && remaining > 0 && !lowBalanceWarningShownRef.current) {
@@ -518,6 +534,19 @@ export function DailyCallContainer({
           }
           if (remaining <= 0) {
             timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+            frozenAtMsRef.current = Date.now()
+            setIsFrozen(true)
+            try {
+              call.setLocalVideo(false)
+              call.setLocalAudio(false)
+            } catch (e) {
+              console.warn("[DailyCall] setLocalVideo/Audio off:", e)
+            }
+            fetch(`/api/bookings/${bookingId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "set-shugyo-frozen" }),
+            }).catch(() => {})
           }
         } else {
           setTimerSecondsLeft((prev) => {
@@ -692,7 +721,141 @@ export function DailyCallContainer({
       call.off("track-started", handleTrackStarted)
       timerIntervalRef.current && clearInterval(timerIntervalRef.current)
     }
-  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents])
+  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId])
+
+  // --- Paket 4: Shugyo Freeze – Balance-Polling, Resume, 5-Min-Timeout ---
+  const forceEndFromFreeze = useCallback(async () => {
+    try {
+      await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "end-session" }),
+      })
+    } catch {
+      /* ignore */
+    }
+    performCleanup()
+    onCallEnded?.()
+  }, [bookingId, performCleanup, onCallEnded])
+
+  useEffect(() => {
+    if (!isFrozen || userRole !== "shugyo" || phase !== "IN_CALL") return
+    const call = callObjectRef.current
+    const minBalanceCents = pricePerMinuteCents * 5
+    const FREEZE_TIMEOUT_MS = 5 * 60 * 1000
+
+    const poll = async () => {
+      const frozenAt = frozenAtMsRef.current
+      if (frozenAt && Date.now() - frozenAt > FREEZE_TIMEOUT_MS) {
+        forceEndFromFreeze()
+        return
+      }
+      try {
+        const res = await fetch("/api/user/balance", { credentials: "include" })
+        const data = (await res.json()) as { balanceCents?: number }
+        const balance = data.balanceCents ?? 0
+        if (balance >= minBalanceCents && call) {
+          if (frozenAtMsRef.current) {
+            frozenDurationMsRef.current += Date.now() - frozenAtMsRef.current
+            frozenAtMsRef.current = null
+          }
+          balanceCentsRef.current = balance
+          setBalanceCentsForTimer(balance)
+          setIsFrozen(false)
+          try {
+            call.setLocalVideo(callMode === "video")
+            call.setLocalAudio(true)
+          } catch (e) {
+            console.warn("[DailyCall] setLocalVideo/Audio on:", e)
+          }
+          await fetch(`/api/bookings/${bookingId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "clear-shugyo-frozen" }),
+          })
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    poll()
+    const timer = setInterval(poll, 5000)
+    return () => clearInterval(timer)
+  }, [isFrozen, userRole, phase, bookingId, pricePerMinuteCents, forceEndFromFreeze])
+
+  // Paket 4: Timer neu starten nach Resume (Shugyo hatte 0 Guthaben, hat aufgeladen)
+  useEffect(() => {
+    if (isFrozen || !useBillingTimer || phase !== "IN_CALL" || !sessionStartMsRef.current || balanceCentsForTimer === null) return
+
+    const tick = () => {
+      const balance = balanceCentsRef.current ?? userBalanceCents
+      const remaining = calculateRemainingTime(
+        sessionStartMsRef.current!,
+        hasPaidBefore,
+        balance,
+        pricePerMinuteCents,
+        frozenDurationMsRef.current
+      )
+      setTimerSecondsLeft(remaining)
+      if (remaining <= 0) {
+        timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+        frozenAtMsRef.current = Date.now()
+        setIsFrozen(true)
+        const call = callObjectRef.current
+        if (call) {
+          try {
+            call.setLocalVideo(false)
+            call.setLocalAudio(false)
+          } catch (e) {
+            console.warn("[DailyCall] setLocalVideo/Audio off:", e)
+          }
+        }
+        fetch(`/api/bookings/${bookingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "set-shugyo-frozen" }),
+        }).catch(() => {})
+      }
+    }
+
+    tick()
+    timerIntervalRef.current = setInterval(tick, 1000)
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+        timerIntervalRef.current = null
+      }
+    }
+  }, [isFrozen, useBillingTimer, phase, bookingId, hasPaidBefore, userBalanceCents, pricePerMinuteCents, balanceCentsForTimer])
+
+  // --- Paket 4: Takumi – Poll für isShugyoFrozen, Session-Status ---
+  useEffect(() => {
+    if (userRole !== "takumi" || bookingMode !== "instant" || phase !== "IN_CALL") return
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, { credentials: "include" })
+        if (!res.ok) return
+        const data = (await res.json()) as { booking?: { isShugyoFrozen?: boolean; status?: string } }
+        if (data.booking?.isShugyoFrozen) setIsShugyoFrozen(true)
+        else setIsShugyoFrozen(false)
+        if (data.booking?.status === "completed") {
+          performCleanup()
+          onCallEnded?.()
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    poll()
+    const timer = setInterval(poll, 3000)
+    return () => clearInterval(timer)
+  }, [userRole, bookingMode, phase, bookingId, performCleanup, onCallEnded])
+
+  // --- Paket 4: Resume – balanceCents für Timer nach Aufladung ---
+  const effectiveBalanceCents = balanceCentsForTimer ?? userBalanceCents
 
   // --- Zuweisung: Remote-Video+Audio-Tracks → remoteVideoRef / remoteAudioRef ---
   const assignRemoteVideoTrack = useCallback(() => {
@@ -1064,12 +1227,49 @@ export function DailyCallContainer({
           </div>
         )}
 
+        {/* Paket 4: Shugyo Freeze-Overlay – Guthaben aufgebraucht */}
+        {isFrozen && userRole === "shugyo" && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-md">
+            <div className="mx-4 flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6 text-center shadow-xl">
+              <Wallet className="size-12 text-amber-500" />
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Dein Guthaben ist aufgebraucht</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Lade dein Wallet auf, um das Gespräch fortzusetzen.
+                </p>
+              </div>
+              <Button
+                onClick={() => openWalletTopup(() => {})}
+                className="w-full gap-2 rounded-xl bg-primary font-semibold"
+              >
+                <Wallet className="size-4" />
+                20 € Aufladen
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Paket 4: Takumi-Overlay – Shugyo lädt auf */}
+        {isShugyoFrozen && userRole === "takumi" && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="mx-4 rounded-xl border border-border bg-card/95 px-6 py-4 text-center shadow-lg">
+              <Loader2 className="mx-auto size-8 animate-spin text-primary" />
+              <p className="mt-2 text-sm font-medium text-foreground">
+                Dein Partner lädt gerade sein Guthaben auf.
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Bitte warte einen Moment…
+              </p>
+            </div>
+          </div>
+        )}
+
         {showPartnerSearchWarning && (
           <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-medium text-black">
             Suche Partner im Raum…
           </div>
         )}
-        {timerSecondsLeft !== null && (
+        {timerSecondsLeft !== null && !isFrozen && (
           <div
             className={cn(
               "absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:py-1.5",
@@ -1079,6 +1279,31 @@ export function DailyCallContainer({
           >
             {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
             <span>{formatMmSs(secs)}</span>
+          </div>
+        )}
+
+        {/* Paket 4: Shugyo Freeze-Overlay */}
+        {isFrozen && userRole === "shugyo" && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-md p-6">
+            <p className="text-center text-lg font-medium text-white">
+              Dein Guthaben ist aufgebraucht. Lade dein Wallet auf, um das Gespräch fortzusetzen.
+            </p>
+            <Button
+              onClick={() => openWalletTopup()}
+              className="h-12 gap-2 rounded-xl bg-primary px-6 text-base font-semibold"
+            >
+              <Wallet className="size-5" />
+              20 € Aufladen
+            </Button>
+          </div>
+        )}
+
+        {/* Paket 4: Takumi-Overlay wenn Shugyo eingefroren */}
+        {isShugyoFrozen && userRole === "takumi" && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+            <p className="text-center text-base font-medium text-white">
+              Dein Partner lädt gerade sein Guthaben auf. Bitte warte einen Moment…
+            </p>
           </div>
         )}
 

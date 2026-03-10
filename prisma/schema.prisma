@@ -256,6 +256,7 @@ model Booking {
   sessionEndedAt        DateTime?
   sessionDuration       Int?          // minutes
   trialUsed             Boolean       @default(false)
+  shugyoFrozenAt        DateTime?     // Paket 4: Soft-Freeze – Shugyo hat 0 Guthaben
 
   // diaiway Safety Enforcement: Pre-Call-Gateway-Zustimmung
   safetyAcceptedAt      DateTime?

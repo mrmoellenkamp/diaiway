@@ -129,6 +129,8 @@ export async function GET(
         sessionEndedAt: booking.sessionEndedAt,
         sessionDuration: booking.sessionDuration,
         trialUsed: booking.trialUsed,
+        shugyoFrozenAt: booking.shugyoFrozenAt,
+        isShugyoFrozen: !!booking.shugyoFrozenAt,
         paymentStatus: booking.paymentStatus,
         stripeSessionId: booking.stripeSessionId,
         stripePaymentIntentId: booking.stripePaymentIntentId,
@@ -233,7 +235,7 @@ export async function PATCH(
     const { action, rating, reviewText } = body as {
       action?: string; rating?: number; reviewText?: string
     }
-    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "report-and-leave", "release-payment", "report-problem", "accept-safety"].includes(action)) {
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "report-and-leave", "release-payment", "report-problem", "accept-safety", "set-shugyo-frozen", "clear-shugyo-frozen"].includes(action)) {
       return NextResponse.json(
         { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, report-and-leave, release-payment, report-problem, accept-safety." },
         { status: 400 }
@@ -259,6 +261,24 @@ export async function PATCH(
     })
     if (currentUser?.isBanned) {
       return NextResponse.json({ error: "Dein Zugang wurde gesperrt (diaiway Safety)." }, { status: 403 })
+    }
+
+    // ── set-shugyo-frozen / clear-shugyo-frozen (Paket 4: Soft-Freeze) ─────
+    if (action === "set-shugyo-frozen" || action === "clear-shugyo-frozen") {
+      if (booking.bookingMode !== "instant") {
+        return NextResponse.json({ error: "Nur bei Instant-Buchungen." }, { status: 400 })
+      }
+      if (!isBooker) {
+        return NextResponse.json({ error: "Nur der Shugyo kann den Freeze-Status setzen." }, { status: 403 })
+      }
+      if (booking.status !== "active") {
+        return NextResponse.json({ error: "Nur während aktiver Session." }, { status: 409 })
+      }
+      await prisma.booking.update({
+        where: { id },
+        data: { shugyoFrozenAt: action === "set-shugyo-frozen" ? new Date() : null },
+      })
+      return NextResponse.json({ success: true })
     }
 
     // ── accept-safety (Pre-Call Safety-Gateway, nur Video) ──────────────────
@@ -381,6 +401,7 @@ export async function PATCH(
           status: "completed",
           sessionEndedAt: now,
           sessionDuration: duration,
+          shugyoFrozenAt: null,
           // Mark trial as used if session was free
           ...(isFreeSession ? { trialUsed: true } : {}),
         },
