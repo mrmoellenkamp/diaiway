@@ -7,6 +7,14 @@ import { DailyCallContainer } from "@/components/video-call/DailyCallContainer"
 import { ReviewStars } from "@/components/review-stars"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 
@@ -26,6 +34,7 @@ interface BookingData {
     userImageUrl: string
     status: string
     paymentStatus?: string
+    paidAmount?: number | null
     safetyAcceptedAt?: string | null
     sessionStartedAt?: string | null
     userBalanceCents?: number
@@ -40,6 +49,7 @@ function PostCallScreen({
   isExpert,
   partnerName,
   paymentStatus,
+  paidAmountCents,
   onDone,
 }: {
   bookingId: string
@@ -47,14 +57,18 @@ function PostCallScreen({
   isExpert: boolean
   partnerName: string
   paymentStatus?: string
+  paidAmountCents?: number | null
   onDone: () => void
 }) {
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [showReleaseDialog, setShowReleaseDialog] = useState(false)
 
-  const handleSubmitReview = useCallback(async () => {
-    if (rating < 1) return
+  const formatAmount = (cents: number) =>
+    `€${(cents / 100).toFixed(2).replace(".", ",")}`
+
+  const submitReviewOnly = useCallback(async () => {
     setSubmitting(true)
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
@@ -76,6 +90,64 @@ function PostCallScreen({
       setSubmitting(false)
     }
   }, [bookingId, isExpert, rating, reviewText, onDone])
+
+  const handleSubmitReview = useCallback(() => {
+    if (rating < 1) return
+    if (!isExpert && paymentStatus === "paid" && (paidAmountCents ?? 0) > 0) {
+      setShowReleaseDialog(true)
+    } else {
+      submitReviewOnly()
+    }
+  }, [rating, isExpert, paymentStatus, paidAmountCents, submitReviewOnly])
+
+  const handleReleaseAndSubmit = useCallback(async () => {
+    setShowReleaseDialog(false)
+    setSubmitting(true)
+    try {
+      const [releaseRes, reviewRes] = await Promise.all([
+        fetch(`/api/bookings/${bookingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "release-payment" }),
+        }),
+        fetch(`/api/bookings/${bookingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit-review",
+            rating,
+            reviewText,
+          }),
+        }),
+      ])
+      if (!releaseRes.ok) throw new Error((await releaseRes.json())?.error ?? "Freigabe fehlgeschlagen")
+      if (!reviewRes.ok) throw new Error((await reviewRes.json())?.error ?? "Bewertung fehlgeschlagen")
+      toast.success("Betrag freigegeben und Bewertung gespeichert! Danke.")
+      onDone()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler")
+    } finally {
+      setSubmitting(false)
+    }
+  }, [bookingId, rating, reviewText, onDone])
+
+  const handleReportAndSubmit = useCallback(async () => {
+    setShowReleaseDialog(false)
+    setSubmitting(true)
+    try {
+      await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "report-problem" }),
+      })
+      await submitReviewOnly()
+      toast.info("Call wurde gemeldet. Deine Bewertung wurde gespeichert.")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler")
+    } finally {
+      setSubmitting(false)
+    }
+  }, [bookingId, submitReviewOnly])
 
   const handleReleasePayment = useCallback(async () => {
     setSubmitting(true)
@@ -116,6 +188,35 @@ function PostCallScreen({
         className="w-full max-w-sm resize-none rounded-xl border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         rows={3}
       />
+
+      <Dialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
+        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Betrag freigeben oder Call melden?</DialogTitle>
+            <DialogDescription>
+              Soll der Betrag von {formatAmount(paidAmountCents ?? 0)} sofort freigegeben werden,
+              oder möchtest du den Call melden?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={handleReleaseAndSubmit}
+              disabled={submitting}
+              className="w-full"
+            >
+              Betrag freigeben
+            </Button>
+            <Button
+              onClick={handleReportAndSubmit}
+              disabled={submitting}
+              variant="destructive"
+              className="w-full"
+            >
+              Call melden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex w-full max-w-sm flex-col gap-3">
         <Button
@@ -287,6 +388,7 @@ function SessionCallContent() {
         isExpert={booking.isExpert}
         partnerName={partnerName}
         paymentStatus={booking.paymentStatus}
+        paidAmountCents={booking.paidAmount}
         onDone={goToSessions}
       />
     )

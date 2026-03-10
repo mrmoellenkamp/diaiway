@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { AlertTriangle, FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Wallet } from "lucide-react"
+import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Square, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 
@@ -131,6 +131,8 @@ export function DailyCallContainer({
   const [safetyCheck1, setSafetyCheck1] = useState(false)
   const [safetyCheck2, setSafetyCheck2] = useState(false)
   const [safetyCheck3, setSafetyCheck3] = useState(false)
+  const [safetyCheck4, setSafetyCheck4] = useState(false)
+  const [safetyCheck5, setSafetyCheck5] = useState(false)
   const [safetySubmitting, setSafetySubmitting] = useState(false)
 
   const canJoin = !needsSafetyModal || safetyAccepted
@@ -140,7 +142,7 @@ export function DailyCallContainer({
   }, [safetyAcceptedAt])
 
   const handleSafetyConfirm = useCallback(async () => {
-    if (!safetyCheck1 || !safetyCheck2 || !safetyCheck3) return
+    if (!safetyCheck1 || !safetyCheck2 || !safetyCheck3 || !safetyCheck4 || !safetyCheck5) return
     setSafetySubmitting(true)
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
@@ -155,7 +157,7 @@ export function DailyCallContainer({
     } finally {
       setSafetySubmitting(false)
     }
-  }, [bookingId, safetyCheck1, safetyCheck2, safetyCheck3])
+  }, [bookingId, safetyCheck1, safetyCheck2, safetyCheck3, safetyCheck4, safetyCheck5])
 
   const callObjectRef = useRef<DailyCall | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
@@ -954,8 +956,14 @@ export function DailyCallContainer({
   const handleToggleMute = useCallback(() => {
     const call = callObjectRef.current
     if (!call || phase !== "IN_CALL") return
-    call.setLocalAudio(!isMuted)
-    setIsMuted(!isMuted)
+    const nextMuted = !isMuted
+    try {
+      call.setLocalAudio(!nextMuted)
+      setIsMuted(nextMuted)
+    } catch (e) {
+      console.warn("[DailyCall] setLocalAudio failed:", e)
+      setIsMuted(nextMuted)
+    }
   }, [phase, isMuted])
 
   // --- Live-Monitoring: zufällige Snapshots → Vision API (nur Video, bei Safety-Einwilligung) ---
@@ -1053,7 +1061,7 @@ export function DailyCallContainer({
       <div className={shellClass}>
         {/* Pre-Call Safety Modal (nur Video) */}
         <Dialog open={needsSafetyModal && !safetyAccepted}>
-          <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>diaiway Safety Enforcement</DialogTitle>
               <DialogDescription>
@@ -1061,23 +1069,37 @@ export function DailyCallContainer({
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4">
-              <label className="flex items-center gap-3 text-sm">
-                <Checkbox checked={safetyCheck1} onCheckedChange={(v) => setSafetyCheck1(!!v)} />
+              <label className="flex items-start gap-3 text-sm">
+                <Checkbox checked={safetyCheck1} onCheckedChange={(v) => setSafetyCheck1(!!v)} className="mt-0.5" />
                 <span>Ich werde keine verbotenen Inhalte zeigen oder teilen.</span>
               </label>
-              <label className="flex items-center gap-3 text-sm">
-                <Checkbox checked={safetyCheck2} onCheckedChange={(v) => setSafetyCheck2(!!v)} />
+              <label className="flex items-start gap-3 text-sm">
+                <Checkbox checked={safetyCheck2} onCheckedChange={(v) => setSafetyCheck2(!!v)} className="mt-0.5" />
                 <span>Ich bin mir der Nutzungsbedingungen bewusst.</span>
               </label>
-              <label className="flex items-center gap-3 text-sm">
-                <Checkbox checked={safetyCheck3} onCheckedChange={(v) => setSafetyCheck3(!!v)} />
+              <label className="flex items-start gap-3 text-sm">
+                <Checkbox checked={safetyCheck3} onCheckedChange={(v) => setSafetyCheck3(!!v)} className="mt-0.5" />
                 <span>Ich respektiere die Sicherheitsrichtlinien. Bei Verdacht können Stichproben geprüft werden.</span>
               </label>
+              <label className="flex items-start gap-3 text-sm">
+                <Checkbox checked={safetyCheck4} onCheckedChange={(v) => setSafetyCheck4(!!v)} className="mt-0.5" />
+                <span>Ich bin über die Belehrung zu sexualisierten oder gewalttätigen Inhalten informiert und verpflichte mich, diese nicht zu zeigen.</span>
+              </label>
+              <label className="flex items-start gap-3 text-sm">
+                <Checkbox checked={safetyCheck5} onCheckedChange={(v) => setSafetyCheck5(!!v)} className="mt-0.5" />
+                <span>Ich willige ein, dass Video-Stichproben zur Sicherheitsprüfung automatisch analysiert werden können (Vision API).</span>
+              </label>
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                <Square className="size-5 shrink-0 fill-destructive text-destructive" />
+                <span className="text-xs text-foreground">
+                  Der rote Notfall-Button (⏹) im Call unterbricht sofort das Gespräch und meldet den Call. Nutze ihn bei Problemen.
+                </span>
+              </div>
             </div>
             <DialogFooter>
               <Button
                 onClick={handleSafetyConfirm}
-                disabled={!safetyCheck1 || !safetyCheck2 || !safetyCheck3 || safetySubmitting}
+                disabled={!safetyCheck1 || !safetyCheck2 || !safetyCheck3 || !safetyCheck4 || !safetyCheck5 || safetySubmitting}
               >
                 {safetySubmitting ? "…" : "Ich bestätige"}
               </Button>
@@ -1270,15 +1292,20 @@ export function DailyCallContainer({
           </div>
         )}
         {timerSecondsLeft !== null && !isFrozen && (
-          <div
-            className={cn(
-              "absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:py-1.5",
-              timerColorClass,
-              timerBlink && "animate-timer-blink"
+          <div className="absolute left-3 top-3 z-10 flex flex-col gap-1 sm:left-4 sm:top-4">
+            <div
+              className={cn(
+                "flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:px-3 sm:py-1.5",
+                timerColorClass,
+                timerBlink && "animate-timer-blink"
+              )}
+            >
+              {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
+              <span>{formatMmSs(secs)}</span>
+            </div>
+            {useBillingTimer && !hasPaidBefore && (
+              <span className="text-[10px] text-white/70">Erstkontakt: 5 Min. kostenlos</span>
             )}
-          >
-            {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
-            <span>{formatMmSs(secs)}</span>
           </div>
         )}
 
@@ -1343,7 +1370,8 @@ export function DailyCallContainer({
             size="icon"
             className="size-10 sm:size-12 transition-transform active:scale-95"
             onClick={handleCycleCamera}
-            title="Kamera wechseln"
+            title="Kamera wechseln (Front/Rück)"
+            aria-label="Kamera wechseln"
           >
             <FlipHorizontal
               className="size-5 sm:size-6 transition-transform duration-300"
@@ -1357,9 +1385,10 @@ export function DailyCallContainer({
           size="icon"
           className="size-10 sm:size-12 transition-transform active:scale-95 border-destructive/50 text-destructive hover:bg-destructive/10"
           onClick={handleReportAndLeave}
-          title="Problem melden & auflegen"
+          title="Notfall: Call sofort beenden & melden"
+          aria-label="Notfall: Call sofort beenden und melden"
         >
-          <AlertTriangle className="size-5 sm:size-6" />
+          <Square className="size-5 sm:size-6 fill-destructive" />
         </Button>
         <Button
           variant="destructive"
