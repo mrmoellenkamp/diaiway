@@ -650,6 +650,9 @@ const de = {
   "booking.successInfo": "Wir leiten deine Buchungsanfrage an {name} weiter. Er wird sich schnellstmöglich melden oder die Buchung bestätigen.",
   "booking.successContinue": "Weiter zu Geplant",
   "booking.redirectFallback": "Weiterleitung funktioniert nicht?",
+  "booking.sprechzeitHint": "Zu diesem Zeitpunkt ist offene Sprechstunde. Sie können direkt Kontakt aufnehmen.",
+  "booking.sprechzeitSelectedHint": "Offene Sprechstunde gewählt. Nutze den Button oben, um direkt Kontakt aufzunehmen – oder wähle einen buchbaren Termin.",
+  "booking.takumiInCall": "Takumi ist im Gespräch. Versuchen Sie es später noch einmal oder vereinbaren Sie einen Termin.",
 
   // Availability Dashboard
   "avail.title": "Meine Verfügbarkeit",

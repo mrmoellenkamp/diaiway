@@ -3,18 +3,27 @@
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Loader2, Lock, Clock } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Lock, Clock, Phone } from "lucide-react"
+import { isTimeInSlots } from "@/lib/availability-utils"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 interface TimeSlot    { start: string; end: string }
 interface BlockedSlot { startTime: string; endTime: string; status: string }
 
+export type SlotType = "booking" | "sprechzeit" | "both"
+
+export interface SlotSelectMeta {
+  inSprechzeit?: boolean
+}
+
 export interface BookingCalendarProps {
   takumiId: string
-  onSelect: (date: string, startTime: string, endTime: string) => void
+  onSelect: (date: string, startTime: string, endTime: string, meta?: SlotSelectMeta) => void
+  onSelectSprechzeit?: (date: string, startTime: string) => void
   selectedDate?: string
   selectedTime?: string
+  selectedSprechzeit?: { date: string; startTime: string } | null
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -85,11 +94,27 @@ function isWindowBlocked(startTime: string, durationMin: number, blocked: Blocke
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
+/**
+ * Merge unique start times from two slot arrays.
+ */
+function mergeStartTimes(avail1: TimeSlot[], avail2: TimeSlot[], durationMin: number): string[] {
+  const set = new Set<string>()
+  for (const t of generateStartTimes(avail1, durationMin)) set.add(t)
+  for (const t of generateStartTimes(avail2, durationMin)) set.add(t)
+  return [...set].sort((a, b) => {
+    const [ah, am] = a.split(":").map(Number)
+    const [bh, bm] = b.split(":").map(Number)
+    return ah * 60 + am - (bh * 60 + bm)
+  })
+}
+
 export function BookingCalendar({
   takumiId,
   onSelect,
+  onSelectSprechzeit,
   selectedDate,
   selectedTime,
+  selectedSprechzeit,
 }: BookingCalendarProps) {
   const today = new Date()
 
@@ -98,31 +123,37 @@ export function BookingCalendar({
   const [pickedDate, setPickedDate] = useState(selectedDate || "")
   const [duration, setDuration]   = useState<Duration>(60)
 
-  // Weekly availability (for fast day-greying in the calendar)
-  const [weeklyAvail, setWeeklyAvail] = useState<Record<number, TimeSlot[]>>({})
+  // Weekly availability: Buchungszeiten + Sprechzeiten (for day highlighting)
+  const [weeklyBookable, setWeeklyBookable] = useState<Record<number, TimeSlot[]>>({})
+  const [weeklySprechzeit, setWeeklySprechzeit] = useState<Record<number, TimeSlot[]>>({})
 
-  // Resolved slots + blocked bookings for the picked date
-  const [dateSlots,    setDateSlots]    = useState<TimeSlot[]>([])
-  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([])
+  // Resolved slots for picked date + blocked bookings
+  const [dateSlots,       setDateSlots]       = useState<TimeSlot[]>([])
+  const [instantSlots,    setInstantSlots]     = useState<TimeSlot[]>([])
+  const [blockedSlots,    setBlockedSlots]    = useState<BlockedSlot[]>([])
 
   const [loadingAvail,  setLoadingAvail]  = useState(true)
   const [loadingSlots,  setLoadingSlots]  = useState(false)
 
-  // ── Load weekly default availability ───────────────────────────────────
+  // ── Load weekly availability (Buchung + Sprechzeit) ───────────────────────
   useEffect(() => {
     setLoadingAvail(true)
     fetch(`/api/availability?takumiId=${takumiId}`)
       .then((r) => r.json())
-      .then((data) => setWeeklyAvail(data.slots || {}))
+      .then((data) => {
+        setWeeklyBookable(data.slots || {})
+        setWeeklySprechzeit(data.instantSlots || {})
+      })
       .catch(() => {})
       .finally(() => setLoadingAvail(false))
   }, [takumiId])
 
-  // ── Load resolved slots + blocked slots for picked date ────────────────
+  // ── Load resolved slots + blocked for picked date ───────────────────────
   useEffect(() => {
     if (!pickedDate) return
     setLoadingSlots(true)
     setDateSlots([])
+    setInstantSlots([])
     setBlockedSlots([])
     Promise.all([
       fetch(`/api/availability?takumiId=${takumiId}&date=${pickedDate}`).then((r) => r.json()),
@@ -130,6 +161,7 @@ export function BookingCalendar({
     ])
       .then(([availData, bookingsData]) => {
         setDateSlots(availData.slots || [])
+        setInstantSlots(availData.instantSlots || [])
         setBlockedSlots(bookingsData.blockedSlots || [])
       })
       .catch(() => {})
@@ -146,20 +178,28 @@ export function BookingCalendar({
     return days
   }, [viewMonth, viewYear])
 
-  // Quick check: is a day potentially available (based on weekly defaults only)?
+  // Quick check: day has Buchungszeiten OR Sprechzeiten
   function isDayAvailable(day: number): boolean {
     const d = new Date(viewYear, viewMonth, day)
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     if (d < todayStart) return false
     const dow = d.getDay()
-    return (weeklyAvail[dow] || []).length > 0
+    const hasBook = (weeklyBookable[dow] || []).length > 0
+    const hasSprech = (weeklySprechzeit[dow] || []).length > 0
+    return hasBook || hasSprech
   }
 
-  // ── Available start times for picked date ──────────────────────────────
-  const startTimes = useMemo(
-    () => generateStartTimes(dateSlots, duration),
-    [dateSlots, duration]
-  )
+  // ── Merged start times (Buchung + Sprechzeit) + slot type per time ────────
+  const { startTimes, slotTypeMap } = useMemo(() => {
+    const merged = mergeStartTimes(dateSlots, instantSlots, duration)
+    const map = new Map<string, SlotType>()
+    for (const t of merged) {
+      const inBook = isTimeInSlots(t, duration, dateSlots)
+      const inSprech = isTimeInSlots(t, duration, instantSlots)
+      map.set(t, inBook && inSprech ? "both" : inBook ? "booking" : "sprechzeit")
+    }
+    return { startTimes: merged, slotTypeMap: map }
+  }, [dateSlots, instantSlots, duration])
 
   function handlePickDate(day: number) {
     const dateStr = formatDateStr(new Date(viewYear, viewMonth, day))
@@ -167,8 +207,15 @@ export function BookingCalendar({
   }
 
   function handleSelectTime(startTime: string) {
+    const slotType = slotTypeMap.get(startTime)
+    if (slotType === "sprechzeit" && onSelectSprechzeit) {
+      onSelectSprechzeit(pickedDate, startTime)
+      return
+    }
     const endTime = minutesToTime(timeToMinutes(startTime) + duration)
-    onSelect(pickedDate, startTime, endTime)
+    onSelect(pickedDate, startTime, endTime, {
+      inSprechzeit: slotType === "both",
+    })
   }
 
   function prevMonth() {
@@ -287,9 +334,13 @@ export function BookingCalendar({
           ) : (
             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
               {startTimes.map((startTime) => {
-                const blocked    = isWindowBlocked(startTime, duration, blockedSlots)
+                const slotType   = slotTypeMap.get(startTime)
+                const isBookable = slotType === "booking" || slotType === "both"
+                const blocked    = isBookable && isWindowBlocked(startTime, duration, blockedSlots)
                 const endTime    = minutesToTime(timeToMinutes(startTime) + duration)
-                const isSelected = selectedTime === startTime && selectedDate === pickedDate
+                const isSelected = (selectedTime === startTime && selectedDate === pickedDate)
+                  || (selectedSprechzeit?.date === pickedDate && selectedSprechzeit?.startTime === startTime)
+                const isSprechzeitOnly = slotType === "sprechzeit"
                 return (
                   <button
                     key={startTime}
@@ -301,11 +352,20 @@ export function BookingCalendar({
                         ? "cursor-not-allowed border-border/30 bg-muted/50 text-muted-foreground/40"
                         : isSelected
                           ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                          : "border-border/60 bg-card text-foreground hover:border-primary/40 hover:bg-primary/5",
+                          : isSprechzeitOnly
+                            ? "border-emerald-500/40 bg-emerald-500/5 text-foreground hover:border-emerald-500/60 hover:bg-emerald-500/10"
+                            : "border-border/60 bg-card text-foreground hover:border-primary/40 hover:bg-primary/5",
                     ].join(" ")}
-                    title={blocked ? "Bereits gebucht" : `${startTime} – ${endTime}`}
+                    title={
+                      blocked
+                        ? "Bereits gebucht"
+                        : isSprechzeitOnly
+                          ? "Offene Sprechstunde – direkt kontaktieren"
+                          : `${startTime} – ${endTime}`
+                    }
                   >
                     {blocked && <Lock className="size-2.5 shrink-0" />}
+                    {isSprechzeitOnly && !blocked && <Phone className="size-2.5 shrink-0" />}
                     {startTime}
                   </button>
                 )
@@ -314,13 +374,21 @@ export function BookingCalendar({
           )}
 
           {/* Legend */}
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <Lock className="size-2.5" /> Bereits gebucht
+            </span>
+            <span className="flex items-center gap-1">
+              <Phone className="size-2.5 text-emerald-600" /> Offene Sprechstunde
             </span>
             {selectedDate === pickedDate && selectedTime && (
               <Badge variant="outline" className="text-[10px]">
                 Gewählt: {selectedTime} – {minutesToTime(timeToMinutes(selectedTime) + duration)}
+              </Badge>
+            )}
+            {selectedSprechzeit?.date === pickedDate && selectedSprechzeit?.startTime && (
+              <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-500/50">
+                Sprechstunde: {selectedSprechzeit.startTime}
               </Badge>
             )}
           </div>

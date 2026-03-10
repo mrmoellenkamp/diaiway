@@ -645,6 +645,9 @@ const en = {
   "booking.successInfo": "We are forwarding your booking request to {name}. They will contact you as soon as possible or confirm the booking.",
   "booking.successContinue": "Continue to Planned",
   "booking.redirectFallback": "Redirect not working?",
+  "booking.sprechzeitHint": "This is an open office hours slot. You can contact directly.",
+  "booking.sprechzeitSelectedHint": "Office hours slot selected. Use the button above to contact directly – or choose a bookable appointment.",
+  "booking.takumiInCall": "Takumi is in a call. Please try again later or book an appointment.",
 
   // Availability Dashboard
   "avail.title": "My Availability",
