@@ -318,6 +318,8 @@ model Transaction {
   stornoInvoicePdfUrl    String?
   stornoCreditNotePdfUrl String?
   completedAt      DateTime?  // Capture-Zeitpunkt
+  invoiceEmailSentAt    DateTime?  // Wann Rechnungs-Mail an Shugyo
+  creditNoteEmailSentAt DateTime? // Wann Gutschriften-Mail an Takumi
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

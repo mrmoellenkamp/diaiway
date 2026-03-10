@@ -187,6 +187,14 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       console.log(`[processCompletion] Gutschrift ${creditNoteNumber}: Keine E-Mail-Adresse für Takumi, übersprungen.`)
     }
 
+    await prisma.transaction.update({
+      where: { id: tx.id },
+      data: {
+        ...(invoiceEmail.sent && { invoiceEmailSentAt: now }),
+        ...(creditEmail.sent && { creditNoteEmailSentAt: now }),
+      },
+    })
+
     return { ok: true }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error"

@@ -18,7 +18,8 @@ import {
   BarChart3, TrendingUp, TrendingDown, Activity, BookOpen,
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
-  ArrowUpRight, ArrowDownRight, Minus, Lock,
+  ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
+  Mail, Building2, User as UserIcon, ExternalLink,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import {
@@ -31,6 +32,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -880,6 +899,450 @@ function DatabaseTab({
   )
 }
 
+// ─── Finance Tab ───────────────────────────────────────────────────────────
+
+type FinanceItem = {
+  id: string
+  bookingId: string
+  status: string
+  totalAmount: number
+  platformFee: number
+  netPayout: number
+  invoiceNumber: string | null
+  creditNoteNumber: string | null
+  invoicePdfUrl: string | null
+  creditNotePdfUrl: string | null
+  stornoInvoicePdfUrl: string | null
+  stornoCreditNotePdfUrl: string | null
+  completedAt: string | null
+  invoiceEmailSentAt: string | null
+  creditNoteEmailSentAt: string | null
+  createdAt: string
+  userName: string
+  userEmail: string
+  expertName: string
+  expertEmail: string | null
+  date: string
+  vatId: string | null
+  isBusiness: boolean
+  paidAt: string | null
+  sessionStartedAt: string | null
+  sessionEndedAt: string | null
+}
+
+const REFUND_MAX_AGE_DAYS = 180
+
+function formatTime(iso: string | null): string {
+  if (!iso) return "—"
+  return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+}
+
+function isRefundDisabled(tx: FinanceItem): boolean {
+  if (tx.status !== "CAPTURED") return true
+  const refDate = tx.completedAt || tx.createdAt
+  if (!refDate) return false
+  const days = (Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24)
+  return days > REFUND_MAX_AGE_DAYS
+}
+
+function buildMoneyFlowTimeline(tx: FinanceItem): { time: string; label: string; detail: string }[] {
+  const ev: { ts: number; label: string; detail: string }[] = []
+  if (tx.paidAt) ev.push({ ts: new Date(tx.paidAt).getTime(), label: "Zahlung autorisiert", detail: "Stripe: PaymentIntent erstellt" })
+  if (tx.sessionStartedAt) ev.push({ ts: new Date(tx.sessionStartedAt).getTime(), label: "Session gestartet", detail: "Daily: Teilnehmer beigetreten" })
+  if (tx.sessionEndedAt) ev.push({ ts: new Date(tx.sessionEndedAt).getTime(), label: "Session beendet", detail: "Daily: Alle Teilnehmer raus" })
+  if (tx.completedAt) ev.push({ ts: new Date(tx.completedAt).getTime(), label: "Abschluss verarbeitet", detail: `Rechnung ${tx.invoiceNumber ?? "—"} generiert & versendet` })
+  if (tx.creditNoteEmailSentAt) {
+    ev.push({ ts: new Date(tx.creditNoteEmailSentAt).getTime(), label: "Gutschrift erstellt", detail: `Gutschrift ${tx.creditNoteNumber ?? "—"} an Takumi generiert` })
+  } else if (tx.completedAt && tx.creditNoteNumber) {
+    ev.push({ ts: new Date(tx.completedAt).getTime(), label: "Gutschrift erstellt", detail: `Gutschrift ${tx.creditNoteNumber} an Takumi` })
+  }
+  ev.sort((a, b) => a.ts - b.ts)
+  return ev.map((e) => ({ time: formatTime(new Date(e.ts).toISOString()), label: e.label, detail: e.detail }))
+}
+
+const MAX_EXPORT_DAYS = 93
+
+function FinanceTab() {
+  const [data, setData] = useState<{
+    kpis: {
+      totalPlatformFeeCents: number
+      stripeFeeCents?: number
+      netPlatformFeeAfterStripeCents?: number
+      collectedVatCents: number
+      openTakumiPayoutsCents: number
+    }
+    transactions: FinanceItem[]
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [taxFilter, setTaxFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [selected, setSelected] = useState<FinanceItem | null>(null)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [exportFrom, setExportFrom] = useState("")
+  const [exportTo, setExportTo] = useState("")
+  const [exporting, setExporting] = useState(false)
+  const [refunding, setRefunding] = useState(false)
+  const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
+  const [refundTarget, setRefundTarget] = useState<FinanceItem | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (taxFilter) params.set("tax", taxFilter)
+      if (statusFilter) params.set("status", statusFilter)
+      const res = await fetch(`/api/admin/finance?${params}`)
+      const json = await res.json()
+      if (res.ok) setData(json)
+      else toast.error(json.error ?? "Fehler beim Laden")
+    } finally {
+      setLoading(false)
+    }
+  }, [taxFilter, statusFilter])
+
+  useEffect(() => { void load() }, [load])
+
+  function exportDays(): number {
+    if (!exportFrom || !exportTo) return 0
+    const from = new Date(exportFrom)
+    const to = new Date(exportTo)
+    return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
+  }
+
+  async function handleExport(type: "zip" | "datev") {
+    if (!exportFrom || !exportTo) { toast.error("Bitte Zeitraum eingeben."); return }
+    const days = exportDays()
+    if (days > MAX_EXPORT_DAYS) {
+      toast.error(`Maximal ${MAX_EXPORT_DAYS} Tage (ca. 3 Monate) pro Export.`)
+      return
+    }
+    setExporting(true)
+    try {
+      const path = type === "zip" ? "/api/admin/finance/export" : "/api/admin/finance/datev"
+      const res = await fetch(`${path}?from=${exportFrom}&to=${exportTo}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err.error ?? "Export fehlgeschlagen.")
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = type === "zip"
+        ? `diaiway_finance_${exportFrom}_${exportTo}.zip`
+        : `diaiway_datev_${exportFrom}_${exportTo}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      setExportDialogOpen(false)
+      toast.success(type === "zip" ? "ZIP heruntergeladen." : "DATEV-CSV heruntergeladen.")
+    } catch { toast.error("Export fehlgeschlagen.") }
+    finally { setExporting(false) }
+  }
+
+  function openRefundConfirm(tx: FinanceItem) {
+    setRefundTarget(tx)
+    setRefundConfirmOpen(true)
+  }
+
+  async function handleRefundConfirm() {
+    if (!refundTarget) return
+    setRefunding(true)
+    try {
+      const res = await fetch("/api/admin/finance/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId: refundTarget.id }),
+      })
+      const json = await res.json()
+      if (res.ok) {
+        toast.success(json.message)
+        setSelected(null)
+        setRefundConfirmOpen(false)
+        setRefundTarget(null)
+        void load()
+      } else toast.error(json.error ?? "Stornierung fehlgeschlagen")
+    } finally {
+      setRefunding(false)
+    }
+  }
+
+  const kpis = data?.kpis
+  const items = data?.transactions ?? []
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <select value={taxFilter} onChange={(e) => setTaxFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm min-w-[120px]">
+            <option value="">Alle Steuer-Status</option>
+            <option value="privat">Privat</option>
+            <option value="unternehmen">Business</option>
+          </select>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm min-w-[120px]">
+            <option value="">Alle Status</option>
+            <option value="CAPTURED">Abgeschlossen</option>
+            <option value="REFUNDED">Storniert</option>
+            <option value="AUTHORIZED">Reserviert</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 h-9" onClick={() => setExportDialogOpen(true)}>
+            <FileArchive className="size-4" />
+            Export ZIP / CSV
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      {kpis && (
+        <div className="grid grid-cols-3 gap-2">
+          <Card className="border-border/50">
+            <CardContent className="p-3">
+              <p className="text-[10px] text-muted-foreground font-medium">Netto-Provision (Total)</p>
+              <p className="text-xl font-bold text-foreground">
+                {eur(kpis.netPlatformFeeAfterStripeCents ?? kpis.totalPlatformFeeCents)}
+              </p>
+              {kpis.stripeFeeCents != null && kpis.stripeFeeCents > 0 && (
+                <p className="text-[10px] mt-0.5">
+                  <span className="text-muted-foreground">Brutto {eur(kpis.totalPlatformFeeCents)}</span>
+                  {" · "}
+                  <span className="text-destructive font-medium">Stripe −{eur(kpis.stripeFeeCents)}</span>
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="p-3">
+              <p className="text-[10px] text-muted-foreground font-medium">Gesammelte USt (Schätzung)</p>
+              <p className="text-xl font-bold text-foreground">{eur(kpis.collectedVatCents)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Nur B2C, reverse charge = 0</p>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="p-3">
+              <p className="text-[10px] text-muted-foreground font-medium">Offene Takumi-Auszahlungen</p>
+              <p className="text-xl font-bold text-foreground">{eur(kpis.openTakumiPayoutsCents)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex justify-center py-8">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      )}
+
+      {!loading && (
+        <Card className="border-border/50">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[90px]">Datum</TableHead>
+                <TableHead>Shugyo / Experte</TableHead>
+                <TableHead>Beleg</TableHead>
+                <TableHead>Steuer</TableHead>
+                <TableHead className="text-right">Betrag</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelected(row)}
+                >
+                  <TableCell className="text-xs">{row.date}</TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      <p className="font-medium truncate max-w-[140px]">{row.userName}</p>
+                      <p className="text-muted-foreground truncate max-w-[140px]">→ {row.expertName}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {row.invoiceNumber && <span className="font-mono">{row.invoiceNumber}</span>}
+                  </TableCell>
+                  <TableCell>
+                    {row.isBusiness ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-[10px] gap-0.5 bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400 cursor-help">
+                              <Building2 className="size-3" />
+                              ZUGFeRD
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Valide ZUGFeRD 2.2 XML eingebettet</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] gap-0.5 bg-muted text-muted-foreground">
+                        <UserIcon className="size-3" />
+                        Privat
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right text-xs font-medium">{eur(row.totalAmount)}</TableCell>
+                  <TableCell>
+                    <Badge variant={row.status === "CAPTURED" ? "default" : "secondary"} className="text-[10px]">
+                      {row.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {items.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">Keine Transaktionen</div>
+          )}
+        </Card>
+      )}
+
+      {/* Transaction Detail Sheet */}
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent side="right" className="sm:max-w-md overflow-y-auto">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Transaktion {selected.invoiceNumber ?? selected.id}</SheetTitle>
+                <p className="text-xs text-muted-foreground">{selected.date} · {selected.userName} → {selected.expertName}</p>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 py-4">
+                {/* Geldfluss-Timeline */}
+                <div>
+                  <Label className="text-xs text-muted-foreground">Geldfluss-Timeline</Label>
+                  <div className="mt-2 space-y-2">
+                    {buildMoneyFlowTimeline(selected).length > 0 ? (
+                      buildMoneyFlowTimeline(selected).map((e, i) => (
+                        <div key={i} className="flex gap-2 text-xs">
+                          <span className="shrink-0 font-mono text-muted-foreground w-10">{e.time}</span>
+                          <div>
+                            <p className="font-medium text-foreground">{e.label}</p>
+                            <p className="text-muted-foreground">{e.detail}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Noch keine Ereignisse erfasst.</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">USt-IdNr. (Shugyo)</Label>
+                  <p className="text-sm font-medium">{selected.vatId || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">PDF-Links</Label>
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    {selected.invoicePdfUrl && (
+                      <a href={selected.invoicePdfUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-xs text-primary hover:underline">
+                        <FileText className="size-3.5" />
+                        Rechnung öffnen
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )}
+                    {selected.creditNotePdfUrl && (
+                      <a href={selected.creditNotePdfUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-xs text-primary hover:underline">
+                        <FileText className="size-3.5" />
+                        Gutschrift öffnen
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )}
+                    {selected.stornoInvoicePdfUrl && (
+                      <a href={selected.stornoInvoicePdfUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-xs text-orange-600 hover:underline">
+                        Storno-Rechnung
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {selected.status === "CAPTURED" && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full gap-2"
+                    disabled={refunding || isRefundDisabled(selected)}
+                    onClick={() => openRefundConfirm(selected)}
+                    title={isRefundDisabled(selected) ? `Stornierung nur innerhalb von ${REFUND_MAX_AGE_DAYS} Tagen möglich (Stripe-Limit)` : undefined}
+                  >
+                    {refunding ? <Loader2 className="size-4 animate-spin" /> : <AlertTriangle className="size-4" />}
+                    Stornierung einleiten
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Export Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Export</DialogTitle>
+            <DialogDescription>
+              Zeitraum auswählen. Max. {MAX_EXPORT_DAYS} Tage (ca. 3 Monate) pro Vorgang.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div>
+              <Label className="text-xs">Von</Label>
+              <Input type="date" value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Bis</Label>
+              <Input type="date" value={exportTo} onChange={(e) => setExportTo(e.target.value)} className="mt-1" />
+            </div>
+            {exportFrom && exportTo && exportDays() > MAX_EXPORT_DAYS && (
+              <p className="text-xs text-destructive">Zeitraum zu groß. Bitte verkürzen.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => handleExport("datev")} disabled={exporting || !exportFrom || !exportTo || exportDays() > MAX_EXPORT_DAYS} className="gap-2">
+              {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+              CSV (DATEV)
+            </Button>
+            <Button onClick={() => handleExport("zip")} disabled={exporting || !exportFrom || !exportTo || exportDays() > MAX_EXPORT_DAYS} className="gap-2">
+              {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileArchive className="size-4" />}
+              ZIP
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Confirmation AlertDialog */}
+      <AlertDialog open={refundConfirmOpen} onOpenChange={setRefundConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Stornierung bestätigen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du die Zahlung von <strong>{refundTarget ? eur(refundTarget.totalAmount) : "—"}</strong> wirklich zurückerstatten?
+              Dieser Vorgang erstellt automatisch eine Storno-Rechnung und eine Storno-Gutschrift.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRefundTarget(null)}>Abbrechen</AlertDialogCancel>
+            <Button variant="destructive" onClick={handleRefundConfirm} disabled={refunding} className="gap-2">
+              {refunding ? <Loader2 className="size-4 animate-spin" /> : <AlertTriangle className="size-4" />}
+              Ja, stornieren
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -948,11 +1411,12 @@ export default function AdminPage() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 h-9">
+            <TabsList className="grid w-full grid-cols-6 h-9">
               <TabsTrigger value="overview" className="text-xs"><BarChart3 className="size-3.5 mr-1" />Übersicht</TabsTrigger>
               <TabsTrigger value="users" className="text-xs"><Users className="size-3.5 mr-1" />Nutzer</TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs"><CalendarDays className="size-3.5 mr-1" />Buchungen</TabsTrigger>
               <TabsTrigger value="takumis" className="text-xs"><Star className="size-3.5 mr-1" />Takumis</TabsTrigger>
+              <TabsTrigger value="finance" className="text-xs"><CreditCard className="size-3.5 mr-1" />Finanzen</TabsTrigger>
               <TabsTrigger value="database" className="text-xs"><Database className="size-3.5 mr-1" />DB</TabsTrigger>
             </TabsList>
             <div className="mt-2">
@@ -985,6 +1449,10 @@ export default function AdminPage() {
 
             <TabsContent value="takumis" className="mt-4">
               <TakumisTab refreshKey={dataRefreshKey} />
+            </TabsContent>
+
+            <TabsContent value="finance" className="mt-4">
+              <FinanceTab />
             </TabsContent>
 
             <TabsContent value="database" className="mt-4">
