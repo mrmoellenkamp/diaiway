@@ -327,6 +327,7 @@ const en = {
   "finances.topupTx": "Wallet top-up",
   "finances.refundTx": "Refund",
   "finances.deductionTx": "Deduction",
+  "finances.topupSuccess": "Payment successful! Your balance has been credited.",
 
   // Invoice Data
   "invoice.title": "Invoice Data",
