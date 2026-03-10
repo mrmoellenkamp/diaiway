@@ -141,8 +141,8 @@ export async function POST(req: Request) {
         room_name: resolvedRoomName,
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
-        exp: expValue,
       },
+      exp: expValue,
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
     console.log("API SENDING EXP:", expValue)
