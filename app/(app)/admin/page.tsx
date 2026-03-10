@@ -19,7 +19,7 @@ import {
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
-  Mail, Building2, User as UserIcon, ExternalLink,
+  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import {
@@ -962,6 +962,24 @@ function buildMoneyFlowTimeline(tx: FinanceItem): { time: string; label: string;
 
 const MAX_EXPORT_DAYS = 93
 
+type PendingRelease = {
+  id: string
+  bookingId: string
+  totalAmount: number
+  platformFee: number
+  netPayout: number
+  status: string
+  createdAt: string | null
+  userName: string | null
+  userEmail: string | null
+  expertName: string | null
+  date: string | null
+  startTime: string | null
+  endTime: string | null
+  sessionEndedAt: string | null
+  stripePaymentIntentId: string | null
+}
+
 function FinanceTab() {
   const [data, setData] = useState<{
     kpis: {
@@ -984,6 +1002,17 @@ function FinanceTab() {
   const [refunding, setRefunding] = useState(false)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
   const [refundTarget, setRefundTarget] = useState<FinanceItem | null>(null)
+  const [pendingReleases, setPendingReleases] = useState<PendingRelease[]>([])
+  const [releasingId, setReleasingId] = useState<string | null>(null)
+
+  const loadPendingReleases = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/finance/pending-releases")
+      const json = await res.json()
+      if (res.ok && Array.isArray(json.items)) setPendingReleases(json.items)
+      else setPendingReleases([])
+    } catch { setPendingReleases([]) }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -1001,6 +1030,28 @@ function FinanceTab() {
   }, [taxFilter, statusFilter])
 
   useEffect(() => { void load() }, [load])
+  useEffect(() => { void loadPendingReleases() }, [loadPendingReleases])
+
+  async function handleProcessRelease(item: PendingRelease) {
+    if (!item.bookingId) return
+    setReleasingId(item.id)
+    try {
+      const res = await fetch("/api/admin/finance/process-release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: item.bookingId }),
+      })
+      const json = await res.json()
+      if (res.ok && json.success) {
+        toast.success(json.message ?? "Freigabe durchgeführt.")
+        void load()
+        void loadPendingReleases()
+      } else {
+        toast.error(json.error ?? "Freigabe fehlgeschlagen.")
+      }
+    } catch { toast.error("Freigabe fehlgeschlagen.") }
+    finally { setReleasingId(null) }
+  }
 
   function exportDays(): number {
     if (!exportFrom || !exportTo) return 0
@@ -1072,6 +1123,62 @@ function FinanceTab() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Offene Freigaben (Admin-Override) */}
+      {pendingReleases.length > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Lock className="size-4 text-amber-600" />
+              Offene Freigaben ({pendingReleases.length})
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Abgeschlossene Sessions, bei denen der Shugyo noch nicht freigegeben hat. Admin kann als Override freigeben (Rechnung + E-Mail werden erstellt).
+            </p>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <div className="flex flex-col gap-2">
+              {pendingReleases.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-card px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {item.userName} → {item.expertName}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {item.date} · {item.startTime}–{item.endTime}
+                      {item.sessionEndedAt && (
+                        <> · Ende: {new Date(item.sessionEndedAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</>
+                      )}
+                    </p>
+                    {item.stripePaymentIntentId && (
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">{item.stripePaymentIntentId}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-bold">{eur(item.totalAmount)}</span>
+                    <Button
+                      size="sm"
+                      className="gap-1.5 h-8"
+                      onClick={() => handleProcessRelease(item)}
+                      disabled={releasingId === item.id}
+                    >
+                      {releasingId === item.id ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-3.5" />
+                      )}
+                      Freigeben
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between gap-2">
         <div className="flex gap-2">
           <select value={taxFilter} onChange={(e) => setTaxFilter(e.target.value)}
