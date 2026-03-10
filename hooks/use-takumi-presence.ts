@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 
-const HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000 // 2 Minuten
+const HEARTBEAT_INTERVAL_MS = 60 * 1000 // 60 Sekunden (Paket 3)
 const FETCH_INTERVAL_MS = 2 * 60 * 1000
 
 /**
