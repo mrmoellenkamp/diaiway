@@ -6,7 +6,7 @@ import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt } from "lucide-react"
+import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, Plus } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -118,11 +118,22 @@ export default function FinancesPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-border/60 bg-background p-3">
+                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background p-3">
                     <p className="text-[10px] text-muted-foreground">{t("finances.balance")}</p>
-                    <p className="text-xl font-bold text-foreground">
-                      {wallet ? formatCents(wallet.balance) : "€0,00"}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xl font-bold text-foreground">
+                        {wallet ? formatCents(wallet.balance) : "€0,00"}
+                      </p>
+                      <Button
+                        onClick={() => openWalletTopup(refetchWallet)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                      >
+                        <Plus className="size-3.5" />
+                        <span className="text-xs">{t("finances.topup")}</span>
+                      </Button>
+                    </div>
                   </div>
                   <div className="rounded-lg border border-border/60 bg-background p-3">
                     <p className="text-[10px] text-muted-foreground">{t("finances.pendingBalance")}</p>
@@ -134,15 +145,6 @@ export default function FinancesPage() {
                 {wallet?.canWithdraw && (
                   <p className="mt-2 text-xs text-primary">{t("finances.canWithdraw")}</p>
                 )}
-                {/* Wallet aufladen: Shugyo & Takumi (Takumi kann andere Takumis buchen) */}
-                <Button
-                  onClick={() => openWalletTopup(refetchWallet)}
-                  className="mt-3 w-full gap-2"
-                  variant="outline"
-                >
-                  <Wallet className="size-4" />
-                  {t("finances.topup")}
-                </Button>
               </CardContent>
             </Card>
 

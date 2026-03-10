@@ -323,7 +323,7 @@ const es = {
   "finances.downloadStornoCreditNote": "Descargar nota de crédito rectificativa",
   "finances.noTransactions": "Aún no hay transacciones.",
   "finances.canWithdraw": "Retiro disponible",
-  "finances.topup": "Recargar wallet",
+  "finances.topup": "Recargar",
 
   // Invoice Data
   "invoice.title": "Datos de facturación",
