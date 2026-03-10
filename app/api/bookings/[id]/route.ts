@@ -71,6 +71,34 @@ export async function GET(
       shugyoProjects = projects
     }
 
+    // Für Shugyo (Video-Timer): Guthaben, Preis/Min, hat er diesen Takumi schon bezahlt?
+    let userBalanceCents: number | undefined
+    let pricePerMinuteCents: number | undefined
+    let hasPaidBefore = false
+    if (isBooker && booking.bookingMode === "instant") {
+      const [shugyoUser, priorPaid] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: booking.userId },
+          select: { balance: true },
+        }),
+        prisma.booking.findFirst({
+          where: {
+            userId: booking.userId,
+            expertId: booking.expertId,
+            paymentStatus: "paid",
+            id: { not: booking.id },
+          },
+          select: { id: true },
+        }),
+      ])
+      userBalanceCents = shugyoUser?.balance ?? 0
+      hasPaidBefore = !!priorPaid
+      const price15 = Number(
+        booking.expert?.priceVideo15Min ?? (booking.expert?.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0)
+      )
+      pricePerMinuteCents = Math.round((price15 * 100) / 15)
+    }
+
     return NextResponse.json({
       booking: {
         id: booking.id,
@@ -113,6 +141,9 @@ export async function GET(
         isExpert, // true if current user is the Takumi (expert) for this booking
         shugyoSkillLevel,
         shugyoProjects,
+        userBalanceCents,
+        pricePerMinuteCents,
+        hasPaidBefore,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
       },

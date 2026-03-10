@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { AlertTriangle, FlipHorizontal, Loader2, Mic, MicOff, PhoneOff } from "lucide-react"
+import { AlertTriangle, FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Wallet } from "lucide-react"
+import { toast } from "sonner"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -43,6 +44,12 @@ interface DailyCallContainerProps {
   onSessionStarted?: () => void
   /** Called when call ends (Auflegen/report-and-leave); parent can show post-call screen instead of redirect. */
   onCallEnded?: () => void
+  /** Paket 3: Billing-Timer für Instant-Calls (Shugyo) */
+  bookingMode?: "scheduled" | "instant"
+  sessionStartedAt?: string | null
+  userBalanceCents?: number
+  pricePerMinuteCents?: number
+  hasPaidBefore?: boolean
 }
 
 interface MediaDevice {
@@ -54,6 +61,28 @@ interface MediaDevice {
 const TIMER_DURATION_SEC = 5 * 60
 const AUDIO_LEVEL_SPEAKING_THRESHOLD = 0.02
 
+/** Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung. */
+function calculateRemainingTime(
+  sessionStartMs: number,
+  hasPaidBefore: boolean,
+  userBalanceCents: number,
+  pricePerMinuteCents: number
+): number {
+  if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
+  const freePeriodSec = hasPaidBefore ? 30 : 5 * 60
+  const elapsedSec = (Date.now() - sessionStartMs) / 1000
+  const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
+  const balanceMinutes = userBalanceCents / pricePerMinuteCents
+  const remainingSec = Math.max(0, balanceMinutes * 60 - billingElapsedSec)
+  return Math.round(remainingSec)
+}
+
+function formatMmSs(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${String(s).padStart(2, "0")}`
+}
+
 export function DailyCallContainer({
   bookingId,
   callMode,
@@ -63,6 +92,11 @@ export function DailyCallContainer({
   safetyAcceptedAt,
   onSessionStarted,
   onCallEnded,
+  bookingMode,
+  sessionStartedAt,
+  userBalanceCents = 0,
+  pricePerMinuteCents = 0,
+  hasPaidBefore = false,
 }: DailyCallContainerProps) {
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
@@ -134,6 +168,14 @@ export function DailyCallContainer({
   const initGuardRef = useRef(false)
   const remoteSessionIdRef = useRef<string | null>(null)
   const joinUrlRef = useRef<string | null>(null)
+  const sessionStartMsRef = useRef<number | null>(null)
+  const lowBalanceWarningShownRef = useRef(false)
+
+  const useBillingTimer =
+    bookingMode === "instant" &&
+    userRole === "shugyo" &&
+    pricePerMinuteCents > 0 &&
+    (userBalanceCents > 0 || sessionStartedAt)
 
   // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
   const performCleanup = useCallback(() => {
@@ -459,16 +501,38 @@ export function DailyCallContainer({
         joinUrlRef.current?.split("/").pop() ||
         "(unbekannt)"
       console.log("INTERNER RAUM-NAME:", currentRoom)
-      setTimerSecondsLeft(TIMER_DURATION_SEC)
-      timerIntervalRef.current = setInterval(() => {
-        setTimerSecondsLeft((prev) => {
-          if (prev === null || prev <= 1) {
-            timerIntervalRef.current && clearInterval(timerIntervalRef.current)
-            return 0
+      sessionStartMsRef.current = Date.now()
+
+      const tick = () => {
+        if (useBillingTimer && sessionStartMsRef.current) {
+          const remaining = calculateRemainingTime(
+            sessionStartMsRef.current,
+            hasPaidBefore,
+            userBalanceCents,
+            pricePerMinuteCents
+          )
+          setTimerSecondsLeft(remaining)
+          if (remaining <= 60 && remaining > 0 && !lowBalanceWarningShownRef.current) {
+            lowBalanceWarningShownRef.current = true
+            toast.warning("Achtung: Dein Guthaben neigt sich dem Ende zu!")
           }
-          return prev - 1
-        })
-      }, 1000)
+          if (remaining <= 0) {
+            timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+          }
+        } else {
+          setTimerSecondsLeft((prev) => {
+            if (prev === null) return TIMER_DURATION_SEC
+            if (prev <= 1) {
+              timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+              return 0
+            }
+            return prev - 1
+          })
+        }
+      }
+      setTimerSecondsLeft(useBillingTimer ? calculateRemainingTime(Date.now(), hasPaidBefore, userBalanceCents, pricePerMinuteCents) : TIMER_DURATION_SEC)
+      tick()
+      timerIntervalRef.current = setInterval(tick, 1000)
       syncRemoteParticipant()
     }
 
@@ -628,7 +692,7 @@ export function DailyCallContainer({
       call.off("track-started", handleTrackStarted)
       timerIntervalRef.current && clearInterval(timerIntervalRef.current)
     }
-  }, [phase, callMode])
+  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents])
 
   // --- Zuweisung: Remote-Video+Audio-Tracks → remoteVideoRef / remoteAudioRef ---
   const assignRemoteVideoTrack = useCallback(() => {
@@ -930,8 +994,8 @@ export function DailyCallContainer({
   // IN_CALL: App Shell mit Video + Steuerungsleiste
   const secs = timerSecondsLeft ?? 0
   const timerColorClass =
-    secs > 120 ? "text-emerald-400" : secs > 30 ? "text-amber-400" : "text-red-400"
-  const timerBlink = secs > 0 && secs <= 30
+    secs > 120 ? "text-emerald-400" : secs > 60 ? "text-amber-400" : "text-red-400"
+  const timerBlink = secs > 0 && secs <= (useBillingTimer ? 60 : 30)
 
   const hasRemoteVideo =
     callMode === "video" && remoteParticipant?.hasVideo
@@ -1008,12 +1072,13 @@ export function DailyCallContainer({
         {timerSecondsLeft !== null && (
           <div
             className={cn(
-              "absolute left-3 top-3 z-10 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:py-1.5",
+              "absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:py-1.5",
               timerColorClass,
               timerBlink && "animate-timer-blink"
             )}
           >
-            {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}
+            {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
+            <span>{formatMmSs(secs)}</span>
           </div>
         )}
 

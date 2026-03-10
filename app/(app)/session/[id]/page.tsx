@@ -27,6 +27,10 @@ interface BookingData {
     status: string
     paymentStatus?: string
     safetyAcceptedAt?: string | null
+    sessionStartedAt?: string | null
+    userBalanceCents?: number
+    pricePerMinuteCents?: number
+    hasPaidBefore?: boolean
   }
 }
 
@@ -299,6 +303,11 @@ function SessionCallContent() {
           partnerName={partnerName}
           safetyAcceptedAt={booking.safetyAcceptedAt}
           onCallEnded={() => setViewMode("post-call")}
+          bookingMode={booking.bookingMode}
+          sessionStartedAt={booking.sessionStartedAt}
+          userBalanceCents={booking.userBalanceCents}
+          pricePerMinuteCents={booking.pricePerMinuteCents}
+          hasPaidBefore={booking.hasPaidBefore}
         />
       </div>
       <div className="shrink-0 border-t px-4 py-3">
