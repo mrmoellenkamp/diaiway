@@ -42,6 +42,8 @@ export interface Takumi {
   priceVoice15Min?: number
   pricePerSession?: number
   isLive: boolean
+  liveStatus?: "offline" | "available" | "in_call" | "busy" | null
+  pricePerMinute?: number // für Instant-Connect: Cents pro Minute
   isPro: boolean
   verified: boolean
   portfolio: string[]

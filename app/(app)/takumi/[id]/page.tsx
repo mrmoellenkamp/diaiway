@@ -17,6 +17,7 @@ import {
   ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail,
 } from "lucide-react"
 import type { SocialLinks } from "@/lib/types"
+import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 
 // ─── Social media icon + link helpers ──────────────────────────────────────
@@ -220,6 +221,9 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
+            {takumi.liveStatus === "available" && (
+              <InstantCallTrigger takumi={takumi} variant="profile" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" />
+            )}
             <Button
               onClick={handleContact}
               disabled={isContacting}
@@ -305,19 +309,27 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
       {/* Sticky Book CTA */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
           <div className="flex flex-col">
             <span className="text-lg font-bold text-foreground">
               ab {(takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)).toFixed(0)} €
             </span>
             <span className="text-[10px] text-muted-foreground">{t("takumiPage.priceInfo")}</span>
           </div>
-          <Button
-            asChild
-            className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
-          >
-            <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
-          </Button>
+          {takumi.liveStatus === "available" ? (
+            <InstantCallTrigger
+              takumi={takumi}
+              variant="profile"
+              className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-8 text-base font-bold text-white shadow-lg shadow-emerald/20"
+            />
+          ) : (
+            <Button
+              asChild
+              className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
+            >
+              <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

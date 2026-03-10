@@ -8,11 +8,12 @@ import { LiveBadge } from "@/components/live-badge"
 import { ReviewStars } from "@/components/review-stars"
 import { CheckCircle } from "lucide-react"
 import { FavoriteButton } from "@/components/favorite-button"
+import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import type { Takumi } from "@/lib/types"
 
 export function TakumiCard({ takumi }: { takumi: Takumi }) {
   return (
-    <Link href={`/takumi/${takumi.id}`}>
+    <Link href={`/takumi/${takumi.id}`} className="block">
       <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
         <CardContent className="relative flex items-start gap-3 p-4">
           <FavoriteButton takumiId={takumi.id} className="absolute top-3 right-3 z-10" />
@@ -51,13 +52,18 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
                 {takumi.rating} ({takumi.reviewCount})
               </span>
             </div>
-            <div className="flex items-center justify-between pt-0.5">
-              <span className="text-xs text-muted-foreground">
-                {takumi.responseTime}
-              </span>
-              <span className="text-sm font-semibold text-primary">
-                ab {(takumi.priceVoice15Min ?? takumi.pricePerSession ? (takumi.pricePerSession ?? 0) / 2 : 0).toFixed(0)} € / 15 Min
-              </span>
+            <div className="flex flex-col gap-1.5 pt-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {takumi.responseTime}
+                </span>
+                <span className="text-sm font-semibold text-primary">
+                  ab {(takumi.priceVoice15Min ?? takumi.pricePerSession ? (takumi.pricePerSession ?? 0) / 2 : 0).toFixed(0)} € / 15 Min
+                </span>
+              </div>
+              {takumi.liveStatus === "available" && (
+                <InstantCallTrigger takumi={takumi} variant="card" className="w-full mt-0.5" />
+              )}
             </div>
           </div>
         </CardContent>

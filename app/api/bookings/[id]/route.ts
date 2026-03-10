@@ -91,6 +91,7 @@ export async function GET(
         startTime: booking.startTime,
         endTime: booking.endTime,
         status: booking.status,
+        bookingMode: booking.bookingMode,
         callType: booking.callType,
         totalPrice: booking.totalPrice != null ? Number(booking.totalPrice) : null,
         price: booking.price,
@@ -285,15 +286,17 @@ export async function PATCH(
           sessionStartedAt: booking.sessionStartedAt,
         })
       }
-      // Allow joining max 5 minutes before the scheduled start time (Berlin time)
-      const scheduledStart = parseBerlinDateTime(booking.date, booking.startTime)
-      const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)
-      if (new Date() < earliestJoin) {
-        const minutesLeft = Math.ceil((earliestJoin.getTime() - Date.now()) / 60000)
-        return NextResponse.json(
-          { error: `Der Raum öffnet 5 Minuten vor dem Termin. Noch ${minutesLeft} Minute(n).` },
-          { status: 425 } // Too Early
-        )
+      // Bei Instant: Zeitprüfung überspringen. Bei geplanten Terminen: max 5 Min vor Start
+      if (booking.bookingMode !== "instant") {
+        const scheduledStart = parseBerlinDateTime(booking.date, booking.startTime)
+        const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)
+        if (new Date() < earliestJoin) {
+          const minutesLeft = Math.ceil((earliestJoin.getTime() - Date.now()) / 60000)
+          return NextResponse.json(
+            { error: `Der Raum öffnet 5 Minuten vor dem Termin. Noch ${minutesLeft} Minute(n).` },
+            { status: 425 } // Too Early
+          )
+        }
       }
 
       const updated = await prisma.booking.update({
@@ -351,6 +354,13 @@ export async function PATCH(
           ...(isFreeSession ? { trialUsed: true } : {}),
         },
       })
+
+      if (booking.bookingMode === "instant" && booking.expertId) {
+        await prisma.expert.update({
+          where: { id: booking.expertId },
+          data: { liveStatus: "available" },
+        })
+      }
 
       return NextResponse.json({
         success: true,

@@ -49,6 +49,11 @@ enum CallType {
   VOICE
 }
 
+enum BookingMode {
+  scheduled
+  instant
+}
+
 enum SkillLevel {
   NEULING
   FORTGESCHRITTEN
@@ -234,7 +239,8 @@ model Booking {
   userName              String
   userEmail             String
 
-  date                  String        // YYYY-MM-DD
+  bookingMode           BookingMode   @default(scheduled)
+  date                  String        // YYYY-MM-DD (bei instant: heute)
   startTime             String        // HH:mm
   endTime               String        // HH:mm
   status                BookingStatus @default(pending)

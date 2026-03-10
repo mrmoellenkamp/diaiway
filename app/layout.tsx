@@ -13,6 +13,8 @@ import { PushNotificationProvider } from '@/components/push-notification-provide
 import { SessionActivityProvider } from '@/components/session-activity-provider'
 import { SessionTimeoutWarning } from '@/components/session-timeout-warning'
 import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
+import { InstantRequestOverlay } from '@/components/instant-request-overlay'
+import { WalletTopupProvider } from '@/lib/wallet-topup-context'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -69,6 +71,7 @@ export default function RootLayout({
             <SessionActivityProvider>
               <I18nProvider>
                 <AppProvider>
+                  <WalletTopupProvider>
                   <PushNotificationProvider>
                     <GlobalNavigation />
                     {children}
@@ -76,7 +79,9 @@ export default function RootLayout({
                     <AiMentorFab />
                     <SessionTimeoutWarning />
                     <TakumiPresenceUpdater />
+                    <InstantRequestOverlay />
                   </PushNotificationProvider>
+                  </WalletTopupProvider>
                 </AppProvider>
               </I18nProvider>
             </SessionActivityProvider>

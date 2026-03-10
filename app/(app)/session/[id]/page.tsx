@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Suspense, useCallback, useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DailyCallContainer } from "@/components/video-call/DailyCallContainer"
 import { ReviewStars } from "@/components/review-stars"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ interface BookingData {
     id: string
     expertId: string
     callType: "VIDEO" | "VOICE"
+    bookingMode?: "scheduled" | "instant"
     isExpert: boolean
     userName: string
     takumiName: string
@@ -151,8 +152,10 @@ function PostCallScreen({
 function SessionCallContent() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t } = useI18n()
   const bookingId = params.id as string
+  const isWaitMode = searchParams.get("wait") === "true"
 
   const [data, setData] = useState<BookingData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -179,6 +182,25 @@ function SessionCallContent() {
       cancelled = true
     }
   }, [bookingId])
+
+  // Poll für Shugyo im Wartemodus (Instant-Anklopf): bis Takumi annimmt oder ablehnt
+  const shouldPollWait = isWaitMode && data && !data.booking.isExpert && data.booking.status === "pending"
+  useEffect(() => {
+    if (!shouldPollWait) return
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`)
+        if (!res.ok) return
+        const json = await res.json()
+        if (json?.booking?.status !== "pending") {
+          setData(json)
+        }
+      } catch {
+        /* ignore */
+      }
+    }, 2000)
+    return () => clearInterval(timer)
+  }, [shouldPollWait, bookingId])
 
   const goToSessions = useCallback(() => {
     router.push("/sessions")
@@ -215,6 +237,43 @@ function SessionCallContent() {
   const userRole: UserRole = booking.isExpert ? "takumi" : "shugyo"
   const partnerName = booking.isExpert ? booking.userName : booking.takumiName
   const partnerImageUrl = booking.isExpert ? booking.userImageUrl : booking.takumiImageUrl
+
+  // Shugyo wartet auf Takumi (Instant-Anklopf)
+  if (isWaitMode && !booking.isExpert && booking.status === "pending") {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+        <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 animate-pulse">
+          <span className="text-4xl">📞</span>
+        </div>
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-foreground">Anklopfen…</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Warte auf Antwort von {booking.takumiName}.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/home")}>
+            Abbrechen
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Takumi hat abgelehnt
+  if (isWaitMode && !booking.isExpert && ["declined", "cancelled"].includes(booking.status)) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-foreground">Anfrage abgelehnt</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {booking.takumiName} ist gerade nicht verfügbar.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/home")}>Zurück zur Startseite</Button>
+      </div>
+    )
+  }
 
   if (viewMode === "post-call") {
     return (
