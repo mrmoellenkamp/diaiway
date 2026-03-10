@@ -88,10 +88,7 @@ export async function POST(req: Request) {
     Math.random().toString(36).substring(7)
   ).replace(/[^a-z0-9-]/g, "")
 
-  const ONE_DAY_FROM_NOW = Math.floor(Date.now() / 1000) + 86400
-  const expValue = Number.isInteger(ONE_DAY_FROM_NOW) && ONE_DAY_FROM_NOW > 0
-    ? Number(ONE_DAY_FROM_NOW)
-    : Math.floor(Date.now() / 1000) + 86400
+  const expValue = Math.floor(Date.now() / 1000) + 3600
 
   const roomPayload = {
     name: roomName,
@@ -141,8 +138,9 @@ export async function POST(req: Request) {
         room_name: resolvedRoomName,
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
+        exp: expValue,
+        eject_at_token_exp: true,
       },
-      exp: expValue,
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
     console.log("API SENDING EXP:", expValue)
