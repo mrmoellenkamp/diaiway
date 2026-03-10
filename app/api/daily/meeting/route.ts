@@ -88,7 +88,9 @@ export async function POST(req: Request) {
     Math.random().toString(36).substring(7)
   ).replace(/[^a-z0-9-]/g, "")
 
-  const expValue = Math.floor(Date.now() / 1000) + 3600
+  const now = Math.floor(Date.now() / 1000)
+  const expValue = now + 3600
+  const nbfValue = now - 60
 
   const roomPayload = {
     name: roomName,
@@ -98,7 +100,7 @@ export async function POST(req: Request) {
     },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))
-  console.log("API SENDING EXP:", expValue)
+  console.log("API SENDING exp:", expValue, "nbf:", nbfValue)
 
   try {
     const roomRes = await fetch(`${DAILY_API_BASE}/rooms`, {
@@ -139,11 +141,12 @@ export async function POST(req: Request) {
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
         exp: expValue,
+        nbf: nbfValue,
         eject_at_token_exp: true,
       },
     }
     console.log("[Daily Meeting] Request to Daily (meeting-tokens):", JSON.stringify(tokenPayload))
-    console.log("API SENDING EXP:", expValue)
+    console.log("API SENDING exp:", expValue, "nbf:", nbfValue)
 
     const tokenRes = await fetch(`${DAILY_API_BASE}/meeting-tokens`, {
       method: "POST",
