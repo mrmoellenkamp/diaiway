@@ -5,6 +5,15 @@ import Daily from "@daily-co/daily-js"
 import type { DailyCall } from "@daily-co/daily-js"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -28,6 +37,8 @@ interface DailyCallContainerProps {
   userRole: UserRole
   partnerImageUrl?: string | null
   partnerName?: string
+  /** Pre-Call Safety bereits bestätigt (nur Video). Bei Voice entfällt das Modal. */
+  safetyAcceptedAt?: string | Date | null
   /** Called when user successfully joins (after start-session); optional. */
   onSessionStarted?: () => void
   /** Called when call ends (Auflegen/report-and-leave); parent can show post-call screen instead of redirect. */
@@ -49,6 +60,7 @@ export function DailyCallContainer({
   userRole,
   partnerImageUrl,
   partnerName = "Partner",
+  safetyAcceptedAt,
   onSessionStarted,
   onCallEnded,
 }: DailyCallContainerProps) {
@@ -76,6 +88,38 @@ export function DailyCallContainer({
   const [isMuted, setIsMuted] = useState(false)
   const [cameraFlipRotation, setCameraFlipRotation] = useState(0)
   const [showPartnerSearchWarning, setShowPartnerSearchWarning] = useState(false)
+
+  // Pre-Call Safety: nur Video; Voice entfällt (README)
+  const needsSafetyModal = callMode === "video" && !safetyAcceptedAt
+  const [safetyAccepted, setSafetyAccepted] = useState(!!safetyAcceptedAt)
+  const [safetyCheck1, setSafetyCheck1] = useState(false)
+  const [safetyCheck2, setSafetyCheck2] = useState(false)
+  const [safetyCheck3, setSafetyCheck3] = useState(false)
+  const [safetySubmitting, setSafetySubmitting] = useState(false)
+
+  const canJoin = !needsSafetyModal || safetyAccepted
+
+  useEffect(() => {
+    if (safetyAcceptedAt) setSafetyAccepted(true)
+  }, [safetyAcceptedAt])
+
+  const handleSafetyConfirm = useCallback(async () => {
+    if (!safetyCheck1 || !safetyCheck2 || !safetyCheck3) return
+    setSafetySubmitting(true)
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "accept-safety" }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error ?? "Fehler")
+      setSafetyAccepted(true)
+    } catch (e) {
+      console.warn("[DailyCall] accept-safety:", e)
+    } finally {
+      setSafetySubmitting(false)
+    }
+  }, [bookingId, safetyCheck1, safetyCheck2, safetyCheck3])
 
   const callObjectRef = useRef<DailyCall | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
@@ -687,6 +731,69 @@ export function DailyCallContainer({
     setIsMuted(!isMuted)
   }, [phase, isMuted])
 
+  // --- Live-Monitoring: zufällige Snapshots → Vision API (nur Video, bei Safety-Einwilligung) ---
+  const snapshotIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (phase !== "IN_CALL" || callMode !== "video" || !safetyAccepted) return
+
+    const captureAndSend = () => {
+      const remoteEl = remoteVideoRef.current
+      const localEl = localPiPVideoRef.current
+
+      const videoEl = remoteEl?.srcObject && remoteEl.readyState >= 2
+        ? remoteEl
+        : localEl?.srcObject && localEl.readyState >= 2
+          ? localEl
+          : null
+
+      if (!videoEl || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) return
+
+      try {
+        const canvas = document.createElement("canvas")
+        const w = Math.min(videoEl.videoWidth, 640)
+        const h = Math.round((w / videoEl.videoWidth) * videoEl.videoHeight)
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+        ctx.drawImage(videoEl, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7)
+
+        fetch("/api/safety/snapshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, imageBase64: dataUrl }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.incidentCreated) {
+              console.warn("[DailyCall] Safety-Incident erstellt – Inhalt wurde gemeldet.")
+            }
+          })
+          .catch((e) => console.warn("[DailyCall] Snapshot senden:", e))
+      } catch (e) {
+        console.warn("[DailyCall] Snapshot capture:", e)
+      }
+    }
+
+    const scheduleNext = () => {
+      const delayMs = 45000 + Math.random() * 45000
+      snapshotIntervalRef.current = setTimeout(() => {
+        captureAndSend()
+        scheduleNext()
+      }, delayMs)
+    }
+
+    scheduleNext()
+
+    return () => {
+      if (snapshotIntervalRef.current) {
+        clearTimeout(snapshotIntervalRef.current)
+        snapshotIntervalRef.current = null
+      }
+    }
+  }, [phase, callMode, safetyAccepted, bookingId])
+
   // --- Cleanup NUR bei echtem Unmount (nicht bei Re-Render/Strict Mode Remount) ---
   useEffect(() => {
     return () => {
@@ -717,6 +824,40 @@ export function DailyCallContainer({
   if (phase === "LOBBY") {
     return (
       <div className={shellClass}>
+        {/* Pre-Call Safety Modal (nur Video) */}
+        <Dialog open={needsSafetyModal && !safetyAccepted}>
+          <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>diaiway Safety Enforcement</DialogTitle>
+              <DialogDescription>
+                Bevor du dem Video-Call beitrittst, bestätige bitte:
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <label className="flex items-center gap-3 text-sm">
+                <Checkbox checked={safetyCheck1} onCheckedChange={(v) => setSafetyCheck1(!!v)} />
+                <span>Ich werde keine verbotenen Inhalte zeigen oder teilen.</span>
+              </label>
+              <label className="flex items-center gap-3 text-sm">
+                <Checkbox checked={safetyCheck2} onCheckedChange={(v) => setSafetyCheck2(!!v)} />
+                <span>Ich bin mir der Nutzungsbedingungen bewusst.</span>
+              </label>
+              <label className="flex items-center gap-3 text-sm">
+                <Checkbox checked={safetyCheck3} onCheckedChange={(v) => setSafetyCheck3(!!v)} />
+                <span>Ich respektiere die Sicherheitsrichtlinien. Bei Verdacht können Stichproben geprüft werden.</span>
+              </label>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleSafetyConfirm}
+                disabled={!safetyCheck1 || !safetyCheck2 || !safetyCheck3 || safetySubmitting}
+              >
+                {safetySubmitting ? "…" : "Ich bestätige"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="flex-1 flex flex-col items-center justify-center gap-6 overflow-y-auto p-4">
           <h3 className="text-lg font-semibold">Bereit zum Beitreten</h3>
           <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-black aspect-video shrink-0">
@@ -767,7 +908,7 @@ export function DailyCallContainer({
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleJoin} className="h-12">Beitreten</Button>
+            <Button onClick={handleJoin} disabled={!canJoin} className="h-12">Beitreten</Button>
             <Button variant="ghost" onClick={() => forceCleanupAndRedirect("Lobby-Abbrechen")}>
               Abbrechen
             </Button>

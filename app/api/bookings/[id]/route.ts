@@ -95,6 +95,7 @@ export async function GET(
         totalPrice: booking.totalPrice != null ? Number(booking.totalPrice) : null,
         price: booking.price,
         note: booking.note,
+        safetyAcceptedAt: booking.safetyAcceptedAt,
         sessionStartedAt: booking.sessionStartedAt,
         sessionEndedAt: booking.sessionEndedAt,
         sessionDuration: booking.sessionDuration,
@@ -200,11 +201,23 @@ export async function PATCH(
     const { action, rating, reviewText } = body as {
       action?: string; rating?: number; reviewText?: string
     }
-    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "report-and-leave", "release-payment", "report-problem"].includes(action)) {
+    if (!action || !["start-session", "end-session", "cancel", "submit-review", "submit-expert-rating", "report-and-leave", "release-payment", "report-problem", "accept-safety"].includes(action)) {
       return NextResponse.json(
-        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, report-and-leave, release-payment, report-problem." },
+        { error: "Ungueltige Aktion. Erlaubt: start-session, end-session, cancel, submit-review, submit-expert-rating, report-and-leave, release-payment, report-problem, accept-safety." },
         { status: 400 }
       )
+    }
+
+    // ── accept-safety (Pre-Call Safety-Gateway, nur Video) ──────────────────
+    if (action === "accept-safety") {
+      if (booking.status !== "pending" && booking.status !== "confirmed") {
+        return NextResponse.json({ error: "Safety nur vor Session-Start." }, { status: 409 })
+      }
+      await prisma.booking.update({
+        where: { id },
+        data: { safetyAcceptedAt: new Date() },
+      })
+      return NextResponse.json({ success: true })
     }
 
     const booking = await prisma.booking.findUnique({
