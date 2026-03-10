@@ -208,18 +208,6 @@ export async function PATCH(
       )
     }
 
-    // ── accept-safety (Pre-Call Safety-Gateway, nur Video) ──────────────────
-    if (action === "accept-safety") {
-      if (booking.status !== "pending" && booking.status !== "confirmed") {
-        return NextResponse.json({ error: "Safety nur vor Session-Start." }, { status: 409 })
-      }
-      await prisma.booking.update({
-        where: { id },
-        data: { safetyAcceptedAt: new Date() },
-      })
-      return NextResponse.json({ success: true })
-    }
-
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: { expert: { select: { userId: true, cancelPolicy: true } } },
@@ -239,6 +227,18 @@ export async function PATCH(
     })
     if (currentUser?.isBanned) {
       return NextResponse.json({ error: "Dein Zugang wurde gesperrt (diaiway Safety)." }, { status: 403 })
+    }
+
+    // ── accept-safety (Pre-Call Safety-Gateway, nur Video) ──────────────────
+    if (action === "accept-safety") {
+      if (booking.status !== "pending" && booking.status !== "confirmed") {
+        return NextResponse.json({ error: "Safety nur vor Session-Start." }, { status: 409 })
+      }
+      await prisma.booking.update({
+        where: { id },
+        data: { safetyAcceptedAt: new Date() },
+      })
+      return NextResponse.json({ success: true })
     }
 
     // ── report-and-leave ───────────────────────────────────────────────────
