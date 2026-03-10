@@ -287,9 +287,9 @@ export function DailyCallContainer({
     if (!call || phase !== "IN_CALL") return
     initGuardRef.current = true
 
-    const handleJoinedMeeting = (evt?: { participants?: { local?: { room_name?: string } } }) => {
-      const roomName = (evt as { participants?: { local?: { room_name?: string } } } | undefined)?.participants?.local?.room_name
-      console.log("INTERNER RAUM-NAME:", roomName ?? evt ?? "(no evt)")
+    const handleJoinedMeeting = () => {
+      const participants = call.participants()
+      console.log("INTERNER RAUM-NAME:", (participants?.local as any)?.room_name)
       setTimerSecondsLeft(TIMER_DURATION_SEC)
       timerIntervalRef.current = setInterval(() => {
         setTimerSecondsLeft((prev) => {
@@ -302,9 +302,9 @@ export function DailyCallContainer({
       }, 1000)
     }
 
-    const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
-      console.log("PARTICIPANT DETECTED:", ev.participant?.session_id)
-      const p = ev.participant
+    const handleParticipantJoined = (ev: any) => {
+      console.log("PARTICIPANT DETECTED:", ev?.participant?.session_id)
+      const p = ev?.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
         remoteSessionIdRef.current = p.session_id
         const part = call.participants()[p.session_id]
@@ -366,7 +366,7 @@ export function DailyCallContainer({
       setRemoteParticipant((prev) => prev ? { ...prev, sessionId: prev.sessionId, hasVideo: true } : prev)
     }
 
-    const handleError = (err: unknown) => console.error("DAILY AUTH ERROR:", err)
+    const handleError = (err: any) => console.error("DAILY AUTH ERROR:", err)
     call.on("error", handleError)
     call.on("joined-meeting", handleJoinedMeeting)
     call.on("participant-joined", handleParticipantJoined)
