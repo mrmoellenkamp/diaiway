@@ -325,7 +325,7 @@ const de = {
   "finances.downloadStornoCreditNote": "Storno-Gutschrift herunterladen",
   "finances.noTransactions": "Noch keine Transaktionen.",
   "finances.canWithdraw": "Auszahlung möglich",
-  "finances.topup": "Wallet aufladen",
+  "finances.topup": "Aufladen",
 
   // Invoice Data (Rechnungsdaten)
   "invoice.title": "Rechnungsdaten",
