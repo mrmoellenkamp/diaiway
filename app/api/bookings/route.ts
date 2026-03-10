@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { ensureCustomerNumber } from "@/lib/billing"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
@@ -176,6 +177,10 @@ export async function POST(req: Request) {
       : (price ?? (Number(expert.priceVideo15Min) || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)) * (durationMin / 15))
 
     const statusToken = randomBytes(32).toString("hex")
+
+    // Kundennummer bei erstmaliger Buchung (Shugyo)
+    ensureCustomerNumber(session.user.id).catch(() => {})
+
     const booking = await prisma.booking.create({
       data: {
         expertId: takumiId,

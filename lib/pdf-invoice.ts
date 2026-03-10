@@ -15,7 +15,7 @@ function formatDateYyyyMmDd(d: Date): string {
 
 /**
  * Rechnung (RE): Von diaiway an den Shugyo über den vollen Bruttobetrag.
- * ZUGFeRD: factur-x.xml wird bei BILLING_ZUGFERD_ENABLED=true eingebettet.
+ * ZUGFeRD: factur-x.xml nur für Geschäftskunden (invoiceData.type === "unternehmen").
  */
 export async function generateInvoicePdf(opts: {
   invoiceNumber: string
@@ -27,9 +27,11 @@ export async function generateInvoicePdf(opts: {
   date: Date
   /** Dauer in Minuten — für ZUGFeRD Quantity (15-Min-Einheiten) */
   durationMinutes?: number
+  /** ZUGFeRD einbetten (nur für Geschäftskunden) */
+  useZugferd?: boolean
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
-  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, durationMinutes = 30 } = opts
+  const { invoiceNumber, recipientName, recipientEmail, bookingId, expertName, totalAmountCents, date, durationMinutes = 30, useZugferd = false } = opts
 
   const quantitySlots15 = Math.max(1, Math.round(durationMinutes / 15))
   const serviceLabel = "Expertensitzung"
@@ -92,7 +94,7 @@ export async function generateInvoicePdf(opts: {
 
 /**
  * Gutschrift (GS): Von diaiway an den Takumi über seinen Netto-Verdienst.
- * ZUGFeRD für Gutschriften: TypeCode 381.
+ * ZUGFeRD nur für Geschäftskunden (invoiceData.type === "unternehmen").
  */
 export async function generateCreditNotePdf(opts: {
   creditNumber: string
@@ -103,6 +105,8 @@ export async function generateCreditNotePdf(opts: {
   platformFeeCents: number
   totalAmountCents: number
   date: Date
+  /** ZUGFeRD einbetten (nur für Geschäftskunden) */
+  useZugferd?: boolean
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const {
@@ -114,6 +118,7 @@ export async function generateCreditNotePdf(opts: {
     platformFeeCents,
     totalAmountCents,
     date,
+    useZugferd = false,
   } = opts
 
   doc.setFontSize(18)
@@ -145,7 +150,7 @@ export async function generateCreditNotePdf(opts: {
   doc.text("Dieser Betrag wurde Ihrem Wallet-Guthaben gutgeschrieben. — diAiway", 20, 270)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
-  if (process.env.BILLING_ZUGFERD_ENABLED === "true") {
+  if (useZugferd) {
     const xml = buildFacturXXml({
       invoiceNumber: creditNumber,
       issueDate: formatDateYyyyMmDd(date),
