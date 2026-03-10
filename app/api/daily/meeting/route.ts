@@ -81,12 +81,7 @@ export async function POST(req: Request) {
     "Content-Type": "application/json",
   }
 
-  const roomName = (
-    "call-" +
-    bookingId.slice(-8).toLowerCase().replace(/[^a-z0-9]/g, "") +
-    "-" +
-    Math.random().toString(36).substring(7)
-  ).replace(/[^a-z0-9-]/g, "")
+  const roomName = `room-${bookingId.trim()}`
 
   const now = Math.floor(Date.now() / 1000)
   const expValue = now + 3600
@@ -103,32 +98,46 @@ export async function POST(req: Request) {
   console.log("API SENDING exp:", expValue, "nbf:", nbfValue)
 
   try {
+    let roomUrl: string | null = null
+
     const roomRes = await fetch(`${DAILY_API_BASE}/rooms`, {
       method: "POST",
       headers,
       body: JSON.stringify(roomPayload),
     })
 
-    if (!roomRes.ok) {
+    if (roomRes.ok) {
+      const roomData = (await roomRes.json()) as { url?: string; name?: string }
+      roomUrl = roomData?.url ?? null
+    } else {
       const errText = await roomRes.text()
-      let errorData: { info?: string; error?: string } = {}
-      try {
-        errorData = JSON.parse(errText) as { info?: string; error?: string }
-      } catch {
-        // errText bleibt als Fallback
+      const isRoomExists = roomRes.status === 409 || errText.toLowerCase().includes("already exists")
+      if (isRoomExists) {
+        const getRes = await fetch(`${DAILY_API_BASE}/rooms/${encodeURIComponent(roomName)}`, {
+          method: "GET",
+          headers,
+        })
+        if (getRes.ok) {
+          const existingRoom = (await getRes.json()) as { url?: string; name?: string }
+          roomUrl = existingRoom?.url ?? null
+        }
       }
-      console.error("[Daily Meeting] Raum-Erstellung fehlgeschlagen:", roomRes.status, errText)
-      console.error("[Daily Meeting] Daily API Error Detail:", errorData)
-      const errorMsg =
-        errorData?.info ?? errorData?.error ?? "Raum konnte nicht erstellt werden."
-      return NextResponse.json({ error: errorMsg }, { status: 502 })
+      if (!roomUrl) {
+        let errorData: { info?: string; error?: string } = {}
+        try {
+          errorData = JSON.parse(errText) as { info?: string; error?: string }
+        } catch {
+          // errText bleibt als Fallback
+        }
+        console.error("[Daily Meeting] Raum-Erstellung fehlgeschlagen:", roomRes.status, errText)
+        const errorMsg =
+          errorData?.info ?? errorData?.error ?? "Raum konnte nicht erstellt werden."
+        return NextResponse.json({ error: errorMsg }, { status: 502 })
+      }
     }
 
-    const roomData = (await roomRes.json()) as { url?: string; name?: string }
-    const roomUrl = roomData?.url
-    const resolvedRoomName = roomData?.name ?? roomName
     if (!roomUrl) {
-      console.error("[Daily Meeting] Raum-Response ohne url:", roomData)
+      console.error("[Daily Meeting] Raum-Response ohne url für:", roomName)
       return NextResponse.json(
         { error: "Ungültige Antwort der Video-API." },
         { status: 502 }
@@ -137,7 +146,7 @@ export async function POST(req: Request) {
 
     const tokenPayload = {
       properties: {
-        room_name: resolvedRoomName,
+        room_name: roomName,
         is_owner: userRole === "takumi",
         user_name: session.user?.name ?? "Teilnehmer",
         exp: expValue,
