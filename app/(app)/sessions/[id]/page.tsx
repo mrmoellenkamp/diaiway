@@ -59,7 +59,7 @@ export default function SessionDetailPage() {
 
   if (!takumiFromParams) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center pb-40">
         <p className="text-muted-foreground">Experte nicht gefunden.</p>
       </div>
     )
@@ -85,7 +85,7 @@ export default function SessionDetailPage() {
   // Pre-call screen
   if (phase === "pre-call") {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen flex-col bg-background pb-40">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-6 px-4 py-8">
           <div className="flex w-full items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
@@ -149,7 +149,7 @@ export default function SessionDetailPage() {
   // Rating screen
   if (phase === "rating") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 pb-40">
         <Avatar className="size-20 border-4 border-primary/10">
           <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
             {takumi.avatar}

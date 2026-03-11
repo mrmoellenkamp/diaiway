@@ -27,7 +27,7 @@ function Todo({ children }: { children: React.ReactNode }) {
 export default function DatenschutzPage() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-24">
+      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-40">
 
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">

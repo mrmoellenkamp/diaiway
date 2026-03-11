@@ -86,7 +86,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   // ─── UI ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white flex items-center justify-center p-6 pb-40">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

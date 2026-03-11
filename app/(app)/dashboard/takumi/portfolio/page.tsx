@@ -107,7 +107,7 @@ export default function TakumiPortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-40">
       <PageContainer>
         <div className="flex flex-col gap-6">
           {/* Header */}

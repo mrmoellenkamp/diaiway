@@ -315,7 +315,7 @@ export default function EditProfilePage() {
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed")
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-24">
+    <div className="flex min-h-screen flex-col bg-background pb-40">
       <div className="mx-auto flex w-full max-w-lg flex-col gap-5 px-4 py-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">

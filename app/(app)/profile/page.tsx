@@ -258,7 +258,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <PageContainer className="pb-40">
+    <PageContainer>
       <div className="flex flex-col gap-6">
         {/* Loading state */}
         {profileLoading ? (
