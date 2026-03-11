@@ -30,8 +30,7 @@ export async function creditWalletTopup(
     })
     if (existing) return { ok: true } // Idempotenz
 
-    let wtId: string
-    await prisma.$transaction(async (tx) => {
+    const wtId = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: amountCents } },
@@ -44,7 +43,7 @@ export async function creditWalletTopup(
           referenceId: stripeSessionId,
         },
       })
-      wtId = wt.id
+      return wt.id
     })
 
     // Rechnung für Wallet-Aufladung erstellen
