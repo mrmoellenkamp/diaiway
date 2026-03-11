@@ -10,9 +10,13 @@ export const maxDuration = 60
  * Optional: CRON_SECRET zur Absicherung.
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret?.trim()) {
+    console.error("[Cron] CRON_SECRET not configured – refusing to run")
+    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
+  }
+  const authHeader = req.headers.get("authorization")
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -28,7 +32,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[Cron] release-wallet error:", err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
+      { error: "Ein Fehler ist aufgetreten." },
       { status: 500 }
     )
   }

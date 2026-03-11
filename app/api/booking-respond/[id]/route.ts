@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { textToHtmlSafe } from "@/lib/security"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
@@ -61,8 +62,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const body = await req.json().catch(() => ({}))
-  const { token, action, message } = body as { token?: string; action?: string; message?: string }
+  let body: Record<string, unknown>
+  try {
+    body = (await req.json()) as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: "Ungültige Anfrage (JSON erforderlich)." }, { status: 400 })
+  }
+  const { token, action, message } = (body ?? {}) as { token?: string; action?: string; message?: string }
 
   const { error, booking } = await resolveBookingAuth(id, token ?? null)
   if (error) return NextResponse.json({ error }, { status: 400 })
@@ -191,7 +197,7 @@ export async function POST(
     <strong style="color:#1c1917;">${booking.date}</strong> (${booking.startTime}–${booking.endTime} Uhr):
   </p>
   <table width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:24px;"><tr><td style="padding:16px 20px;">
-    <p style="margin:0;font-size:14px;line-height:1.6;color:#1c1917;">${message.replace(/\n/g, "<br/>")}</p>
+    <p style="margin:0;font-size:14px;line-height:1.6;color:#1c1917;">${textToHtmlSafe(message)}</p>
   </td></tr></table>
   <p style="margin:0 0 16px;font-size:13px;color:#78716c;">
     Du kannst direkt auf diese E-Mail antworten oder die Buchung über den folgenden Link bestätigen:

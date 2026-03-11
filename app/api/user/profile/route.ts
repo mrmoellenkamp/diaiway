@@ -32,7 +32,8 @@ export async function GET() {
       createdAt: user.createdAt,
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
 
@@ -67,10 +68,14 @@ export async function PATCH(req: Request) {
       data.refundPreference = body.refundPreference
     }
     if (body.invoiceData !== undefined) {
-      if (body.invoiceData !== null && typeof body.invoiceData !== "object") {
-        return NextResponse.json({ error: "Ungueltige Rechnungsdaten." }, { status: 400 })
+      if (body.invoiceData === null) {
+        data.invoiceData = null
+      } else {
+        const { sanitizeInvoiceData } = await import("@/lib/security")
+        const sanitized = sanitizeInvoiceData(body.invoiceData)
+        if (!sanitized) return NextResponse.json({ error: "Ungültige Rechnungsdaten." }, { status: 400 })
+        data.invoiceData = sanitized
       }
-      data.invoiceData = body.invoiceData
     }
     if (body.skillLevel !== undefined) {
       const valid = ["NEULING", "FORTGESCHRITTEN", "PROFI"]
@@ -135,6 +140,7 @@ export async function PATCH(req: Request) {
       message: "Profil erfolgreich aktualisiert.",
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

@@ -56,17 +56,17 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
     clearTimeout(timeoutId)
     if (!res.ok) {
       console.error("[Vision] API error:", res.status, await res.text())
-      return { safe: true }
+      return { safe: false, reason: "Bildprüfung fehlgeschlagen. Bitte versuche es erneut." }
     }
     const data = await res.json()
     const annotation = data?.responses?.[0]?.safeSearchAnnotation as SafeSearchAnnotation | undefined
-    if (!annotation) return { safe: true }
+    if (!annotation) return { safe: false, reason: "Bild konnte nicht geprüft werden." }
     const result = checkAnnotation(annotation)
     return { safe: result.safe, reason: result.reason }
   } catch (err) {
     clearTimeout(timeoutId)
     console.error("[Vision] Safety check failed:", err)
-    return { safe: true }
+    return { safe: false, reason: "Bildprüfung fehlgeschlagen. Bitte versuche es erneut." }
   }
 }
 
@@ -94,15 +94,15 @@ export async function checkImageSafetyFromBase64(base64: string): Promise<Safety
     clearTimeout(timeoutId)
     if (!res.ok) {
       console.error("[Vision] API error:", res.status, await res.text())
-      return { safe: true }
+      return { safe: false, reason: "Bildprüfung fehlgeschlagen.", violation: undefined }
     }
     const data = await res.json()
     const annotation = data?.responses?.[0]?.safeSearchAnnotation as SafeSearchAnnotation | undefined
-    if (!annotation) return { safe: true }
+    if (!annotation) return { safe: false, reason: "Bild konnte nicht geprüft werden.", violation: undefined }
     return checkAnnotation(annotation)
   } catch (err) {
     clearTimeout(timeoutId)
     console.error("[Vision] Safety check failed:", err)
-    return { safe: true }
+    return { safe: false, reason: "Bildprüfung fehlgeschlagen.", violation: undefined }
   }
 }
