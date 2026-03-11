@@ -6,17 +6,9 @@ import { BottomNav } from "@/components/bottom-nav"
 import { LandingHeader } from "@/components/landing-header"
 import { useI18n } from "@/lib/i18n"
 
-function shouldShowBottomNav(pathname: string): boolean {
-  return (
-    pathname.startsWith("/home") ||
-    pathname.startsWith("/categories") ||
-    pathname.startsWith("/ai-guide") ||
-    pathname.startsWith("/messages") ||
-    pathname.startsWith("/profile") ||
-    pathname.startsWith("/sessions") ||
-    pathname.startsWith("/projects") ||
-    pathname.startsWith("/dashboard")
-  )
+/** Footer mit Icons + Links auf jeder Seite außer Landing */
+function shouldShowFooter(pathname: string): boolean {
+  return pathname !== "/"
 }
 
 function titleForPath(pathname: string, t: (key: string, params?: Record<string, string | number>) => string) {
@@ -44,12 +36,12 @@ export function GlobalNavigation() {
   }
 
   const title = titleForPath(pathname, t)
-  const showBottomNav = shouldShowBottomNav(pathname)
+  const showFooter = shouldShowFooter(pathname)
 
   return (
     <>
       <AppHeader title={title} />
-      {showBottomNav && <BottomNav />}
+      {showFooter && <BottomNav />}
     </>
   )
 }
