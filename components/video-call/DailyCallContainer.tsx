@@ -1408,16 +1408,6 @@ export function DailyCallContainer({
         )}
 
         <Button
-          variant="outline"
-          size="icon"
-          className="size-10 sm:size-12 transition-transform active:scale-95 border-destructive/50 text-destructive hover:bg-destructive/10"
-          onClick={handleReportAndLeave}
-          title="Notfall: Call sofort beenden & melden"
-          aria-label="Notfall: Call sofort beenden und melden"
-        >
-          <Square className="size-5 sm:size-6 fill-destructive" />
-        </Button>
-        <Button
           variant="destructive"
           size="icon"
           className="size-10 sm:size-12 transition-transform active:scale-95"
@@ -1425,6 +1415,16 @@ export function DailyCallContainer({
           title="Auflegen"
         >
           <PhoneOff className="size-5 sm:size-6" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9 sm:size-10 shrink-0 rounded-full border border-dashed border-muted-foreground/40 text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground"
+          onClick={handleReportAndLeave}
+          title="Notfall: Call melden (nur bei Problemen)"
+          aria-label="Notfall: Call melden"
+        >
+          <Square className="size-4 sm:size-5" />
         </Button>
       </div>
     </div>
