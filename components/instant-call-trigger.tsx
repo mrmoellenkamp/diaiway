@@ -90,7 +90,7 @@ export function InstantCallTrigger({
 
   const hasPaidBefore = instantCheck?.hasPaidBefore ?? false
   const buttonText = hasPaidBefore
-    ? "Direkt weitermachen"
+    ? "Instant Connect"
     : "Neues Projekt starten"
   const subtitle = hasPaidBefore
     ? "Abrechnung ab Sekunde 31"
