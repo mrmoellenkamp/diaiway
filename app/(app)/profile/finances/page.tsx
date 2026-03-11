@@ -6,7 +6,7 @@ import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, Plus } from "lucide-react"
+import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -49,14 +49,18 @@ export default function FinancesPage() {
     pendingBalance: number
     canWithdraw: boolean
   } | null>(null)
+  const [cancelFreeHours, setCancelFreeHours] = useState(24)
+  const [cancelFeePercent, setCancelFeePercent] = useState(0)
+  const [savingCancelPolicy, setSavingCancelPolicy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     Promise.all([
       fetch("/api/wallet/history").then((r) => r.json()),
       fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/user/takumi-profile").then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([walletData, profileData]) => {
+      .then(([walletData, profileData, takumiData]) => {
         if (cancelled) return
         if (walletData?.history) setHistory(walletData.history)
         if (walletData?.wallet) setWallet(walletData.wallet)
@@ -64,6 +68,11 @@ export default function FinancesPage() {
           setRefundPreference(profileData.refundPreference === "wallet" ? "wallet" : "payout")
         }
         if (profileData?.appRole) setAppRole(profileData.appRole)
+        if (takumiData?.exists && takumiData?.cancelPolicy) {
+          const cp = takumiData.cancelPolicy as { freeHours?: number; feePercent?: number }
+          setCancelFreeHours(typeof cp.freeHours === "number" ? cp.freeHours : 24)
+          setCancelFeePercent(typeof cp.feePercent === "number" ? cp.feePercent : 0)
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -88,7 +97,7 @@ export default function FinancesPage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="pb-40">
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="icon" className="shrink-0">
@@ -147,6 +156,107 @@ export default function FinancesPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Stornierungsrichtlinie (nur Takumi) */}
+            {appRole === "takumi" && (
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <ShieldCheck className="size-4 text-primary" />
+                    {t("editProfile.cancelPolicy")}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">{t("editProfile.cancelPolicyDesc")}</p>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {t("editProfile.cancelFreeHours")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[0, 12, 24, 48, 72].map((h) => (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => setCancelFreeHours(h)}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            cancelFreeHours === h
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {h === 0
+                            ? t("editProfile.cancelNeverFree")
+                            : t("editProfile.cancelHours").replace("{h}", String(h))}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {t("editProfile.cancelFeePercent")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[0, 25, 50, 75, 100].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setCancelFeePercent(p)}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            cancelFeePercent === p
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {p === 0 ? t("editProfile.cancelNoFee") : `${p}%`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                    {cancelFreeHours === 0
+                      ? t("editProfile.cancelSummaryNoFree").replace("{percent}", String(cancelFeePercent))
+                      : cancelFeePercent === 0
+                        ? t("editProfile.cancelSummaryFreeOnly").replace("{h}", String(cancelFreeHours))
+                        : t("editProfile.cancelSummaryFull")
+                            .replace("{h}", String(cancelFreeHours))
+                            .replace("{percent}", String(cancelFeePercent))}
+                  </div>
+                  <Button
+                    disabled={savingCancelPolicy}
+                    onClick={async () => {
+                      setSavingCancelPolicy(true)
+                      try {
+                        const res = await fetch("/api/user/takumi-profile", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            cancelPolicy: { freeHours: cancelFreeHours, feePercent: cancelFeePercent },
+                          }),
+                        })
+                        if (res.ok) {
+                          toast.success(t("editProfile.saved"))
+                        } else {
+                          const data = await res.json()
+                          toast.error(data.error || t("profile.error"))
+                        }
+                      } catch {
+                        toast.error(t("common.networkError"))
+                      } finally {
+                        setSavingCancelPolicy(false)
+                      }
+                    }}
+                    size="sm"
+                    className="w-fit"
+                  >
+                    {savingCancelPolicy ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      t("editProfile.save")
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Rückerstattung bei Ablehnung (nur Shugyo) */}
             {appRole === "shugyo" && (
@@ -256,6 +366,19 @@ export default function FinancesPage() {
                             {formatCents(tx.amount)}
                           </span>
                           <div className="flex items-center gap-1">
+                            {tx.type === "topup" && tx.invoicePdfUrl && (
+                              <Button variant="ghost" size="icon" className="size-8" asChild>
+                                <a
+                                  href={tx.invoicePdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={t("finances.downloadInvoice")}
+                                  title={tx.invoiceNumber ?? t("finances.downloadInvoice")}
+                                >
+                                  <Download className="size-4" />
+                                </a>
+                              </Button>
+                            )}
                             {tx.type === "paid" && (
                               <>
                                 {tx.invoicePdfUrl && (

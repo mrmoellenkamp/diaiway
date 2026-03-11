@@ -265,7 +265,7 @@ const en = {
   "profile.switchRole": "Switch role",
   "profile.currentRoleTakumi": "Current: Takumi (Expert)",
   "profile.currentRoleShugyo": "Current: Shugyo (Learner)",
-  "shugyo.dashboardTitle": "My Learner Profile",
+  "shugyo.dashboardTitle": "My Shugyo Profile",
   "shugyo.dashboardDesc": "Select your skill level and upload project images. The expert will see this info in the video call.",
   "shugyo.selectSkillLevel": "Skill Level",
   "shugyo.skillLevelDesc": "Helps experts advise you better.",
@@ -317,6 +317,7 @@ const en = {
   "profile.previewDesc": "This is how others see your profile.",
   "profile.backToProfile": "Back to profile",
   "profile.previewLoginRequired": "Please log in.",
+  "profile.account": "Account",
 
   // Finances
   "finances.title": "Finances",

@@ -8,6 +8,7 @@ import {
   generateInvoicePdf,
   generateStornoCreditNotePdf,
   generateStornoInvoicePdf,
+  generateWalletTopupInvoicePdf,
 } from "@/lib/pdf-invoice"
 
 const PLATFORM_FEE_PERCENT = 15
@@ -29,12 +30,13 @@ export async function creditWalletTopup(
     })
     if (existing) return { ok: true } // Idempotenz
 
+    let wtId: string
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: amountCents } },
       })
-      await tx.walletTransaction.create({
+      const wt = await tx.walletTransaction.create({
         data: {
           userId,
           amountCents,
@@ -42,7 +44,42 @@ export async function creditWalletTopup(
           referenceId: stripeSessionId,
         },
       })
+      wtId = wt.id
     })
+
+    // Rechnung für Wallet-Aufladung erstellen
+    try {
+      const [user, invoiceNumber] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { name: true, email: true },
+        }),
+        getNextDocumentNumber("RE"),
+      ])
+      if (user) {
+        const now = new Date()
+        const buf = await generateWalletTopupInvoicePdf({
+          invoiceNumber,
+          recipientName: user.name,
+          recipientEmail: user.email,
+          amountCents,
+          date: now,
+        })
+        const blob = await put(`invoices/wallet-${wtId}-${invoiceNumber}.pdf`, Buffer.from(buf), {
+          access: "public",
+        })
+        await prisma.walletTransaction.update({
+          where: { id: wtId },
+          data: {
+            metadata: { invoiceNumber, invoicePdfUrl: blob.url },
+          },
+        })
+      }
+    } catch (err) {
+      console.error("[creditWalletTopup] Invoice generation failed:", err)
+      // Topup war erfolgreich, Rechnung fehlgeschlagen — loggen, aber nicht fehlschlagen
+    }
+
     return { ok: true }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error"
@@ -533,6 +570,7 @@ export async function getWalletHistory(userId: string, limit = 50) {
   ])
   const walletItems = walletTx.map((wt) => {
     const txType = wt.type === "topup" ? "topup" : wt.type === "refund" ? "refund" : "deduction"
+    const meta = (wt.metadata as { invoiceNumber?: string; invoicePdfUrl?: string } | null) ?? {}
     return {
       id: wt.id,
       type: txType as "topup" | "deduction" | "refund",
@@ -551,8 +589,8 @@ export async function getWalletHistory(userId: string, limit = 50) {
         year: "numeric",
       }),
       createdAt: wt.createdAt,
-      invoiceNumber: null,
-      invoicePdfUrl: null,
+      invoiceNumber: meta.invoiceNumber ?? null,
+      invoicePdfUrl: meta.invoicePdfUrl ?? null,
       stornoInvoiceNumber: null,
       stornoInvoicePdfUrl: null,
       creditNoteNumber: null,

@@ -267,7 +267,7 @@ const de = {
   "profile.currentRoleShugyo": "Aktuell: Shugyo (Lerner)",
 
   // Shugyo Dashboard
-  "shugyo.dashboardTitle": "Mein Lerner-Profil",
+  "shugyo.dashboardTitle": "Mein Shugyo Profil",
   "shugyo.dashboardDesc": "Wähle deine Kenntnisstufe und lade Projektbilder hoch. Der Experte sieht diese Infos im Video-Call.",
   "shugyo.selectSkillLevel": "Kenntnisstufe",
   "shugyo.skillLevelDesc": "So können Experten dich besser beraten.",
@@ -319,6 +319,7 @@ const de = {
   "profile.previewDesc": "So sehen andere dein Profil.",
   "profile.backToProfile": "Zurück zum Profil",
   "profile.previewLoginRequired": "Bitte melde dich an.",
+  "profile.account": "Konto",
 
   // Finances
   "finances.title": "Finanzen",

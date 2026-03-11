@@ -37,7 +37,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { data: session, status: sessionStatus } = useSession()
+  const { data: session, status: sessionStatus, update: updateSession } = useSession()
   const [role, setRoleState] = useState<UserRole>("shugyo")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
@@ -58,7 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [session, sessionStatus])
 
-  // Persist role to DB when changed
+  // Persist role to DB when changed + update session for middleware
   function setRole(newRole: UserRole) {
     setRoleState(newRole)
     if (isLoggedIn) {
@@ -66,7 +66,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appRole: newRole }),
-      }).catch(() => {})
+      })
+        .then((r) => r.ok && updateSession({ appRole: newRole }))
+        .catch(() => {})
     }
   }
   const [storedMessages, setStoredMessages] = useState<UIMessage[]>([])

@@ -14,6 +14,7 @@ import { SessionTimeoutWarning } from '@/components/session-timeout-warning'
 import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
 import { InstantRequestOverlay } from '@/components/instant-request-overlay'
 import { WalletTopupProvider } from '@/lib/wallet-topup-context'
+import { ScrollToTop } from '@/components/scroll-to-top'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -72,6 +73,7 @@ export default function RootLayout({
                 <AppProvider>
                   <WalletTopupProvider>
                   <PushNotificationProvider>
+                    <ScrollToTop />
                     <GlobalNavigation />
                     {children}
                     <AiMentorFab />
