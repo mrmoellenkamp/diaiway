@@ -208,6 +208,8 @@ const es = {
   "categories.title": "Categorías",
   "categories.count": "{count} categorías",
   "categories.areas": "áreas",
+  "categories.mentorTitle": "Categoría y áreas temáticas",
+  "categories.mentorDesc": "Describe tu proyecto, sube fotos y recibe un análisis fundamentado de nuestra IA o busca en las categorías un contacto adecuado.",
 
   // Category Detail
   "categoryDetail.expertsFound": "{count} expertos encontrados",

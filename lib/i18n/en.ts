@@ -208,6 +208,8 @@ const en = {
   "categories.title": "Categories",
   "categories.count": "{count} categories",
   "categories.areas": "areas",
+  "categories.mentorTitle": "Category and subject areas",
+  "categories.mentorDesc": "Describe your project, upload photos and receive a well-founded analysis from our AI or search in the categories for a suitable contact.",
 
   // Category Detail
   "categoryDetail.expertsFound": "{count} experts found",

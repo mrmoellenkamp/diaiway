@@ -28,6 +28,13 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
                 <LiveBadge />
               </span>
             )}
+            {takumi.liveStatus === "available" && (
+              <span className="absolute -top-0.5 -right-0.5">
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/20 text-accent border-accent/40">
+                  Instant
+                </Badge>
+              </span>
+            )}
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-1 pr-6">
             <div className="flex items-center gap-1.5">
@@ -73,6 +80,7 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
 }
 
 export function TakumiCardCompact({ takumi }: { takumi: Takumi }) {
+  const offersInstant = takumi.liveStatus === "available"
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
       <div className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-3 transition-shadow hover:shadow-md">
@@ -99,6 +107,11 @@ export function TakumiCardCompact({ takumi }: { takumi: Takumi }) {
           <div className="flex items-center gap-0.5">
             <ReviewStars rating={takumi.rating} />
           </div>
+          {offersInstant && (
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/20 text-accent border-accent/40">
+              Instant
+            </Badge>
+          )}
         </div>
       </div>
     </Link>

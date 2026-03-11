@@ -36,6 +36,7 @@ import {
   FolderOpen,
   Images,
 } from "lucide-react"
+import { TakumiStatusCard } from "@/components/takumi-status-card"
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -481,6 +482,7 @@ export default function ProfilePage() {
 
           {/* Go Live toggle (Takumi only) */}
           {isTakumi && (
+            <>
             <Card className="border-accent/30 bg-accent/5 gap-0 py-0">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
@@ -518,6 +520,8 @@ export default function ProfilePage() {
                 />
               </CardContent>
             </Card>
+            <TakumiStatusCard />
+            </>
           )}
 
           {/* Takumi earnings (Takumi only) */}

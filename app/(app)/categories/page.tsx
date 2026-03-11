@@ -2,14 +2,19 @@
 
 import { PageContainer } from "@/components/page-container"
 import { CategoryCardLarge } from "@/components/category-card"
+import { TakumiCardCompact } from "@/components/takumi-card"
 import { MentorChat } from "@/components/mentor-chat"
 import { useCategories } from "@/lib/categories-i18n"
+import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { Sparkles } from "lucide-react"
 
 export default function CategoriesPage() {
   const { t } = useI18n()
   const categories = useCategories()
+  const { takumis } = useTakumis()
+  const liveTakumis = takumis.filter((tk) => tk.isLive)
+
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
@@ -21,16 +26,36 @@ export default function CategoriesPage() {
                 <Sparkles className="size-3.5 text-primary" />
               </div>
               <h2 className="text-lg font-bold text-foreground">
-                {t("landing.mentorTitle")}
-                <span className="font-jp ml-1.5 text-xs font-normal text-primary/30">{"導師"}</span>
+                {t("categories.mentorTitle")}
               </h2>
             </div>
             <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-              {t("landing.mentorDesc")}
+              {t("categories.mentorDesc")}
             </p>
           </div>
           <MentorChat variant="embedded" />
         </section>
+
+        {/* Online Takumis (Kurzprofile) */}
+        {liveTakumis.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-foreground">{t("home.nowLive")}</h2>
+              <span className="flex items-center gap-1 text-xs text-accent font-medium">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-accent" />
+                </span>
+                {liveTakumis.length} {t("home.online")}
+              </span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+              {liveTakumis.map((tk) => (
+                <TakumiCardCompact key={tk.id} takumi={tk} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Categories */}
         <div className="flex flex-col gap-4">
