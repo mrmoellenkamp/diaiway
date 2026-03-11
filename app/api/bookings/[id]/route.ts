@@ -5,6 +5,7 @@ import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import { processCompletion } from "@/app/actions/process-completion"
 import {
+  chargeInstantCallToWallet,
   creditRefundToShugyoWallet,
   refundTransactionForBooking,
   setTransactionOnHoldForBooking,
@@ -244,7 +245,17 @@ export async function PATCH(
 
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { expert: { select: { userId: true, cancelPolicy: true } } },
+      include: {
+        expert: {
+          select: {
+            userId: true,
+            cancelPolicy: true,
+            priceVideo15Min: true,
+            priceVoice15Min: true,
+            pricePerSession: true,
+          },
+        },
+      },
     })
     if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
 
@@ -395,6 +406,31 @@ export async function PATCH(
         }
       }
 
+      let chargedAmountCents: number | undefined
+      if (booking.bookingMode === "instant" && isBooker && booking.expert) {
+        const price15 =
+          booking.callType === "VOICE"
+            ? Number(booking.expert.priceVoice15Min ?? booking.expert.priceVideo15Min ?? (booking.expert.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0))
+            : Number(booking.expert.priceVideo15Min ?? (booking.expert.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0))
+        const pricePerMinuteCents = Math.round((price15 * 100) / 15)
+        const hasPaidBefore = !!(
+          await prisma.booking.findFirst({
+            where: {
+              userId: booking.userId,
+              expertId: booking.expertId,
+              paymentStatus: "paid",
+              id: { not: id },
+            },
+            select: { id: true },
+          })
+        )
+        const chargeResult = await chargeInstantCallToWallet(id, duration, pricePerMinuteCents, hasPaidBefore)
+        if (!chargeResult.ok && chargeResult.error !== "Insufficient wallet balance") {
+          console.warn("[end-session] Instant charge failed:", chargeResult.error)
+        }
+        chargedAmountCents = chargeResult.amountCents
+      }
+
       const updated = await prisma.booking.update({
         where: { id },
         data: {
@@ -402,7 +438,6 @@ export async function PATCH(
           sessionEndedAt: now,
           sessionDuration: duration,
           shugyoFrozenAt: null,
-          // Mark trial as used if session was free
           ...(isFreeSession ? { trialUsed: true } : {}),
         },
       })
@@ -421,6 +456,7 @@ export async function PATCH(
         sessionDuration: updated.sessionDuration,
         autoRefunded,
         isFreeSession,
+        chargedAmountCents,
       })
     }
 

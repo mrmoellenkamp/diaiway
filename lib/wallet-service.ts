@@ -194,6 +194,75 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 }
 
 /**
+ * Instant-Call: Belastet Shugyo-Wallet nach Session-Ende.
+ * Kosten = (Dauer - kostenlose Phase) × Preis/Min. Erstellt Transaction AUTHORIZED.
+ */
+export async function chargeInstantCallToWallet(
+  bookingId: string,
+  durationMin: number,
+  pricePerMinuteCents: number,
+  hasPaidBefore: boolean
+): Promise<{ ok: boolean; amountCents?: number; error?: string }> {
+  const FREE_MIN = hasPaidBefore ? 0.5 : 5 // 30 Sek oder 5 Min gratis
+  const billingMin = Math.max(0, durationMin - FREE_MIN)
+  const amountCents = Math.round(billingMin * pricePerMinuteCents) || 0
+
+  if (amountCents <= 0) return { ok: true, amountCents: 0 }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { expert: true },
+  })
+  if (!booking) return { ok: false, error: "Booking not found" }
+  if (booking.paymentStatus === "paid") return { ok: true, amountCents }
+  const expertUserId = booking.expert?.userId
+  if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  const shugyo = await prisma.user.findUnique({
+    where: { id: booking.userId },
+    select: { balance: true },
+  })
+  if (!shugyo || shugyo.balance < amountCents) {
+    return { ok: false, error: "Insufficient wallet balance", amountCents }
+  }
+
+  const platformFee = Math.round(amountCents * (PLATFORM_FEE_PERCENT / 100))
+  const netPayout = amountCents - platformFee
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: booking.userId },
+      data: { balance: { decrement: amountCents } },
+    })
+    await tx.user.update({
+      where: { id: expertUserId },
+      data: { pendingBalance: { increment: amountCents } },
+    })
+    await tx.transaction.create({
+      data: {
+        bookingId,
+        expertId: booking.expertId,
+        userId: booking.userId,
+        totalAmount: amountCents,
+        platformFee,
+        netPayout,
+        status: "AUTHORIZED",
+      },
+    })
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        paymentStatus: "paid",
+        stripePaymentIntentId: "wallet",
+        paidAt: new Date(),
+        paidAmount: amountCents,
+      },
+    })
+  })
+  return { ok: true, amountCents }
+}
+
+/**
  * Rückerstattung als Wallet-Guthaben (statt Auszahlung).
  * Betrag wird dem Shugyo gutgeschrieben, Takumi's pendingBalance wird freigegeben.
  */

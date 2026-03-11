@@ -50,6 +50,7 @@ function PostCallScreen({
   partnerName,
   paymentStatus,
   paidAmountCents,
+  bookingMode,
   onDone,
 }: {
   bookingId: string
@@ -58,6 +59,7 @@ function PostCallScreen({
   partnerName: string
   paymentStatus?: string
   paidAmountCents?: number | null
+  bookingMode?: "scheduled" | "instant"
   onDone: () => void
 }) {
   const [rating, setRating] = useState(0)
@@ -149,6 +151,23 @@ function PostCallScreen({
     }
   }, [bookingId, submitReviewOnly])
 
+  const handleReportOnly = useCallback(async () => {
+    setSubmitting(true)
+    try {
+      await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "report-problem" }),
+      })
+      toast.info("Call wurde gemeldet. Wir prüfen den Vorgang.")
+      onDone()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler")
+    } finally {
+      setSubmitting(false)
+    }
+  }, [bookingId, onDone])
+
   const handleReleasePayment = useCallback(async () => {
     setSubmitting(true)
     try {
@@ -168,7 +187,28 @@ function PostCallScreen({
     }
   }, [bookingId, onDone])
 
+  const handleInstantConfirmAndRelease = useCallback(async () => {
+    setShowReleaseDialog(false)
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "release-payment" }),
+      })
+      if (!res.ok) throw new Error((await res.json())?.error ?? "Freigabe fehlgeschlagen")
+      toast.success("Abrechnung bestätigt und freigegeben!")
+      onDone()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler")
+    } finally {
+      setSubmitting(false)
+    }
+  }, [bookingId, onDone])
+
   const canReleasePayment = !isExpert && paymentStatus === "paid"
+  const isInstantShugyo = !isExpert && bookingMode === "instant"
+  const incurredAmount = paidAmountCents ?? 0
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4 py-8">
@@ -178,6 +218,19 @@ function PostCallScreen({
           Bewerte {partnerName} – ihr habt euch gegenseitig unterstützt.
         </p>
       </div>
+
+      {/* Instant: Entstandene Gebühren prominent anzeigen */}
+      {isInstantShugyo && incurredAmount > 0 && (
+        <div className="w-full max-w-sm rounded-xl border-2 border-primary/30 bg-primary/5 p-5 text-center">
+          <p className="text-sm font-medium text-muted-foreground">Entstandene Gebühren</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">
+            {(incurredAmount / 100).toFixed(2).replace(".", ",")} €
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Bitte bestätige die Abrechnung oder melde den Call.
+          </p>
+        </div>
+      )}
 
       <ReviewStars rating={rating} size="lg" interactive onRate={setRating} />
 
@@ -219,6 +272,26 @@ function PostCallScreen({
       </Dialog>
 
       <div className="flex w-full max-w-sm flex-col gap-3">
+        {/* Instant: Freigeben/Melden zuerst, dann Bewertung */}
+        {isInstantShugyo && incurredAmount > 0 && (
+          <>
+            <Button
+              onClick={handleInstantConfirmAndRelease}
+              disabled={submitting}
+              className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Abrechnung bestätigen & freigeben
+            </Button>
+            <Button
+              onClick={handleReportOnly}
+              disabled={submitting}
+              variant="destructive"
+              className="h-12 w-full rounded-xl"
+            >
+              Call melden
+            </Button>
+          </>
+        )}
         <Button
           onClick={handleSubmitReview}
           disabled={rating === 0 || submitting}
@@ -226,7 +299,7 @@ function PostCallScreen({
         >
           Bewertung abgeben
         </Button>
-        {canReleasePayment && (
+        {canReleasePayment && !isInstantShugyo && (
           <Button
             onClick={handleReleasePayment}
             disabled={submitting}
@@ -266,27 +339,24 @@ function SessionCallContent() {
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"call" | "post-call">("call")
 
-  useEffect(() => {
-    let cancelled = false
-    async function fetchBooking() {
-      try {
-        const res = await fetch(`/api/bookings/${bookingId}`)
-        if (!res.ok) {
-          const err = (await res.json()).error ?? "Buchung nicht gefunden"
-          if (!cancelled) setError(err)
-          return
-        }
-        const json = await res.json()
-        if (!cancelled) setData(json)
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Fehler beim Laden")
+  const fetchBooking = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`)
+      if (!res.ok) {
+        const err = (await res.json()).error ?? "Buchung nicht gefunden"
+        setError(err)
+        return
       }
-    }
-    fetchBooking()
-    return () => {
-      cancelled = true
+      const json = await res.json()
+      setData(json)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Fehler beim Laden")
     }
   }, [bookingId])
+
+  useEffect(() => {
+    fetchBooking()
+  }, [fetchBooking])
 
   // Poll für Shugyo im Wartemodus (Instant-Anklopf): bis Takumi annimmt oder ablehnt
   const shouldPollWait = isWaitMode && data && !data.booking.isExpert && data.booking.status === "pending"
@@ -389,6 +459,7 @@ function SessionCallContent() {
         partnerName={partnerName}
         paymentStatus={booking.paymentStatus}
         paidAmountCents={booking.paidAmount}
+        bookingMode={booking.bookingMode}
         onDone={goToSessions}
       />
     )
@@ -404,7 +475,10 @@ function SessionCallContent() {
           partnerImageUrl={partnerImageUrl || undefined}
           partnerName={partnerName}
           safetyAcceptedAt={booking.safetyAcceptedAt}
-          onCallEnded={() => setViewMode("post-call")}
+          onCallEnded={() => {
+            setViewMode("post-call")
+            fetchBooking()
+          }}
           bookingMode={booking.bookingMode}
           sessionStartedAt={booking.sessionStartedAt}
           userBalanceCents={booking.userBalanceCents}
