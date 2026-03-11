@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Square, Wallet } from "lucide-react"
+import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Square, Video, VideoOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 
@@ -122,6 +122,7 @@ export function DailyCallContainer({
   const [partnerSpeaking, setPartnerSpeaking] = useState(false)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number | null>(null)
   const [isMuted, setIsMuted] = useState(false)
+  const [isCameraOff, setIsCameraOff] = useState(false)
   const [cameraFlipRotation, setCameraFlipRotation] = useState(0)
   const [showPartnerSearchWarning, setShowPartnerSearchWarning] = useState(false)
 
@@ -698,6 +699,7 @@ export function DailyCallContainer({
       setPhase("LOBBY")
       setRemoteParticipant(null)
       setIsMuted(false)
+      setIsCameraOff(false)
       initGuardRef.current = false
     })
 
@@ -965,6 +967,19 @@ export function DailyCallContainer({
       setIsMuted(nextMuted)
     }
   }, [phase, isMuted])
+
+  const handleToggleCamera = useCallback(() => {
+    const call = callObjectRef.current
+    if (!call || phase !== "IN_CALL" || callMode !== "video") return
+    const nextOff = !isCameraOff
+    try {
+      call.setLocalVideo(!nextOff)
+      setIsCameraOff(nextOff)
+    } catch (e) {
+      console.warn("[DailyCall] setLocalVideo failed:", e)
+      setIsCameraOff(nextOff)
+    }
+  }, [phase, callMode, isCameraOff])
 
   // --- Live-Monitoring: zufällige Snapshots → Vision API (nur Video, bei Safety-Einwilligung) ---
   const snapshotIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1365,19 +1380,31 @@ export function DailyCallContainer({
         </Button>
 
         {callMode === "video" && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-10 sm:size-12 transition-transform active:scale-95"
-            onClick={handleCycleCamera}
-            title="Kamera wechseln (Front/Rück)"
-            aria-label="Kamera wechseln"
-          >
-            <FlipHorizontal
-              className="size-5 sm:size-6 transition-transform duration-300"
-              style={{ transform: `rotate(${cameraFlipRotation}deg)` }}
-            />
-          </Button>
+          <>
+            <Button
+              variant={isCameraOff ? "destructive" : "outline"}
+              size="icon"
+              className="size-10 sm:size-12 transition-transform active:scale-95"
+              onClick={handleToggleCamera}
+              title={isCameraOff ? "Kamera an" : "Kamera aus"}
+              aria-label={isCameraOff ? "Kamera an" : "Kamera aus"}
+            >
+              {isCameraOff ? <VideoOff className="size-5 sm:size-6" /> : <Video className="size-5 sm:size-6" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-10 sm:size-12 transition-transform active:scale-95"
+              onClick={handleCycleCamera}
+              title="Kamera wechseln (Front/Rück)"
+              aria-label="Kamera wechseln"
+            >
+              <FlipHorizontal
+                className="size-5 sm:size-6 transition-transform duration-300"
+                style={{ transform: `rotate(${cameraFlipRotation}deg)` }}
+              />
+            </Button>
+          </>
         )}
 
         <Button

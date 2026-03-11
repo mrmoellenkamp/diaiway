@@ -558,6 +558,7 @@ const es = {
   "takumiPage.reviews": "Valoraciones ({count})",
   "takumiPage.reviewsEmpty": "Las valoraciones aparecerán aquí tras las sesiones completadas.",
   "takumiPage.bookNow": "Reservar ahora",
+  "takumiPage.bookAppointment": "Reservar cita",
   "takumiPage.priceInfo": "por 15 min · Video y voz",
   "takumiPage.dmGreeting": "Hola {name}, vi tu perfil y me gustaría hablar contigo sobre mi proyecto.",
 
