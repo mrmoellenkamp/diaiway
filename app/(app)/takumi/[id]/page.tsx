@@ -14,8 +14,9 @@ import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail,
+  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail, Calendar,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { SocialLinks } from "@/lib/types"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
@@ -144,7 +145,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Cover Area */}
+      {/* Cover Area + FAB (Störer: auffälliger CTA oben) */}
       <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
         <Link
@@ -152,6 +153,14 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           className="absolute left-4 top-4 z-10 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
         >
           <ArrowLeft className="size-4 text-white" />
+        </Link>
+        {/* FAB: Termin buchen – klebt oben, hebt sich deutlich ab */}
+        <Link
+          href={`/booking/${takumi.id}`}
+          className="absolute right-4 top-14 z-20 flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-xl shadow-amber-900/40 ring-2 ring-amber-400 hover:bg-amber-400 transition-all hover:scale-105 active:scale-95"
+        >
+          <Calendar className="size-4 shrink-0" />
+          {t("takumiPage.bookNow")}
         </Link>
       </div>
 
@@ -221,9 +230,6 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
-            {takumi.liveStatus === "available" && (
-              <InstantCallTrigger takumi={takumi} variant="profile" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" />
-            )}
             <Button
               onClick={handleContact}
               disabled={isContacting}
@@ -307,37 +313,44 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </PageContainer>
 
-      {/* Sticky Book CTA */}
+      {/* Sticky Bottom Bar: Preis + beide CTAs (Termin buchen + Instant, wenn verfügbar) */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-3">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-          <div className="flex flex-col">
+          <div className="flex flex-col shrink-0">
             <span className="text-lg font-bold text-foreground">
               ab {(takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)).toFixed(0)} €
             </span>
             <span className="text-[10px] text-muted-foreground">{t("takumiPage.priceInfo")}</span>
           </div>
-          {takumi.liveStatus === "available" ? (
-            <InstantCallTrigger
-              takumi={takumi}
-              variant="profile"
-              className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-8 text-base font-bold text-white shadow-lg shadow-emerald/20"
-            />
-          ) : (
-            <div className="flex flex-col items-end gap-1">
-              {takumi.liveStatus === "in_call" && (
-                <p className="text-[11px] text-muted-foreground text-right max-w-[200px]">
-                  {t("booking.takumiInCall")}
-                </p>
+          <div className="flex items-center gap-2 shrink-0">
+            {takumi.liveStatus === "available" && (
+              <InstantCallTrigger
+                takumi={takumi}
+                variant="profile"
+                className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 text-sm font-bold text-white shadow-md shrink-0"
+              />
+            )}
+            <Button
+              asChild
+              className={cn(
+                "h-11 rounded-xl text-sm font-bold shrink-0",
+                takumi.liveStatus === "available"
+                  ? "bg-accent text-accent-foreground hover:bg-accent/90 px-5"
+                  : "bg-accent px-6 text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
               )}
-              <Button
-                asChild
-                className="h-12 rounded-xl bg-accent px-8 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
-              >
-                <Link href={`/booking/${takumi.id}`}>{t("takumiPage.bookNow")}</Link>
-              </Button>
-            </div>
-          )}
+            >
+              <Link href={`/booking/${takumi.id}`} className="flex items-center gap-1.5">
+                <Calendar className="size-4" />
+                {t("takumiPage.bookNow")}
+              </Link>
+            </Button>
+          </div>
         </div>
+        {takumi.liveStatus === "in_call" && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground text-center">
+            {t("booking.takumiInCall")}
+          </p>
+        )}
       </div>
     </div>
   )

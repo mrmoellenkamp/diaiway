@@ -555,7 +555,9 @@ export default function ProfilePage() {
               {isTakumi && (
                 <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
               )}
-              <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
+              {isTakumi && (
+                <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />
+              )}
               <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
               <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
               <MenuItem icon={Settings} label={t("common.settings")} href="/profile/settings" />

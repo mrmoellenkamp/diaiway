@@ -371,19 +371,36 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           />
         </div>
 
-        {/* Sprechstunde-Hinweis: wenn Sprechzeit-Slot gewählt */}
+        {/* Sprechstunde: Direkt anrufen ODER Termin buchen – beide Optionen nebeneinander */}
         {(selectedInSprechzeit || selectedSprechzeit) && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col gap-3">
             <p className="text-sm text-emerald-800 dark:text-emerald-200">
               {t("booking.sprechzeitHint")}
             </p>
-            {takumi.liveStatus === "available" && (
-              <InstantCallTrigger
-                takumi={takumi}
-                variant="profile"
-                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
-              />
-            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {takumi.liveStatus === "available" && (
+                <InstantCallTrigger
+                  takumi={takumi}
+                  variant="profile"
+                  className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white order-1"
+                />
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSelectedSprechzeit(null)
+                  setSelectedInSprechzeit(false)
+                }}
+                className={cn(
+                  "h-12 rounded-xl border-emerald-500/50 bg-white/80 hover:bg-white dark:bg-card",
+                  takumi.liveStatus === "available" ? "order-2" : "order-1"
+                )}
+              >
+                <Calendar className="size-4 shrink-0" />
+                {t("takumiPage.bookNow")}
+              </Button>
+            </div>
             {takumi.liveStatus === "in_call" && (
               <p className="text-xs text-muted-foreground">
                 {t("booking.takumiInCall")}
