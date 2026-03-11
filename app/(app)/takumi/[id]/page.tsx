@@ -9,7 +9,6 @@ import { LiveBadge } from "@/components/live-badge"
 import { ReviewStars } from "@/components/review-stars"
 import { PageContainer } from "@/components/page-container"
 import { useTakumis } from "@/hooks/use-takumis"
-import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
@@ -97,8 +96,6 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const { id } = use(params)
   const { t } = useI18n()
   const { takumis } = useTakumis()
-  const { sendDirectMessage } = useApp()
-  const router = useRouter()
   const [composeOpen, setComposeOpen] = useState(false)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
