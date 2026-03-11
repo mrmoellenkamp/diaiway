@@ -2,7 +2,7 @@ const de = {
   // Common
   "common.home": "Home",
   "common.categories": "Kategorien",
-  "common.aiGuide": "diAiway Intelligence",
+  "common.aiGuide": "diAiway",
   "common.chats": "Chats",
   "common.profile": "Profil",
   "common.back": "Zurück",
@@ -315,6 +315,10 @@ const de = {
   "profile.error": "Fehler beim Speichern.",
   "profile.memberSince": "Mitglied seit {date}",
   "profile.userProfileHint": "Shugyo-Profile zeigen nur Basisinfos.",
+  "profile.previewTitle": "Profilvorschau",
+  "profile.previewDesc": "So sehen andere dein Profil.",
+  "profile.backToProfile": "Zurück zum Profil",
+  "profile.previewLoginRequired": "Bitte melde dich an.",
 
   // Finances
   "finances.title": "Finanzen",
@@ -376,8 +380,8 @@ const de = {
   "mentor.chat": "diAiway AI Intelligence",
   "mentor.retryError": "Bitte versuche es erneut.",
   "mentor.attachPhoto": "Foto anhängen",
-  "mentor.headerTitleEmbedded": "diAiway AI Intelligence",
-  "mentor.headerTitleFloating": "diAiway AI Intelligence",
+  "mentor.headerTitleEmbedded": "diAiway",
+  "mentor.headerTitleFloating": "diAiway",
   "mentor.headerDescEmbedded": "Projekt-Check — Analysiere, plane, finde Experten",
   "mentor.headerDescFloating": "Dein persönlicher Berater",
   "mentor.online": "Online",
@@ -576,6 +580,7 @@ const de = {
   "takumiPage.dmGreeting": "Hallo {name}, ich habe dein Profil gesehen und würde gerne mit dir über mein Projekt sprechen.",
 
   // AI Guide
+  "aiGuide.introText": "Beschreibe dein Projekt, lade Fotos hoch und erhalte eine fundierte Analyse durch unsere AI oder suche in den Kategorien nach einem passenden Ansprechpartner.",
   "aiGuide.welcome": "Konichiwa! Ich bin dein diAiway-Guide. Beschreibe dein Problem oder lade ein Foto hoch — ich finde den passenden Experten für dich!",
   "aiGuide.foundExperts": "Ich habe {count} passende Experten für dich gefunden:",
   "aiGuide.noExpertsYet": "Aktuell sind noch keine Experten registriert. Schau bald wieder vorbei!",

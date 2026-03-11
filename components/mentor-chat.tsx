@@ -23,6 +23,7 @@ import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { DiAiwayBrand } from "@/components/diaiway-brand"
 
 function getMessageText(msg: UIMessage): string {
   if (!msg.parts || !Array.isArray(msg.parts)) return ""
@@ -237,9 +238,9 @@ export function MentorChat({ variant, className }: MentorChatProps) {
           <Sparkles className="size-4 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground">
-            {(isEmbedded || isFullpage) ? t("mentor.headerTitleEmbedded") : t("mentor.headerTitleFloating")}
-            <span className="font-jp ml-1.5 text-[10px] font-normal text-primary/40">{"導師"}</span>
+          <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <DiAiwayBrand />
+            <span className="font-jp text-[10px] font-normal text-primary/40">{"導師"}</span>
           </p>
           <p className="text-[10px] text-muted-foreground truncate">
             {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}

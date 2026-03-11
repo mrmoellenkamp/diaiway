@@ -2,7 +2,7 @@ const en = {
   // Common
   "common.home": "Home",
   "common.categories": "Categories",
-  "common.aiGuide": "diAiway Intelligence",
+  "common.aiGuide": "diAiway",
   "common.chats": "Chats",
   "common.profile": "Profile",
   "common.back": "Back",
@@ -313,6 +313,10 @@ const en = {
   "profile.error": "Error saving.",
   "profile.memberSince": "Member since {date}",
   "profile.userProfileHint": "Shugyo profiles show basic info only.",
+  "profile.previewTitle": "Profile preview",
+  "profile.previewDesc": "This is how others see your profile.",
+  "profile.backToProfile": "Back to profile",
+  "profile.previewLoginRequired": "Please log in.",
 
   // Finances
   "finances.title": "Finances",
@@ -374,8 +378,8 @@ const en = {
   "mentor.chat": "diAiway AI Intelligence",
   "mentor.retryError": "Please try again.",
   "mentor.attachPhoto": "Attach photo",
-  "mentor.headerTitleEmbedded": "diAiway AI Intelligence",
-  "mentor.headerTitleFloating": "diAiway AI Intelligence",
+  "mentor.headerTitleEmbedded": "diAiway",
+  "mentor.headerTitleFloating": "diAiway",
   "mentor.headerDescEmbedded": "Project Check — Analyze, plan, find experts",
   "mentor.headerDescFloating": "Your personal advisor",
   "mentor.online": "Online",
@@ -573,6 +577,7 @@ const en = {
   "takumiPage.dmGreeting": "Hi {name}, I saw your profile and would love to talk with you about my project.",
 
   // AI Guide
+  "aiGuide.introText": "Describe your project, upload photos and get a thorough analysis from our AI, or browse categories to find a suitable contact.",
   "aiGuide.welcome": "Konichiwa! I'm your diAiway Guide. Describe your problem or upload a photo — I'll find the right expert for you!",
   "aiGuide.foundExperts": "I found {count} matching experts for you:",
   "aiGuide.noExpertsYet": "No experts are registered yet. Check back soon!",

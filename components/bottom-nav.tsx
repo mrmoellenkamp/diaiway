@@ -2,19 +2,20 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, MessageSquare, User, Mail, LayoutGrid } from "lucide-react"
+import { Home, MessageSquare, User, LayoutGrid } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
+import { DiAiwayBrand } from "@/components/diaiway-brand"
 
 export function BottomNav() {
   const pathname = usePathname()
   const { t } = useI18n()
 
-  const navItems = [
+  const navItems: { href: string; label: string; icon: typeof Home | null; brand?: boolean }[] = [
     { href: "/home", label: t("common.home"), icon: Home },
     { href: "/categories", label: t("common.categories"), icon: LayoutGrid },
-    { href: "/ai-guide", label: t("common.aiGuide"), icon: MessageSquare },
-    { href: "/messages", label: t("common.chats"), icon: Mail },
+    { href: "/ai-guide", label: "diAiway", icon: MessageSquare, brand: true },
+    { href: "/messages", label: t("messages.title"), icon: null },
     { href: "/profile", label: t("common.profile"), icon: User },
   ]
 
@@ -28,7 +29,7 @@ export function BottomNav() {
         "rounded-t-2xl"
       )}
       role="contentinfo"
-      aria-label="Footer mit Navigation und rechtlichen Links"
+      aria-label="Hauptnavigation"
     >
       <nav
         className="mx-auto max-w-lg"
@@ -37,10 +38,12 @@ export function BottomNav() {
       >
         <div
           className="flex items-center justify-around pt-3"
-          style={{ paddingBottom: "0.25rem" } as React.CSSProperties}
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } as React.CSSProperties}
         >
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href)
+            const isMessages = item.href === "/messages"
+            const isBrand = item.brand === true
             return (
               <Link
                 key={item.href}
@@ -53,46 +56,31 @@ export function BottomNav() {
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <item.icon
-                  className={cn(
-                    "size-5 transition-all",
-                    isActive && "scale-110"
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                <span>{item.label}</span>
+                {item.icon ? (
+                  <item.icon
+                    className={cn(
+                      "size-5 transition-all",
+                      isActive && "scale-110"
+                    )}
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                ) : (
+                  <span className={cn(
+                    "text-[11px] font-medium leading-tight",
+                    isMessages && "text-center"
+                  )}>
+                    {item.label}
+                  </span>
+                )}
+                {!isMessages && (
+                  isBrand ? <DiAiwayBrand className="text-xs" /> : <span>{item.label}</span>
+                )}
                 {isActive && (
                   <span className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary pointer-events-none" />
                 )}
               </Link>
             )
           })}
-        </div>
-        {/* Rechtliche Links unterhalb der Icons */}
-        <div
-          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 pb-3 text-[11px] text-muted-foreground/70"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } as React.CSSProperties}
-        >
-          <Link
-            href="/legal/datenschutz"
-            className="transition-colors hover:text-muted-foreground"
-          >
-            {t("footer.privacy")}
-          </Link>
-          <span aria-hidden className="text-muted-foreground/50">·</span>
-          <Link
-            href="/help"
-            className="transition-colors hover:text-muted-foreground"
-          >
-            {t("footer.helpSupport")}
-          </Link>
-          <span aria-hidden className="text-muted-foreground/50">·</span>
-          <Link
-            href="/legal/impressum"
-            className="transition-colors hover:text-muted-foreground"
-          >
-            {t("footer.imprint")}
-          </Link>
         </div>
       </nav>
     </footer>

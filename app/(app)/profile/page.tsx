@@ -35,6 +35,9 @@ import {
   X,
   FolderOpen,
   Images,
+  Eye,
+  Shield,
+  HelpCircle,
 } from "lucide-react"
 import { TakumiStatusCard } from "@/components/takumi-status-card"
 function StatBox({ label, value }: { label: string; value: string }) {
@@ -255,7 +258,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="pb-40">
       <div className="flex flex-col gap-6">
         {/* Loading state */}
         {profileLoading ? (
@@ -571,6 +574,7 @@ export default function ProfilePage() {
           <Card className="overflow-hidden border-border/60 gap-0 py-0">
             <CardContent className="flex flex-col p-0 divide-y divide-border">
               <MenuItem icon={Edit3} label={t("profile.editProfile")} href="/profile/edit" accent />
+              <MenuItem icon={Eye} label={t("profile.previewTitle")} href="/profile/preview" />
               <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
               {isTakumi && (
@@ -582,6 +586,9 @@ export default function ProfilePage() {
               <MenuItem icon={CreditCard} label={t("profile.finances")} href="/profile/finances" />
               <MenuItem icon={FileText} label={t("profile.invoiceData")} href="/profile/invoice-data" />
               <MenuItem icon={Settings} label={t("common.settings")} href="/profile/settings" />
+              <MenuItem icon={Shield} label={t("footer.privacy")} href="/legal/datenschutz" />
+              <MenuItem icon={HelpCircle} label={t("footer.helpSupport")} href="/help" />
+              <MenuItem icon={FileText} label={t("footer.imprint")} href="/legal/impressum" />
             </CardContent>
           </Card>
 
