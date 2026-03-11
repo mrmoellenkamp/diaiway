@@ -176,6 +176,50 @@ export async function generateCreditNotePdf(opts: {
 }
 
 /**
+ * Rechnung für Wallet-Aufladung (RE): Von diaiway an den Shugyo über den Aufladebetrag.
+ */
+export async function generateWalletTopupInvoicePdf(opts: {
+  invoiceNumber: string
+  recipientName: string
+  recipientEmail: string
+  amountCents: number
+  date: Date
+}): Promise<ArrayBuffer> {
+  const doc = new jsPDF()
+  const { invoiceNumber, recipientName, recipientEmail, amountCents, date } = opts
+
+  doc.setFontSize(18)
+  doc.text("Rechnung", 20, 25)
+  doc.setFontSize(10)
+  doc.text(`Rechnungsnummer: ${invoiceNumber}`, 20, 35)
+  doc.text(`Datum: ${date.toLocaleDateString("de-DE")}`, 20, 42)
+
+  doc.text(BILLING_SENDER.name, 20, 55)
+  doc.setFontSize(9)
+  doc.text(
+    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
+    20,
+    62
+  )
+  if (BILLING_SENDER.vatId) doc.text(`USt-IdNr.: ${BILLING_SENDER.vatId}`, 20, 68)
+
+  doc.text("Rechnungsempfänger:", 20, 78)
+  doc.text(recipientName, 20, 85)
+  doc.text(recipientEmail, 20, 92)
+
+  doc.setFontSize(10)
+  doc.text("Positionen:", 20, 110)
+  doc.text("Wallet-Aufladung", 20, 120)
+  doc.text(`Gesamtbetrag: ${formatCents(amountCents)}`, 20, 128)
+
+  doc.text("Zahlbar sofort. Enthält 19% MwSt. (falls anwendbar).", 20, 150)
+  doc.setFontSize(8)
+  doc.text("Vielen Dank für Ihr Vertrauen. — diAiway", 20, 270)
+
+  return doc.output("arraybuffer") as ArrayBuffer
+}
+
+/**
  * Storno-Rechnung (SR): Storniert die Rechnung (RE) an den Shugyo.
  */
 export function generateStornoInvoicePdf(opts: {

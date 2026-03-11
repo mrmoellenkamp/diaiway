@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, MessageSquare, User, LayoutGrid } from "lucide-react"
+import { Home, MessageSquare, User, LayoutGrid, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
@@ -15,7 +15,7 @@ export function BottomNav() {
     { href: "/home", label: t("common.home"), icon: Home },
     { href: "/categories", label: t("common.categories"), icon: LayoutGrid },
     { href: "/ai-guide", label: "diAiway", icon: MessageSquare, brand: true },
-    { href: "/messages", label: t("messages.title"), icon: null },
+    { href: "/messages", label: t("messages.title"), icon: Mail },
     { href: "/profile", label: t("common.profile"), icon: User },
   ]
 
@@ -42,7 +42,6 @@ export function BottomNav() {
         >
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href)
-            const isMessages = item.href === "/messages"
             const isBrand = item.brand === true
             return (
               <Link
@@ -64,17 +63,8 @@ export function BottomNav() {
                     )}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
-                ) : (
-                  <span className={cn(
-                    "text-[11px] font-medium leading-tight",
-                    isMessages && "text-center"
-                  )}>
-                    {item.label}
-                  </span>
-                )}
-                {!isMessages && (
-                  isBrand ? <DiAiwayBrand className="text-xs" /> : <span>{item.label}</span>
-                )}
+                ) : null}
+                {isBrand ? <DiAiwayBrand className="text-xs" /> : <span>{item.label}</span>}
                 {isActive && (
                   <span className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary pointer-events-none" />
                 )}

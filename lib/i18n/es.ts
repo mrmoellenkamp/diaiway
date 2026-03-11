@@ -265,7 +265,7 @@ const es = {
   "profile.switchRole": "Cambiar rol",
   "profile.currentRoleTakumi": "Actual: Takumi (Experto)",
   "profile.currentRoleShugyo": "Actual: Shugyo (Aprendiz)",
-  "shugyo.dashboardTitle": "Mi perfil de aprendiz",
+  "shugyo.dashboardTitle": "Mi perfil Shugyo",
   "shugyo.dashboardDesc": "Elige tu nivel y sube imágenes de proyectos. El experto lo verá en la videollamada.",
   "shugyo.selectSkillLevel": "Nivel",
   "shugyo.skillLevelDesc": "Ayuda a los expertos a asesorarte mejor.",
@@ -317,6 +317,7 @@ const es = {
   "profile.previewDesc": "Así ven otros tu perfil.",
   "profile.backToProfile": "Volver al perfil",
   "profile.previewLoginRequired": "Por favor inicia sesión.",
+  "profile.account": "Cuenta",
 
   // Finances
   "finances.title": "Finanzas",

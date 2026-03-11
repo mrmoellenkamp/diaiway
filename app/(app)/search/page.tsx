@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, Suspense } from "react"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { PageContainer } from "@/components/page-container"
@@ -28,11 +29,13 @@ function SearchContent() {
       )
     : []
 
+  const q = query.toLowerCase().trim()
   const catResults = query.length > 1
     ? categories.filter(
         (c) =>
-          c.name.toLowerCase().includes(query.toLowerCase()) ||
-          c.description.toLowerCase().includes(query.toLowerCase())
+          c.name.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q) ||
+          c.subcategories.some((sub) => sub.toLowerCase().includes(q))
       )
     : []
 
@@ -57,11 +60,32 @@ function SearchContent() {
                 {t("search.categoriesLabel")}
               </p>
               <div className="flex flex-col gap-2">
-                {catResults.map((c) => (
-                  <div key={c.slug} className="rounded-xl border border-border/60 bg-card p-3 text-sm">
-                    {c.name}
-                  </div>
-                ))}
+                {catResults.map((c) => {
+                  const matchingSubs = c.subcategories.filter((sub) =>
+                    sub.toLowerCase().includes(q)
+                  )
+                  return (
+                    <Link
+                      key={c.slug}
+                      href={`/categories/${c.slug}`}
+                      className="block rounded-xl border border-border/60 bg-card p-3 text-sm transition-colors hover:bg-muted/50"
+                    >
+                      <span className="font-medium">{c.name}</span>
+                      {matchingSubs.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {matchingSubs.map((sub) => (
+                            <span
+                              key={sub}
+                              className="rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                            >
+                              {sub}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           )}
