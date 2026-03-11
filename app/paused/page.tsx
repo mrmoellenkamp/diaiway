@@ -31,7 +31,7 @@ export default function PausedPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-40 text-center">
       <div className="flex size-16 items-center justify-center rounded-2xl bg-yellow-500/10 mb-6">
         <PauseCircle className="size-8 text-yellow-500" />
       </div>

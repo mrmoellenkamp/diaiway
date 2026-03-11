@@ -16,7 +16,7 @@ export default function CategoriesPage() {
   const liveTakumis = takumis.filter((tk) => tk.isLive)
 
   return (
-    <PageContainer className="pb-40">
+    <PageContainer>
       <div className="flex flex-col gap-6">
         {/* Seitenüberschrift */}
         <div>
