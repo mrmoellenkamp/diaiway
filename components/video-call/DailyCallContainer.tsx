@@ -71,7 +71,7 @@ function calculateRemainingTime(
   frozenDurationMs = 0
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
-  const freePeriodSec = hasPaidBefore ? 30 : 5 * 60
+  const freePeriodSec = 30 // Instant Connect: immer 30 Sek gratis
   const elapsedSec = (Date.now() - sessionStartMs - frozenDurationMs) / 1000
   const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
   const balanceMinutes = userBalanceCents / pricePerMinuteCents
@@ -187,8 +187,7 @@ export function DailyCallContainer({
   const useBillingTimer =
     bookingMode === "instant" &&
     userRole === "shugyo" &&
-    pricePerMinuteCents > 0 &&
-    (userBalanceCents > 0 || sessionStartedAt)
+    pricePerMinuteCents > 0
 
   useEffect(() => {
     balanceCentsRef.current = balanceCentsForTimer
@@ -196,16 +195,14 @@ export function DailyCallContainer({
 
   // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
   const performCleanup = useCallback(() => {
-    localStreamRef.current?.getTracks().forEach((t) => t.stop())
-    localStreamRef.current = null
-    micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
-    micLevelIntervalRef.current = null
-    audioContextRef.current?.close()
-    timerIntervalRef.current && clearInterval(timerIntervalRef.current)
-    timerIntervalRef.current = null
-
     const call = callObjectRef.current
     if (call) {
+      try {
+        call.setLocalVideo(false)
+        call.setLocalAudio(false)
+      } catch (e) {
+        console.warn("[DailyCall] cleanup setLocalVideo/Audio:", e)
+      }
       try {
         call.leave()
         call.destroy()
@@ -214,6 +211,13 @@ export function DailyCallContainer({
       }
       callObjectRef.current = null
     }
+    localStreamRef.current?.getTracks().forEach((t) => t.stop())
+    localStreamRef.current = null
+    micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
+    micLevelIntervalRef.current = null
+    audioContextRef.current?.close()
+    timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+    timerIntervalRef.current = null
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null
       remoteAudioRef.current.pause()
@@ -1318,8 +1322,8 @@ export function DailyCallContainer({
               {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
               <span>{formatMmSs(secs)}</span>
             </div>
-            {useBillingTimer && !hasPaidBefore && (
-              <span className="text-[10px] text-white/70">Erstkontakt: 5 Min. kostenlos</span>
+            {useBillingTimer && (
+              <span className="text-[10px] text-white/70">30 Sek. kostenlos</span>
             )}
           </div>
         )}

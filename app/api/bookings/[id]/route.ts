@@ -413,18 +413,7 @@ export async function PATCH(
             ? Number(booking.expert.priceVoice15Min ?? booking.expert.priceVideo15Min ?? (booking.expert.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0))
             : Number(booking.expert.priceVideo15Min ?? (booking.expert.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0))
         const pricePerMinuteCents = Math.round((price15 * 100) / 15)
-        const hasPaidBefore = !!(
-          await prisma.booking.findFirst({
-            where: {
-              userId: booking.userId,
-              expertId: booking.expertId,
-              paymentStatus: "paid",
-              id: { not: id },
-            },
-            select: { id: true },
-          })
-        )
-        const chargeResult = await chargeInstantCallToWallet(id, duration, pricePerMinuteCents, hasPaidBefore)
+        const chargeResult = await chargeInstantCallToWallet(id, duration, pricePerMinuteCents)
         if (!chargeResult.ok && chargeResult.error !== "Insufficient wallet balance") {
           console.warn("[end-session] Instant charge failed:", chargeResult.error)
         }

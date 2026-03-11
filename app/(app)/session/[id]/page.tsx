@@ -219,15 +219,17 @@ function PostCallScreen({
         </p>
       </div>
 
-      {/* Instant: Entstandene Gebühren prominent anzeigen */}
-      {isInstantShugyo && incurredAmount > 0 && (
+      {/* Instant: Entstandene Gebühren anzeigen (auch bei 0 €) */}
+      {isInstantShugyo && (
         <div className="w-full max-w-sm rounded-xl border-2 border-primary/30 bg-primary/5 p-5 text-center">
           <p className="text-sm font-medium text-muted-foreground">Entstandene Gebühren</p>
           <p className="mt-1 text-2xl font-bold text-foreground">
             {(incurredAmount / 100).toFixed(2).replace(".", ",")} €
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Bitte bestätige die Abrechnung oder melde den Call.
+            {incurredAmount > 0
+              ? "Bitte bestätige die Abrechnung oder melde den Call."
+              : "Session unter 30 Sek. – keine Gebühren. Du kannst den Call melden oder weitergehen."}
           </p>
         </div>
       )}
@@ -273,19 +275,21 @@ function PostCallScreen({
 
       <div className="flex w-full max-w-sm flex-col gap-3">
         {/* Instant: Freigeben/Melden zuerst, dann Bewertung */}
-        {isInstantShugyo && incurredAmount > 0 && (
+        {isInstantShugyo && (
           <>
-            <Button
-              onClick={handleInstantConfirmAndRelease}
-              disabled={submitting}
-              className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              Abrechnung bestätigen & freigeben
-            </Button>
+            {incurredAmount > 0 && (
+              <Button
+                onClick={handleInstantConfirmAndRelease}
+                disabled={submitting}
+                className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Abrechnung bestätigen & freigeben
+              </Button>
+            )}
             <Button
               onClick={handleReportOnly}
               disabled={submitting}
-              variant="destructive"
+              variant={incurredAmount > 0 ? "destructive" : "outline"}
               className="h-12 w-full rounded-xl"
             >
               Call melden
