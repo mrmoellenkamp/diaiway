@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
+import { CollapsibleAiBox } from "@/components/collapsible-ai-box"
 import { Button } from "@/components/ui/button"
 import { TakumiCard, TakumiCardCompact } from "@/components/takumi-card"
 import { CategoryCard } from "@/components/category-card"
@@ -39,24 +40,14 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* AI-Guide CTA */}
+        {/* diAiway Intelligence — collapsible */}
         <div className="px-4">
-          <Link href="/ai-guide">
-            <div className="flex items-center gap-3 rounded-xl bg-primary p-4 transition-shadow hover:shadow-md">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent/20">
-                <Sparkles className="size-5 text-accent" />
-              </div>
-              <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-sm font-semibold text-primary-foreground">
-                  {t("common.aiGuide")}
-                </span>
-                <span className="text-xs text-primary-foreground/70">
-                  {t("home.aiGuideDesc")}
-                </span>
-              </div>
-              <ArrowRight className="size-4 text-primary-foreground/50" />
-            </div>
-          </Link>
+          <CollapsibleAiBox
+            defaultExpanded={false}
+            chatVariant="embedded"
+            compact
+            variant="primary"
+          />
         </div>
 
         {/* Live Takumis Carousel */}

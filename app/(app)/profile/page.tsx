@@ -101,6 +101,7 @@ export default function ProfilePage() {
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
+  const [languages, setLanguages] = useState<string[]>([])
   const [skillLevel, setSkillLevel] = useState<string | null>(null)
   const [projectCount, setProjectCount] = useState(0)
   const [completedSessions, setCompletedSessions] = useState(0)
@@ -133,6 +134,7 @@ export default function ProfilePage() {
           setDbEmail(data.email || "")
           setDbImage(data.image || "")
           setFavorites(data.favorites || [])
+          setLanguages(Array.isArray(data.languages) ? data.languages : [])
           setSkillLevel(data.skillLevel ?? null)
         }
         if (!isTakumi && takumiOrProjectsRes?.ok) {
@@ -173,6 +175,15 @@ export default function ProfilePage() {
 
   const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
 
+  const LANG_FLAGS: Record<string, string> = { de: "🇩🇪", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹" }
+  const LANG_OPTIONS = ["de", "en", "es", "fr", "it"] as const
+
+  function handleLanguagesToggle(lang: string) {
+    const next = languages.includes(lang) ? languages.filter((l) => l !== lang) : [...languages, lang]
+    setLanguages(next)
+    setHasUnsavedChanges(true)
+  }
+
   async function handleSkillLevelChange(level: "NEULING" | "FORTGESCHRITTEN" | "PROFI") {
     setSavingSkill(true)
     try {
@@ -196,7 +207,7 @@ export default function ProfilePage() {
   }
 
   async function handleSaveProfile() {
-    const updates: Record<string, string> = {}
+    const updates: Record<string, string | string[]> = {}
     if (isEditingName && editName.trim() && editName.trim() !== userName) {
       if (editName.trim().length < 2) {
         toast.error(t("profile.nameMinLength"))
@@ -207,6 +218,7 @@ export default function ProfilePage() {
     if (isEditingImage && editImage !== userImage) {
       updates.image = editImage
     }
+    if (hasUnsavedChanges) updates.languages = languages
     if (Object.keys(updates).length === 0) {
       toast.info(t("profile.noChanges"))
       return
@@ -281,23 +293,34 @@ export default function ProfilePage() {
                 </Button>
               </div>
             ) : (
-              <button
-                onClick={() => { setEditImage(userImage); setIsEditingImage(true); setHasUnsavedChanges(true) }}
-                className="group relative"
-              >
-                <Avatar className="size-20 border-4 border-primary/10">
-                  {userImage ? (
-                    <img src={userImage} alt={userName} className="size-full rounded-full object-cover" />
-                  ) : (
-                    <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                      {userInitials}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Edit3 className="size-4 text-white" />
-                </div>
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={() => { setEditImage(userImage); setIsEditingImage(true); setHasUnsavedChanges(true) }}
+                  className="group relative"
+                >
+                  <Avatar className="size-20 border-4 border-primary/10">
+                    {userImage ? (
+                      <img src={userImage} alt={userName} className="size-full rounded-full object-cover" />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                        {userInitials}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Edit3 className="size-4 text-white" />
+                  </div>
+                </button>
+                {languages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {languages.map((lang) => (
+                      <span key={lang} className="text-lg leading-none" title={lang.toUpperCase()}>
+                        {LANG_FLAGS[lang] ?? lang}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             <div className="flex flex-col items-center gap-1 text-center">
@@ -375,6 +398,33 @@ export default function ProfilePage() {
               <StatBox label={isTakumi ? t("profile.earned") : t("profile.spent")} value={`${totalSpent}\u20AC`} />
               <div className="h-8 w-px bg-border" />
               <StatBox label={t("profile.favorites")} value={String(favorites.length)} />
+            </CardContent>
+          </Card>
+
+          {/* Sprachen */}
+          <Card className="border-border/60 gap-0 py-0">
+            <CardContent className="flex flex-col gap-3 p-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                {t("profile.languages")}
+              </h3>
+              <p className="text-xs text-muted-foreground">{t("profile.languagesDesc")}</p>
+              <div className="flex flex-wrap gap-2">
+                {LANG_OPTIONS.map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => handleLanguagesToggle(lang)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      languages.includes(lang)
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <span className="text-base">{LANG_FLAGS[lang]}</span>
+                    <span>{lang.toUpperCase()}</span>
+                  </button>
+                ))}
+              </div>
             </CardContent>
           </Card>
 

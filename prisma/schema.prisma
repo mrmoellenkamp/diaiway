@@ -112,6 +112,9 @@ model User {
   // Shugyo: Kenntnisstufe für bessere Beratung
   skillLevel       SkillLevel?
 
+  // Gesprochene Sprachen (z.B. ["de","en","es"]) für Fahnen-Anzeige
+  languages        String[]    @default([])
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
