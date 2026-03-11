@@ -13,15 +13,8 @@ export async function GET() {
     return NextResponse.json({ ok: true, db: "connected" })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
-    const stack = err instanceof Error ? err.stack : undefined
-    console.error("[Health] DB error:", message, stack)
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-        ...(process.env.NODE_ENV === "development" && { stack }),
-      },
-      { status: 500 }
-    )
+    console.error("[Health] DB error:", message)
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ ok: false, error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

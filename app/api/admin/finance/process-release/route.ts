@@ -36,8 +36,8 @@ export async function POST(req: Request) {
       { status: 400 }
     )
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unbekannter Fehler"
     console.error("[admin/finance/process-release] Error:", err)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

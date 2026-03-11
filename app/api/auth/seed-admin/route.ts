@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const existingAdmin = await prisma.user.findFirst({ where: { role: "admin" } })
     if (existingAdmin) {
       return NextResponse.json(
-        { error: "Ein Admin-Nutzer existiert bereits.", existingAdmin: existingAdmin.email },
+        { error: "Ein Admin-Nutzer existiert bereits." },
         { status: 409 }
       )
     }

@@ -170,8 +170,15 @@ export async function PATCH(
           "skillLevel", "refundPreference", "invoiceData",
         ] as const
         const data: Record<string, unknown> = {}
+        const { sanitizeInvoiceData } = await import("@/lib/security")
         for (const k of allowed) {
-          if (body.user![k] !== undefined) data[k] = body.user![k]
+          if (body.user![k] === undefined) continue
+          if (k === "invoiceData") {
+            const sanitized = sanitizeInvoiceData(body.user!.invoiceData)
+            if (sanitized !== null) data[k] = sanitized
+          } else {
+            data[k] = body.user![k]
+          }
         }
         if (Object.keys(data).length > 0) {
           await tx.user.update({ where: { id }, data })
@@ -285,6 +292,7 @@ export async function PATCH(
     return NextResponse.json({ success: true, message: "Profil gespeichert." })
   } catch (err) {
     console.error("[admin/users/profile] PATCH error:", err)
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

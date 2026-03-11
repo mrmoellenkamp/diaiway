@@ -34,7 +34,7 @@ function checkAnnotation(annotation: SafeSearchAnnotation): SafetyCheckResult {
 
 export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean; reason?: string }> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
-  if (!apiKey?.trim()) return { safe: true }
+  if (!apiKey?.trim()) return { safe: false, reason: "Bildprüfung nicht konfiguriert." }
 
   const timeoutMs = 8000
   const controller = new AbortController()
@@ -73,7 +73,7 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
 /** Pre-Check & Alert: Prüft Base64-Bild, gibt detailliertes Ergebnis (inkl. violation für Speicherung) */
 export async function checkImageSafetyFromBase64(base64: string): Promise<SafetyCheckResult> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
-  if (!apiKey?.trim()) return { safe: true }
+  if (!apiKey?.trim()) return { safe: false, reason: "Bildprüfung nicht konfiguriert.", violation: undefined }
 
   const timeoutMs = 8000
   const controller = new AbortController()

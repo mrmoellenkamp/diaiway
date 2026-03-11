@@ -78,7 +78,8 @@ export async function GET(req: Request) {
       instantSlots: instantSlots || EMPTY_WEEKLY_SLOTS,
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
 
@@ -121,6 +122,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true, message: "Verfuegbarkeit gespeichert." })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
