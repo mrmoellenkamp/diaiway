@@ -2,7 +2,7 @@ const es = {
   // Common
   "common.home": "Inicio",
   "common.categories": "Categorías",
-  "common.aiGuide": "Guía IA",
+  "common.aiGuide": "diAiway Intelligence",
   "common.chats": "Chats",
   "common.profile": "Perfil",
   "common.back": "Volver",
@@ -155,7 +155,7 @@ const es = {
   // Home
   "home.greeting": "Hola,",
   "home.searchPlaceholder": "Buscar expertos, categorías...",
-  "home.aiGuideDesc": "Subir foto y encontrar expertos",
+  "home.aiGuideDesc": "Describe tu proyecto y obtén un análisis fundamentado",
   "home.nowLive": "En vivo ahora",
   "home.online": "en línea",
   "home.noExpertsOnline": "No hay expertos en línea ahora.",

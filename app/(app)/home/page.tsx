@@ -48,7 +48,7 @@ export default function HomePage() {
               </div>
               <div className="flex flex-1 flex-col gap-0.5">
                 <span className="text-sm font-semibold text-primary-foreground">
-                  AI-Guide
+                  {t("common.aiGuide")}
                 </span>
                 <span className="text-xs text-primary-foreground/70">
                   {t("home.aiGuideDesc")}

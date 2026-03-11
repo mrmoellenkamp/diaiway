@@ -63,7 +63,7 @@ async function convertFilesToDataURLs(
 }
 
 interface MentorChatProps {
-  variant: "embedded" | "floating"
+  variant: "embedded" | "floating" | "fullpage"
   className?: string
 }
 
@@ -101,6 +101,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
   const [showProactivePrompt, setShowProactivePrompt] = useState(false)
   const router = useRouter()
   const isEmbedded = variant === "embedded"
+  const isFullpage = variant === "fullpage"
 
   const liveTakumi =
     (viewingTakumiId ? takumis.find((t) => t.id === viewingTakumiId) : null) ||
@@ -224,7 +225,9 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         "flex flex-col overflow-hidden font-sans",
         isEmbedded
           ? "rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl"
-          : "h-full bg-emerald-50/50 backdrop-blur-md",
+          : isFullpage
+            ? "h-[calc(100vh-6rem)] rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl"
+            : "h-full bg-emerald-50/50 backdrop-blur-md",
         className
       )}
     >
@@ -235,11 +238,11 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground">
-            {isEmbedded ? t("mentor.headerTitleEmbedded") : t("mentor.headerTitleFloating")}
+            {(isEmbedded || isFullpage) ? t("mentor.headerTitleEmbedded") : t("mentor.headerTitleFloating")}
             <span className="font-jp ml-1.5 text-[10px] font-normal text-primary/40">{"導師"}</span>
           </p>
           <p className="text-[10px] text-muted-foreground truncate">
-            {isEmbedded ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
+            {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
           </p>
         </div>
         <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-semibold text-accent">
@@ -256,7 +259,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         ref={scrollRef}
         className={cn(
           "flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none",
-          isEmbedded ? "min-h-[180px] max-h-[260px]" : "min-h-0"
+          isEmbedded && !isFullpage ? "min-h-[180px] max-h-[260px]" : "min-h-0"
         )}
       >
         {/* Welcome */}
@@ -534,7 +537,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isStreaming}
-            placeholder={isEmbedded ? t("mentor.placeholderEmbedded") : t("mentor.placeholderFloating")}
+            placeholder={(isEmbedded || isFullpage) ? t("mentor.placeholderEmbedded") : t("mentor.placeholderFloating")}
             rows={1}
             className="min-w-0 flex-1 resize-none bg-transparent py-1 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
             style={{ maxHeight: 160 }}
