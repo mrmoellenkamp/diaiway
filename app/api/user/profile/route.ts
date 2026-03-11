@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, createdAt: true },
+      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, languages: true, createdAt: true },
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
@@ -28,6 +28,7 @@ export async function GET() {
       refundPreference: user.refundPreference || "payout",
       invoiceData: user.invoiceData ?? null,
       skillLevel: user.skillLevel ?? null,
+      languages: user.languages ?? [],
       createdAt: user.createdAt,
     })
   } catch (err: unknown) {
@@ -44,7 +45,7 @@ export async function PATCH(req: Request) {
 
   try {
     const body = await req.json()
-    const data: Record<string, string | object | null> = {}
+    const data: Record<string, string | object | string[] | null> = {}
 
     if (body.name !== undefined) {
       if (!body.name || body.name.trim().length < 2) {
@@ -77,6 +78,12 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "Ungueltige Kenntnisstufe." }, { status: 400 })
       }
       data.skillLevel = body.skillLevel
+    }
+    if (body.languages !== undefined) {
+      const valid = ["de", "en", "es", "fr", "it"]
+      const arr = Array.isArray(body.languages) ? body.languages : []
+      const filtered = arr.filter((l: string) => valid.includes(String(l).toLowerCase()))
+      data.languages = [...new Set(filtered)]
     }
 
     if (Object.keys(data).length === 0) {

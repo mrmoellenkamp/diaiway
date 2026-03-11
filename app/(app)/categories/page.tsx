@@ -3,7 +3,7 @@
 import { PageContainer } from "@/components/page-container"
 import { CategoryCardLarge } from "@/components/category-card"
 import { TakumiCardCompact } from "@/components/takumi-card"
-import { MentorChat } from "@/components/mentor-chat"
+import { CollapsibleAiBox } from "@/components/collapsible-ai-box"
 import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
@@ -18,22 +18,15 @@ export default function CategoriesPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        {/* AI Mentor — above categories */}
+        {/* diAiway Intelligence — collapsible, öffnet bei Klick */}
         <section className="flex flex-col gap-3">
-          <div className="flex flex-col items-center gap-1.5 text-center">
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
-                <Sparkles className="size-3.5 text-primary" />
-              </div>
-              <h2 className="text-lg font-bold text-foreground">
-                {t("categories.mentorTitle")}
-              </h2>
-            </div>
-            <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-              {t("categories.mentorDesc")}
-            </p>
-          </div>
-          <MentorChat variant="embedded" />
+          <CollapsibleAiBox
+            defaultExpanded={false}
+            chatVariant="embedded"
+            variant="card"
+            title={t("categories.mentorTitle")}
+            description={t("categories.mentorDesc")}
+          />
         </section>
 
         {/* Online Takumis (Kurzprofile) */}

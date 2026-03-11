@@ -2,7 +2,6 @@
 
 import { use, useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,12 +13,13 @@ import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail, Calendar,
+  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { SocialLinks } from "@/lib/types"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
+import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 
 // ─── Social media icon + link helpers ──────────────────────────────────────
@@ -97,11 +97,9 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const { id } = use(params)
   const { t } = useI18n()
   const { takumis } = useTakumis()
-  const { openMentorWithTakumi, sendDirectMessage } = useApp()
+  const { sendDirectMessage } = useApp()
   const router = useRouter()
-  const [isContacting, setIsContacting] = useState(false)
-  const [isDmSending, setIsDmSending] = useState(false)
-  const [dmSent, setDmSent] = useState(false)
+  const [composeOpen, setComposeOpen] = useState(false)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
   const takumi = takumis.find((tk) => tk.id === id)
@@ -117,32 +115,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   }, [id])
   if (!takumi) notFound()
 
-  function handleContact() {
-    if (!takumi) return
-    setIsContacting(true)
-    setTimeout(() => {
-      openMentorWithTakumi(takumi.id, takumi.name)
-      setIsContacting(false)
-    }, 600)
-  }
-
-  async function handleDirectMessage() {
-    if (!takumi) return
-    setIsDmSending(true)
-    const firstName = takumi.name.split(" ")[0]
-    const text = t("takumiPage.dmGreeting").replace("{name}", firstName)
-    const result = await sendDirectMessage(takumi.id, text)
-    setIsDmSending(false)
-    if ("error" in result) {
-      toast.error(result.error || "Nachricht konnte nicht gesendet werden.")
-      return
-    }
-    setDmSent(true)
-    const target = result.recipientUserId
-      ? `/messages?with=${encodeURIComponent(result.recipientUserId)}`
-      : "/messages"
-    setTimeout(() => router.push(target), 600)
-  }
+  const firstName = takumi?.name.split(" ")[0] ?? ""
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -224,46 +197,21 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
             <Button
-              onClick={handleContact}
-              disabled={isContacting}
-              className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 disabled:opacity-70"
+              onClick={() => setComposeOpen(true)}
+              className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
             >
-              {isContacting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {t("takumiPage.preparingChat")}
-                </>
-              ) : (
-                <>
-                  <Send className="size-4" />
-                  {t("takumiPage.contactChat")}
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={handleDirectMessage}
-              disabled={isDmSending || dmSent}
-              variant="outline"
-              className="h-11 w-full gap-2.5 rounded-xl border-primary/20 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-70"
-            >
-              {dmSent ? (
-                <>
-                  <CheckCircle className="size-4 text-accent" />
-                  {t("takumiPage.messageSent")}
-                </>
-              ) : isDmSending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {t("takumiPage.sending")}
-                </>
-              ) : (
-                <>
-                  <Mail className="size-4" />
-                  {t("takumiPage.directMessage").replace("{name}", takumi.name.split(" ")[0])}
-                </>
-              )}
+              <Send className="size-4" />
+              {t("takumiPage.contactChat").replace("{name}", firstName)}
             </Button>
           </div>
+
+          <MessageComposeModal
+            open={composeOpen}
+            onOpenChange={setComposeOpen}
+            recipientName={takumi.name}
+            recipientExpertId={takumi.id}
+            onSent={() => toast.success(t("takumiPage.messageSent"))}
+          />
 
           {/* Trust Badges */}
           <div className="flex flex-wrap gap-2">
