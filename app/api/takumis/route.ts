@@ -57,12 +57,9 @@ export async function GET() {
     )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "DB-Fehler"
-    const stack = err instanceof Error ? err.stack : undefined
-    console.error("[diAiway] GET /api/takumis error:", message, stack)
-    return NextResponse.json(
-      { error: message, ...(process.env.NODE_ENV === "development" && stack && { stack }) },
-      { status: 500 }
-    )
+    console.error("[diAiway] GET /api/takumis error:", message)
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
 
@@ -114,7 +111,8 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Fehler beim Erstellen"
     console.error("[diAiway] POST /api/takumis error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
 
@@ -148,6 +146,7 @@ export async function PATCH(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Fehler beim Aktualisieren"
     console.error("[diAiway] PATCH /api/takumis error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

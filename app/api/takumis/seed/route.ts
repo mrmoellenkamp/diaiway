@@ -59,6 +59,7 @@ export async function POST() {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Seed-Fehler"
     console.error("[diAiway] POST /api/takumis/seed error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

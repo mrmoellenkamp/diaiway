@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
     } else {
       const refundRes = await cancelOrRefundPaymentIntent(booking.stripePaymentIntentId!)
       if (!refundRes.ok) {
+        console.error("[admin/finance/refund] Stripe refund failed:", refundRes.error)
         return NextResponse.json(
-          { error: `Stripe-Refund fehlgeschlagen: ${refundRes.error}` },
+          { error: "Stripe-Stornierung fehlgeschlagen. Bitte später erneut versuchen." },
           { status: 502 }
         )
       }

@@ -5,6 +5,7 @@ import { transporter, smtpFrom } from "@/lib/email"
 /**
  * GET /api/test/sample-invoice
  * Erzeugt eine Beispiel-ZUGFeRD-Rechnung.
+ * Nur in Development (NODE_ENV !== "production") verfügbar.
  *
  * Query:
  *   - email=xxx  Wenn gesetzt und SMTP konfiguriert: Rechnung per E-Mail senden
@@ -12,6 +13,9 @@ import { transporter, smtpFrom } from "@/lib/email"
  * Response: PDF-Download (application/pdf)
  */
 export async function GET(req: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
   try {
     const { searchParams } = new URL(req.url)
     const targetEmail = searchParams.get("email")

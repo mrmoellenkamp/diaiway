@@ -27,9 +27,13 @@ async function runExpertsOffline() {
 }
 
 export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret?.trim()) {
+    console.error("[Cron] experts-offline: CRON_SECRET not configured")
+    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
+  }
+  const authHeader = req.headers.get("authorization")
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const result = await runExpertsOffline()
@@ -37,9 +41,13 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const authHeader = req.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret?.trim()) {
+    console.error("[Cron] experts-offline: CRON_SECRET not configured")
+    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
+  }
+  const authHeader = req.headers.get("authorization")
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const result = await runExpertsOffline()

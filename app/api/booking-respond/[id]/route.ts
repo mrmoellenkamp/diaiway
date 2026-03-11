@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { textToHtmlSafe } from "@/lib/security"
+import { textToHtmlSafe, escapeHtml } from "@/lib/security"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
@@ -191,10 +191,10 @@ export async function POST(
 </td></tr>
 <tr><td style="padding:32px 40px;">
   <h1 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#1c1917;">Rückfrage zu deiner Buchungsanfrage</h1>
-  <p style="margin:0 0 8px;font-size:14px;color:#78716c;">Hallo <strong style="color:#1c1917;">${booking.userName}</strong>,</p>
+  <p style="margin:0 0 8px;font-size:14px;color:#78716c;">Hallo <strong style="color:#1c1917;">${escapeHtml(booking.userName)}</strong>,</p>
   <p style="margin:0 0 20px;font-size:14px;color:#78716c;">
-    <strong style="color:#1c1917;">${booking.expertName}</strong> hat eine Rückfrage zu deiner Buchung am
-    <strong style="color:#1c1917;">${booking.date}</strong> (${booking.startTime}–${booking.endTime} Uhr):
+    <strong style="color:#1c1917;">${escapeHtml(booking.expertName)}</strong> hat eine Rückfrage zu deiner Buchung am
+    <strong style="color:#1c1917;">${escapeHtml(booking.date)}</strong> (${escapeHtml(booking.startTime)}–${escapeHtml(booking.endTime)} Uhr):
   </p>
   <table width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:24px;"><tr><td style="padding:16px 20px;">
     <p style="margin:0;font-size:14px;line-height:1.6;color:#1c1917;">${textToHtmlSafe(message)}</p>
