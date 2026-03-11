@@ -4,6 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Safe-Area: für iOS/Android (Capacitor) – Web bleibt mit 0 / Fallback */
+  --safe-area-inset-top: env(safe-area-inset-top, 0);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
+  --safe-area-inset-left: env(safe-area-inset-left, 0);
+  --safe-area-inset-right: env(safe-area-inset-right, 0);
+
   /* diAiway Zen-Tech Palette */
   --background: #fafaf9;
   --foreground: #1c1917;
@@ -95,6 +101,14 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Safe-Area Utilities: Footer/Content bleibt auf iPhone über dem Home-Indicator, Web behält Standard-Padding */
+.pb-safe {
+  padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(1rem, var(--safe-area-inset-top));
 }
 
 @keyframes live-pulse {

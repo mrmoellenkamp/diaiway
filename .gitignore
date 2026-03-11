@@ -16,3 +16,15 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Capacitor / Native builds
+android/build/
+android/.gradle/
+android/app/build/
+android/.idea/
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+out/
