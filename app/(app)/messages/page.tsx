@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -43,7 +43,7 @@ interface MsgItem {
   timestamp: number
 }
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const { t } = useI18n()
   const { refreshNotificationCount } = useApp()
   const searchParams = useSearchParams()
@@ -405,5 +405,19 @@ export default function MessagesPage() {
         </div>
       )}
     </PageContainer>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageContainer>
+    }>
+      <MessagesPageContent />
+    </Suspense>
   )
 }
