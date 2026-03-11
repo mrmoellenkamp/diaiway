@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useSession } from "next-auth/react"
 import type { UIMessage } from "ai"
-import type { UserRole, DirectThread, DirectMessage } from "./types"
+import type { UserRole } from "./types"
 
 interface AppContextType {
   role: UserRole
@@ -22,9 +22,8 @@ interface AppContextType {
   viewingTakumiId: string | null
   setViewingTakumiId: (id: string | null) => void
   openMentorWithTakumi: (takumiId: string, takumiName: string) => void
-  // Direct messaging
-  dmThreads: DirectThread[]
-  sendDirectMessage: (takumiId: string, takumiName: string, takumiAvatar: string, subcategory: string, text: string) => void
+  // Direct messaging (API-backed)
+  sendDirectMessage: (recipientExpertId: string, text: string) => Promise<{ recipientUserId?: string } | { error: string }>
   totalUnread: number
   notificationCount: number
   refreshNotificationCount: (() => void) | undefined
@@ -36,17 +35,6 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
-
-/** Load DM threads from localStorage */
-function loadThreads(): DirectThread[] {
-  if (typeof window === "undefined") return []
-  try {
-    const raw = localStorage.getItem("diaiway-dm-threads")
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { data: session, status: sessionStatus } = useSession()
@@ -86,7 +74,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isMentorOpen, setMentorOpen] = useState(false)
   const [pendingMentorMessage, setPendingMentorMessage] = useState<string | null>(null)
   const [viewingTakumiId, setViewingTakumiId] = useState<string | null>(null)
-  const [dmThreads, setDmThreads] = useState<DirectThread[]>([])
   const [notificationCount, setNotificationCount] = useState(0)
   const [isSearchingExperts, setIsSearchingExperts] = useState(false)
   const [searchResults, setSearchResults] = useState<string[] | null>(null)
@@ -103,17 +90,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sessionStatus === "authenticated" && session?.user) refreshNotificationCount()
   }, [sessionStatus, session?.user])
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    setDmThreads(loadThreads())
-  }, [])
-
-  // Persist DM threads
-  useEffect(() => {
-    if (typeof window !== "undefined" && dmThreads.length > 0) {
-      localStorage.setItem("diaiway-dm-threads", JSON.stringify(dmThreads))
+  async function sendDirectMessage(recipientExpertId: string, text: string) {
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipientExpertId, text }),
+      })
+      const data = await res.json()
+      if (res.ok) return { recipientUserId: data.recipientUserId }
+      return { error: data.error ?? "Fehler" }
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Fehler" }
     }
-  }, [dmThreads])
+  }
 
   function handleSetStoredMessages(msgs: UIMessage[]) {
     storedMessagesRef.current = msgs
@@ -128,43 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMentorOpen(true)
   }
 
-  function sendDirectMessage(
-    takumiId: string,
-    takumiName: string,
-    takumiAvatar: string,
-    subcategory: string,
-    text: string
-  ) {
-    const newMsg: DirectMessage = {
-      id: `dm-${Date.now()}`,
-      text,
-      sender: "user",
-      timestamp: Date.now(),
-    }
-    setDmThreads((prev) => {
-      const existing = prev.find((t) => t.takumiId === takumiId)
-      if (existing) {
-        return prev.map((t) =>
-          t.takumiId === takumiId
-            ? { ...t, messages: [...t.messages, newMsg] }
-            : t
-        )
-      }
-      return [
-        ...prev,
-        {
-          takumiId,
-          takumiName,
-          takumiAvatar,
-          subcategory,
-          messages: [newMsg],
-          unread: 0,
-        },
-      ]
-    })
-  }
-
-  const totalUnread = dmThreads.reduce((sum, t) => sum + t.unread, 0) + notificationCount
+  const totalUnread = notificationCount
 
   return (
     <AppContext.Provider
@@ -185,7 +139,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         viewingTakumiId,
         setViewingTakumiId,
         openMentorWithTakumi,
-        dmThreads,
         sendDirectMessage,
         totalUnread,
         notificationCount,
