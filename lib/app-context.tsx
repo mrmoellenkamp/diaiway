@@ -67,7 +67,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appRole: newRole }),
       })
-        .then((r) => r.ok && updateSession({ appRole: newRole }))
+        .then((r) => (r.ok ? updateSession({ appRole: newRole }) : null))
         .catch(() => {})
     }
   }
