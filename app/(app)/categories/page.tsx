@@ -18,14 +18,19 @@ export default function CategoriesPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        {/* diAiway Intelligence — collapsible, öffnet bei Klick */}
-        <section className="flex flex-col gap-3">
+        {/* Seitenüberschrift */}
+        <div>
+          <h1 className="text-xl font-bold text-foreground">{t("categories.mentorTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("categories.mentorDesc")}</p>
+        </div>
+
+        {/* diAiway Intelligence — wie auf Home */}
+        <section>
           <CollapsibleAiBox
             defaultExpanded={false}
             chatVariant="embedded"
-            variant="card"
-            title={t("categories.mentorTitle")}
-            description={t("categories.mentorDesc")}
+            compact
+            variant="primary"
           />
         </section>
 

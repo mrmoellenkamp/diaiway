@@ -554,6 +554,8 @@ const es = {
   "portfolio.saveError": "Error al guardar.",
   "portfolio.loadError": "Error al cargar.",
   "takumiPage.contactChat": "Escribir con {name} ahora",
+  "takumiPage.chatNow": "Chatear con {name} ahora",
+  "takumiPage.sendMail": "Enviar un email a {name}",
   "takumiPage.preparingChat": "Preparando chat...",
   "takumiPage.directMessage": "Mensaje a {name}",
   "takumiPage.writeTo": "Mensaje a {name}",

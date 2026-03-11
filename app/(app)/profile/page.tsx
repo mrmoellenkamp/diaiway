@@ -176,13 +176,6 @@ export default function ProfilePage() {
   const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
 
   const LANG_FLAGS: Record<string, string> = { de: "🇩🇪", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹" }
-  const LANG_OPTIONS = ["de", "en", "es", "fr", "it"] as const
-
-  function handleLanguagesToggle(lang: string) {
-    const next = languages.includes(lang) ? languages.filter((l) => l !== lang) : [...languages, lang]
-    setLanguages(next)
-    setHasUnsavedChanges(true)
-  }
 
   async function handleSkillLevelChange(level: "NEULING" | "FORTGESCHRITTEN" | "PROFI") {
     setSavingSkill(true)
@@ -218,7 +211,6 @@ export default function ProfilePage() {
     if (isEditingImage && editImage !== userImage) {
       updates.image = editImage
     }
-    if (hasUnsavedChanges) updates.languages = languages
     if (Object.keys(updates).length === 0) {
       toast.info(t("profile.noChanges"))
       return
@@ -311,15 +303,6 @@ export default function ProfilePage() {
                     <Edit3 className="size-4 text-white" />
                   </div>
                 </button>
-                {languages.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1">
-                    {languages.map((lang) => (
-                      <span key={lang} className="text-lg leading-none" title={lang.toUpperCase()}>
-                        {LANG_FLAGS[lang] ?? lang}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
@@ -352,18 +335,29 @@ export default function ProfilePage() {
                 </button>
               )}
               <p className="text-xs text-muted-foreground">{userEmail}</p>
-              <div className="mt-1 flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="border-primary/30 bg-primary/5 text-primary text-[10px]"
-                >
-                  {isTakumi ? "Takumi" : "Shugyo"}{" "}
-                  <span className="font-jp ml-0.5">{isTakumi ? "匠" : "修行"}</span>
-                </Badge>
-                {(session?.user as { role?: string })?.role === "admin" && (
-                  <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]">
-                    Admin
+              <div className="mt-1 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="border-primary/30 bg-primary/5 text-primary text-[10px]"
+                  >
+                    {isTakumi ? "Takumi" : "Shugyo"}{" "}
+                    <span className="font-jp ml-0.5">{isTakumi ? "匠" : "修行"}</span>
                   </Badge>
+                  {(session?.user as { role?: string })?.role === "admin" && (
+                    <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+                {languages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {languages.map((lang) => (
+                      <span key={lang} className="text-lg leading-none" title={lang.toUpperCase()}>
+                        {LANG_FLAGS[lang] ?? lang}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -398,33 +392,6 @@ export default function ProfilePage() {
               <StatBox label={isTakumi ? t("profile.earned") : t("profile.spent")} value={`${totalSpent}\u20AC`} />
               <div className="h-8 w-px bg-border" />
               <StatBox label={t("profile.favorites")} value={String(favorites.length)} />
-            </CardContent>
-          </Card>
-
-          {/* Sprachen */}
-          <Card className="border-border/60 gap-0 py-0">
-            <CardContent className="flex flex-col gap-3 p-4">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                {t("profile.languages")}
-              </h3>
-              <p className="text-xs text-muted-foreground">{t("profile.languagesDesc")}</p>
-              <div className="flex flex-wrap gap-2">
-                {LANG_OPTIONS.map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => handleLanguagesToggle(lang)}
-                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                      languages.includes(lang)
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <span className="text-base">{LANG_FLAGS[lang]}</span>
-                    <span>{lang.toUpperCase()}</span>
-                  </button>
-                ))}
-              </div>
             </CardContent>
           </Card>
 

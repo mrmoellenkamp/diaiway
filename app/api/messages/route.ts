@@ -156,10 +156,11 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { recipientUserId, recipientExpertId, text } = body as {
+    const { recipientUserId, recipientExpertId, text, notifyByEmail } = body as {
       recipientUserId?: string
       recipientExpertId?: string
       text?: string
+      notifyByEmail?: boolean
     }
 
     const trimmed = typeof text === "string" ? text.trim() : ""
@@ -205,8 +206,8 @@ export async function POST(req: Request) {
       console.warn("[messages] Notification/Push failed:", e)
     }
 
-    // E-Mail an Empfänger mit Link zum Postfach
-    if (recipient?.email) {
+    // E-Mail an Empfänger nur bei Mail-Nachrichten (nicht bei Chat)
+    if (notifyByEmail === true && recipient?.email) {
       sendNewMessageEmail({
         to: recipient.email,
         recipientName: recipient.name ?? "Nutzer",

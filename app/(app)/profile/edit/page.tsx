@@ -57,6 +57,7 @@ export default function EditProfilePage() {
   // Base profile
   const [name, setName] = useState("")
   const [image, setImage] = useState("")
+  const [languages, setLanguages] = useState<string[]>([])
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -102,6 +103,7 @@ export default function EditProfilePage() {
           const data = await res.json()
           setName(data.name || "")
           setImage(data.image || "")
+          setLanguages(Array.isArray(data.languages) ? data.languages : [])
         }
       } catch { /* ignore */ }
       finally { setLoadingProfile(false) }
@@ -244,9 +246,10 @@ export default function EditProfilePage() {
   async function handleSave() {
     setSaving(true)
     try {
-      const profilePayload: Record<string, string> = {}
+      const profilePayload: Record<string, string | string[]> = {}
       if (name.trim()) profilePayload.name = name.trim()
       if (image !== undefined) profilePayload.image = image
+      profilePayload.languages = languages
 
       if (Object.keys(profilePayload).length > 0) {
         const profileRes = await fetch("/api/user/profile", {
@@ -393,6 +396,43 @@ export default function EditProfilePage() {
                     placeholder={t("editProfile.namePlaceholder")}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* ===== Sprachen ===== */}
+            <Card className="border-border/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 8l6 6M4 14l6-6M2 5h20M2 19h20" />
+                  </svg>
+                  {t("profile.languages")}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">{t("profile.languagesDesc")}</p>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {(["de", "en", "es", "fr", "it"] as const).map((lang) => {
+                  const flags: Record<string, string> = { de: "🇩🇪", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹" }
+                  const isSelected = languages.includes(lang)
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) setLanguages((prev) => prev.filter((l) => l !== lang))
+                        else setLanguages((prev) => [...prev, lang])
+                      }}
+                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        isSelected
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <span className="text-base">{flags[lang]}</span>
+                      <span>{lang.toUpperCase()}</span>
+                    </button>
+                  )
+                })}
               </CardContent>
             </Card>
 

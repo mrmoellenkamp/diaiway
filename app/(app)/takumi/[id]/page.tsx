@@ -1,6 +1,7 @@
 "use client"
 
 import { use, useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +13,7 @@ import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, Calendar,
+  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -94,9 +95,11 @@ function SocialBar({ links }: { links: SocialLinks }) {
 
 export default function TakumiProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
   const { t } = useI18n()
   const { takumis } = useTakumis()
   const [composeOpen, setComposeOpen] = useState(false)
+  const [chatLoading, setChatLoading] = useState(false)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
   const takumi = takumis.find((tk) => tk.id === id)
@@ -113,6 +116,24 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   if (!takumi) notFound()
 
   const firstName = takumi?.name.split(" ")[0] ?? ""
+
+  async function handleStartChat() {
+    if (!takumi?.id || chatLoading) return
+    setChatLoading(true)
+    try {
+      const res = await fetch(`/api/messages/recipient-id?expertId=${encodeURIComponent(takumi.id)}`)
+      const data = await res.json()
+      if (res.ok && data.userId) {
+        router.push(`/messages?with=${encodeURIComponent(data.userId)}`)
+      } else {
+        toast.error(data.error || "Empfänger konnte nicht geladen werden.")
+      }
+    } catch {
+      toast.error("Fehler beim Öffnen des Chats.")
+    } finally {
+      setChatLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -194,11 +215,24 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
             <Button
-              onClick={() => setComposeOpen(true)}
+              onClick={handleStartChat}
+              disabled={chatLoading}
               className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
             >
-              <Send className="size-4" />
-              {t("takumiPage.contactChat").replace("{name}", firstName)}
+              {chatLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <MessageCircle className="size-4" />
+              )}
+              {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", firstName)}
+            </Button>
+            <Button
+              onClick={() => setComposeOpen(true)}
+              variant="outline"
+              className="h-12 w-full gap-2.5 rounded-xl border-primary/30 text-base font-semibold text-primary hover:bg-primary/5"
+            >
+              <Mail className="size-4" />
+              {t("takumiPage.sendMail").replace("{name}", firstName)}
             </Button>
           </div>
 
