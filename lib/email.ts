@@ -256,6 +256,52 @@ export async function sendBookingStatusEmail(opts: {
   })
 }
 
+/* ----- Neue Nachricht im Postfach ----- */
+export async function sendNewMessageEmail(opts: {
+  to: string
+  recipientName: string
+  senderName: string
+  messagePreview: string
+  inboxUrl: string
+}) {
+  const preview = opts.messagePreview.length > 100
+    ? opts.messagePreview.slice(0, 100) + "…"
+    : opts.messagePreview
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.recipientName}</strong>,<br/>
+      du hast eine neue Nachricht von <strong style="color:#1c1917;">${opts.senderName}</strong> in deinem Postfach.
+    </p>
+    <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:24px;">
+      <tr><td style="padding:16px 20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;font-style:italic;">„${preview.replace(/"/g, "&quot;")}"</p>
+      </td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0;">
+          <a href="${opts.inboxUrl}" target="_blank" style="display:inline-block;padding:14px 36px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            Zum Postfach öffnen
+          </a>
+        </td>
+      </tr>
+    </table>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: `diAiway – Neue Nachricht von ${opts.senderName}`,
+      html: emailWrapper("Neue Nachricht im Postfach", body),
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown"
+    return { sent: false, error: msg }
+  }
+}
+
 /* ----- Rechnung bereit (Shugyo) ----- */
 export async function sendInvoiceReadyEmail(opts: {
   to: string

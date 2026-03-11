@@ -364,14 +364,14 @@ const es = {
   "aria.showPassword": "Mostrar contraseña",
   "aria.hidePassword": "Ocultar contraseña",
 
-  // Mentor / AI FAB
-  "mentor.open": "Abrir mentor de proyecto",
+  // Mentor / AI FAB (diAiway AI Intelligence)
+  "mentor.open": "Abrir diAiway AI Intelligence",
   "mentor.close": "Cerrar chat",
-  "mentor.chat": "Chat del Mentor de Proyecto",
+  "mentor.chat": "diAiway AI Intelligence",
   "mentor.retryError": "Por favor, inténtalo de nuevo.",
   "mentor.attachPhoto": "Adjuntar foto",
-  "mentor.headerTitleEmbedded": "diAIway intelligence",
-  "mentor.headerTitleFloating": "Mentor de Proyecto",
+  "mentor.headerTitleEmbedded": "diAiway AI Intelligence",
+  "mentor.headerTitleFloating": "diAiway AI Intelligence",
   "mentor.headerDescEmbedded": "Revisión de proyecto — Analiza, planifica, encuentra expertos",
   "mentor.headerDescFloating": "Tu asesor personal",
   "mentor.online": "En línea",

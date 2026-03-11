@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.git/
+build/
+dist/
+public/images/
+*.log

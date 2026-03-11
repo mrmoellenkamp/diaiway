@@ -17,6 +17,7 @@ import {
   ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Loader2, Send, Mail, Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import type { SocialLinks } from "@/lib/types"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
@@ -125,22 +126,22 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
     }, 600)
   }
 
-  function handleDirectMessage() {
+  async function handleDirectMessage() {
     if (!takumi) return
     setIsDmSending(true)
-    setTimeout(() => {
-      const firstName = takumi.name.split(" ")[0]
-      sendDirectMessage(
-        takumi.id,
-        takumi.name,
-        takumi.avatar,
-        takumi.subcategory,
-        t("takumiPage.dmGreeting").replace("{name}", firstName)
-      )
-      setIsDmSending(false)
-      setDmSent(true)
-      setTimeout(() => router.push("/messages"), 800)
-    }, 500)
+    const firstName = takumi.name.split(" ")[0]
+    const text = t("takumiPage.dmGreeting").replace("{name}", firstName)
+    const result = await sendDirectMessage(takumi.id, text)
+    setIsDmSending(false)
+    if ("error" in result) {
+      toast.error(result.error || "Nachricht konnte nicht gesendet werden.")
+      return
+    }
+    setDmSent(true)
+    const target = result.recipientUserId
+      ? `/messages?with=${encodeURIComponent(result.recipientUserId)}`
+      : "/messages"
+    setTimeout(() => router.push(target), 600)
   }
 
   return (

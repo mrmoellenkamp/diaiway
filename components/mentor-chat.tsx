@@ -480,7 +480,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
                 <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-2" />
                 <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-3" />
               </div>
-              <span className="text-[10px] text-muted-foreground">Mentor analysiert...</span>
+              <span className="text-[10px] text-muted-foreground">AI analysiert...</span>
             </div>
           </div>
         )}

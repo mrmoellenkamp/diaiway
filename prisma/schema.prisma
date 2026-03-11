@@ -125,6 +125,8 @@ model User {
   walletTransactions WalletTransaction[]
   shugyoProjects      ShugyoProject[]
   takumiPortfolio     TakumiPortfolioProject[]
+  sentMessages        DirectMessage[]  @relation("SentMessages")
+  receivedMessages    DirectMessage[]   @relation("ReceivedMessages")
 }
 
 // Wallet-Bewegungen (Aufladung, Buchung, Rückerstattung) für Instant-Connect & Buchhaltung
@@ -319,7 +321,7 @@ model Notification {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String   // booking_request | booking_confirmed | booking_declined | booking_question
+  type       String   // booking_request | booking_confirmed | booking_declined | booking_question | new_message
   bookingId  String?
   title      String
   body       String   @default("")
@@ -328,6 +330,22 @@ model Notification {
 
   @@index([userId])
   @@index([userId, read])
+}
+
+// Direktnachrichten (Postfach): Nutzer können sich gegenseitig schreiben
+model DirectMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient  User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId, recipientId])
+  @@index([recipientId, senderId])
+  @@index([recipientId, read])
 }
 
 model Transaction {
