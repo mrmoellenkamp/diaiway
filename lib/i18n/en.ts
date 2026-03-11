@@ -2,7 +2,7 @@ const en = {
   // Common
   "common.home": "Home",
   "common.categories": "Categories",
-  "common.aiGuide": "AI Guide",
+  "common.aiGuide": "diAiway Intelligence",
   "common.chats": "Chats",
   "common.profile": "Profile",
   "common.back": "Back",
@@ -155,7 +155,7 @@ const en = {
   // Home
   "home.greeting": "Hello,",
   "home.searchPlaceholder": "Search for experts, categories...",
-  "home.aiGuideDesc": "Upload photo & find experts",
+  "home.aiGuideDesc": "Describe your project and get a well-founded analysis",
   "home.nowLive": "Live Now",
   "home.online": "online",
   "home.noExpertsOnline": "No experts online right now.",
