@@ -39,7 +39,7 @@ export function MessageComposeModal({
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientExpertId, text }),
+        body: JSON.stringify({ recipientExpertId, text, notifyByEmail: true }),
       })
       const data = await res.json()
       if (res.ok) {
