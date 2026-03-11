@@ -561,6 +561,7 @@ const de = {
   "takumiPage.reviews": "Bewertungen ({count})",
   "takumiPage.reviewsEmpty": "Bewertungen werden nach abgeschlossenen Sessions hier angezeigt.",
   "takumiPage.bookNow": "Jetzt buchen",
+  "takumiPage.bookAppointment": "Termin buchen",
   "takumiPage.priceInfo": "pro 15 Min · Video & Voice",
   "takumiPage.dmGreeting": "Hallo {name}, ich habe dein Profil gesehen und würde gerne mit dir über mein Projekt sprechen.",
 

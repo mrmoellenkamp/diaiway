@@ -398,7 +398,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 )}
               >
                 <Calendar className="size-4 shrink-0" />
-                {t("takumiPage.bookNow")}
+                {t("takumiPage.bookAppointment")}
               </Button>
             </div>
             {takumi.liveStatus === "in_call" && (

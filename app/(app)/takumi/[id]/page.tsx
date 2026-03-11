@@ -145,7 +145,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Cover Area + FAB (Störer: auffälliger CTA oben) */}
+      {/* Cover Area */}
       <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
         <Link
@@ -153,14 +153,6 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           className="absolute left-4 top-4 z-10 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
         >
           <ArrowLeft className="size-4 text-white" />
-        </Link>
-        {/* FAB: Termin buchen – klebt oben, hebt sich deutlich ab */}
-        <Link
-          href={`/booking/${takumi.id}`}
-          className="absolute right-4 top-14 z-20 flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-xl shadow-amber-900/40 ring-2 ring-amber-400 hover:bg-amber-400 transition-all hover:scale-105 active:scale-95"
-        >
-          <Calendar className="size-4 shrink-0" />
-          {t("takumiPage.bookNow")}
         </Link>
       </div>
 
@@ -313,41 +305,41 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </PageContainer>
 
-      {/* Sticky Bottom Bar: Preis + beide CTAs (Termin buchen + Instant, wenn verfügbar) */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-          <div className="flex flex-col shrink-0">
+      {/* Sticky Bottom Bar: Preis + Termin buchen + Instant Connect (wenn verfügbar) */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-4">
+        <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="text-lg font-bold text-foreground">
               ab {(takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)).toFixed(0)} €
             </span>
             <span className="text-[10px] text-muted-foreground">{t("takumiPage.priceInfo")}</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             {takumi.liveStatus === "available" && (
               <InstantCallTrigger
                 takumi={takumi}
                 variant="profile"
-                className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 text-sm font-bold text-white shadow-md shrink-0"
+                className="order-2 sm:order-1 h-12 w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 px-6 text-sm font-bold text-white shadow-md sm:w-auto"
               />
             )}
             <Button
               asChild
               className={cn(
-                "h-11 rounded-xl text-sm font-bold shrink-0",
+                "order-1 sm:order-2 h-12 rounded-xl text-sm font-bold w-full sm:w-auto",
                 takumi.liveStatus === "available"
-                  ? "bg-accent text-accent-foreground hover:bg-accent/90 px-5"
+                  ? "bg-accent text-accent-foreground hover:bg-accent/90 px-6"
                   : "bg-accent px-6 text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
               )}
             >
-              <Link href={`/booking/${takumi.id}`} className="flex items-center gap-1.5">
+              <Link href={`/booking/${takumi.id}`} className="flex items-center justify-center gap-2">
                 <Calendar className="size-4" />
-                {t("takumiPage.bookNow")}
+                {t("takumiPage.bookAppointment")}
               </Link>
             </Button>
           </div>
         </div>
         {takumi.liveStatus === "in_call" && (
-          <p className="mt-1.5 text-[11px] text-muted-foreground text-center">
+          <p className="mt-1 text-[11px] text-muted-foreground text-center">
             {t("booking.takumiInCall")}
           </p>
         )}

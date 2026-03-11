@@ -558,6 +558,7 @@ const en = {
   "takumiPage.reviews": "Reviews ({count})",
   "takumiPage.reviewsEmpty": "Reviews will appear here after completed sessions.",
   "takumiPage.bookNow": "Book now",
+  "takumiPage.bookAppointment": "Book appointment",
   "takumiPage.priceInfo": "per 15 min · Video & Voice",
   "takumiPage.dmGreeting": "Hi {name}, I saw your profile and would love to talk with you about my project.",
 

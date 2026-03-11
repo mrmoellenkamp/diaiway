@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nur für Shugyo." }, { status: 403 })
   }
 
-  let body: { expertId?: string }
+  let body: { expertId?: string; callType?: "VIDEO" | "VOICE" }
   try {
     body = await req.json()
   } catch {
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   }
 
   const expertId = body.expertId
+  const callType = body.callType === "VOICE" ? "VOICE" : "VIDEO"
   if (!expertId || typeof expertId !== "string") {
     return NextResponse.json({ error: "expertId fehlt." }, { status: 400 })
   }
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
           email: true,
           liveStatus: true,
           priceVideo15Min: true,
+          priceVoice15Min: true,
           pricePerSession: true,
         },
       }),
@@ -89,7 +91,9 @@ export async function POST(req: Request) {
     const endTime = `${String(now.getHours()).padStart(2, "0")}:${String((now.getMinutes() + 30) % 60).padStart(2, "0")}`
 
     const price15Min = Number(
-      expert.priceVideo15Min ?? (expert.pricePerSession ? expert.pricePerSession / 2 : 0)
+      callType === "VOICE"
+        ? (expert.priceVoice15Min ?? expert.priceVideo15Min ?? (expert.pricePerSession ? expert.pricePerSession / 2 : 0))
+        : (expert.priceVideo15Min ?? (expert.pricePerSession ? expert.pricePerSession / 2 : 0))
     )
     const totalPrice = price15Min * 2 // 30 Min als Platzhalter
 
@@ -102,6 +106,7 @@ export async function POST(req: Request) {
         userName: user.name ?? "Shugyo",
         userEmail: user.email ?? "",
         bookingMode: "instant",
+        callType,
         date: today,
         startTime,
         endTime,
