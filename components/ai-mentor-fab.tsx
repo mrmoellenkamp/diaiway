@@ -30,7 +30,7 @@ export function AiMentorFab() {
           onClick={() => setIsOpen(true)}
           className={cn(
             "fixed right-4 z-[45] flex size-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto",
-            "bottom-[max(6rem,calc(1.5rem+env(safe-area-inset-bottom)))]" // über Footer auf allen Seiten außer Landing
+            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom)))]" // über Footer (Icons + Links + Safe Area)
           )}
           aria-label={t("mentor.open")}
         >
@@ -48,7 +48,7 @@ export function AiMentorFab() {
           className={cn(
             "fixed right-3 z-[100] flex w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-2xl pointer-events-auto",
             "animate-in fade-in slide-in-from-bottom-4 duration-300",
-            "bottom-[max(6rem,calc(1.5rem+env(safe-area-inset-bottom)))] max-h-[calc(100vh-10rem)]"
+            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom)))] max-h-[calc(100vh-10rem)]"
           )}
           role="dialog"
           aria-label={t("mentor.chat")}

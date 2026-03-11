@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { MentorChat } from "@/components/mentor-chat"
+import { DiAiwayBrand } from "@/components/diaiway-brand"
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -34,7 +35,7 @@ export function CollapsibleAiBox({
   const { t } = useI18n()
   const [expanded, setExpanded] = useState(defaultExpanded)
 
-  const displayTitle = title ?? t("common.aiGuide")
+  const useBrand = !title
   const displayDesc = description ?? t("home.aiGuideDesc")
   const isPrimary = variant === "primary"
 
@@ -66,7 +67,7 @@ export function CollapsibleAiBox({
             "text-sm font-semibold",
             isPrimary ? "text-primary-foreground" : "text-foreground"
           )}>
-            {displayTitle}
+            {useBrand ? <DiAiwayBrand /> : title}
           </span>
           <span className={cn(
             "ml-1.5 block text-xs",
