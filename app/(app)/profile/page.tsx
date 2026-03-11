@@ -233,11 +233,11 @@ export default function ProfilePage() {
       const data = await res.json()
       if (res.ok) {
         toast.success(data.message)
-        if (updates.name) {
+        if (typeof updates.name === "string") {
           setDbName(updates.name)
           await updateSession({ name: updates.name })
         }
-        if (updates.image !== undefined) {
+        if (updates.image !== undefined && typeof updates.image === "string") {
           setDbImage(updates.image)
           await updateSession({ image: updates.image })
         }
