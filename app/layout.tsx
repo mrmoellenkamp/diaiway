@@ -7,7 +7,6 @@ import { I18nProvider } from '@/lib/i18n'
 import { SessionProvider } from '@/components/session-provider'
 import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
-import { GlobalFooter } from '@/components/global-footer'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PushNotificationProvider } from '@/components/push-notification-provider'
 import { SessionActivityProvider } from '@/components/session-activity-provider'
@@ -75,7 +74,6 @@ export default function RootLayout({
                   <PushNotificationProvider>
                     <GlobalNavigation />
                     {children}
-                    <GlobalFooter />
                     <AiMentorFab />
                     <SessionTimeoutWarning />
                     <TakumiPresenceUpdater />

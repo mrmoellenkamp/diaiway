@@ -12,7 +12,7 @@ export function PageContainer({
   return (
     <main
       className={cn(
-        "mx-auto max-w-lg pb-24", // pb-24 = 96px to account for bottom nav (~64px) + FAB space
+        "mx-auto max-w-lg pb-28", // space for footer (icons + links + safe-area) + FAB
         "min-h-[calc(100vh-4rem)]", // min-height minus header
         !noPadding && "px-4 py-4",
         className
