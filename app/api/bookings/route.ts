@@ -90,7 +90,8 @@ export async function GET(req: Request) {
       })),
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }
 

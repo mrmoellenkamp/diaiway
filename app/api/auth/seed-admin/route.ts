@@ -8,10 +8,15 @@ import { prisma } from "@/lib/db"
  * Will reject if an admin already exists.
  */
 export async function POST(req: Request) {
+  const expectedPassword = process.env.ADMIN_PASSWORD
+  if (!expectedPassword?.trim()) {
+    console.error("[seed-admin] ADMIN_PASSWORD not configured")
+    return NextResponse.json({ error: "Nicht konfiguriert." }, { status: 503 })
+  }
   try {
     const { password: adminPassword, name, email, userPassword } = await req.json()
 
-    if (!adminPassword || adminPassword !== process.env.ADMIN_PASSWORD) {
+    if (!adminPassword || adminPassword !== expectedPassword) {
       return NextResponse.json({ error: "Falsches Admin-Passwort." }, { status: 401 })
     }
     if (!name || !email || !userPassword) {
@@ -46,7 +51,7 @@ export async function POST(req: Request) {
       { status: 201 }
     )
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Fehler"
-    return NextResponse.json({ error: message }, { status: 500 })
+    const { sanitizeErrorForClient } = await import("@/lib/security")
+    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
 }

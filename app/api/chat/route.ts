@@ -47,6 +47,11 @@ const USER_CONTEXT: Record<string, (name: string) => string> = {
 }
 
 export async function POST(req: Request) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return Response.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+
   const ip = getClientIp(req)
   const rl = rateLimit(`chat:ip:${ip}`, { limit: 30, windowSec: 60 })
   if (!rl.success) {
@@ -72,17 +77,14 @@ export async function POST(req: Request) {
     const langInstruction = LANGUAGE_INSTRUCTIONS[locale] ?? LANGUAGE_INSTRUCTIONS.de
 
     let userContext = ""
-    try {
-      const session = await auth()
-      if (session?.user?.name) {
+    if (session?.user?.name) {
         const userCtxFn = USER_CONTEXT[locale] ?? USER_CONTEXT.de
         userContext = `\n\n${userCtxFn(session.user.name)}`
-      }
-    } catch { /* not authenticated */ }
+    }
 
     let expertContext = ""
     try {
-      const experts = await prisma.expert.findMany()
+      const experts = await prisma.expert.findMany({ take: 100, orderBy: { sessionCount: "desc" } })
       if (experts.length > 0) {
         const list = experts
           .map(
@@ -109,6 +111,9 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unbekannter Fehler"
     console.error("[diAiway] Chat API error:", message)
-    return Response.json({ error: message }, { status: 500 })
+    return Response.json(
+      { error: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut." },
+      { status: 500 }
+    )
   }
 }

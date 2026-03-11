@@ -83,8 +83,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: "Stornierung durchgeführt." })
   } catch (err) {
     console.error("[admin/finance/refund] Error:", err)
+    const { sanitizeErrorForClient } = await import("@/lib/security")
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Stornierung fehlgeschlagen." },
+      { error: sanitizeErrorForClient(err) },
       { status: 500 }
     )
   }

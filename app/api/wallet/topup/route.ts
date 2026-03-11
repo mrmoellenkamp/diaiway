@@ -61,8 +61,9 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     console.error("[wallet/topup] Stripe error:", err)
+    const { sanitizeErrorForClient } = await import("@/lib/security")
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Checkout konnte nicht erstellt werden." },
+      { error: sanitizeErrorForClient(err) },
       { status: 500 }
     )
   }

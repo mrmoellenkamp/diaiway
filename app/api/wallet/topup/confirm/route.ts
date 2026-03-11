@@ -56,8 +56,9 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     console.error("[wallet/topup/confirm]", err)
+    const { sanitizeErrorForClient } = await import("@/lib/security")
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Bestätigung fehlgeschlagen." },
+      { error: sanitizeErrorForClient(err) },
       { status: 500 }
     )
   }
