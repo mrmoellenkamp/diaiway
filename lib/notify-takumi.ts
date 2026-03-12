@@ -1,11 +1,12 @@
 /**
- * Shared helper: Benachrichtigung + E-Mail an Takumi nach bestätigter Buchungszahlung.
+ * Shared helper: Benachrichtigung + E-Mail + System-Waymail an Takumi nach bestätigter Buchungszahlung.
  * Idempotent: erstellt keine doppelte booking_request Notification.
  */
 
 import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { createSystemWaymail } from "@/lib/system-waymail"
 
 export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
   ok: boolean
@@ -70,20 +71,26 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
         where: { bookingId, type: "booking_request", userId: notifyUserId },
       })
       if (!existing) {
+        const waymailBody = `${booking.userName} hat eine Session am ${booking.date} von ${booking.startTime}–${booking.endTime} Uhr gebucht und bezahlt.`
         await prisma.notification.create({
           data: {
             userId: notifyUserId,
             type: "booking_request",
             bookingId: booking.id,
             title: "Neue Buchungsanfrage (bezahlt)",
-            body: `${booking.userName} hat eine Session am ${booking.date} von ${booking.startTime}–${booking.endTime} Uhr gebucht und bezahlt.`,
+            body: waymailBody,
           },
         })
+        const waymail = await createSystemWaymail({
+          recipientId: notifyUserId,
+          subject: "Neue Buchungsanfrage (bezahlt)",
+          body: waymailBody,
+        }).catch(() => null)
         notificationCreated = true
         sendPushToUser(notifyUserId, {
           title: "Neue Buchung (bezahlt)",
           body: `${booking.userName} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
-          url: "/messages",
+          url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
         }).catch(() => {})
       }
     } else {

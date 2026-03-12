@@ -165,8 +165,9 @@ export async function GET(req: NextRequest) {
 
         const now = Date.now()
         const ONLINE_MS = 5 * 60 * 1000
+        const GRACE_MS = 60 * 1000 // 60 s Puffer: User erst nach Ablauf als offline anzeigen (verhindert Aufblinken bei kurzen Abbrüchen)
         const lastSeen = expert?.lastSeenAt?.getTime()
-        const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
+        const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS + GRACE_MS
 
         return {
           partnerId,
