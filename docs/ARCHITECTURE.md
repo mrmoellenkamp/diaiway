@@ -53,7 +53,7 @@ diAIway ist eine Next.js 16 App mit App Router, PostgreSQL (Prisma), NextAuth.js
 | `/api/bookings/[id]/status` | GET | Buchungsstatus abfragen |
 | `/api/bookings/slots` | GET | Verfügbare Slots für Takumi+Datum |
 | `/api/booking-respond/[id]` | GET, POST | Token oder Session: bestätigen/ablehnen/rückfragen |
-| `/api/notifications` | GET, PATCH | Benachrichtigungen, als gelesen markieren |
+| `/api/notifications` | GET, PATCH, DELETE | Benachrichtigungen, als gelesen markieren, löschen (ids oder alle) |
 | `/api/user/*` | - | Profil, Takumi-Profil, Account, Favoriten |
 | `/api/users/[id]` | GET | Öffentliches Profil eines Nutzers |
 | `/api/wallet/history` | GET | Transaktionshistorie (Takumi) |
