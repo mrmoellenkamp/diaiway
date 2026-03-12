@@ -165,7 +165,7 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
 
 /**
  * Bezahlung einer Buchung mit Wallet-Guthaben (Shugyo).
- * Reduziert User.balance des Shugyo, erstellt Transaction, erhöht Takumi pendingBalance.
+ * Atomar: Balance-Guard verhindert negatives Guthaben; WalletTransaction für Audit.
  */
 export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const existing = await prisma.transaction.findUnique({ where: { bookingId } })
@@ -185,48 +185,68 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
   )
   if (totalAmountCents <= 0) return { ok: false, error: "Invalid price" }
 
-  const shugyo = await prisma.user.findUnique({
-    where: { id: booking.userId },
-    select: { balance: true },
-  })
-  if (!shugyo || shugyo.balance < totalAmountCents) {
-    return { ok: false, error: "Insufficient wallet balance" }
-  }
-
   const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = totalAmountCents - platformFee
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: booking.userId },
-      data: { balance: { decrement: totalAmountCents } },
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Atomic balance deduction with guard: only update if balance >= amount (race-condition safe)
+      const updateResult = await tx.user.updateMany({
+        where: {
+          id: booking.userId,
+          balance: { gte: totalAmountCents },
+        },
+        data: { balance: { decrement: totalAmountCents } },
+      })
+
+      if (updateResult.count === 0) {
+        throw new Error("INSUFFICIENT_FUNDS")
+      }
+
+      await tx.user.update({
+        where: { id: expertUserId },
+        data: { pendingBalance: { increment: totalAmountCents } }, // Escrow bis processCompletion
+      })
+
+      await tx.transaction.create({
+        data: {
+          bookingId,
+          expertId: booking.expertId,
+          userId: booking.userId,
+          totalAmount: totalAmountCents,
+          platformFee,
+          netPayout,
+          status: "AUTHORIZED", // Wallet: Escrow in pendingBalance, Capture bei processCompletion
+        },
+      })
+
+      await tx.walletTransaction.create({
+        data: {
+          userId: booking.userId,
+          amountCents: -totalAmountCents, // DEBIT (negative = Belastung)
+          type: "booking_payment",
+          referenceId: bookingId,
+          metadata: { bookingId, type: "DEBIT" },
+        },
+      })
+
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          paymentStatus: "paid",
+          stripePaymentIntentId: "wallet",
+          paidAt: new Date(),
+          paidAmount: totalAmountCents,
+        },
+      })
     })
-    await tx.user.update({
-      where: { id: expertUserId },
-      data: { pendingBalance: { increment: totalAmountCents } }, // Escrow bis processCompletion
-    })
-    await tx.transaction.create({
-      data: {
-        bookingId,
-        expertId: booking.expertId,
-        userId: booking.userId,
-        totalAmount: totalAmountCents,
-        platformFee,
-        netPayout,
-        status: "AUTHORIZED", // Wallet: Escrow in pendingBalance, Capture bei processCompletion
-      },
-    })
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        paymentStatus: "paid",
-        stripePaymentIntentId: "wallet",
-        paidAt: new Date(),
-        paidAmount: totalAmountCents,
-      },
-    })
-  })
-  return { ok: true }
+    return { ok: true }
+  } catch (err) {
+    if ((err as Error)?.message === "INSUFFICIENT_FUNDS") {
+      return { ok: false, error: "INSUFFICIENT_FUNDS" }
+    }
+    throw err
+  }
 }
 
 /**

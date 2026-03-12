@@ -38,10 +38,13 @@ export async function POST(
   const result = await payBookingWithWallet(bookingId)
   if (!result.ok) {
     const msg =
-      result.error === "Insufficient wallet balance"
+      result.error === "INSUFFICIENT_FUNDS"
         ? "Nicht genügend Guthaben im Wallet."
         : result.error || "Zahlung fehlgeschlagen."
-    return NextResponse.json({ error: msg }, { status: 400 })
+    return NextResponse.json(
+      { error: msg, code: result.error === "INSUFFICIENT_FUNDS" ? "INSUFFICIENT_FUNDS" : undefined },
+      { status: result.error === "INSUFFICIENT_FUNDS" ? 402 : 400 }
+    )
   }
 
   try {
