@@ -27,4 +27,5 @@ ios/App/build/
 ios/DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
+**/xcshareddata/swiftpm/
 out/
