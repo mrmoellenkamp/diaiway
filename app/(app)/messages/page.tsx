@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2 } from "lucide-react"
+import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -51,7 +51,7 @@ function MessagesPageContent() {
   const [waymails, setWaymails] = useState<Array<{ id: string; senderName: string; senderImageUrl: string | null; subject: string; textPreview: string; timestamp: number; read: boolean; isSystemWaymail?: boolean }>>([])
   const [loadingWaymails, setLoadingWaymails] = useState(false)
   const [selectedWaymailId, setSelectedWaymailId] = useState<string | null>(null)
-  const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null } | null>(null)
+  const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null; read?: boolean } | null>(null)
 
   const fetchThreads = useCallback(async () => {
     const r = await fetch("/api/messages")
@@ -148,8 +148,11 @@ function MessagesPageContent() {
         .then((d) => {
           if (d.error) return
           setWaymailDetail(d)
-          fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
-          setWaymails((prev) => prev.map((w) => (w.id === waymailParam ? { ...w, read: true } : w)))
+          const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
+          if (!alreadyRead) {
+            fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
+            setWaymails((prev) => prev.map((x) => (x.id === waymailParam ? { ...x, read: true } : x)))
+          }
         })
         .catch(() => setWaymailDetail(null))
     }
@@ -318,12 +321,12 @@ function MessagesPageContent() {
           ) : waymails.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/60 bg-card/50 px-4 py-20 text-center">
               <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-                <Mail className="size-7 text-primary" />
+                <MailOpen className="size-7 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">{t("messages.waymailEmpty")}</h2>
               <p className="max-w-xs text-sm text-muted-foreground">{t("messages.waymailEmptyDesc")}</p>
               <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href="/categories">{t("messages.findExperts")}</Link>
+                <Link href="/takumis">{t("messages.findExperts")}</Link>
               </Button>
             </div>
           ) : (
@@ -340,8 +343,10 @@ function MessagesPageContent() {
                       .then((d) => {
                         if (d.error) return
                         setWaymailDetail(d)
-                        fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" }).catch(() => {})
-                        setWaymails((prev) => prev.map((w) => (w.id === wm.id ? { ...w, read: true } : w)))
+                        if (!wm.read) {
+                          fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" }).catch(() => {})
+                          setWaymails((prev) => prev.map((w) => (w.id === wm.id ? { ...w, read: true } : w)))
+                        }
                       })
                       .catch(() => setWaymailDetail(null))
                   }}
@@ -387,14 +392,14 @@ function MessagesPageContent() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/60 bg-card/50 px-4 py-20 text-center">
               <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-                <MessageSquare className="size-7 text-primary" />
+                <MessageSquareDashed className="size-7 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">{t("messages.empty")}</h2>
               <p className="max-w-xs text-sm text-muted-foreground">{t("messages.emptyDesc")}</p>
               <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href="/categories">{t("messages.findExperts")}</Link>
+                <Link href="/takumis">{t("messages.findExperts")}</Link>
               </Button>
             </div>
           ) : (

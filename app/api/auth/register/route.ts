@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { sendWelcomeWaymail } from "@/lib/onboarding"
 
 export const runtime = "nodejs"
 
@@ -85,6 +86,8 @@ export async function POST(req: Request) {
         favorites: [],
       },
     })
+
+    sendWelcomeWaymail(user.id).catch(() => {})
 
     return NextResponse.json(
       { success: true, message: "Konto erfolgreich erstellt.", userId: user.id },
