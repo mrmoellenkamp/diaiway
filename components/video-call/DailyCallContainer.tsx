@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, PictureInPicture, PictureInPictureOff, Square, Video, VideoOff, Wallet } from "lucide-react"
+import { FlipHorizontal, Loader2, Maximize2, Mic, MicOff, PhoneOff, PictureInPicture, Square, Video, VideoOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 
@@ -1450,7 +1450,7 @@ export function DailyCallContainer({
                 title={isPiPActive ? "PiP beenden" : "Bild-in-Bild (in anderer App weiter sehen)"}
                 aria-label={isPiPActive ? "PiP beenden" : "Bild-in-Bild"}
               >
-                {isPiPActive ? <PictureInPictureOff className="size-5 sm:size-6" /> : <PictureInPicture className="size-5 sm:size-6" />}
+                {isPiPActive ? <Maximize2 className="size-5 sm:size-6" /> : <PictureInPicture className="size-5 sm:size-6" />}
               </Button>
             )}
           </>
