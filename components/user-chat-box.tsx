@@ -133,7 +133,7 @@ export function UserChatBox({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
-  const { upload, phase: uploadPhase, statusLabel, error: uploadError, reset: resetUpload } = useSecureFileUpload()
+  const { upload, phase: uploadPhase, statusLabel, error: uploadError, isScanning: uploadScanning, reset: resetUpload } = useSecureFileUpload()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
 
@@ -361,22 +361,22 @@ export function UserChatBox({
             sending={sending}
           />
         )}
-        {uploadPhase === "scanning" || uploadPhase === "preview" ? (
+        {uploadScanning ? (
           <p className="mb-2 text-xs text-muted-foreground">{statusLabel}</p>
         ) : null}
         <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
           <button
             type="button"
             onClick={handleAttach}
-            disabled={sending || uploadPhase === "scanning" || uploadPhase === "preview"}
+            disabled={sending || uploadScanning}
             className={cn(
               "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-              (sending || uploadPhase === "scanning" || uploadPhase === "preview") && "pointer-events-none opacity-40"
+              (sending || uploadScanning) && "pointer-events-none opacity-40"
             )}
             aria-label="Datei anhängen"
-            aria-busy={uploadPhase === "scanning" || uploadPhase === "preview"}
+            aria-busy={uploadScanning}
           >
-            {(uploadPhase === "scanning" || uploadPhase === "preview") ? (
+            {uploadScanning ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
               <Paperclip className="size-3.5" />

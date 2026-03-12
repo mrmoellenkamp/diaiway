@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail } from "lucide-react"
+import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -48,7 +48,7 @@ function MessagesPageContent() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actingId, setActingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"notifications" | "chats" | "waymails">("chats")
-  const [waymails, setWaymails] = useState<Array<{ id: string; senderName: string; senderImageUrl: string | null; subject: string; textPreview: string; timestamp: number; read: boolean }>>([])
+  const [waymails, setWaymails] = useState<Array<{ id: string; senderName: string; senderImageUrl: string | null; subject: string; textPreview: string; timestamp: number; read: boolean; isSystemWaymail?: boolean }>>([])
   const [loadingWaymails, setLoadingWaymails] = useState(false)
   const [selectedWaymailId, setSelectedWaymailId] = useState<string | null>(null)
   const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null } | null>(null)
@@ -341,12 +341,18 @@ function MessagesPageContent() {
                     !wm.read && "bg-accent/5"
                   )}
                 >
-                  <Avatar className="size-10 shrink-0">
-                    {wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                      {wm.senderName.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {wm.isSystemWaymail ? (
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title="diAiway System">
+                      <Building2 className="size-5" />
+                    </div>
+                  ) : (
+                    <Avatar className="size-10 shrink-0">
+                      {wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                        {wm.senderName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
                     <p className="truncate text-xs text-muted-foreground">{wm.textPreview}</p>
