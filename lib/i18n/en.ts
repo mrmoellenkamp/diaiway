@@ -183,6 +183,7 @@ const en = {
   "messages.title": "Inbox",
   "messages.tabNotifications": "Notifications",
   "messages.tabChats": "Chats",
+  "messages.tabWaymails": "Waymails",
   "messages.empty": "No messages yet",
   "messages.emptyDesc": "Start a conversation with an expert.",
   "messages.discoverCategories": "Discover categories",

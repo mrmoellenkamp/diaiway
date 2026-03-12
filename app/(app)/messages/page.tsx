@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2 } from "lucide-react"
+import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -47,7 +47,11 @@ function MessagesPageContent() {
   const [loadingThreads, setLoadingThreads] = useState(true)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actingId, setActingId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"notifications" | "chats">("chats")
+  const [activeTab, setActiveTab] = useState<"notifications" | "chats" | "waymails">("chats")
+  const [waymails, setWaymails] = useState<Array<{ id: string; senderName: string; senderImageUrl: string | null; subject: string; textPreview: string; timestamp: number; read: boolean }>>([])
+  const [loadingWaymails, setLoadingWaymails] = useState(false)
+  const [selectedWaymailId, setSelectedWaymailId] = useState<string | null>(null)
+  const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null } | null>(null)
 
   const fetchThreads = useCallback(async () => {
     const r = await fetch("/api/messages")
@@ -126,7 +130,7 @@ function MessagesPageContent() {
 
   const unreadNotifications = notifications.filter((n) => !n.read)
 
-  // Beim ersten Laden: wenn ?with= gesetzt, Chat-Tab + Thread öffnen
+  // Beim ersten Laden: URL-Params (with, waymail) setzen
   useEffect(() => {
     if (withParam && threads.length > 0 && !activeThread) {
       setActiveThread(withParam)
@@ -134,15 +138,41 @@ function MessagesPageContent() {
     }
   }, [withParam, threads, activeThread])
 
+  const waymailParam = searchParams.get("waymail")
+  useEffect(() => {
+    if (waymailParam) {
+      setActiveTab("waymails")
+      setSelectedWaymailId(waymailParam)
+      fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`)
+        .then((r) => r.json())
+        .then((d) => (d.error ? null : setWaymailDetail(d)))
+        .catch(() => setWaymailDetail(null))
+    }
+  }, [waymailParam])
+
+  const fetchWaymails = useCallback(async () => {
+    setLoadingWaymails(true)
+    const r = await fetch("/api/messages?type=waymail")
+    if (r.ok) {
+      const data = await r.json()
+      setWaymails(data.waymails ?? [])
+    }
+    setLoadingWaymails(false)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === "waymails") fetchWaymails()
+  }, [activeTab, fetchWaymails])
+
   // Postfach: E-Mail-Browser-Layout — Benachrichtigungen + Chats getrennt
   return (
     <PageContainer>
-      {/* Tabs: Benachrichtigungen | Chats */}
-      <div className="mb-4 flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1">
+      {/* Tabs: Benachrichtigungen | Chats | Waymails */}
+      <div className="mb-4 flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 overflow-x-auto">
         <button
           onClick={() => setActiveTab("notifications")}
           className={cn(
-            "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "notifications"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -158,13 +188,24 @@ function MessagesPageContent() {
         <button
           onClick={() => setActiveTab("chats")}
           className={cn(
-            "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "chats"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t("messages.tabChats")}
+        </button>
+        <button
+          onClick={() => setActiveTab("waymails")}
+          className={cn(
+            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            activeTab === "waymails"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {t("messages.tabWaymails")}
         </button>
       </div>
 
@@ -245,7 +286,76 @@ function MessagesPageContent() {
         </div>
       )}
 
-      {/* Chats — Thread-Liste + Chat-Box (öffnet sich inline) */}
+      {/* Waymails — E-Mail-Listenansicht (Avatar | Betreff fett | Vorschau | Zeit) */}
+      {activeTab === "waymails" && (
+        <div className="flex flex-col gap-1">
+          {selectedWaymailId && waymailDetail ? (
+            <div className="rounded-xl border border-border/60 bg-card/50 p-4">
+              <button
+                onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
+                className="mb-3 text-sm text-primary hover:underline"
+              >
+                ← Zurück
+              </button>
+              <p className="text-xs text-muted-foreground">{waymailDetail.senderName}</p>
+              <h2 className="mt-1 text-lg font-bold text-foreground">{waymailDetail.subject || "(ohne Betreff)"}</h2>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">{waymailDetail.text}</p>
+              {waymailDetail.attachmentUrl && (
+                <a href={waymailDetail.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                  📎 Anhang öffnen
+                </a>
+              )}
+            </div>
+          ) : loadingWaymails ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : waymails.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card/50 px-4 py-8 text-center">
+              <Mail className="mx-auto mb-2 size-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Keine Waymails</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
+              {waymails.map((wm) => (
+                <div
+                  key={wm.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedWaymailId(wm.id)
+                    fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`)
+                      .then((r) => r.json())
+                      .then((d) => (d.error ? null : setWaymailDetail(d)))
+                      .catch(() => setWaymailDetail(null))
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}
+                  className={cn(
+                    "flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30",
+                    !wm.read && "bg-accent/5"
+                  )}
+                >
+                  <Avatar className="size-10 shrink-0">
+                    {wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                      {wm.senderName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
+                    <p className="truncate text-xs text-muted-foreground">{wm.textPreview}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                      {new Date(wm.timestamp).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chats — Thread-Liste + Chat-Box (öffnet sich inline / als Drawer) */}
       {activeTab === "chats" && (
         <div className="flex flex-col gap-4">
           {loadingThreads ? (

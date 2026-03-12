@@ -112,6 +112,8 @@ export interface UserChatBoxProps {
   onClose: () => void
   /** Optional: Breite an PageContainer angleichen (max-w-lg) */
   inline?: boolean
+  /** Wenn in Drawer/Bottom-Sheet: volle Höhe, keine äußere Umrandung */
+  inDrawer?: boolean
 }
 
 export function UserChatBox({
@@ -123,6 +125,7 @@ export function UserChatBox({
   subcategory,
   onClose,
   inline = true,
+  inDrawer = false,
 }: UserChatBoxProps) {
   const { t } = useI18n()
   const [messages, setMessages] = useState<MsgItem[]>([])
@@ -171,6 +174,7 @@ export function UserChatBox({
         body: JSON.stringify({
           recipientUserId: partnerId,
           text: text || "(Anhang)",
+          communicationType: "CHAT",
           attachmentUrl: attachment?.url,
           attachmentThumbnailUrl: attachment?.thumbnailUrl,
           attachmentFilename: attachment?.filename,
@@ -219,9 +223,10 @@ export function UserChatBox({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl",
-        inline ? "w-full max-w-lg" : "w-full",
-        "animate-in fade-in slide-in-from-bottom-2 duration-200"
+        "flex flex-col overflow-hidden flex-1 min-h-0",
+        !inDrawer && "rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200",
+        inDrawer && "bg-background",
+        inline ? "w-full max-w-lg" : "w-full"
       )}
     >
       {/* Header */}
@@ -257,7 +262,13 @@ export function UserChatBox({
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none min-h-[200px] max-h-[min(50vh,400px)]">
+      <div
+        ref={scrollRef}
+        className={cn(
+          "flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none min-h-[200px]",
+          inDrawer ? "max-h-[60dvh]" : "max-h-[min(50vh,400px)]"
+        )}
+      >
         {loading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="size-8 animate-spin text-muted-foreground" />

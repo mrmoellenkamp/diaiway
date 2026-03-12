@@ -28,21 +28,29 @@ export function MessageComposeModal({
   onSent,
 }: MessageComposeModalProps) {
   const { t } = useI18n()
+  const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
 
   async function handleSend() {
+    const sub = subject.trim()
     const text = message.trim()
-    if (!text || sending) return
+    if (!sub || !text || sending) return
     setSending(true)
     try {
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientExpertId, text, notifyByEmail: true }),
+        body: JSON.stringify({
+          recipientExpertId,
+          text,
+          subject: sub,
+          communicationType: "MAIL",
+        }),
       })
       const data = await res.json()
       if (res.ok) {
+        setSubject("")
         setMessage("")
         onOpenChange(false)
         onSent?.()
@@ -58,7 +66,7 @@ export function MessageComposeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0 overflow-hidden">
+      <DialogContent className="max-w-md gap-0 p-0 overflow-hidden h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] sm:h-auto sm:max-h-[90vh] sm:w-auto sm:max-w-md rounded-none sm:rounded-lg">
         <DialogHeader className="border-b border-border px-4 py-3">
           <DialogTitle className="text-base font-semibold">
             {t("takumiPage.writeTo", { name: recipientName })}
@@ -72,6 +80,17 @@ export function MessageComposeModal({
             </span>
             <span className="text-sm font-medium text-foreground">{recipientName}</span>
           </div>
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+            <span className="w-12 shrink-0 text-xs font-medium text-muted-foreground">
+              Betreff:
+            </span>
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Betreff eingeben"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
           <div className="flex flex-1 flex-col p-4">
             <textarea
               value={message}
@@ -83,7 +102,7 @@ export function MessageComposeModal({
             <div className="mt-3 flex justify-end">
               <Button
                 onClick={handleSend}
-                disabled={!message.trim() || sending}
+                disabled={!subject.trim() || !message.trim() || sending}
                 className="gap-2"
               >
                 {sending ? (

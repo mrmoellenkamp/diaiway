@@ -23,6 +23,10 @@ import { getCachedTakumi, setCachedTakumi } from "@/lib/offline-cache"
 import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 import { UserChatBox } from "@/components/user-chat-box"
+import {
+  Drawer,
+  DrawerContent,
+} from "@/components/ui/drawer"
 
 // ─── Social media icon + link helpers ──────────────────────────────────────
 
@@ -266,29 +270,53 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-2.5">
-            <Button
-              onClick={handleStartChat}
-              disabled={chatLoading}
-              className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
-            >
-              {chatLoading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <MessageCircle className="size-4" />
-              )}
-              {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", firstName)}
-            </Button>
+            {takumi.isLive ? (
+              <Button
+                onClick={handleStartChat}
+                disabled={chatLoading}
+                className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+              >
+                {chatLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <MessageCircle className="size-4" />
+                )}
+                {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", firstName)}
+                <span className="ml-1.5 flex size-2 rounded-full bg-green-400" aria-hidden />
+              </Button>
+            ) : (
+              <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                <p>
+                  {takumi.name} ist gerade offline. Du kannst ihm aber eine{" "}
+                  <button
+                    type="button"
+                    onClick={() => setComposeOpen(true)}
+                    className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80"
+                  >
+                    Waymail
+                  </button>{" "}
+                  senden.
+                </p>
+              </div>
+            )}
             {chatOpen && chatPartner && (
-              <UserChatBox
-                partnerId={chatPartner.userId}
-                partnerName={chatPartner.partnerName}
-                partnerAvatar={chatPartner.partnerAvatar}
-                partnerImageUrl={chatPartner.partnerImageUrl}
-                expertId={chatPartner.expertId}
-                subcategory={chatPartner.subcategory}
-                onClose={() => setChatOpen(false)}
-                inline
-              />
+              <Drawer open={chatOpen} onOpenChange={setChatOpen} direction="bottom">
+                <DrawerContent className="max-h-[90dvh] flex flex-col p-0 gap-0 rounded-t-2xl">
+                  <div className="flex flex-1 min-h-0 overflow-hidden">
+                    <UserChatBox
+                      partnerId={chatPartner.userId}
+                      partnerName={chatPartner.partnerName}
+                      partnerAvatar={chatPartner.partnerAvatar}
+                      partnerImageUrl={chatPartner.partnerImageUrl}
+                      expertId={chatPartner.expertId}
+                      subcategory={chatPartner.subcategory}
+                      onClose={() => setChatOpen(false)}
+                      inline
+                      inDrawer
+                    />
+                  </div>
+                </DrawerContent>
+              </Drawer>
             )}
             <Button
               onClick={() => setComposeOpen(true)}

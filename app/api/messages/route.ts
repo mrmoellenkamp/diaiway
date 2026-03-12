@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { sendNewMessageEmail } from "@/lib/email"
+import { sendWaymailNotificationEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 
 export const runtime = "nodejs"
@@ -32,8 +32,55 @@ export async function GET(req: NextRequest) {
   }
 
   const withUserId = req.nextUrl.searchParams.get("with")
+  const typeParam = req.nextUrl.searchParams.get("type") // "threads" | "waymail"
+  const waymailId = req.nextUrl.searchParams.get("waymail")
 
   try {
+    // Einzelne Waymail lesen (?waymail=id)
+    if (waymailId) {
+      const wm = await prisma.directMessage.findFirst({
+        where: { id: waymailId, recipientId: session.user.id, communicationType: "MAIL" },
+        include: { sender: { select: { name: true, image: true } } },
+      })
+      if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
+      await prisma.directMessage.update({ where: { id: wm.id }, data: { read: true } })
+      return NextResponse.json({
+        id: wm.id,
+        senderName: wm.senderDisplayName ?? wm.sender?.name ?? "Unbekannt",
+        senderImageUrl: wm.sender?.image && wm.sender.image.length > 0 ? wm.sender.image : null,
+        subject: wm.subject,
+        text: wm.text,
+        attachmentUrl: wm.attachmentUrl,
+        attachmentThumbnailUrl: wm.attachmentThumbnailUrl,
+        attachmentFilename: wm.attachmentFilename,
+        timestamp: wm.createdAt.getTime(),
+      })
+    }
+
+    // Waymail-Liste (nur MAIL, E-Mail-Browser-Layout)
+    if (typeParam === "waymail") {
+      const waymails = await prisma.directMessage.findMany({
+        where: {
+          recipientId: session.user.id,
+          communicationType: "MAIL",
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: { sender: { select: { name: true, image: true } } },
+      })
+      return NextResponse.json({
+        waymails: waymails.map((m) => ({
+          id: m.id,
+          senderName: m.senderDisplayName ?? m.sender?.name ?? "Unbekannt",
+          senderImageUrl: m.sender?.image && m.sender.image.length > 0 ? m.sender.image : null,
+          subject: m.subject ?? "(ohne Betreff)",
+          textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
+          timestamp: m.createdAt.getTime(),
+          read: m.read,
+        })),
+      })
+    }
+
     if (withUserId) {
       // Load messages in thread with specific user
       const partnerId = withUserId
@@ -42,6 +89,7 @@ export async function GET(req: NextRequest) {
       }
       const messages = await prisma.directMessage.findMany({
         where: {
+          communicationType: "CHAT",
           OR: [
             { senderId: session.user.id, recipientId: partnerId },
             { senderId: partnerId, recipientId: session.user.id },
@@ -54,7 +102,7 @@ export async function GET(req: NextRequest) {
       })
       // Mark as read for current user
       await prisma.directMessage.updateMany({
-        where: { recipientId: session.user.id, senderId: partnerId, read: false },
+        where: { recipientId: session.user.id, senderId: partnerId, read: false, communicationType: "CHAT" },
         data: { read: true },
       })
       return NextResponse.json({
@@ -72,19 +120,19 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // List threads (conversations)
+    // List CHAT threads (nur communicationType CHAT)
     const sent = await prisma.directMessage.findMany({
-      where: { senderId: session.user.id },
+      where: { senderId: session.user.id, communicationType: "CHAT" },
       select: { recipientId: true },
       distinct: ["recipientId"],
     })
     const received = await prisma.directMessage.findMany({
-      where: { recipientId: session.user.id },
+      where: { recipientId: session.user.id, communicationType: "CHAT", senderId: { not: null } },
       select: { senderId: true },
       distinct: ["senderId"],
     })
-    const partnerIds = [...new Set([...sent.map((s) => s.recipientId), ...received.map((r) => r.senderId)])].filter(
-      (id) => id !== session.user.id
+    const partnerIds = [...new Set([...sent.map((s) => s.recipientId), ...received.map((r) => r.senderId!).filter(Boolean)])].filter(
+      (id): id is string => id != null && id !== session.user.id
     )
 
     const threads = await Promise.all(
@@ -99,6 +147,7 @@ export async function GET(req: NextRequest) {
         })
         const lastMsg = await prisma.directMessage.findFirst({
           where: {
+            communicationType: "CHAT",
             OR: [
               { senderId: session.user.id, recipientId: partnerId },
               { senderId: partnerId, recipientId: session.user.id },
@@ -107,7 +156,7 @@ export async function GET(req: NextRequest) {
           orderBy: { createdAt: "desc" },
         })
         const unread = await prisma.directMessage.count({
-          where: { recipientId: session.user.id, senderId: partnerId, read: false },
+          where: { recipientId: session.user.id, senderId: partnerId, read: false, communicationType: "CHAT" },
         })
         const displayName = user?.name ?? "Nutzer"
         const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
@@ -161,11 +210,21 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { recipientUserId, recipientExpertId, text, notifyByEmail, attachmentUrl, attachmentThumbnailUrl, attachmentFilename } = body as {
+    const {
+      recipientUserId,
+      recipientExpertId,
+      text,
+      subject,
+      communicationType = "CHAT",
+      attachmentUrl,
+      attachmentThumbnailUrl,
+      attachmentFilename,
+    } = body as {
       recipientUserId?: string
       recipientExpertId?: string
       text?: string
-      notifyByEmail?: boolean
+      subject?: string
+      communicationType?: "CHAT" | "MAIL"
       attachmentUrl?: string
       attachmentThumbnailUrl?: string
       attachmentFilename?: string
@@ -177,6 +236,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nachricht oder Anhang erforderlich." }, { status: 400 })
     }
 
+    // Waymail erfordert Betreff
+    if (communicationType === "MAIL") {
+      const sub = typeof subject === "string" ? subject.trim() : ""
+      if (!sub) {
+        return NextResponse.json({ error: "Waymail erfordert einen Betreff." }, { status: 400 })
+      }
+    }
+
     const recipientId = await resolveRecipientUserId(recipientExpertId, recipientUserId)
     if (!recipientId || recipientId === session.user.id) {
       return NextResponse.json({ error: "Empfänger nicht gefunden." }, { status: 400 })
@@ -184,8 +251,10 @@ export async function POST(req: Request) {
 
     const message = await prisma.directMessage.create({
       data: {
+        communicationType: communicationType === "MAIL" ? "MAIL" : "CHAT",
         senderId: session.user.id,
         recipientId,
+        subject: communicationType === "MAIL" ? (typeof subject === "string" ? subject.trim() : "") : null,
         text: trimmed || "(Anhang)",
         attachmentUrl: hasAttachment ? attachmentUrl : null,
         attachmentThumbnailUrl: attachmentThumbnailUrl || null,
@@ -193,45 +262,67 @@ export async function POST(req: Request) {
       },
     })
 
-    // Notification für Empfänger
     const recipient = await prisma.user.findUnique({
       where: { id: recipientId },
       select: { name: true, email: true },
     })
     const senderName = session.user.name ?? "Jemand"
 
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: recipientId,
-          type: "new_message",
-          title: `Neue Nachricht von ${senderName}`,
-          body: trimmed.length > 80 ? trimmed.slice(0, 80) + "…" : trimmed,
-        },
-      })
-      sendPushToUser(recipientId, {
-        title: `Neue Nachricht von ${senderName}`,
-        body: trimmed.slice(0, 60) + (trimmed.length > 60 ? "…" : ""),
-        url: `/messages?with=${encodeURIComponent(session.user.id)}`,
-      }).catch(() => {})
-    } catch (e) {
-      console.warn("[messages] Notification/Push failed:", e)
-    }
-
-    // E-Mail an Empfänger nur bei Mail-Nachrichten (nicht bei Chat)
-    if (notifyByEmail === true && recipient?.email) {
-      sendNewMessageEmail({
-        to: recipient.email,
-        recipientName: recipient.name ?? "Nutzer",
-        senderName,
-        messagePreview: trimmed,
-        inboxUrl: `${baseUrl}/messages`,
-      }).catch((e) => console.warn("[messages] Email failed:", e))
+    if (communicationType === "CHAT") {
+      // CHAT: nur Push, keine E-Mail
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: recipientId,
+            type: "new_message",
+            title: `${senderName} schreibt dir…`,
+            body: trimmed.length > 60 ? trimmed.slice(0, 60) + "…" : trimmed,
+          },
+        })
+        sendPushToUser(recipientId, {
+          title: `${senderName} schreibt dir…`,
+          body: trimmed.slice(0, 60) + (trimmed.length > 60 ? "…" : ""),
+          url: `/messages?with=${encodeURIComponent(session.user.id)}`,
+        }).catch(() => {})
+      } catch (e) {
+        console.warn("[messages] Notification/Push failed:", e)
+      }
+    } else {
+      // WAYMAIL: E-Mail (nur Absender + Betreff, Privacy), Push mit Deep-Link
+      const waymailUrl = `${baseUrl}/messages?waymail=${message.id}`
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: recipientId,
+            type: "new_message",
+            title: `Waymail von ${senderName}`,
+            body: (message.subject ?? "").slice(0, 80),
+          },
+        })
+        sendPushToUser(recipientId, {
+          title: `Waymail von ${senderName}`,
+          body: (message.subject ?? "").slice(0, 60),
+          url: waymailUrl,
+        }).catch(() => {})
+      } catch (e) {
+        console.warn("[messages] Notification/Push failed:", e)
+      }
+      if (recipient?.email) {
+        sendWaymailNotificationEmail({
+          to: recipient.email,
+          recipientName: recipient.name ?? "Nutzer",
+          senderName,
+          subject: message.subject ?? "(ohne Betreff)",
+          waymailUrl,
+        }).catch((e) => console.warn("[messages] Waymail Email failed:", e))
+      }
     }
 
     return NextResponse.json({
       id: message.id,
       text: message.text,
+      subject: message.subject ?? undefined,
+      communicationType: message.communicationType,
       sender: "user",
       timestamp: message.createdAt.getTime(),
       recipientUserId: recipientId,

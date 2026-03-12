@@ -183,6 +183,7 @@ const es = {
   "messages.title": "Bandeja de entrada",
   "messages.tabNotifications": "Notificaciones",
   "messages.tabChats": "Chats",
+  "messages.tabWaymails": "Waymails",
   "messages.empty": "Aún no hay mensajes",
   "messages.emptyDesc": "Inicia una conversación con un experto.",
   "messages.discoverCategories": "Descubrir categorías",

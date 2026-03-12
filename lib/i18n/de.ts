@@ -183,6 +183,7 @@ const de = {
   "messages.title": "Postfach",
   "messages.tabNotifications": "Benachrichtigungen",
   "messages.tabChats": "Chats",
+  "messages.tabWaymails": "Waymails",
   "messages.empty": "Noch keine Nachrichten",
   "messages.emptyDesc": "Starte eine Unterhaltung mit einem Experten.",
   "messages.discoverCategories": "Kategorien entdecken",
