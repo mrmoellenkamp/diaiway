@@ -1592,11 +1592,17 @@ export default function AdminPage() {
               <TabsTrigger value="finance" className="text-xs"><CreditCard className="size-3.5 mr-1" />Finanzen</TabsTrigger>
               <TabsTrigger value="database" className="text-xs"><Database className="size-3.5 mr-1" />DB</TabsTrigger>
             </TabsList>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap gap-1">
               <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
                 <Link href="/admin/safety">
                   <Shield className="size-3.5" />
                   diaiway Safety
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                <Link href="/admin/templates">
+                  <Mail className="size-3.5" />
+                  Templates
                 </Link>
               </Button>
             </div>

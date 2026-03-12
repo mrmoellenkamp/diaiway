@@ -65,6 +65,11 @@ enum CommunicationType {
   MAIL
 }
 
+enum TemplateCategory {
+  SYSTEM
+  BOOKING
+}
+
 // Instant-Connect: Takumi-Status für spontane Calls
 enum LiveStatus {
   offline   // Nicht erreichbar
@@ -338,6 +343,30 @@ model Notification {
 
   @@index([userId])
   @@index([userId, read])
+}
+
+// Multilinguale Vorlagen für System-Mails und Waymails
+model CommunicationTemplate {
+  id                  String              @id @default(cuid())
+  slug                String              @unique
+  category            TemplateCategory
+  availableVariables  Json?               // ["sender_name","recipient_name",...]
+  translations        TemplateTranslation[]
+
+  @@index([slug])
+  @@index([category])
+}
+
+model TemplateTranslation {
+  id         String               @id @default(cuid())
+  templateId String
+  template   CommunicationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  language   String               // de, en, es
+  subject    String?
+  body       String               @db.Text
+
+  @@unique([templateId, language])
+  @@index([templateId])
 }
 
 // Direktnachrichten: CHAT (live, nur wenn online) | MAIL/Waymail (asynchron, mit subject)

@@ -2,7 +2,7 @@
 
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
-import { notifyTakumiAfterPayment } from "@/lib/notify-takumi"
+import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 
 export interface SessionCheckoutParams {
   bookingId: string

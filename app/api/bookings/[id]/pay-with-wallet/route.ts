@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { payBookingWithWallet } from "@/lib/wallet-service"
-import { notifyTakumiAfterPayment } from "@/lib/notify-takumi"
+import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 
 export const runtime = "nodejs"
 
