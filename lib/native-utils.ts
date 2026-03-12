@@ -90,10 +90,12 @@ export async function scheduleSessionReminder(booking: {
         importance: 4,
       })
     }
-    const { status } = await LocalNotifications.checkPermissions()
+    const permissions = await LocalNotifications.checkPermissions()
+    let status = permissions.display
     if (status !== "granted") {
-      const { status: req } = await LocalNotifications.requestPermissions()
-      if (req !== "granted") return
+      const request = await LocalNotifications.requestPermissions()
+      status = request.display
+      if (status !== "granted") return
     }
 
     const [year, month, day] = booking.date.split("-").map(Number)
