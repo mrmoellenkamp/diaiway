@@ -14,8 +14,8 @@ function whenNative(fn: () => void): void {
 export function hapticSuccess(): void {
   whenNative(async () => {
     try {
-      const { Haptics } = await import("@capacitor/haptics")
-      await Haptics.impact({ style: "medium" })
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics")
+      await Haptics.impact({ style: ImpactStyle.Medium })
     } catch {
       /* ignore */
     }
@@ -28,8 +28,8 @@ export function hapticSuccess(): void {
 export function hapticLight(): void {
   whenNative(async () => {
     try {
-      const { Haptics } = await import("@capacitor/haptics")
-      await Haptics.impact({ style: "light" })
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics")
+      await Haptics.impact({ style: ImpactStyle.Light })
     } catch {
       /* ignore */
     }
