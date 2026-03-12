@@ -17,7 +17,7 @@ diAIway ist eine Next.js 16 App mit App Router, PostgreSQL (Prisma), NextAuth.js
 2. Buchung wird mit `paymentStatus: unpaid` erstellt (noch keine E-Mail/Notification)
 3. Shugyo zahlt: Stripe Embedded Checkout (Hold & Capture) oder `POST /api/bookings/[id]/pay-with-wallet`
 4. Nach Zahlung: Stripe-Webhook (`checkout.session.completed` oder `payment_intent.amount_capturable_updated`) oder `verifySessionPayment` setzt `paymentStatus: paid`; bei manual capture ist `payment_status` = unpaid, aber Session "complete" → Zahlung trotzdem gültig
-5. E-Mail an Takumi + Notification via `notifyTakumiAfterPayment` (idempotent)
+5. E-Mail an Takumi + Notification via `notifyAfterPayment (notification-service)` (idempotent)
 6. Fallback: Client ruft `POST /api/bookings/[id]/notify-takumi` bei erfolgreicher Zahlung
 7. Takumi bestätigt/lehnt ab via:
    - E-Mail-Link: `/booking/respond/[id]?token=...`

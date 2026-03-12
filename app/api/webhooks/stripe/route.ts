@@ -3,7 +3,7 @@ import { headers } from "next/headers"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
-import { notifyTakumiAfterPayment } from "@/lib/notify-takumi"
+import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"

@@ -1,5 +1,6 @@
 /**
- * Shared helper: Benachrichtigung + E-Mail + System-Waymail an Takumi nach bestätigter Buchungszahlung.
+ * Rollen-agnostischer Benachrichtigungs-Service.
+ * Benachrichtigung + E-Mail + System-Waymail nach Buchungszahlung (Shugyo → Takumi).
  * Idempotent: erstellt keine doppelte booking_request Notification.
  */
 
@@ -7,8 +8,10 @@ import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { createSystemWaymail } from "@/lib/system-waymail"
+import { getRenderedTemplate } from "@/lib/template-service"
+import { seedCommunicationTemplates } from "@/lib/seed-templates"
 
-export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
+export async function notifyAfterPayment(bookingId: string): Promise<{
   ok: boolean
   emailSent?: boolean
   notificationCreated?: boolean
@@ -32,7 +35,7 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
     const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${booking.statusToken}&action=confirmed`
 
-    // E-Mail (immer senden, auch bei wiederholtem Aufruf – harmlos)
+    // E-Mail (immer senden)
     let emailSent = false
     try {
       await sendBookingRequestEmail({
@@ -52,10 +55,9 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
       })
       emailSent = true
     } catch (emailErr) {
-      console.error("[notifyTakumi] Email failed:", emailErr)
+      console.error("[notification-service] Email failed:", emailErr)
     }
 
-    // userId zum Benachrichtigen: zuerst Expert.userId, sonst User mit gleicher E-Mail
     let notifyUserId = booking.expert?.userId ?? null
     if (!notifyUserId && booking.expertEmail) {
       const user = await prisma.user.findFirst({
@@ -71,19 +73,51 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
         where: { bookingId, type: "booking_request", userId: notifyUserId },
       })
       if (!existing) {
-        const waymailBody = `${booking.userName} hat eine Session am ${booking.date} von ${booking.startTime}–${booking.endTime} Uhr gebucht und bezahlt.`
+        const bookingTime = `${booking.startTime}–${booking.endTime} Uhr`
+        let waymailSubject = "Neue Buchungsanfrage (bezahlt)"
+        let waymailBody = `${booking.userName} hat eine Session am ${booking.date} von ${bookingTime} gebucht und bezahlt.`
+
+        const rendered = await getRenderedTemplate("booking-request-paid", "de", {
+          senderUserId: booking.userId,
+          recipientUserId: notifyUserId,
+          extraVariables: {
+            booking_date: booking.date,
+            booking_time: bookingTime,
+            service_name: booking.expertName,
+          },
+        })
+        if (rendered) {
+          waymailSubject = rendered.subject
+          waymailBody = rendered.body
+        } else {
+          await seedCommunicationTemplates().catch(() => {})
+          const retry = await getRenderedTemplate("booking-request-paid", "de", {
+            senderUserId: booking.userId,
+            recipientUserId: notifyUserId,
+            extraVariables: {
+              booking_date: booking.date,
+              booking_time: bookingTime,
+              service_name: booking.expertName,
+            },
+          })
+          if (retry) {
+            waymailSubject = retry.subject
+            waymailBody = retry.body
+          }
+        }
+
         await prisma.notification.create({
           data: {
             userId: notifyUserId,
             type: "booking_request",
             bookingId: booking.id,
-            title: "Neue Buchungsanfrage (bezahlt)",
+            title: waymailSubject,
             body: waymailBody,
           },
         })
         const waymail = await createSystemWaymail({
           recipientId: notifyUserId,
-          subject: "Neue Buchungsanfrage (bezahlt)",
+          subject: waymailSubject,
           body: waymailBody,
         }).catch(() => null)
         notificationCreated = true
@@ -94,13 +128,16 @@ export async function notifyTakumiAfterPayment(bookingId: string): Promise<{
         }).catch(() => {})
       }
     } else {
-      console.warn("[notifyTakumi] Expert ohne userId und keine passende User-E-Mail:", booking.expertEmail)
+      console.warn("[notification-service] Expert ohne userId:", booking.expertEmail)
     }
 
     return { ok: true, emailSent, notificationCreated }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown"
-    console.error("[notifyTakumi] Error:", msg)
+    console.error("[notification-service] Error:", msg)
     return { ok: false, error: msg }
   }
 }
+
+/** @deprecated Use notifyAfterPayment. Alias für Abwärtskompatibilität. */
+export const notifyTakumiAfterPayment = notifyAfterPayment
