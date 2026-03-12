@@ -1,19 +1,83 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
+import { useState, useEffect, useCallback, Suspense, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Paperclip } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
 import { useApp } from "@/lib/app-context"
 import { formatTimeBerlin } from "@/lib/date-utils"
 import { toast } from "sonner"
+import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
+
+function MessageAttachment({
+  url,
+  thumbnailUrl,
+  filename,
+}: {
+  url: string
+  thumbnailUrl?: string | null
+  filename?: string | null
+}) {
+  const isPdf = url.toLowerCase().endsWith(".pdf") || filename?.toLowerCase().endsWith(".pdf")
+  return (
+    <div className="mt-2">
+      {isPdf ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1.5 text-xs text-primary hover:underline"
+        >
+          📄 {filename || "PDF"}
+        </a>
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+          <LazyImage src={thumbnailUrl || url} alt={filename || "Anhang"} className="max-h-40 rounded-lg object-contain" />
+        </a>
+      )}
+    </div>
+  )
+}
+
+function LazyImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const [inView, setInView] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setInView(true)
+      },
+      { rootMargin: "100px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className={cn("min-h-20", !inView && "bg-muted/30")}>
+      {inView && (
+        <img
+          src={src}
+          alt={alt}
+          className={cn(className, !loaded && "animate-pulse bg-muted/30")}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+    </div>
+  )
+}
 
 interface NotificationItem {
   id: string
@@ -41,6 +105,9 @@ interface MsgItem {
   text: string
   sender: "user" | "partner"
   timestamp: number
+  attachmentUrl?: string | null
+  attachmentThumbnailUrl?: string | null
+  attachmentFilename?: string | null
 }
 
 function MessagesPageContent() {
@@ -58,6 +125,8 @@ function MessagesPageContent() {
   const [sending, setSending] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actingId, setActingId] = useState<string | null>(null)
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
+  const { upload, phase: uploadPhase, error: uploadError, statusLabel, reset: resetUpload } = useSecureFileUpload()
 
   const fetchThreads = useCallback(async () => {
     const r = await fetch("/api/messages")
@@ -109,22 +178,50 @@ function MessagesPageContent() {
 
   async function handleSend() {
     const text = input.trim()
-    if (!text || !activeThread || sending) return
+    const attachment = pendingAttachment
+    const hasAttachment = !!attachment
+    if ((!text && !hasAttachment) || !activeThread || sending) return
     const tempId = `temp-${Date.now()}`
-    const optimisticMsg = { id: tempId, text, sender: "user" as const, timestamp: Date.now() }
+    const optimisticMsg: MsgItem = {
+      id: tempId,
+      text: text || "(Anhang)",
+      sender: "user",
+      timestamp: Date.now(),
+      attachmentUrl: attachment?.url,
+      attachmentThumbnailUrl: attachment?.thumbnailUrl,
+      attachmentFilename: attachment?.filename,
+    }
     setMessages((prev) => [...prev, optimisticMsg])
     setInput("")
+    setPendingAttachment(null)
     setSending(true)
     try {
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientUserId: activeThread, text }),
+        body: JSON.stringify({
+          recipientUserId: activeThread,
+          text: text || "(Anhang)",
+          attachmentUrl: attachment?.url,
+          attachmentThumbnailUrl: attachment?.thumbnailUrl,
+          attachmentFilename: attachment?.filename,
+        }),
       })
       const data = await res.json()
       if (res.ok) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, id: data.id, timestamp: data.timestamp } : m))
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: data.id,
+                  timestamp: data.timestamp,
+                  attachmentUrl: data.attachmentUrl,
+                  attachmentThumbnailUrl: data.attachmentThumbnailUrl,
+                  attachmentFilename: data.attachmentFilename,
+                }
+              : m
+          )
         )
         fetchThreads()
       } else {
@@ -136,6 +233,17 @@ function MessagesPageContent() {
       toast.error("Fehler – Nachricht konnte nicht gesendet werden.")
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleAttach() {
+    if (sending) return
+    const result = await upload()
+    if (result) {
+      setPendingAttachment({ url: result.url, thumbnailUrl: result.thumbnailUrl, filename: result.filename })
+      resetUpload()
+    } else if (uploadError) {
+      toast.error(uploadError)
     }
   }
 
@@ -244,6 +352,13 @@ function MessagesPageContent() {
                   )}
                 >
                   {msg.text}
+                  {msg.attachmentUrl && (
+                    <MessageAttachment
+                      url={msg.attachmentUrl}
+                      thumbnailUrl={msg.attachmentThumbnailUrl}
+                      filename={msg.attachmentFilename}
+                    />
+                  )}
                 </div>
               </div>
             ))
@@ -251,17 +366,39 @@ function MessagesPageContent() {
         </div>
 
         <div className="border-t border-border bg-card/95 px-4 py-3">
+          {pendingAttachment && (
+            <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+              <span className="truncate text-xs text-muted-foreground">{pendingAttachment.filename}</span>
+              <Button variant="ghost" size="icon" className="size-6 shrink-0" onClick={() => setPendingAttachment(null)}>
+                <XCircle className="size-3" />
+              </Button>
+            </div>
+          )}
+          {uploadPhase === "scanning" || uploadPhase === "preview" ? (
+            <p className="mb-2 text-xs text-muted-foreground">{statusLabel}</p>
+          ) : null}
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 shrink-0"
+              onClick={handleAttach}
+              disabled={sending}
+              title="Datei anhängen"
+              aria-label="Datei anhängen"
+            >
+              <Paperclip className="size-5" />
+            </Button>
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder={t("messages.placeholder")}
-              className="h-10 rounded-xl bg-muted/50 text-sm"
+              className="h-10 flex-1 rounded-xl bg-muted/50 text-sm"
             />
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || sending}
+              disabled={(!input.trim() && !pendingAttachment) || sending}
               size="icon"
               className="size-10 shrink-0 rounded-xl bg-primary hover:bg-primary/90"
             >

@@ -337,14 +337,17 @@ model Notification {
 
 // Direktnachrichten (Postfach): Nutzer können sich gegenseitig schreiben
 model DirectMessage {
-  id         String   @id @default(cuid())
-  senderId   String
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId String
-  recipient  User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
-  text       String   @db.Text
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id                   String   @id @default(cuid())
+  senderId             String
+  sender               User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId          String
+  recipient            User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  text                 String   @db.Text
+  attachmentUrl        String?  // Secure File Exchange: Vercel Blob URL nach Virenscan
+  attachmentThumbnailUrl String? // Thumbnail (max 200px) für Bilder
+  attachmentFilename   String?  // Original-Dateiname (sanitized)
+  read                 Boolean  @default(false)
+  createdAt            DateTime @default(now())
 
   @@index([senderId, recipientId])
   @@index([recipientId, senderId])

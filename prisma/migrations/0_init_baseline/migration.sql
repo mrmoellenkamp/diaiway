@@ -1,0 +1,2 @@
+-- Baseline: Database existed before Prisma Migrate. Schema already in place.
+-- This migration is intentionally empty.
