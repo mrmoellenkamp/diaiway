@@ -60,6 +60,11 @@ enum SkillLevel {
   PROFI
 }
 
+enum CommunicationType {
+  CHAT
+  MAIL
+}
+
 // Instant-Connect: Takumi-Status für spontane Calls
 enum LiveStatus {
   offline   // Nicht erreichbar
@@ -335,23 +340,27 @@ model Notification {
   @@index([userId, read])
 }
 
-// Direktnachrichten (Postfach): Nutzer können sich gegenseitig schreiben
+// Direktnachrichten: CHAT (live, nur wenn online) | MAIL/Waymail (asynchron, mit subject)
 model DirectMessage {
-  id                   String   @id @default(cuid())
-  senderId             String
-  sender               User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId          String
-  recipient            User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
-  text                 String   @db.Text
-  attachmentUrl        String?  // Secure File Exchange: Vercel Blob URL nach Virenscan
-  attachmentThumbnailUrl String? // Thumbnail (max 200px) für Bilder
-  attachmentFilename   String?  // Original-Dateiname (sanitized)
-  read                 Boolean  @default(false)
-  createdAt            DateTime @default(now())
+  id                    String            @id @default(cuid())
+  communicationType     CommunicationType @default(CHAT)
+  senderId              String?           // null = System-Waymail (senderDisplayName)
+  sender                User?             @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderDisplayName     String?           // "diAiway System" bei System-Waymails
+  recipientId           String
+  recipient             User              @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  subject               String?           // Pflicht bei MAIL
+  text                  String            @db.Text
+  attachmentUrl         String?
+  attachmentThumbnailUrl String?
+  attachmentFilename    String?
+  read                  Boolean           @default(false)
+  createdAt             DateTime          @default(now())
 
   @@index([senderId, recipientId])
   @@index([recipientId, senderId])
   @@index([recipientId, read])
+  @@index([communicationType])
 }
 
 model Transaction {

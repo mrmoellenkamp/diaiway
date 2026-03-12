@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { createSystemWaymail } from "@/lib/system-waymail"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { emailForName } from "@/lib/email-utils"
 import { requireAuth } from "@/lib/api-auth"
@@ -241,10 +242,15 @@ export async function POST(req: Request) {
               body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
             },
           })
+          const waymail = await createSystemWaymail({
+            recipientId: expert.userId,
+            subject: "Neue Buchungsanfrage",
+            body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          }).catch(() => null)
           sendPushToUser(expert.userId, {
             title: "Neue Buchungsanfrage",
             body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
-            url: "/messages",
+            url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
           }).catch(() => {})
         } catch { /* notification errors must not block */ }
       }

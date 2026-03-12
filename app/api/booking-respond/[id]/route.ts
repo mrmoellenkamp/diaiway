@@ -7,6 +7,7 @@ import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { createSystemWaymail } from "@/lib/system-waymail"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
@@ -162,7 +163,16 @@ export async function POST(
           body,
         },
       })
-      sendPushToUser(booking.userId, { title, body, url: "/messages" }).catch(() => {})
+      const waymail = await createSystemWaymail({
+        recipientId: booking.userId,
+        subject: title,
+        body,
+      }).catch(() => null)
+      sendPushToUser(booking.userId, {
+        title,
+        body,
+        url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
+      }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
     return NextResponse.json({ ok: true, status: action })
@@ -231,10 +241,15 @@ export async function POST(
           body: notifBody,
         },
       })
+      const waymail = await createSystemWaymail({
+        recipientId: booking.userId,
+        subject: "Rückfrage zu deiner Buchung",
+        body: notifBody,
+      }).catch(() => null)
       sendPushToUser(booking.userId, {
         title: "Rückfrage zu deiner Buchung",
         body: notifBody,
-        url: "/messages",
+        url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
       }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
