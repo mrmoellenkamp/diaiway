@@ -44,7 +44,7 @@ Sharp muss für das Ziel-System gebaut werden (z.B. auf Vercel automatisch).
 
 ## Erlaubte Formate
 
-- Bilder: JPEG, PNG, WebP, GIF
+- Bilder: JPEG, PNG
 - Dokumente: PDF
 
 Blockiert: exe, bat, cmd, msi, scr, vbs, js, jar, php, py, sh, ps1, dll, so, dylib

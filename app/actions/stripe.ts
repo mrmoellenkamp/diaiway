@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
+import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 
 export interface SessionCheckoutParams {
@@ -17,7 +18,9 @@ export interface BookingCheckoutParams {
   priceInCents: number
 }
 
-/** Create a Stripe Checkout Session for booking payment (Vorauszahlung). */
+/** Create a Stripe Checkout Session for booking payment (Vorauszahlung).
+ * Uses Hold & Capture (manual) with traceability metadata.
+ */
 export async function startBookingCheckout(params: BookingCheckoutParams) {
   const { bookingId, takumiName, priceInCents } = params
 
@@ -25,9 +28,14 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     throw new Error("Missing required parameters for checkout")
   }
 
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Nicht angemeldet")
+  const shugyoId = session.user.id
+
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Buchung bereits bezahlt")
+  if (booking.userId !== shugyoId) throw new Error("Keine Berechtigung für diese Buchung")
 
   const serviceLabel = "Expertensitzung"
   const durationMin = (() => {
@@ -39,7 +47,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     return 30
   })()
 
-  const session = await stripe.checkout.sessions.create({
+  const sessionData = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
@@ -58,18 +66,31 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     ],
     mode: "payment",
     payment_intent_data: {
-      capture_method: "manual", // Hold & Capture: Geld nur reservieren, erst bei Leistung einziehen
-      metadata: { bookingId, type: "booking_payment" }, // Für amount_capturable_updated-Webhook
+      capture_method: "manual", // Hold & Capture: reserve only, capture after service
+      metadata: {
+        bookingId,
+        shugyoId,
+        type: "booking_payment",
+      },
     },
-    metadata: { bookingId, type: "booking_payment" },
+    metadata: { bookingId, shugyoId, type: "booking_payment" },
   })
+
+  const paymentIntentId =
+    typeof sessionData.payment_intent === "string"
+      ? sessionData.payment_intent
+      : sessionData.payment_intent?.id ?? null
 
   await prisma.booking.update({
     where: { id: bookingId },
-    data: { stripeSessionId: session.id, paymentStatus: "pending" },
+    data: {
+      stripeSessionId: sessionData.id,
+      ...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
+      paymentStatus: "pending",
+    },
   })
 
-  return { clientSecret: session.client_secret, sessionId: session.id }
+  return { clientSecret: sessionData.client_secret, sessionId: sessionData.id }
 }
 
 /** Create a Stripe Checkout Session for a video session payment (während des Calls). */
@@ -80,13 +101,18 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
     throw new Error("Missing required parameters for checkout")
   }
 
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Nicht angemeldet")
+  const shugyoId = session.user.id
+
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")
   if (booking.paymentStatus === "paid") throw new Error("Session already paid")
+  if (booking.userId !== shugyoId) throw new Error("Keine Berechtigung")
 
   const serviceLabel = "Expertensitzung"
 
-  const session = await stripe.checkout.sessions.create({
+  const sessionData = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
@@ -105,18 +131,27 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
     ],
     mode: "payment",
     payment_intent_data: {
-      capture_method: "manual", // Hold & Capture
-      metadata: { bookingId, type: "session_payment" }, // Für amount_capturable_updated-Webhook
+      capture_method: "manual",
+      metadata: { bookingId, shugyoId, type: "session_payment" },
     },
-    metadata: { bookingId, type: "session_payment" },
+    metadata: { bookingId, shugyoId, type: "session_payment" },
   })
+
+  const paymentIntentId =
+    typeof sessionData.payment_intent === "string"
+      ? sessionData.payment_intent
+      : sessionData.payment_intent?.id ?? null
 
   await prisma.booking.update({
     where: { id: bookingId },
-    data: { stripeSessionId: session.id, paymentStatus: "pending" },
+    data: {
+      stripeSessionId: sessionData.id,
+      ...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
+      paymentStatus: "pending",
+    },
   })
 
-  return { clientSecret: session.client_secret, sessionId: session.id }
+  return { clientSecret: sessionData.client_secret, sessionId: sessionData.id }
 }
 
 /** Verify payment status for a booking (client-side polling).

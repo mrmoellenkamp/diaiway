@@ -5,7 +5,7 @@ export interface PickedFile {
   previewUrl?: string
 }
 
-const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]
+const ALLOWED_MIMES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
 const MAX_SIZE = 2.5 * 1024 * 1024 // 2.5 MB
 
 /**
@@ -25,7 +25,7 @@ export async function pickFileForChat(): Promise<File | null> {
 
     const input = document.createElement("input")
     input.type = "file"
-    input.accept = "image/jpeg,image/png,image/webp,image/gif,application/pdf"
+    input.accept = "image/jpeg,image/jpg,image/png,application/pdf"
     input.multiple = false
     input.onchange = () => {
       const file = input.files?.[0]
@@ -48,7 +48,7 @@ export function validateFileForUpload(file: File): { ok: true } | { ok: false; e
   if (blocked.includes(ext)) {
     return { ok: false, error: "Dieses Dateiformat wird aus Sicherheitsgründen nicht unterstützt.", code: "TYPE_NOT_ALLOWED" }
   }
-  if (!ALLOWED_MIMES.includes(file.type) && file.type !== "application/pdf") {
+  if (!ALLOWED_MIMES.includes(file.type)) {
     return { ok: false, error: "Dieses Dateiformat wird aus Sicherheitsgründen nicht unterstützt.", code: "TYPE_NOT_ALLOWED" }
   }
   if (file.size > MAX_SIZE) {

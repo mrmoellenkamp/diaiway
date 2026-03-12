@@ -2,11 +2,13 @@ import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { createSystemWaymail } from "@/lib/system-waymail"
-import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
+import { parseBerlinDateTime } from "@/lib/date-utils"
+import { validateBookingDateWindow } from "@/lib/booking-date-validation"
 import { emailForName } from "@/lib/email-utils"
 import { requireAuth } from "@/lib/api-auth"
 
@@ -125,15 +127,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Mindestdauer 15 Minuten, nur Vielfache von 15 möglich." }, { status: 400 })
     }
 
-    // Reject bookings in the past (Berlin time)
-    const slotDateTime = parseBerlinDateTime(date, startTime)
-    if (slotDateTime <= new Date()) {
-      return NextResponse.json({ error: "Buchungen in der Vergangenheit sind nicht möglich." }, { status: 400 })
-    }
-
-    // 7-Tage-Regel: Buchungen max. 7 Tage im Voraus
-    if (isBeyondMaxBookingDays(date, startTime)) {
-      return NextResponse.json({ error: "Buchungen dürfen maximal 7 Tage im Voraus getätigt werden." }, { status: 400 })
+    // Hard backend validation: 7-day window (before Stripe or Prisma)
+    const dateValidation = validateBookingDateWindow(date, startTime)
+    if (!dateValidation.valid) {
+      return NextResponse.json(
+        { error: dateValidation.message },
+        { status: 400 }
+      )
     }
 
     // Load expert
@@ -161,48 +161,53 @@ export async function POST(req: Request) {
       await prisma.expert.update({ where: { id: expert.id }, data: { email: expertEmail } })
     }
 
-    // Check time-slot conflict
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        expertId: takumiId,
-        date,
-        status: { in: ["pending", "confirmed", "active"] },
-        AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
-      },
-    })
-    if (conflict) {
-      return NextResponse.json({ error: "Dieser Zeitraum ist bereits belegt." }, { status: 409 })
-    }
-
     const effectiveTotalPrice = totalPrice != null && totalPrice >= 1
       ? totalPrice
       : (price ?? (Number(expert.priceVideo15Min) || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)) * (durationMin / 15))
 
     const statusToken = randomBytes(32).toString("hex")
 
-    // Kundennummer bei erstmaliger Buchung (Shugyo)
+    // Kundennummer bei erstmaliger Buchung (Shugyo) — non-blocking
     ensureCustomerNumber(session.user.id).catch(() => {})
 
-    const booking = await prisma.booking.create({
-      data: {
-        expertId: takumiId,
-        expertName: expert.name,
-        expertEmail,
-        userId: session.user.id,
-        userName: session.user.name || "Nutzer",
-        userEmail: session.user.email || "",
-        date,
-        startTime,
-        endTime,
-        callType: effectiveCallType,
-        totalPrice: effectiveTotalPrice,
-        price: price ?? Math.round(effectiveTotalPrice),
-        note: note || "",
-        statusToken,
-        paymentStatus: "unpaid",
-        trialUsed: false,
+    // Database transaction: conflict check + booking creation (prevents double-booking race)
+    const booking = await prisma.$transaction(
+      async (tx) => {
+        const conflict = await tx.booking.findFirst({
+          where: {
+            expertId: takumiId,
+            date,
+            status: { in: ["pending", "confirmed", "active"] },
+            AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+          },
+        })
+        if (conflict) {
+          throw new Error("SLOT_CONFLICT")
+        }
+
+        return tx.booking.create({
+          data: {
+            expertId: takumiId,
+            expertName: expert.name,
+            expertEmail,
+            userId: session.user.id,
+            userName: session.user.name || "Nutzer",
+            userEmail: session.user.email || "",
+            date,
+            startTime,
+            endTime,
+            callType: effectiveCallType,
+            totalPrice: effectiveTotalPrice,
+            price: price ?? Math.round(effectiveTotalPrice),
+            note: note || "",
+            statusToken,
+            paymentStatus: "unpaid",
+            trialUsed: false,
+          },
+        })
       },
-    })
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||
@@ -263,6 +268,13 @@ export async function POST(req: Request) {
       message: deferNotification ? "Buchung erstellt. Bitte zahle jetzt." : "Buchungsanfrage gesendet!",
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    const msg = (err as Error)?.message ?? ""
+    if (msg === "SLOT_CONFLICT") {
+      return NextResponse.json(
+        { error: "Dieser Zeitraum ist bereits belegt." },
+        { status: 409 }
+      )
+    }
+    return NextResponse.json({ error: msg || "Buchung fehlgeschlagen." }, { status: 500 })
   }
 }
