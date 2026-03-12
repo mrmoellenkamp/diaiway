@@ -1,5 +1,8 @@
--- CreateEnum
-CREATE TYPE "CommunicationType" AS ENUM ('CHAT', 'MAIL');
+-- CreateEnum (idempotent: skip if already exists)
+DO $$ BEGIN
+  CREATE TYPE "CommunicationType" AS ENUM ('CHAT', 'MAIL');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AlterTable DirectMessage: communicationType, subject, senderDisplayName, senderId nullable
 ALTER TABLE "DirectMessage" ADD COLUMN IF NOT EXISTS "communicationType" "CommunicationType" NOT NULL DEFAULT 'CHAT';
