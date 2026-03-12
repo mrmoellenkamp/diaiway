@@ -164,6 +164,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           <button
             type="button"
             onClick={async () => {
+              if (!takumi) return
               const url = `https://diaiway.com/takumi/${takumi.id}`
               const ok = await shareNative({ title: takumi.name, text: takumi.bio?.slice(0, 120), url })
               if (!ok) toast.info("Teilen ist nur in der App verfügbar.")
