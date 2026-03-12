@@ -139,6 +139,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const firstName = takumi.name.split(" ")[0] ?? ""
 
   async function handleStartChat() {
+    if (!takumi) return
     if (!takumi.id || chatLoading) return
     setChatLoading(true)
     try {
