@@ -234,6 +234,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               priceInCents={Math.round(totalPrice * 100)}
               walletBalanceCents={walletBalanceCents}
               onSuccess={() => {
+                import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
                 toast.success(t("booking.successTitle"))
                 window.location.href = "/sessions?tab=upcoming"
               }}

@@ -52,5 +52,9 @@
     <string>Wir benötigen Zugriff auf deine Kamera für die Video-Beratung zwischen Shugyo und Takumi.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Wir benötigen Zugriff auf dein Mikrofon, damit du dich während der Beratung unterhalten kannst.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Wir benötigen Zugriff auf deine Fotogalerie, um Bilder für dein Projekt oder dein Profil hochzuladen.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Face ID wird zur sicheren Anmeldung und zum Schutz deiner Daten verwendet.</string>
 </dict>
 </plist>

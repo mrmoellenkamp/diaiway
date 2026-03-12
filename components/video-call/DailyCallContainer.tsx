@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, Square, Video, VideoOff, Wallet } from "lucide-react"
+import { FlipHorizontal, Loader2, Mic, MicOff, PhoneOff, PictureInPicture, PictureInPictureOff, Square, Video, VideoOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 
@@ -102,6 +102,7 @@ export function DailyCallContainer({
 }: DailyCallContainerProps) {
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
+  const [isPiPActive, setIsPiPActive] = useState(false)
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [micLevel, setMicLevel] = useState(0)
@@ -408,6 +409,13 @@ export function DailyCallContainer({
     setPhase("JOINING")
     setError(null)
     try {
+      const { checkConnectivity } = await import("@/lib/native-utils")
+      const { connected } = await checkConnectivity()
+      if (!connected) {
+        setPhase("LOBBY")
+        toast.error("Keine Internetverbindung. Bitte prüfe deine Verbindung und versuche es erneut.")
+        return
+      }
       const existingCall = callObjectRef.current
       if (existingCall) {
         try {
@@ -985,6 +993,31 @@ export function DailyCallContainer({
     }
   }, [phase, callMode, isCameraOff])
 
+  const handleTogglePiP = useCallback(async () => {
+    const videoEl = remoteVideoRef.current
+    if (!videoEl || phase !== "IN_CALL" || callMode !== "video") return
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture()
+        setIsPiPActive(false)
+      } else if (videoEl.srcObject && "requestPictureInPicture" in videoEl) {
+        await videoEl.requestPictureInPicture()
+        setIsPiPActive(true)
+      }
+    } catch (e) {
+      console.warn("[DailyCall] PiP failed:", e)
+      setIsPiPActive(false)
+    }
+  }, [phase, callMode])
+
+  useEffect(() => {
+    const videoEl = remoteVideoRef.current
+    if (!videoEl) return
+    const onLeave = () => setIsPiPActive(false)
+    videoEl.addEventListener("leavepictureinpicture", onLeave)
+    return () => videoEl.removeEventListener("leavepictureinpicture", onLeave)
+  }, [phase])
+
   // --- Live-Monitoring: zufällige Snapshots → Vision API (nur Video, bei Safety-Einwilligung) ---
   const snapshotIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
@@ -1408,6 +1441,18 @@ export function DailyCallContainer({
                 style={{ transform: `rotate(${cameraFlipRotation}deg)` }}
               />
             </Button>
+            {hasRemoteVideo && (
+              <Button
+                variant={isPiPActive ? "secondary" : "outline"}
+                size="icon"
+                className="size-10 sm:size-12 transition-transform active:scale-95"
+                onClick={handleTogglePiP}
+                title={isPiPActive ? "PiP beenden" : "Bild-in-Bild (in anderer App weiter sehen)"}
+                aria-label={isPiPActive ? "PiP beenden" : "Bild-in-Bild"}
+              >
+                {isPiPActive ? <PictureInPictureOff className="size-5 sm:size-6" /> : <PictureInPicture className="size-5 sm:size-6" />}
+              </Button>
+            )}
           </>
         )}
 

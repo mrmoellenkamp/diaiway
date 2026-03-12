@@ -110,6 +110,10 @@ function MessagesPageContent() {
   async function handleSend() {
     const text = input.trim()
     if (!text || !activeThread || sending) return
+    const tempId = `temp-${Date.now()}`
+    const optimisticMsg = { id: tempId, text, sender: "user" as const, timestamp: Date.now() }
+    setMessages((prev) => [...prev, optimisticMsg])
+    setInput("")
     setSending(true)
     try {
       const res = await fetch("/api/messages", {
@@ -119,14 +123,17 @@ function MessagesPageContent() {
       })
       const data = await res.json()
       if (res.ok) {
-        setMessages((prev) => [...prev, { id: data.id, text: data.text, sender: "user", timestamp: data.timestamp }])
-        setInput("")
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, id: data.id, timestamp: data.timestamp } : m))
+        )
         fetchThreads()
       } else {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId))
         toast.error(data.error || "Fehler")
       }
     } catch {
-      toast.error("Fehler")
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
+      toast.error("Fehler – Nachricht konnte nicht gesendet werden.")
     } finally {
       setSending(false)
     }
@@ -158,6 +165,7 @@ function MessagesPageContent() {
       })
       const data = await res.json()
       if (res.ok) {
+        import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
         toast.success(action === "confirmed" ? t("messages.bookingConfirmedToast") : t("messages.bookingDeclinedToast"))
         markAsRead([notificationId])
         setNotifications((prev) => prev.map((no) => (no.id === notificationId ? { ...no, read: true } : no)))

@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.diaiway.app",
+        "paths": ["/takumi/*", "/sessions", "/sessions/*", "/messages", "/messages/*", "/booking/*", "/home", "/categories", "/categories/*"]
+      }
+    ]
+  }
+}

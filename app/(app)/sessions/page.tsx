@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation"
 import useSWR from "swr"
 import { PageContainer } from "@/components/page-container"
 import { BookingCard } from "@/components/booking-card"
+import { scheduleSessionReminder, cancelPastReminders } from "@/lib/native-utils"
+import { getCachedBookings, setCachedBookings } from "@/lib/offline-cache"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { Video, CalendarCheck, CheckCircle2, Inbox } from "lucide-react"
@@ -74,9 +76,24 @@ function SessionsContent() {
       setActiveTab(tabParam)
     }
   }, [tabParam])
-  const { data, isLoading, mutate } = useSWR<{ bookings: BookingRecord[] }>("/api/bookings", fetcher, {
-    refreshInterval: 10000, // refresh every 10s to catch live status changes
-  })
+  const [cachedBookings, setCachedBookingsState] = useState<BookingRecord[] | null>(null)
+  useEffect(() => {
+    getCachedBookings().then((b) => b && setCachedBookingsState(b))
+  }, [])
+
+  const { data, isLoading, mutate } = useSWR<{ bookings: BookingRecord[] }>(
+    "/api/bookings",
+    fetcher,
+    {
+      refreshInterval: 10000,
+      fallbackData: cachedBookings ? { bookings: cachedBookings } : undefined,
+    }
+  )
+  useEffect(() => {
+    if (data?.bookings?.length) setCachedBookings(data.bookings)
+  }, [data?.bookings])
+
+  const displayBookings = data?.bookings ?? cachedBookings ?? []
 
   // Callback to refresh list after cancellation
   const handleCancelled = () => mutate()
@@ -87,7 +104,28 @@ function SessionsContent() {
     { id: "completed" as const, label: t("sessions.tabCompleted"), icon: CheckCircle2 },
   ]
 
-  const bookings = data?.bookings || []
+  const bookings = displayBookings
+  // Local Notifications: Erinnerungen für bestätigte Sessions (30 Min vor Start)
+  useEffect(() => {
+    const confirmed = bookings.filter((b) => b.status === "confirmed")
+    const now = new Date()
+    const past: string[] = []
+    for (const b of confirmed) {
+      const [y, m, d] = (b.date || "").split("-").map(Number)
+      const [h, min] = (b.startTime || "00:00").split(":").map(Number)
+      const at = new Date(y, m - 1, d, h, min, 0)
+      if (at.getTime() > now.getTime()) {
+        scheduleSessionReminder({ id: b.id, expertName: b.expertName, date: b.date, startTime: b.startTime || "00:00" })
+      } else {
+        past.push(b.id)
+      }
+    }
+    const toCancel = bookings
+      .filter((b) => ["completed", "declined", "cancelled"].includes(b.status) || past.includes(b.id))
+      .map((b) => b.id)
+    if (toCancel.length > 0) cancelPastReminders([...new Set(toCancel)])
+  }, [bookings])
+
   const filtered = bookings
     .filter((b) => tabForStatus(b.status) === activeTab)
     .sort((a, b) => {
@@ -131,7 +169,7 @@ function SessionsContent() {
 
       {/* Session list */}
       <div className="mt-4 flex flex-col gap-3">
-        {isLoading ? (
+        {isLoading && displayBookings.length === 0 ? (
           <LoadingSkeleton />
         ) : filtered.length === 0 ? (
           <EmptyState tab={activeTab} />
