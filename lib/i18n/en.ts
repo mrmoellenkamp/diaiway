@@ -11,6 +11,7 @@ const en = {
   "common.add": "Add",
   "common.delete": "Delete",
   "common.cancel": "Cancel",
+  "common.close": "Close",
   "common.abort": "Cancel",
   "common.loading": "Loading...",
   "common.error": "Error",
@@ -179,7 +180,9 @@ const en = {
   "sessions.backToSessions": "Back to sessions",
 
   // Messages
-  "messages.title": "Messages",
+  "messages.title": "Inbox",
+  "messages.tabNotifications": "Notifications",
+  "messages.tabChats": "Chats",
   "messages.empty": "No messages yet",
   "messages.emptyDesc": "Start a conversation with an expert.",
   "messages.discoverCategories": "Discover categories",

@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
         })
         const expert = await prisma.expert.findFirst({
           where: { userId: partnerId },
-          select: { id: true, avatar: true, subcategory: true, isLive: true, lastSeenAt: true },
+          select: { id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true },
         })
         const lastMsg = await prisma.directMessage.findFirst({
           where: {
@@ -112,6 +112,7 @@ export async function GET(req: NextRequest) {
         const displayName = user?.name ?? "Nutzer"
         const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
         const subcategory = expert?.subcategory ?? ""
+        const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
 
         const now = Date.now()
         const ONLINE_MS = 5 * 60 * 1000
@@ -122,6 +123,7 @@ export async function GET(req: NextRequest) {
           partnerId,
           partnerName: displayName,
           partnerAvatar: avatar,
+          partnerImageUrl: partnerImageUrl ?? null,
           subcategory,
           expertId: expert?.id ?? null,
           isOnline: !!isOnline,
@@ -210,7 +212,7 @@ export async function POST(req: Request) {
       sendPushToUser(recipientId, {
         title: `Neue Nachricht von ${senderName}`,
         body: trimmed.slice(0, 60) + (trimmed.length > 60 ? "…" : ""),
-        url: "/messages",
+        url: `/messages?with=${encodeURIComponent(session.user.id)}`,
       }).catch(() => {})
     } catch (e) {
       console.warn("[messages] Notification/Push failed:", e)
