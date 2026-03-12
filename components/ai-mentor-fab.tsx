@@ -42,13 +42,13 @@ export function AiMentorFab() {
         </button>
       )}
 
-      {/* Chat Window - z-[100] to be above everything */}
+      {/* Chat Window – öffnet am FAB, nutzt verfügbare Höhe */}
       {isOpen && (
         <div
           className={cn(
             "fixed right-3 z-[100] flex w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-2xl pointer-events-auto",
             "animate-in fade-in slide-in-from-bottom-4 duration-300",
-            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom)))] max-h-[calc(100vh-10rem)]"
+            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom)))] max-h-[min(75vh,600px)]"
           )}
           role="dialog"
           aria-label={t("mentor.chat")}
@@ -62,7 +62,7 @@ export function AiMentorFab() {
             <X className="size-5" />
           </button>
 
-          <MentorChat variant="floating" className="h-[340px]" />
+          <MentorChat variant="floating" className="min-h-[400px] flex-1" />
         </div>
       )}
     </>

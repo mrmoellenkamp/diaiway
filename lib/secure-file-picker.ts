@@ -10,18 +10,34 @@ const MAX_SIZE = 2.5 * 1024 * 1024 // 2.5 MB
 
 /**
  * Öffnet Dateiauswahl (Bilder + PDF). Funktioniert im Web und im Capacitor WebView.
- * Für native UX optional: @capawesome/capacitor-file-picker installieren und in useSecureFileUpload integrieren.
+ * Beim Abbrechen des Dialogs wird null zurückgegeben (kein hängendes Promise).
  */
 export async function pickFileForChat(): Promise<File | null> {
   return new Promise<File | null>((resolve) => {
+    let resolved = false
+    const resolveOnce = (value: File | null) => {
+      if (resolved) return
+      resolved = true
+      window.removeEventListener("focus", onFocus)
+      clearTimeout(tid)
+      resolve(value)
+    }
+
     const input = document.createElement("input")
     input.type = "file"
     input.accept = "image/jpeg,image/png,image/webp,image/gif,application/pdf"
     input.multiple = false
     input.onchange = () => {
       const file = input.files?.[0]
-      resolve(file ?? null)
+      resolveOnce(file ?? null)
     }
+
+    const onFocus = () => {
+      setTimeout(() => resolveOnce(null), 400)
+    }
+    window.addEventListener("focus", onFocus)
+    const tid = window.setTimeout(() => resolveOnce(null), 60000)
+
     input.click()
   })
 }
