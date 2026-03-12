@@ -133,9 +133,17 @@ export function UserChatBox({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
-  const { upload, phase: uploadPhase, statusLabel, error: uploadError, isScanning: uploadScanning, reset: resetUpload } = useSecureFileUpload()
+  const { upload, phase: uploadPhase, statusLabel, error: uploadError, isScanning: uploadScanning, reset: resetUpload, clearError: clearUploadError } = useSecureFileUpload()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
+  const [interactionLocked, setInteractionLocked] = useState(inDrawer)
+
+  useEffect(() => {
+    if (!inDrawer) return
+    setInteractionLocked(true)
+    const t = setTimeout(() => setInteractionLocked(false), 300)
+    return () => clearTimeout(t)
+  }, [inDrawer])
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -347,9 +355,19 @@ export function UserChatBox({
         style={keyboardOffset > 0 ? { paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${keyboardOffset}px)` } : undefined}
       >
         {uploadError && (
-          <p className="mb-2 text-xs text-destructive" role="alert">
-            {uploadError}
-          </p>
+          <div className="mb-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+            <p className="min-w-0 flex-1 text-xs text-destructive" role="alert">
+              {uploadError}
+            </p>
+            <button
+              type="button"
+              onClick={clearUploadError}
+              className="shrink-0 rounded p-0.5 text-destructive hover:bg-destructive/20"
+              aria-label="Fehlermeldung schließen"
+            >
+              <XCircle className="size-3.5" />
+            </button>
+          </div>
         )}
         {pendingAttachment && (
           <PendingAttachmentPreview
@@ -368,10 +386,10 @@ export function UserChatBox({
           <button
             type="button"
             onClick={handleAttach}
-            disabled={sending || uploadScanning}
+            disabled={sending || uploadScanning || interactionLocked}
             className={cn(
               "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-              (sending || uploadScanning) && "pointer-events-none opacity-40"
+              (sending || uploadScanning || interactionLocked) && "pointer-events-none opacity-40"
             )}
             aria-label="Datei anhängen"
             aria-busy={uploadScanning}
@@ -387,12 +405,12 @@ export function UserChatBox({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             placeholder={t("messages.placeholder")}
-            disabled={sending}
+            disabled={sending || interactionLocked}
             className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={handleSend}
-            disabled={(!input.trim() && !pendingAttachment) || sending}
+            disabled={(!input.trim() && !pendingAttachment) || sending || interactionLocked}
             className={cn(
               "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg transition-all",
               (input.trim() || pendingAttachment) && !sending
