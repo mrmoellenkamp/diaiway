@@ -125,7 +125,6 @@ function MessagesPageContent() {
   }
 
   const unreadNotifications = notifications.filter((n) => !n.read)
-  const thread = threads.find((th) => th.partnerId === activeThread)
 
   // Beim ersten Laden: wenn ?with= gesetzt, Chat-Tab + Thread öffnen
   useEffect(() => {
