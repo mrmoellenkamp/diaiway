@@ -18,11 +18,27 @@ export async function GET(req: NextRequest) {
 
   const expert = await prisma.expert.findUnique({
     where: { id: expertId },
-    select: { userId: true },
+    select: {
+      userId: true,
+      name: true,
+      avatar: true,
+      imageUrl: true,
+      subcategory: true,
+      user: { select: { image: true } },
+    },
   })
   if (!expert?.userId) {
     return NextResponse.json({ error: "Experte nicht gefunden oder nicht mit Nutzer verknüpft." }, { status: 404 })
   }
 
-  return NextResponse.json({ userId: expert.userId })
+  const imageUrl = expert.imageUrl || (expert.user?.image && expert.user.image.length > 0 ? expert.user.image : null)
+
+  return NextResponse.json({
+    userId: expert.userId,
+    partnerName: expert.name ?? "Takumi",
+    partnerAvatar: expert.avatar ?? (expert.name?.slice(0, 2).toUpperCase() || "?"),
+    partnerImageUrl: imageUrl || null,
+    expertId,
+    subcategory: expert.subcategory ?? "",
+  })
 }

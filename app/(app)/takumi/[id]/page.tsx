@@ -1,7 +1,6 @@
 "use client"
 
 import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +22,7 @@ import { shareNative } from "@/lib/native-utils"
 import { getCachedTakumi, setCachedTakumi } from "@/lib/offline-cache"
 import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
+import { UserChatBox } from "@/components/user-chat-box"
 
 // ─── Social media icon + link helpers ──────────────────────────────────────
 
@@ -97,12 +97,20 @@ function SocialBar({ links }: { links: SocialLinks }) {
 
 export default function TakumiProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
   const { t } = useI18n()
   const { takumis, isLoading } = useTakumis()
   const [cachedTakumi, setCachedTakumiState] = useState<Takumi | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [chatLoading, setChatLoading] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatPartner, setChatPartner] = useState<{
+    userId: string
+    partnerName: string
+    partnerAvatar: string
+    partnerImageUrl?: string | null
+    expertId: string
+    subcategory: string
+  } | null>(null)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
   const takumiFromList = takumis.find((tk) => tk.id === id)
@@ -146,7 +154,15 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       const res = await fetch(`/api/messages/recipient-id?expertId=${encodeURIComponent(takumi.id)}`)
       const data = await res.json()
       if (res.ok && data.userId) {
-        router.push(`/messages?with=${encodeURIComponent(data.userId)}`)
+        setChatPartner({
+          userId: data.userId,
+          partnerName: data.partnerName ?? takumi.name,
+          partnerAvatar: data.partnerAvatar ?? takumi.avatar,
+          partnerImageUrl: data.partnerImageUrl,
+          expertId: takumi.id,
+          subcategory: data.subcategory ?? takumi.subcategory ?? "",
+        })
+        setChatOpen(true)
       } else {
         toast.error(data.error || "Empfänger konnte nicht geladen werden.")
       }
@@ -262,6 +278,18 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               )}
               {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", firstName)}
             </Button>
+            {chatOpen && chatPartner && (
+              <UserChatBox
+                partnerId={chatPartner.userId}
+                partnerName={chatPartner.partnerName}
+                partnerAvatar={chatPartner.partnerAvatar}
+                partnerImageUrl={chatPartner.partnerImageUrl}
+                expertId={chatPartner.expertId}
+                subcategory={chatPartner.subcategory}
+                onClose={() => setChatOpen(false)}
+                inline
+              />
+            )}
             <Button
               onClick={() => setComposeOpen(true)}
               variant="outline"

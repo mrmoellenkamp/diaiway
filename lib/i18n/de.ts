@@ -11,6 +11,7 @@ const de = {
   "common.add": "Hinzufügen",
   "common.delete": "Löschen",
   "common.cancel": "Abbrechen",
+  "common.close": "Schließen",
   "common.abort": "Abbrechen",
   "common.loading": "Laden...",
   "common.error": "Fehler",
@@ -178,8 +179,10 @@ const de = {
   "sessions.emptyCompletedDesc": "Deine beendeten Sessions erscheinen hier.",
   "sessions.backToSessions": "Zurück zu Sessions",
 
-  // Messages
-  "messages.title": "Nachrichten",
+  // Messages / Postfach
+  "messages.title": "Postfach",
+  "messages.tabNotifications": "Benachrichtigungen",
+  "messages.tabChats": "Chats",
   "messages.empty": "Noch keine Nachrichten",
   "messages.emptyDesc": "Starte eine Unterhaltung mit einem Experten.",
   "messages.discoverCategories": "Kategorien entdecken",

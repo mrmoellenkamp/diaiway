@@ -11,6 +11,7 @@ const es = {
   "common.add": "Añadir",
   "common.delete": "Eliminar",
   "common.cancel": "Cancelar",
+  "common.close": "Cerrar",
   "common.abort": "Cancelar",
   "common.loading": "Cargando...",
   "common.error": "Error",
@@ -179,7 +180,9 @@ const es = {
   "sessions.backToSessions": "Volver a sesiones",
 
   // Messages
-  "messages.title": "Mensajes",
+  "messages.title": "Bandeja de entrada",
+  "messages.tabNotifications": "Notificaciones",
+  "messages.tabChats": "Chats",
   "messages.empty": "Aún no hay mensajes",
   "messages.emptyDesc": "Inicia una conversación con un experto.",
   "messages.discoverCategories": "Descubrir categorías",
