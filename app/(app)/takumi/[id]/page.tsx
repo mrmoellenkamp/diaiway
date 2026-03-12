@@ -128,11 +128,18 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       .catch(() => {})
   }, [id])
   if (!isLoading && !takumi) notFound()
+  if (!takumi) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="size-12 animate-spin text-primary" />
+      </div>
+    )
+  }
 
-  const firstName = takumi?.name.split(" ")[0] ?? ""
+  const firstName = takumi.name.split(" ")[0] ?? ""
 
   async function handleStartChat() {
-    if (!takumi?.id || chatLoading) return
+    if (!takumi.id || chatLoading) return
     setChatLoading(true)
     try {
       const res = await fetch(`/api/messages/recipient-id?expertId=${encodeURIComponent(takumi.id)}`)
@@ -164,7 +171,6 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           <button
             type="button"
             onClick={async () => {
-              if (!takumi) return
               const url = `https://diaiway.com/takumi/${takumi.id}`
               const ok = await shareNative({ title: takumi.name, text: takumi.bio?.slice(0, 120), url })
               if (!ok) toast.info("Teilen ist nur in der App verfügbar.")
