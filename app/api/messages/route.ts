@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
 
     // Waymail-Liste (nur MAIL, E-Mail-Browser-Layout)
     if (typeParam === "waymail") {
-      const waymails = await prisma.directMessage.findMany({
+      const raw = await prisma.directMessage.findMany({
         where: {
           recipientId: session.user.id,
           communicationType: "MAIL",
@@ -68,8 +68,9 @@ export async function GET(req: NextRequest) {
         take: 100,
         include: { sender: { select: { name: true, image: true } } },
       })
-      return NextResponse.json({
-        waymails: waymails.map((m) => ({
+      const mapped = raw.map((m) => {
+        const isSystem = !m.senderId || m.senderDisplayName === "diAiway System"
+        return {
           id: m.id,
           senderName: m.senderDisplayName ?? m.sender?.name ?? "Unbekannt",
           senderImageUrl: m.sender?.image && m.sender.image.length > 0 ? m.sender.image : null,
@@ -77,8 +78,17 @@ export async function GET(req: NextRequest) {
           textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
           timestamp: m.createdAt.getTime(),
           read: m.read,
-        })),
+          isSystemWaymail: isSystem,
+        }
       })
+      mapped.sort((a, b) => {
+        if (!a.read && b.read) return -1
+        if (a.read && !b.read) return 1
+        if (!a.isSystemWaymail && b.isSystemWaymail) return -1
+        if (a.isSystemWaymail && !b.isSystemWaymail) return 1
+        return b.timestamp - a.timestamp
+      })
+      return NextResponse.json({ waymails: mapped })
     }
 
     if (withUserId) {
@@ -164,10 +174,9 @@ export async function GET(req: NextRequest) {
         const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
 
         const now = Date.now()
-        const ONLINE_MS = 5 * 60 * 1000
-        const GRACE_MS = 60 * 1000 // 60 s Puffer: User erst nach Ablauf als offline anzeigen (verhindert Aufblinken bei kurzen Abbrüchen)
+        const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt
         const lastSeen = expert?.lastSeenAt?.getTime()
-        const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS + GRACE_MS
+        const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
 
         return {
           partnerId,

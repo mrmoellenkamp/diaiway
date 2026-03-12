@@ -72,13 +72,13 @@ export function useSecureFileUpload() {
   }, [])
 
   const statusLabel =
-    phase === "scanning"
-      ? "Scanne auf Viren…"
-      : phase === "preview"
-        ? "Generiere Vorschau…"
-        : phase === "uploading"
-          ? "Wird hochgeladen…"
-          : null
+    phase === "scanning" || phase === "preview"
+      ? "Sicherheits-Check läuft…"
+      : phase === "uploading"
+        ? "Wird hochgeladen…"
+        : null
 
-  return { upload, phase, error, result, statusLabel, reset }
+  const isScanning = phase === "scanning" || phase === "preview"
+
+  return { upload, phase, error, result, statusLabel, isScanning, reset }
 }

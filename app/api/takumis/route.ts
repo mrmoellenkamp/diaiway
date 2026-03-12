@@ -18,13 +18,12 @@ export async function GET() {
     )
 
     const now = Date.now()
-    const ONLINE_MS = 5 * 60 * 1000
-    const GRACE_MS = 60 * 1000 // 60 s Puffer vor Offline-Anzeige (verhindert Aufblinken bei kurzen Verbindungsabbrüchen)
+    const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt
 
     return NextResponse.json(
       active.map((e) => {
         const lastSeen = e.lastSeenAt?.getTime()
-        const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS + GRACE_MS
+        const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
         const isLive = e.isLive && isActuallyOnline
         return {
         id: e.id,
