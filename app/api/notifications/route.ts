@@ -64,3 +64,29 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
+
+/** DELETE — remove notifications (ids or all) */
+export async function DELETE(req: Request) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+
+  try {
+    const body = await req.json().catch(() => ({}))
+    const { ids } = body as { ids?: string[] }
+
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      await prisma.notification.deleteMany({
+        where: { id: { in: ids }, userId: session.user.id },
+      })
+    } else {
+      await prisma.notification.deleteMany({
+        where: { userId: session.user.id },
+      })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+  }
+}

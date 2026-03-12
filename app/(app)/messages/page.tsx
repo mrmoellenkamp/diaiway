@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed } from "lucide-react"
+import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -93,6 +93,24 @@ function MessagesPageContent() {
         }
       })
       .catch(() => {})
+  }
+
+  async function deleteNotification(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      const r = await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [id] }),
+      })
+      if (r.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id))
+        refreshNotificationCount?.()
+        toast.success(t("messages.notificationDeleted"))
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    }
   }
 
   async function handleBookingAction(bookingId: string, action: "confirmed" | "declined", notificationId: string) {
@@ -263,9 +281,18 @@ function MessagesPageContent() {
                       {new Date(n.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                     </p>
                   </div>
-                  {n.type === "booking_request" && n.bookingId && (
-                    <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1">
+                  <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => deleteNotification(n.id, e)}
+                      aria-label={t("common.delete")}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                    {n.type === "booking_request" && n.bookingId && (
+                      <>
                         <Button
                           size="sm"
                           className="h-7 text-xs"
@@ -284,9 +311,9 @@ function MessagesPageContent() {
                         >
                           {t("messages.bookingDecline")}
                         </Button>
-                      </div>
-                    </div>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

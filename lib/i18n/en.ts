@@ -193,6 +193,7 @@ const en = {
   "messages.bookingAlerts": "Booking notifications",
   "messages.bookingConfirm": "Confirm",
   "messages.bookingDecline": "Decline",
+  "messages.notificationDeleted": "Notification deleted",
   "messages.bookingAsk": "Ask a question",
   "messages.bookingViewDetails": "View details",
   "messages.bookingConfirmedToast": "Booking confirmed",

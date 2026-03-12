@@ -193,6 +193,7 @@ const de = {
   "messages.bookingAlerts": "Buchungsbenachrichtigungen",
   "messages.bookingConfirm": "Bestätigen",
   "messages.bookingDecline": "Ablehnen",
+  "messages.notificationDeleted": "Benachrichtigung gelöscht",
   "messages.bookingAsk": "Rückfrage stellen",
   "messages.bookingViewDetails": "Details ansehen",
   "messages.bookingConfirmedToast": "Buchung bestätigt",
