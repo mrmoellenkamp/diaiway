@@ -462,6 +462,17 @@ model SafetyIncident {
   @@index([status])
 }
 
+// Admin-Aktionen (Force Capture, Manual Release) für Audit
+model AdminActionLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   // force_capture | manual_release
+  targetType  String   // booking
+  targetId    String   // bookingId
+  details     Json?    @default("{}")
+  createdAt   DateTime @default(now())
+}
+
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
 model InvoiceCounter {
   id    String   @id @default(cuid())
