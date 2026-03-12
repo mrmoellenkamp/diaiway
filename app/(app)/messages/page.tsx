@@ -311,9 +311,15 @@ function MessagesPageContent() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : waymails.length === 0 ? (
-            <div className="rounded-xl border border-border/60 bg-card/50 px-4 py-8 text-center">
-              <Mail className="mx-auto mb-2 size-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Keine Waymails</p>
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/60 bg-card/50 px-4 py-20 text-center">
+              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+                <Mail className="size-7 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">{t("messages.waymailEmpty")}</h2>
+              <p className="max-w-xs text-sm text-muted-foreground">{t("messages.waymailEmptyDesc")}</p>
+              <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                <Link href="/categories">{t("messages.findExperts")}</Link>
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
@@ -370,7 +376,7 @@ function MessagesPageContent() {
               <h2 className="text-lg font-semibold text-foreground">{t("messages.empty")}</h2>
               <p className="max-w-xs text-sm text-muted-foreground">{t("messages.emptyDesc")}</p>
               <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href="/categories">{t("messages.discoverCategories")}</Link>
+                <Link href="/categories">{t("messages.findExperts")}</Link>
               </Button>
             </div>
           ) : (

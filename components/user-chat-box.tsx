@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { X, Send, Paperclip, Loader2, User, Check, XCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -133,10 +133,34 @@ export function UserChatBox({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
-  const { upload, phase: uploadPhase, statusLabel, reset: resetUpload } = useSecureFileUpload()
-  const scrollRef = useCallback((el: HTMLDivElement | null) => {
-    if (el) el.scrollTop = el.scrollHeight
+  const { upload, phase: uploadPhase, statusLabel, error: uploadError, reset: resetUpload } = useSecureFileUpload()
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, loading, scrollToBottom])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const handler = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height)
+      setKeyboardOffset(offset)
+      requestAnimationFrame(scrollToBottom)
+    }
+    vv.addEventListener("resize", handler)
+    vv.addEventListener("scroll", handler)
+    handler()
+    return () => {
+      vv.removeEventListener("resize", handler)
+      vv.removeEventListener("scroll", handler)
+    }
+  }, [scrollToBottom])
 
   useEffect(() => {
     if (!partnerId) return
@@ -214,10 +238,8 @@ export function UserChatBox({
     if (res.ok) {
       setPendingAttachment({ url: res.result.url, thumbnailUrl: res.result.thumbnailUrl, filename: res.result.filename })
       resetUpload()
-    } else if (res.error) {
-      resetUpload()
-      toast.error(res.error)
     }
+    // Bei Fehler: error bleibt im Hook, wird unter dem Button angezeigt (kein Toast)
   }
 
   return (
@@ -263,7 +285,10 @@ export function UserChatBox({
 
       {/* Messages */}
       <div
-        ref={scrollRef}
+        ref={(el) => {
+          scrollRef.current = el
+          if (el) scrollToBottom()
+        }}
         className={cn(
           "flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none min-h-[200px]",
           inDrawer ? "max-h-[60dvh]" : "max-h-[min(50vh,400px)]"
@@ -316,8 +341,16 @@ export function UserChatBox({
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-primary/8 bg-white/40 px-3 py-2.5">
+      {/* Input — mit Tastatur-Offset, damit das Feld bei geöffneter Tastatur sichtbar bleibt */}
+      <div
+        className="border-t border-primary/8 bg-white/40 px-3 py-2.5 shrink-0"
+        style={keyboardOffset > 0 ? { paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${keyboardOffset}px)` } : undefined}
+      >
+        {uploadError && (
+          <p className="mb-2 text-xs text-destructive" role="alert">
+            {uploadError}
+          </p>
+        )}
         {pendingAttachment && (
           <PendingAttachmentPreview
             url={pendingAttachment.url}
@@ -335,14 +368,19 @@ export function UserChatBox({
           <button
             type="button"
             onClick={handleAttach}
-            disabled={sending}
+            disabled={sending || uploadPhase === "scanning" || uploadPhase === "preview"}
             className={cn(
               "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-              sending && "pointer-events-none opacity-40"
+              (sending || uploadPhase === "scanning" || uploadPhase === "preview") && "pointer-events-none opacity-40"
             )}
             aria-label="Datei anhängen"
+            aria-busy={uploadPhase === "scanning" || uploadPhase === "preview"}
           >
-            <Paperclip className="size-3.5" />
+            {(uploadPhase === "scanning" || uploadPhase === "preview") ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Paperclip className="size-3.5" />
+            )}
           </button>
           <input
             value={input}
