@@ -90,9 +90,11 @@ function LoginContent() {
 
         if (role === "admin") {
           window.location.href = "/admin"
+        } else if (appRole === "takumi") {
+          window.location.href = "/profile"
         } else {
-          // Shugyo & Takumi → dashboard
-          window.location.href = "/dashboard"
+          // Shugyo → categories
+          window.location.href = "/categories"
         }
       }
     } catch {
