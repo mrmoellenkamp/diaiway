@@ -15,6 +15,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - [Umgebungsvariablen](#umgebungsvariablen)
 - [Datenbank](#datenbank)
 - [Rollen & Zugriff](#rollen--zugriff)
+- [Core Architecture & Communication](#core-architecture--communication)
 - [Deployment](#deployment)
 - [Dokumentation](#dokumentation)
 
@@ -202,6 +203,82 @@ npx prisma studio
 - `/dashboard/availability`: nur Takumi & Admin
 - `/admin`: nur Admin
 - Pausierte Konten: Redirect zu `/paused`
+
+---
+
+## Core Architecture & Communication
+
+### Messaging-Infrastruktur
+
+Alle Nachrichten werden in der Tabelle **DirectMessage** gespeichert. Die Differenzierung erfolgt über das Enum-Feld **`communicationType`**:
+
+| Typ | Bedeutung | Verwendung |
+|-----|-----------|------------|
+| **CHAT** | Live-Direktansprache | Nur verfügbar, wenn der Empfänger online ist. Schneller, flüchtiger Austausch (z.B. während einer Session). |
+| **MAIL** (Waymail) | Formeller Mail-Browser | Immer verfügbar. Asynchroner, dokumentierter Versand. Erfordert zwingend ein Feld `subject` (Betreff). Triggert eine externe E-Mail-Benachrichtigung. |
+
+Waymail-spezifische Felder: `subject` (Pflicht bei MAIL), `senderDisplayName` (z.B. „diAiway System“ für System-Waymails), `senderId` optional (null bei System-Waymails).
+
+---
+
+### Live-Chat Flow
+
+- **UI**: Slide-up Drawer (Bottom Sheet) via vaul auf Mobilgeräten; Inline-Ansicht auf Desktop.
+- **Presence**: Polling-basierter Heartbeat (`/api/expert/heartbeat`) alle **20 Sekunden** (Takumi mit `liveStatus === "available"`). `lastSeenAt` wird aktualisiert.
+- **30-Sekunden-Timeout**: Ein Nutzer gilt als offline, wenn der Heartbeat länger als **30 Sekunden** ausbleibt. Der „Jetzt chatten“-Button wird nur angezeigt, wenn der Takumi online ist (`isLive && lastSeenAt < 30s`).
+- **Offline-Fallback**: Bei offline Empfänger erscheint ein Hinweis mit Link zum Waymail-Editor („Du kannst ihm eine Waymail senden“).
+- **Chat-Push**: Bei neuen CHAT-Nachrichten nur Push-Benachrichtigung („X schreibt dir…“), keine E-Mail.
+- **Real-time**: Aktuell kein Pusher/WebSocket; Nachrichten werden per Polling/Fetch geladen. WebSockets/Pusher sind für Echtzeit-Refresh optional geplant.
+
+---
+
+### Waymail Flow
+
+- **Asynchron**: Waymails sind jederzeit lesbar; keine Online-Präsenz nötig.
+- **Listenansicht** (`/messages` Tab Waymails): Avatar | Betreff (fett) | Vorschau | Zeit. E-Mail-Browser-Layout (kein Chat-Bubble-Design).
+- **Deep-Linking**: E-Mail-Benachrichtigung enthält einen Button mit Deep-Link `/messages?waymail={id}`. Die Middleware speichert die vollständige URL in `callbackUrl`; nach Login wird der Nutzer exakt zu dieser Waymail weitergeleitet.
+- **Privacy-Konformität**: `sendWaymailNotificationEmail` sendet nur **Absender-Benutzername** und **Betreff**. **Kein Nachrichtentext**, keine E-Mail-Adressen im Inhalt (Content-Leak vermieden). Der Link führt zum Waymail-Reader in der App.
+- **Mark-as-Read**: Waymail wird erst beim vollständigen Laden der Detail-Ansicht als gelesen markiert (PATCH `/api/messages?waymail={id}`).
+
+---
+
+### Rollen-System (Shugyo & Takumi)
+
+- **Rollen-agnostisch**: Das Messaging-System arbeitet **nutzer-zu-nutzer**. User und Expert sind über `Expert.userId` verknüpft; die Kommunikation erfolgt über User-IDs (`senderId`, `recipientId`).
+- **Richtungen**: Kommunikation ist in alle Kombinationen möglich:
+  - **S→T** (Shugyo → Takumi): Buchungsanfragen, Chat während Session
+  - **T→S** (Takumi → Shugyo): Bestätigungen, Rückfragen, Waymails
+  - **T→T** (Takumi → Takumi): Bei entsprechenden Features möglich
+- **Template-Service**: `lib/template-service.ts` nutzt `{{sender_role}}`, `{{recipient_role}}` etc., um Mails unabhängig von der Rollen-Konstellation zu personalisieren.
+
+---
+
+### Security & Assets
+
+**Secure-File-Pipeline** (Chat & Waymail):
+
+1. **Client**: `lib/secure-file-picker.ts` validiert MIME (Bilder, PDF) und **2,5 MB Limit** vor dem Upload.
+2. **API** (`/api/files/secure-upload`): Erneute Prüfung von Typ und Größe; **Cloudmersive Virus Scan API** (falls `CLOUDMERSIVE_API_KEY` gesetzt); Thumbnail-Generierung via Sharp.
+3. **Error-Handling**:
+   - **> 2,5 MB**: „Tipp: Verkleinere das Bild oder PDF, um die maximale Größe von 2,5 MB einzuhalten.“
+   - **Viren/API-Fehler**: „Datei konnte nicht verarbeitet werden: Das Dokument entspricht nicht unseren Sicherheitsrichtlinien oder ist beschädigt.“
+4. **UI**: Fehlermeldungen erscheinen als roter Hinweistext unter dem Upload-Button; manuelles Schließen per X oder **10-Sekunden-Auto-Dismiss** im Chat-Drawer.
+
+---
+
+### Onboarding & Lifecycle
+
+- **Welcome-Waymail**: Wird ausgelöst, sobald ein neuer Nutzer erfolgreich registriert wurde (`POST /api/auth/register`). Direkt nach `prisma.user.create` wird `sendWelcomeWaymail(user.id)` asynchron aufgerufen.
+- **Template-System**: Die Welcome-Waymail nutzt das Template **`welcome-mail`** (aus `lib/template-service.ts` bzw. DB). Bei fehlendem Template wird `seedCommunicationTemplates()` ausgeführt und ein zweiter Versuch unternommen; Fallback auf hardcodierte Strings.
+
+---
+
+### Technical Debt / Next Steps
+
+- **Template-Migration**: Das Multilingual Template System (`CommunicationTemplate`, `TemplateTranslation`) ist implementiert. `lib/onboarding.ts` und `lib/notification-service.ts` (ehemals `notify-takumi.ts`) nutzen bereits `getRenderedTemplate()` und Templates (`welcome-mail`, `booking-request-paid`). **Fallback-Strings** bleiben in beiden Dateien für den Fall, dass das Template-System noch nicht geseedet wurde.
+- **Sprachwahl**: Aktuell wird `language: "de"` hardcodet. Geplant: Nutzer-Präferenz bzw. Browser-Sprache für Template-Rendering.
+- **Pusher/WebSockets**: Optional für Echtzeit-Chat; aktuell Polling.
+- **Admin-Template-Editor**: Unter `/admin/templates` mit Tabs DE/EN/ES, Variablen-Check und Test-Waymail-Funktion verfügbar.
 
 ---
 
