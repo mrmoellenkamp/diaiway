@@ -16,17 +16,17 @@ export function useSecureFileUpload() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<UploadResult | null>(null)
 
-  const upload = useCallback(async (): Promise<UploadResult | null> => {
+  const upload = useCallback(async (): Promise<{ ok: true; result: UploadResult } | { ok: false; error: string }> => {
     setError(null)
     setResult(null)
     const file = await pickFileForChat()
-    if (!file) return null
+    if (!file) return { ok: false as const, error: "" }
 
     const validation = validateFileForUpload(file)
     if (!validation.ok) {
       setError(validation.error)
       setPhase("error")
-      return null
+      return { ok: false as const, error: validation.error }
     }
 
     setPhase("scanning")
@@ -38,13 +38,15 @@ export function useSecureFileUpload() {
       const res = await fetch("/api/files/secure-upload", {
         method: "POST",
         body: formData,
+        credentials: "include",
       })
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error ?? "Upload fehlgeschlagen.")
+        const errMsg = data.error ?? "Upload fehlgeschlagen."
+        setError(errMsg)
         setPhase("error")
-        return null
+        return { ok: false as const, error: errMsg }
       }
 
       setPhase("done")
@@ -54,11 +56,12 @@ export function useSecureFileUpload() {
         filename: data.filename ?? file.name,
       }
       setResult(uploadResult)
-      return uploadResult
+      return { ok: true as const, result: uploadResult }
     } catch (e) {
-      setError("Upload fehlgeschlagen.")
+      const errMsg = "Upload fehlgeschlagen."
+      setError(errMsg)
       setPhase("error")
-      return null
+      return { ok: false as const, error: errMsg }
     }
   }, [])
 

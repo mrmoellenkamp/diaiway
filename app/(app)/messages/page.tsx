@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Paperclip } from "lucide-react"
+import { ArrowLeft, Send, MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Paperclip, Check, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -42,6 +42,66 @@ function MessageAttachment({
           <LazyImage src={thumbnailUrl || url} alt={filename || "Anhang"} className="max-h-40 rounded-lg object-contain" />
         </a>
       )}
+    </div>
+  )
+}
+
+function PendingAttachmentPreview({
+  url,
+  thumbnailUrl,
+  filename,
+  onConfirm,
+  onRemove,
+  sending,
+}: {
+  url: string
+  thumbnailUrl: string | null
+  filename: string
+  onConfirm: () => void
+  onRemove: () => void
+  sending: boolean
+}) {
+  const [thumbError, setThumbError] = useState(false)
+  const showThumb = thumbnailUrl && !thumbError
+  const isPdf = url.toLowerCase().endsWith(".pdf") || filename.toLowerCase().endsWith(".pdf")
+
+  return (
+    <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+      {showThumb ? (
+        <img
+          src={thumbnailUrl!}
+          alt=""
+          className="size-14 shrink-0 rounded-lg object-cover"
+          onError={() => setThumbError(true)}
+        />
+      ) : (
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-2xl">
+          {isPdf ? "📄" : "🖼️"}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-foreground">{filename}</p>
+        <p className="text-xs text-muted-foreground">Zum Senden auf ✓ tippen</p>
+      </div>
+      <Button
+        variant="default"
+        size="icon"
+        className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground"
+        onClick={onConfirm}
+        disabled={sending}
+        aria-label="Anhang bestätigen und senden"
+      >
+        <Check className="size-5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 shrink-0"
+        onClick={onRemove}
+        aria-label="Anhang entfernen"
+      >
+        <XCircle className="size-4" />
+      </Button>
     </div>
   )
 }
@@ -238,12 +298,13 @@ function MessagesPageContent() {
 
   async function handleAttach() {
     if (sending) return
-    const result = await upload()
-    if (result) {
-      setPendingAttachment({ url: result.url, thumbnailUrl: result.thumbnailUrl, filename: result.filename })
+    const res = await upload()
+    if (res.ok) {
+      setPendingAttachment({ url: res.result.url, thumbnailUrl: res.result.thumbnailUrl, filename: res.result.filename })
       resetUpload()
-    } else if (uploadError) {
-      toast.error(uploadError)
+    } else if (res.error) {
+      resetUpload()
+      toast.error(res.error)
     }
   }
 
@@ -298,21 +359,22 @@ function MessagesPageContent() {
 
   const unreadNotifications = notifications.filter((n) => !n.read)
 
-  // Thread detail view
+  // Thread detail view – Layout angelehnt an AI-Chatbox
   if (activeThread && thread) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] flex-col bg-background pb-16">
-        <div className="flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur-md px-4 py-3">
-          <button onClick={() => setActiveThread(null)} className="flex size-8 items-center justify-center rounded-full hover:bg-muted">
-            <ArrowLeft className="size-4" />
+      <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl pb-16">
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-primary/8 bg-primary/[0.04] px-4 py-3">
+          <button onClick={() => setActiveThread(null)} className="flex size-8 items-center justify-center rounded-full hover:bg-primary/5">
+            <ArrowLeft className="size-4 text-foreground" />
           </button>
-          <Avatar className="size-9 border border-primary/10">
+          <Avatar className="size-9 border border-primary/10 ring-1 ring-primary/10">
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
               {thread.partnerAvatar}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">
               {thread.expertId ? (
                 <Link href={`/takumi/${thread.expertId}`} className="underline-offset-2 hover:underline">
                   {thread.partnerName}
@@ -322,17 +384,18 @@ function MessagesPageContent() {
               )}
             </p>
             {thread.subcategory ? (
-              <p className="text-[11px] text-muted-foreground">{thread.subcategory}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{thread.subcategory}</p>
             ) : null}
           </div>
           {thread.expertId && (
-            <Button asChild size="sm" variant="outline" className="h-8 rounded-lg text-xs">
+            <Button asChild size="sm" variant="outline" className="h-8 rounded-lg text-xs shrink-0">
               <Link href={`/takumi/${thread.expertId}`}>{t("common.profile")}</Link>
             </Button>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-4 scrollbar-none">
+        {/* Messages */}
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none min-h-0">
           {loadingMessages ? (
             <div className="flex justify-center py-8">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -341,14 +404,28 @@ function MessagesPageContent() {
             messages.map((msg) => (
               <div
                 key={msg.id}
-                className={cn("flex", msg.sender === "user" ? "justify-end" : "justify-start")}
+                className={cn("flex gap-2.5", msg.sender === "user" ? "flex-row-reverse" : "flex-row")}
               >
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed",
+                    "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                    msg.sender === "partner"
+                      ? "bg-primary/10 ring-1 ring-primary/10 text-primary"
+                      : "bg-accent/10 ring-1 ring-accent/10"
+                  )}
+                >
+                  {msg.sender === "partner" ? (
+                    thread.partnerAvatar
+                  ) : (
+                    <User className="size-3.5 text-accent" />
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    "max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
                     msg.sender === "user"
                       ? "rounded-tr-md bg-primary/10 text-foreground"
-                      : "rounded-tl-md border border-border/40 bg-white/80 text-foreground shadow-sm"
+                      : "rounded-tl-md border border-border/30 bg-white/80 text-foreground shadow-sm"
                   )}
                 >
                   {msg.text}
@@ -365,45 +442,55 @@ function MessagesPageContent() {
           )}
         </div>
 
-        <div className="border-t border-border bg-card/95 px-4 py-3">
+        {/* Input Bar – wie AI-Chatbox */}
+        <div className="border-t border-primary/8 bg-white/40 px-3 py-2.5">
           {pendingAttachment && (
-            <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-              <span className="truncate text-xs text-muted-foreground">{pendingAttachment.filename}</span>
-              <Button variant="ghost" size="icon" className="size-6 shrink-0" onClick={() => setPendingAttachment(null)}>
-                <XCircle className="size-3" />
-              </Button>
-            </div>
+            <PendingAttachmentPreview
+              url={pendingAttachment.url}
+              thumbnailUrl={pendingAttachment.thumbnailUrl}
+              filename={pendingAttachment.filename}
+              onConfirm={handleSend}
+              onRemove={() => setPendingAttachment(null)}
+              sending={sending}
+            />
           )}
           {uploadPhase === "scanning" || uploadPhase === "preview" ? (
             <p className="mb-2 text-xs text-muted-foreground">{statusLabel}</p>
           ) : null}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-10 shrink-0"
+          <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
+            <button
+              type="button"
               onClick={handleAttach}
               disabled={sending}
-              title="Datei anhängen"
+              className={cn(
+                "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+                sending && "pointer-events-none opacity-40"
+              )}
               aria-label="Datei anhängen"
             >
-              <Paperclip className="size-5" />
-            </Button>
-            <Input
+              <Paperclip className="size-3.5" />
+            </button>
+            <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={t("messages.placeholder")}
-              className="h-10 flex-1 rounded-xl bg-muted/50 text-sm"
+              disabled={sending}
+              className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
             />
-            <Button
+            <button
               onClick={handleSend}
               disabled={(!input.trim() && !pendingAttachment) || sending}
-              size="icon"
-              className="size-10 shrink-0 rounded-xl bg-primary hover:bg-primary/90"
+              className={cn(
+                "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg transition-all",
+                (input.trim() || pendingAttachment) && !sending
+                  ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                  : "text-muted-foreground/25"
+              )}
+              aria-label="Nachricht senden"
             >
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            </Button>
+              {sending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+            </button>
           </div>
         </div>
       </div>
