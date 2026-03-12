@@ -1594,6 +1594,12 @@ export default function AdminPage() {
             </TabsList>
             <div className="mt-2 flex flex-wrap gap-1">
               <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                <Link href="/admin/finance">
+                  <CreditCard className="size-3.5" />
+                  Finance Monitoring
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
                 <Link href="/admin/safety">
                   <Shield className="size-3.5" />
                   diaiway Safety
