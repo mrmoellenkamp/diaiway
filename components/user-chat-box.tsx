@@ -139,6 +139,12 @@ export function UserChatBox({
   const [interactionLocked, setInteractionLocked] = useState(inDrawer)
 
   useEffect(() => {
+    if (!uploadError || !inDrawer) return
+    const t = setTimeout(() => clearUploadError(), 10000)
+    return () => clearTimeout(t)
+  }, [uploadError, inDrawer, clearUploadError])
+
+  useEffect(() => {
     if (!inDrawer) return
     setInteractionLocked(true)
     const t = setTimeout(() => setInteractionLocked(false), 300)

@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
         attachmentThumbnailUrl: wm.attachmentThumbnailUrl,
         attachmentFilename: wm.attachmentFilename,
         timestamp: wm.createdAt.getTime(),
+        read: wm.read,
       })
     }
 
