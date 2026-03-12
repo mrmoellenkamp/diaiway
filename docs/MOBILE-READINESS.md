@@ -1,14 +1,15 @@
-# Mobile-Readiness – iOS & Android Migration
+# Mobile-Readiness – iOS & Android (Capacitor)
 
-Diese Dokumentation bereitet die Web-App auf die spätere Migration zu iOS und Android vor. Bei der Entwicklung der Web-App sollen diese Richtlinien berücksichtigt werden, damit der Übergang zu nativen Apps reibungslos verläuft.
+**Status:** diAIway ist eine **Hybrid-App** mit Capacitor 8. iOS- und Android-Projekte sind in `ios/` und `android/` vorhanden. Diese Richtlinien unterstützen die Weiterentwicklung der nativen Builds.
 
 ---
 
 ## Inhaltsverzeichnis
 
 - [Aktueller Stand](#aktueller-stand)
+- [Capacitor & Native Plugins](#capacitor--native-plugins)
 - [Entwicklungsrichtlinien](#entwicklungsrichtlinien)
-- [Migration-Pfade](#migration-pfade)
+- [Deep-Linking & Permissions](#deep-linking--permissions)
 - [Checkliste pro Feature](#checkliste-pro-feature)
 - [Zu vermeiden](#zu-vermeiden)
 - [PWA & Manifest](#pwa--manifest)
@@ -19,12 +20,15 @@ Diese Dokumentation bereitet die Web-App auf die spätere Migration zu iOS und A
 
 | Aspekt | Status |
 |--------|--------|
+| Capacitor 8 | ✅ Hybrid-App mit `ios/` und `android/` |
 | PWA Manifest | ✅ `manifest.json` mit standalone, theme_color, icons |
 | Viewport | ✅ device-width, themeColor, initialScale |
 | Safe Area | ✅ `pb-[max(0.5rem,env(safe-area-inset-bottom))]` in BottomNav |
 | Responsive | ✅ Tailwind breakpoints, `useIsMobile` Hook |
 | Touch-Ziele | ⚠️ Mind. 44×44px prüfen |
 | Apple Icon | ✅ Referenz in metadata |
+| Deep-Linking | ✅ `deep-link-handler.tsx`, `App.getLaunchUrl()` |
+| Push (Web + Native) | ✅ Web Push + Capacitor Push Notifications |
 
 ---
 
@@ -61,27 +65,32 @@ Diese Dokumentation bereitet die Web-App auf die spätere Migration zu iOS und A
 
 ---
 
-## Migration-Pfade
+## Capacitor & Native Plugins
 
-### Option A: Capacitor (empfohlen für schnellen Start)
+Die App nutzt **Capacitor 8**. Verwendete Plugins:
 
-- **Konzept**: Web-App in nativen Container packen
-- **Vorteil**: Gleicher Code, Zugriff auf native APIs (Kamera, Push, etc.)
-- **Aufwand**: Gering – nach Web-Finalisierung
-- **Vorbereitung**: PWA-Manifest, viewport, safe-areas bereits umgesetzt
+| Plugin | Verwendung |
+|--------|------------|
+| `@capacitor/camera` | Foto-Capture |
+| `@capacitor/push-notifications` | FCM/APNs für Push |
+| `@capacitor/local-notifications` | Lokale Benachrichtigungen |
+| `@capacitor/haptics` | Haptisches Feedback |
+| `@capacitor/network` | Netzwerkstatus |
+| `@capacitor/preferences` | Key-Value-Speicher |
+| `@capacitor/share` | System-Share |
+| `@capacitor/splash-screen` | Splash-Screen |
+| `@capacitor/app` | Lifecycle, Deep-Links |
+| `capacitor-native-biometric` | Biometrie (optional) |
 
-### Option B: React Native (Expo)
+**Relevante Dateien:** `capacitor.config.ts`, `use-native-bridge.ts`, `native-utils.ts`, `deep-link-handler.tsx`, `native-test-center.tsx`
 
-- **Konzept**: UI neu in React Native, Logik teilen
-- **Vorteil**: Native Performance, eigenes Look & Feel
-- **Aufwand**: Hoch – API-Layer und Auth wiederverwenden, UI neu bauen
-- **Vorbereitung**: API-Routen sauber, Business-Logik in `lib/` ohne DOM
+---
 
-### Option C: PWA-only
+## Deep-Linking & Permissions
 
-- **Konzept**: Web-App als „Add to Home Screen“ – keine App-Stores
-- **Vorteil**: Kein Store-Review, sofort nutzbar
-- **Einschränkung**: Kein Push (außer Web Push), eingeschränkter Offline-Support
+- **Native**: `App.getLaunchUrl()` in `deep-link-handler.tsx` ausgewertet
+- **Web**: `callbackUrl` nach Login für Waymail-Links
+- **Permissions**: Camera, Push – Abfrage bei Nutzung; Push-Registrierung über `PushNotificationProvider`
 
 ---
 
@@ -125,12 +134,11 @@ Aktuell in `public/manifest.json`:
 
 ---
 
-## Nächste Schritte (nach Web-Finalisierung)
+## Nächste Schritte (laufend)
 
-1. **Capacitor evaluieren**: `npm init @capacitor/app`
-2. **iOS/Android-Projekte anlegen**: Capacitor fügt `ios/` und `android/` hinzu
-3. **Native Plugins**: Push, Kamera, etc. bei Bedarf
-4. **Store-Listing**: Icons, Screenshots, Beschreibungen vorbereiten
+1. **Touch-Ziele** auf 44×44px prüfen (Checkliste)
+2. **Store-Listing**: Icons, Screenshots, Beschreibungen aktuell halten
+3. **Testing**: Native Builds regelmäßig mit `npx cap run ios` / `npx cap run android` testen
 
 ---
 

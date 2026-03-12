@@ -473,6 +473,18 @@ model AdminActionLog {
   createdAt   DateTime @default(now())
 }
 
+// Daily.co Ghost Session: participant.left → 60s wait for rejoin → terminate (Case A/B)
+model DailyParticipantLeft {
+  id          String    @id @default(cuid())
+  room        String    // room-{bookingId}
+  sessionId   String    // participant session_id
+  leftAt      DateTime  @default(now())
+  cancelledAt DateTime? // set when participant.joined (same room) within 60s → no terminate
+
+  @@index([room])
+  @@index([leftAt])
+}
+
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
 model InvoiceCounter {
   id    String   @id @default(cuid())

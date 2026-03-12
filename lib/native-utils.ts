@@ -37,6 +37,34 @@ export function hapticLight(): void {
 }
 
 /**
+ * Mittleres Haptic (z.B. Warnung bei 4 Min Handshake).
+ */
+export function hapticMedium(): void {
+  whenNative(async () => {
+    try {
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics")
+      await Haptics.impact({ style: ImpactStyle.Medium })
+    } catch {
+      /* ignore */
+    }
+  })
+}
+
+/**
+ * Starkes Haptic (z.B. Zahlung erfasst bei 5 Min Handshake).
+ */
+export function hapticHeavy(): void {
+  whenNative(async () => {
+    try {
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics")
+      await Haptics.impact({ style: ImpactStyle.Heavy })
+    } catch {
+      /* ignore */
+    }
+  })
+}
+
+/**
  * Ist die App verbunden? (nur native – sonst true annehmen)
  */
 export async function checkConnectivity(): Promise<{ connected: boolean }> {
@@ -132,6 +160,62 @@ export async function cancelPastReminders(bookingIds: string[]): Promise<void> {
       return Math.abs(n) || 1
     })
     await LocalNotifications.cancel({ notifications: ids.map((id) => ({ id })) })
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Session active reminder channel (for background notification).
+ */
+const SESSION_ACTIVE_CHANNEL_ID = "session-active"
+
+/**
+ * Zeigt eine lokale Benachrichtigung wenn die App in den Hintergrund geht während einer Session.
+ * "Session still active. Tap to return."
+ */
+export async function scheduleSessionActiveNotification(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const { LocalNotifications } = await import("@capacitor/local-notifications")
+    if (Capacitor.getPlatform() === "android") {
+      await LocalNotifications.createChannel({
+        id: SESSION_ACTIVE_CHANNEL_ID,
+        name: "Session aktiv",
+        importance: 3,
+      })
+    }
+    const permissions = await LocalNotifications.checkPermissions()
+    let status = permissions.display
+    if (status !== "granted") {
+      const request = await LocalNotifications.requestPermissions()
+      status = request.display
+      if (status !== "granted") return
+    }
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: 9001,
+          channelId: SESSION_ACTIVE_CHANNEL_ID,
+          title: "Session aktiv",
+          body: "Session noch aktiv. Tippe zum Zurückkehren.",
+          schedule: { at: new Date(Date.now() + 500) },
+        },
+      ],
+    })
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Entfernt die "Session aktiv"-Benachrichtigung.
+ */
+export async function cancelSessionActiveNotification(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const { LocalNotifications } = await import("@capacitor/local-notifications")
+    await LocalNotifications.cancel({ notifications: [{ id: 9001 }] })
   } catch {
     /* ignore */
   }

@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
-import { releaseReservation, refundTransactionForBooking } from "@/lib/wallet-service"
-import { processCompletion } from "@/app/actions/process-completion"
+import { terminateSessionForBooking } from "@/lib/session-terminate"
 
 export const runtime = "nodejs"
-
-const HANDSHAKE_LIMIT_MS = 5 * 60 * 1000 // 5 minutes
 
 /**
  * POST /api/sessions/[id]/terminate
@@ -46,122 +42,22 @@ export async function POST(
     return NextResponse.json({ error: "Keine Berechtigung." }, { status: 403 })
   }
 
-  // ── Idempotency: already terminated ─────────────────────────────────────
-  if (booking.status === "completed" || booking.status === "cancelled_in_handshake") {
-    return NextResponse.json({
-      ok: true,
-      status: booking.status,
-      message: "Session bereits beendet.",
-    })
-  }
+  const result = await terminateSessionForBooking(bookingId)
 
-  if (booking.status !== "active") {
-    return NextResponse.json(
-      { error: `Terminierung nur aus Status "active" möglich (aktuell: ${booking.status}).` },
-      { status: 409 }
-    )
-  }
-
-  const startedAt = booking.sessionStartedAt ?? booking.createdAt
-  const durationInMs = Date.now() - new Date(startedAt).getTime()
-  const isHandshake = durationInMs < HANDSHAKE_LIMIT_MS
-
-  if (isHandshake) {
-    // ── Case A: Duration < 5 minutes — Release payment hold ────────────────
-    const piId = booking.stripePaymentIntentId
-    const isWallet = piId === "wallet"
-    const isPaid = booking.paymentStatus === "paid"
-
-    if (isPaid) {
-      if (isWallet) {
-        try {
-          const relResult = await releaseReservation(bookingId)
-          if (!relResult.ok) {
-            console.error("[terminate] Wallet releaseReservation failed:", relResult.error)
-            return NextResponse.json(
-              { error: relResult.error ?? "Freigabe fehlgeschlagen." },
-              { status: 500 }
-            )
-          }
-        } catch (err) {
-          console.error("[terminate] Wallet release error:", err)
-          return NextResponse.json(
-            { error: "Wallet-Freigabe fehlgeschlagen." },
-            { status: 500 }
-          )
-        }
-      } else if (piId) {
-        try {
-          const cancelResult = await cancelOrRefundPaymentIntent(piId)
-          if (!cancelResult.ok) {
-            console.error("[terminate] Stripe cancel failed:", cancelResult.error)
-            return NextResponse.json(
-              { error: cancelResult.error ?? "Stripe-Storno fehlgeschlagen." },
-              { status: 502 }
-            )
-          }
-          try {
-            await refundTransactionForBooking(bookingId)
-          } catch (walletErr) {
-            console.error("[terminate] refundTransactionForBooking:", walletErr)
-          }
-        } catch (err) {
-          console.error("[terminate] Stripe cancel error:", err)
-          return NextResponse.json(
-            { error: "Stripe-Storno fehlgeschlagen." },
-            { status: 502 }
-          )
-        }
-      }
+  if (!result.ok) {
+    if (result.error?.includes("nur aus Status")) {
+      return NextResponse.json({ error: result.error }, { status: 409 })
     }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: "cancelled_in_handshake",
-          sessionEndedAt: new Date(),
-          sessionDuration: Math.round(durationInMs / 60_000),
-          ...(isPaid && { paymentStatus: "refunded" as const }),
-        },
-      })
-    })
-
-    return NextResponse.json({
-      ok: true,
-      status: "cancelled_in_handshake",
-      durationMs: durationInMs,
-      message: "Handshake beendet. Zahlung wurde freigegeben.",
-    })
-  }
-
-  // ── Case B: Duration >= 5 minutes — Complete and capture ─────────────────
-  await prisma.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "completed",
-        sessionEndedAt: new Date(),
-        sessionDuration: Math.round(durationInMs / 60_000),
-      },
-    })
-  })
-
-  // processCompletion: generates invoices, moves wallet pendingBalance → balance for Takumi
-  try {
-    const result = await processCompletion(bookingId)
-    if (!result.ok && !result.error?.includes("bereits verarbeitet")) {
-      console.warn("[terminate] processCompletion:", result.error)
-    }
-  } catch (err) {
-    console.error("[terminate] processCompletion error:", err)
-    // Session is completed; completion (invoices etc.) may be retried by cron
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
   return NextResponse.json({
     ok: true,
-    status: "completed",
-    durationMs: durationInMs,
-    message: "Session abgeschlossen. Zahlung wurde eingezogen.",
+    status: result.status,
+    durationMs: result.durationMs,
+    message:
+      result.status === "cancelled_in_handshake"
+        ? "Handshake beendet. Zahlung wurde freigegeben."
+        : "Session abgeschlossen. Zahlung wurde eingezogen.",
   })
 }

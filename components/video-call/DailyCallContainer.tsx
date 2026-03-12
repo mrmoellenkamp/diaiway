@@ -5,6 +5,12 @@ import Daily from "@daily-co/daily-js"
 import type { DailyCall } from "@daily-co/daily-js"
 
 import { Button } from "@/components/ui/button"
+import {
+  cancelSessionActiveNotification,
+  hapticHeavy,
+  hapticMedium,
+  scheduleSessionActiveNotification,
+} from "@/lib/native-utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -29,6 +35,7 @@ import { useWalletTopup } from "@/lib/wallet-topup-context"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
+type ReconnectState = { phase: "waiting"; secondsLeft: number } | null
 
 type CallMode = "video" | "voice"
 type UserRole = "shugyo" | "takumi"
@@ -179,8 +186,14 @@ export function DailyCallContainer({
   const frozenAtMsRef = useRef<number | null>(null)
   const frozenDurationMsRef = useRef<number>(0)
   const balanceCentsRef = useRef<number | null>(null)
+  const joinCredentialsRef = useRef<{ url: string; token: string } | null>(null)
+  const serverSessionStartMsRef = useRef<number | null>(null)
+  const haptic4MinFiredRef = useRef(false)
+  const haptic5MinFiredRef = useRef(false)
+  const appStateRemoveRef = useRef<(() => void) | null>(null)
 
   const [isFrozen, setIsFrozen] = useState(false)
+  const [reconnectState, setReconnectState] = useState<ReconnectState>(null)
   const [isShugyoFrozen, setIsShugyoFrozen] = useState(false)
   const [balanceCentsForTimer, setBalanceCentsForTimer] = useState<number | null>(null)
   const { openWalletTopup } = useWalletTopup()
@@ -193,6 +206,13 @@ export function DailyCallContainer({
   useEffect(() => {
     balanceCentsRef.current = balanceCentsForTimer
   }, [balanceCentsForTimer])
+
+  // Server-backed session start for timer sync (no reset on reconnect)
+  useEffect(() => {
+    if (sessionStartedAt) {
+      serverSessionStartMsRef.current = new Date(sessionStartedAt).getTime()
+    }
+  }, [sessionStartedAt])
 
   // --- Cleanup: Nur Ressourcen freigeben, KEIN Redirect ---
   const performCleanup = useCallback(() => {
@@ -437,6 +457,7 @@ export function DailyCallContainer({
       if (!res.ok) throw new Error(data.error ?? "API-Fehler")
       const { url, token } = data
       if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
+      joinCredentialsRef.current = { url, token }
 
       if (!token) {
         console.error("CRITICAL: No token provided to join!")
@@ -470,7 +491,7 @@ export function DailyCallContainer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "start-session" }),
         })
-        const patchData = (await patchRes.json()) as { error?: string }
+        const patchData = (await patchRes.json()) as { error?: string; sessionStartedAt?: string }
         if (!patchRes.ok) {
           if (patchRes.status === 425) {
             await call.leave()
@@ -482,6 +503,9 @@ export function DailyCallContainer({
           }
           console.warn("[DailyCall] start-session failed:", patchData.error)
         } else {
+          if (patchData?.sessionStartedAt) {
+            serverSessionStartMsRef.current = new Date(patchData.sessionStartedAt).getTime()
+          }
           onSessionStarted?.()
         }
       } catch (startErr) {
@@ -530,7 +554,11 @@ export function DailyCallContainer({
         joinUrlRef.current?.split("/").pop() ||
         "(unbekannt)"
       console.log("INTERNER RAUM-NAME:", currentRoom)
-      sessionStartMsRef.current = Date.now()
+      if (serverSessionStartMsRef.current == null) {
+        sessionStartMsRef.current = Date.now()
+      } else {
+        sessionStartMsRef.current = serverSessionStartMsRef.current
+      }
 
       const tick = () => {
         if (useBillingTimer && sessionStartMsRef.current) {
@@ -566,7 +594,15 @@ export function DailyCallContainer({
         } else {
           setTimerSecondsLeft((prev) => {
             if (prev === null) return TIMER_DURATION_SEC
+            if (prev === 60 && !haptic4MinFiredRef.current) {
+              haptic4MinFiredRef.current = true
+              hapticMedium()
+            }
             if (prev <= 1) {
+              if (!haptic5MinFiredRef.current) {
+                haptic5MinFiredRef.current = true
+                hapticHeavy()
+              }
               timerIntervalRef.current && clearInterval(timerIntervalRef.current)
               return 0
             }
@@ -574,7 +610,12 @@ export function DailyCallContainer({
           })
         }
       }
-      setTimerSecondsLeft(useBillingTimer ? calculateRemainingTime(Date.now(), hasPaidBefore, userBalanceCents, pricePerMinuteCents) : TIMER_DURATION_SEC)
+      const startMs = sessionStartMsRef.current ?? Date.now()
+      const elapsedSec = (Date.now() - startMs) / 1000
+      const initialRemaining = useBillingTimer
+        ? calculateRemainingTime(startMs, hasPaidBefore, balanceCentsRef.current ?? userBalanceCents, pricePerMinuteCents, frozenDurationMsRef.current)
+        : Math.max(0, Math.round(TIMER_DURATION_SEC - elapsedSec))
+      setTimerSecondsLeft(initialRemaining)
       tick()
       timerIntervalRef.current = setInterval(tick, 1000)
       syncRemoteParticipant()
@@ -698,8 +739,28 @@ export function DailyCallContainer({
       }
     }
 
-    const handleError = (err: any) => console.error("DAILY AUTH ERROR:", err)
+    const handleError = (err: any) => {
+      console.error("[DailyCall] DAILY ERROR:", err)
+      setReconnectState((prev) => (prev ? prev : { phase: "waiting", secondsLeft: 60 }))
+    }
+
+    const handleCameraError = () => {
+      setReconnectState((prev) => (prev ? prev : { phase: "waiting", secondsLeft: 60 }))
+    }
+
+    const handleNetworkConnection = (ev: { action?: string; type?: string; event?: string }) => {
+      const isInterrupted =
+        ev?.action === "interrupted" ||
+        ev?.event === "interrupted" ||
+        (ev as { payload?: { action?: string } })?.payload?.action === "interrupted"
+      if (isInterrupted) {
+        setReconnectState((prev) => (prev ? prev : { phase: "waiting", secondsLeft: 60 }))
+      }
+    }
+
     call.on("error", handleError)
+    call.on("camera-error", handleCameraError)
+    call.on("network-connection", handleNetworkConnection)
     call.on("joined-meeting", handleJoinedMeeting)
     call.on("participant-joined", handleParticipantJoined)
     call.on("participant-updated", handleParticipantUpdated)
@@ -729,6 +790,8 @@ export function DailyCallContainer({
     return () => {
       clearInterval(participantsRefreshInterval)
       call.off("error", handleError)
+      call.off("camera-error", handleCameraError)
+      call.off("network-connection", handleNetworkConnection)
       call.off("joined-meeting", handleJoinedMeeting)
       call.off("participant-joined", handleParticipantJoined)
       call.off("participant-updated", handleParticipantUpdated)
@@ -738,6 +801,89 @@ export function DailyCallContainer({
       timerIntervalRef.current && clearInterval(timerIntervalRef.current)
     }
   }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId])
+
+  // --- App State: Background → local notification; Foreground → cancel notification ---
+  useEffect(() => {
+    if (phase !== "IN_CALL") return
+    import("@capacitor/app")
+      .then(({ App }) => App.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) cancelSessionActiveNotification()
+        else scheduleSessionActiveNotification()
+      }))
+      .then((l) => {
+        appStateRemoveRef.current = () => l.remove()
+      })
+      .catch(() => {})
+    return () => {
+      appStateRemoveRef.current?.()
+      appStateRemoveRef.current = null
+    }
+  }, [phase])
+
+  // --- Graceful Reconnect: 60s countdown + Capacitor Network listener ---
+  useEffect(() => {
+    if (!reconnectState || reconnectState.secondsLeft <= 0) return
+    const t = setInterval(() => {
+      setReconnectState((prev) => {
+        if (!prev || prev.secondsLeft <= 1) return null
+        return { phase: "waiting", secondsLeft: prev.secondsLeft - 1 }
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [reconnectState?.secondsLeft])
+
+  useEffect(() => {
+    if (!reconnectState || phase !== "IN_CALL") return
+    let cancelled = false
+    const tryRejoin = async () => {
+      const call = callObjectRef.current
+      if (!call || cancelled) return
+      try {
+        const { checkConnectivity } = await import("@/lib/native-utils")
+        const { connected } = await checkConnectivity()
+        if (!connected || cancelled) return
+        const res = await fetch("/api/daily/meeting", {
+          method: "POST",
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, callMode, userRole }),
+        })
+        const data = (await res.json()) as { url?: string; token?: string; error?: string }
+        if (!res.ok || !data.url || !data.token || cancelled) return
+        joinCredentialsRef.current = { url: data.url, token: data.token }
+        setReconnectState(null)
+        await call.join({
+          url: data.url,
+          token: data.token,
+          videoSource: selectedCameraId || true,
+          audioSource: selectedMicId || true,
+          startVideoOff: callMode === "voice",
+        })
+      } catch (e) {
+        console.warn("[DailyCall] Reconnect join failed:", e)
+      }
+    }
+    const poll = async () => {
+      if (cancelled) return
+      const { checkConnectivity } = await import("@/lib/native-utils")
+      const { connected } = await checkConnectivity()
+      if (connected) tryRejoin()
+    }
+    poll()
+    const id = setInterval(poll, 3000)
+    let removeNetworkListener: (() => void) | undefined
+    import("@capacitor/network")
+      .then(({ Network }) => Network.addListener("networkStatusChange", (s) => s.connected && tryRejoin()))
+      .then((l) => {
+        removeNetworkListener = () => l.remove()
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+      clearInterval(id)
+      removeNetworkListener?.()
+    }
+  }, [reconnectState, phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId])
 
   // --- Paket 4: Shugyo Freeze – Balance-Polling, Resume, 5-Min-Timeout ---
   const forceEndFromFreeze = useCallback(async () => {
@@ -1085,6 +1231,7 @@ export function DailyCallContainer({
   useEffect(() => {
     return () => {
       console.log("[DailyCall] Cleanup: Komponente unmountet – performCleanup (KEIN Redirect)")
+      cancelSessionActiveNotification()
       performCleanup()
     }
   }, [performCleanup])
@@ -1338,7 +1485,24 @@ export function DailyCallContainer({
           </div>
         )}
 
-        {showPartnerSearchWarning && (
+        {reconnectState && (
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-black/80 backdrop-blur-sm">
+            <Loader2 className="size-12 animate-spin text-primary" />
+            <p className="text-center text-base font-medium text-white">
+              Verbindung unterbrochen. Verbinde neu…
+            </p>
+            <p className="text-sm text-white/80">
+              {reconnectState.secondsLeft > 0
+                ? `Automatischer Versuch in ${reconnectState.secondsLeft}s`
+                : "Warte auf Netzwerkverbindung…"}
+            </p>
+            <p className="text-xs text-white/60">
+              Der 5-Min-Timer läuft weiter – keine doppelte Abrechnung.
+            </p>
+          </div>
+        )}
+
+        {showPartnerSearchWarning && !reconnectState && (
           <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-medium text-black">
             Suche Partner im Raum…
           </div>

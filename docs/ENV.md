@@ -68,11 +68,23 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 
 VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+v.publicKey);console.log('VAPID_PRIVATE_KEY='+v.privateKey);console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY='+v.publicKey);"`
 
+## Daily.co (Video/Voice)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `DAILY_API_KEY` | Daily.co API Key für Räume und Tokens |
+| `DAILY_WEBHOOK_SECRET` | HMAC-Geheimnis zur Signaturprüfung von `/api/webhooks/daily` (BASE-64). Im Daily-Dashboard unter Webhooks abrufbar. |
+
+**Daily Webhook Events** (im Daily-Dashboard konfigurieren):
+- `participant.left`, `participant.joined` (Ghost-Session: 60s Wartezeit auf Rejoin)
+- `meeting.ended` (sofortige Terminierung)
+
 ## Optional
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `CRON_SECRET` | Schützt `GET /api/cron/release-wallet` (24h-Freigabe). Bei Vercel Cron: `Authorization: Bearer <CRON_SECRET>` |
+| `CRON_SECRET` | Schützt Cron-Endpoints (`/api/cron/release-wallet`, `/api/cron/daily-ghost-sessions`). Bei Vercel Cron: `Authorization: Bearer <CRON_SECRET>` |
+| `DAILY_GHOST_SECRET` | Alternative zu CRON_SECRET nur für `/api/cron/daily-ghost-sessions` |
 | `TZ` | Timezone (z.B. `Europe/Berlin` für CET/CEST) |
 
 ---
