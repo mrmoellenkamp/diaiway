@@ -36,14 +36,13 @@ export async function GET(req: NextRequest) {
   const waymailId = req.nextUrl.searchParams.get("waymail")
 
   try {
-    // Einzelne Waymail lesen (?waymail=id)
+    // Einzelne Waymail lesen (?waymail=id) — mark-as-read erfolgt clientseitig nach vollständigem Laden des Readers
     if (waymailId) {
       const wm = await prisma.directMessage.findFirst({
         where: { id: waymailId, recipientId: session.user.id, communicationType: "MAIL" },
         include: { sender: { select: { name: true, image: true } } },
       })
       if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
-      await prisma.directMessage.update({ where: { id: wm.id }, data: { read: true } })
       return NextResponse.json({
         id: wm.id,
         senderName: wm.senderDisplayName ?? wm.sender?.name ?? "Unbekannt",
@@ -80,13 +79,6 @@ export async function GET(req: NextRequest) {
           read: m.read,
           isSystemWaymail: isSystem,
         }
-      })
-      mapped.sort((a, b) => {
-        if (!a.read && b.read) return -1
-        if (a.read && !b.read) return 1
-        if (!a.isSystemWaymail && b.isSystemWaymail) return -1
-        if (a.isSystemWaymail && !b.isSystemWaymail) return 1
-        return b.timestamp - a.timestamp
       })
       return NextResponse.json({ waymails: mapped })
     }
@@ -342,6 +334,29 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     console.error("[messages] POST error:", err)
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+  }
+}
+
+/** PATCH — Waymail als gelesen markieren (wird nach vollständigem Laden des Readers aufgerufen) */
+export async function PATCH(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
+  }
+  const waymailId = req.nextUrl.searchParams.get("waymail")
+  if (!waymailId) {
+    return NextResponse.json({ error: "waymail id fehlt." }, { status: 400 })
+  }
+  try {
+    const wm = await prisma.directMessage.findFirst({
+      where: { id: waymailId, recipientId: session.user.id, communicationType: "MAIL" },
+    })
+    if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
+    await prisma.directMessage.update({ where: { id: wm.id }, data: { read: true } })
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error("[messages] PATCH error:", err)
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

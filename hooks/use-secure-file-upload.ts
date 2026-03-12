@@ -17,10 +17,10 @@ export function useSecureFileUpload() {
   const [result, setResult] = useState<UploadResult | null>(null)
 
   const upload = useCallback(async (): Promise<{ ok: true; result: UploadResult } | { ok: false; error: string }> => {
-    setError(null)
     setResult(null)
     const file = await pickFileForChat()
     if (!file) return { ok: false as const, error: "" }
+    setError(null) // Erst bei neuer Dateiauswahl den vorherigen Fehler löschen
 
     const validation = validateFileForUpload(file)
     if (!validation.ok) {
@@ -71,6 +71,11 @@ export function useSecureFileUpload() {
     setResult(null)
   }, [])
 
+  const clearError = useCallback(() => {
+    setError(null)
+    setPhase("idle")
+  }, [])
+
   const statusLabel =
     phase === "scanning" || phase === "preview"
       ? "Sicherheits-Check läuft…"
@@ -80,5 +85,5 @@ export function useSecureFileUpload() {
 
   const isScanning = phase === "scanning" || phase === "preview"
 
-  return { upload, phase, error, result, statusLabel, isScanning, reset }
+  return { upload, phase, error, result, statusLabel, isScanning, reset, clearError }
 }

@@ -145,7 +145,12 @@ function MessagesPageContent() {
       setSelectedWaymailId(waymailParam)
       fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`)
         .then((r) => r.json())
-        .then((d) => (d.error ? null : setWaymailDetail(d)))
+        .then((d) => {
+          if (d.error) return
+          setWaymailDetail(d)
+          fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
+          setWaymails((prev) => prev.map((w) => (w.id === waymailParam ? { ...w, read: true } : w)))
+        })
         .catch(() => setWaymailDetail(null))
     }
   }, [waymailParam])
@@ -332,14 +337,16 @@ function MessagesPageContent() {
                     setSelectedWaymailId(wm.id)
                     fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`)
                       .then((r) => r.json())
-                      .then((d) => (d.error ? null : setWaymailDetail(d)))
+                      .then((d) => {
+                        if (d.error) return
+                        setWaymailDetail(d)
+                        fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" }).catch(() => {})
+                        setWaymails((prev) => prev.map((w) => (w.id === wm.id ? { ...w, read: true } : w)))
+                      })
                       .catch(() => setWaymailDetail(null))
                   }}
                   onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}
-                  className={cn(
-                    "flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30",
-                    !wm.read && "bg-accent/5"
-                  )}
+                  className="flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30"
                 >
                   {wm.isSystemWaymail ? (
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title="diAiway System">
@@ -353,12 +360,17 @@ function MessagesPageContent() {
                       </AvatarFallback>
                     </Avatar>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
-                    <p className="truncate text-xs text-muted-foreground">{wm.textPreview}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/70">
-                      {new Date(wm.timestamp).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
-                    </p>
+                  <div className="flex min-w-0 flex-1 items-start gap-2">
+                    {!wm.read && (
+                      <span className="mt-1.5 shrink-0 flex size-2 rounded-full bg-blue-500" aria-hidden title="Ungelesen" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
+                      <p className="truncate text-xs text-muted-foreground">{wm.textPreview}</p>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                        {new Date(wm.timestamp).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
