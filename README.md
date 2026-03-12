@@ -30,7 +30,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Sessions**: 5 Min Handshake (Probezeit) gratis, dann bezahlte Session
 - **Handshake-Overlay**: Nach Probezeit erscheint Zahlungsdialog für Session-Fortsetzung; Stripe Embedded Checkout oder Wallet
 - **Wallet**: Guthaben für Rückerstattungen; Zahlung mit Wallet bei Buchung möglich
-- **Benachrichtigungen**: Buchungsbestätigungen in Nachrichten
+- **Benachrichtigungen**: Buchungsbestätigungen in Nachrichten; einzeln aus der Liste löschbar
 - **Profil**: Favoriten, Sessions, Profilnamen als Links zu `/user/[id]`, Konto pausieren/löschen (DSGVO)
 - **Safety**: Snapshot-Einwilligung für diAIway Safety Enforcement (Pre-Check, Live-Monitoring); bei Voice-Calls entfällt Pre-Check
 
@@ -93,7 +93,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 │   │   ├── admin/          # Admin-APIs, Safety Incidents
 │   │   ├── auth/           # Auth, Register, Reset
 │   │   ├── bookings/       # Buchungen, pay-with-wallet, notify-takumi
-│   │   ├── notifications/  # Benachrichtigungen
+│   │   ├── notifications/  # Benachrichtigungen (GET, PATCH, DELETE)
 │   │   ├── safety/         # Pre-Check, Alert-Snapshot
 │   │   ├── user/           # Profil, Takumi-Profil, Account
 │   │   ├── users/[id]/     # Öffentliches Profil pro User
