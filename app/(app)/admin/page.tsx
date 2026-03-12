@@ -1080,7 +1080,7 @@ function FinanceTab() {
     return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
   }
 
-  async function handleExport(type: "zip" | "datev") {
+  async function handleExport(type: "zip" | "datev" | "csv") {
     if (!exportFrom || !exportTo) { toast.error("Bitte Zeitraum eingeben."); return }
     const days = exportDays()
     if (days > MAX_EXPORT_DAYS) {
@@ -1089,24 +1089,27 @@ function FinanceTab() {
     }
     setExporting(true)
     try {
-      const path = type === "zip" ? "/api/admin/finance/export" : "/api/admin/finance/datev"
-      const res = await fetch(`${path}?from=${exportFrom}&to=${exportTo}`)
+      const path = type === "zip" ? "/api/admin/finance/export" : type === "csv" ? "/api/admin/finance/export" : "/api/admin/finance/datev"
+      const url = type === "csv" ? `${path}?from=${exportFrom}&to=${exportTo}&format=csv` : `${path}?from=${exportFrom}&to=${exportTo}`
+      const res = await fetch(url)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         toast.error(err.error ?? "Export fehlgeschlagen.")
         return
       }
       const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
+      const blobUrl = URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url
+      a.href = blobUrl
       a.download = type === "zip"
         ? `diaiway_finance_${exportFrom}_${exportTo}.zip`
-        : `diaiway_datev_${exportFrom}_${exportTo}.csv`
+        : type === "csv"
+          ? `diaiway_export_${exportFrom}_${exportTo}.csv`
+          : `diaiway_datev_${exportFrom}_${exportTo}.csv`
       a.click()
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(blobUrl)
       setExportDialogOpen(false)
-      toast.success(type === "zip" ? "ZIP heruntergeladen." : "DATEV-CSV heruntergeladen.")
+      toast.success(type === "zip" ? "ZIP heruntergeladen." : type === "csv" ? "Financial CSV heruntergeladen." : "DATEV-CSV heruntergeladen.")
     } catch { toast.error("Export fehlgeschlagen.") }
     finally { setExporting(false) }
   }
@@ -1481,6 +1484,10 @@ function FinanceTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setExportDialogOpen(false)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => handleExport("csv")} disabled={exporting || !exportFrom || !exportTo || exportDays() > MAX_EXPORT_DAYS} className="gap-2">
+              {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+              CSV (Financial)
+            </Button>
             <Button variant="outline" onClick={() => handleExport("datev")} disabled={exporting || !exportFrom || !exportTo || exportDays() > MAX_EXPORT_DAYS} className="gap-2">
               {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
               CSV (DATEV)
