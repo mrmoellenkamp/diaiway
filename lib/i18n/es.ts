@@ -193,6 +193,7 @@ const es = {
   "messages.bookingAlerts": "Notificaciones de reservas",
   "messages.bookingConfirm": "Confirmar",
   "messages.bookingDecline": "Rechazar",
+  "messages.notificationDeleted": "Notificación eliminada",
   "messages.bookingAsk": "Preguntar",
   "messages.bookingViewDetails": "Ver detalles",
   "messages.bookingConfirmedToast": "Reserva confirmada",
