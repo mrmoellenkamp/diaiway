@@ -470,28 +470,6 @@ const en = {
   // Global Nav titles
   "globalNav.availability": "My Availability",
 
-  // Dashboard
-  "dashboard.greeting": "Hi",
-  "dashboard.nextSessions": "Next Sessions",
-  "dashboard.liveRadar": "Live Radar (Favorites online)",
-  "dashboard.projectStatus": "Project Status (AI Guide)",
-  "dashboard.wallet": "Wallet",
-  "dashboard.walletBalance": "Balance",
-  "dashboard.pendingBookings": "Booking Requests (Pending)",
-  "dashboard.earningsOverview": "Earnings Overview",
-  "dashboard.availabilityCalendar": "Availability Calendar",
-  "dashboard.profileStatus": "Profile Status",
-  "dashboard.noNextSessions": "No upcoming sessions",
-  "dashboard.viewSessions": "All Sessions",
-  "dashboard.noFavoritesOnline": "No favorites online",
-  "dashboard.openAiGuide": "Open AI Guide",
-  "dashboard.openWallet": "Wallet & Finances",
-  "dashboard.viewPending": "Review requests",
-  "dashboard.pendingCount": "{count} open",
-  "dashboard.earningsTotal": "Earned (total)",
-  "dashboard.openAvailability": "Manage availability",
-  "dashboard.openProfile": "View profile",
-
   // Edit Profile
   "editProfile.title": "Edit Profile",
   "editProfile.personalData": "Personal Data",

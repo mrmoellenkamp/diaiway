@@ -15,7 +15,7 @@ export function AppHeader({ title }: { title?: string }) {
   return (
     <header className="sticky top-0 z-50 isolate border-b border-border bg-card/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-        <Link href="/dashboard" className="flex min-h-11 min-w-11 items-center justify-center gap-2 -m-1 p-1 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors">
+        <Link href="/" className="flex min-h-11 min-w-11 items-center justify-center gap-2 -m-1 p-1 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary shrink-0">
             <span className="text-sm font-bold text-primary-foreground">di</span>
           </div>
