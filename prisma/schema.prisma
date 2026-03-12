@@ -34,6 +34,7 @@ enum BookingStatus {
   completed
   declined
   cancelled
+  cancelled_in_handshake  // Session < 5 min: payment released, no charge
 }
 
 enum PaymentStatus {

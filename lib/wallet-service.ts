@@ -413,6 +413,15 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
 }
 
 /**
+ * Release reservation for handshake (< 5 min): revert wallet amount to Shugyo balance.
+ * Used when session ends before handshake limit; equivalent to creditRefundToShugyoWallet
+ * for pre-capture wallet payments.
+ */
+export async function releaseReservation(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  return creditRefundToShugyoWallet(bookingId)
+}
+
+/**
  * Refund bei Buchungsstornierung (nach erfolgreichem Stripe-Refund).
  * Wird von der Buchungs-API aufgerufen, wenn User/Expert storniert und Stripe refunded.
  */
