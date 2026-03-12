@@ -169,7 +169,6 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 
   const pendingBookings = takumiBookings.filter((b) => b.status === "pending")
 
-  const favorites = userProfile?.favorites ?? []
   const nowTs = Date.now()
   const favoritesOnline: FavoriteOnline[] = expertsAll
     .filter(
