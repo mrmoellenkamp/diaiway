@@ -15,6 +15,8 @@ import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
 import { InstantRequestOverlay } from '@/components/instant-request-overlay'
 import { WalletTopupProvider } from '@/lib/wallet-topup-context'
 import { ScrollToTop } from '@/components/scroll-to-top'
+import { SplashScreenHider } from '@/components/splash-screen-hider'
+import { DeepLinkHandler } from '@/components/deep-link-handler'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -73,6 +75,8 @@ export default function RootLayout({
                 <AppProvider>
                   <WalletTopupProvider>
                   <PushNotificationProvider>
+                    <DeepLinkHandler />
+                    <SplashScreenHider />
                     <ScrollToTop />
                     <GlobalNavigation />
                     {children}

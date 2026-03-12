@@ -113,6 +113,7 @@ export function WalletTopupModal({
     }
     setConfirming(false)
     if (ok) {
+      import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
       toast.success(t("finances.topupSuccess"))
       onOpenChange(false)
       onSuccess?.()

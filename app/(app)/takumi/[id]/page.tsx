@@ -13,12 +13,14 @@ import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2,
+  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2, Share2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import type { SocialLinks } from "@/lib/types"
+import type { SocialLinks, Takumi } from "@/lib/types"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
+import { shareNative } from "@/lib/native-utils"
+import { getCachedTakumi, setCachedTakumi } from "@/lib/offline-cache"
 import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 
@@ -97,12 +99,24 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   const { id } = use(params)
   const router = useRouter()
   const { t } = useI18n()
-  const { takumis } = useTakumis()
+  const { takumis, isLoading } = useTakumis()
+  const [cachedTakumi, setCachedTakumiState] = useState<Takumi | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [chatLoading, setChatLoading] = useState(false)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
 
-  const takumi = takumis.find((tk) => tk.id === id)
+  const takumiFromList = takumis.find((tk) => tk.id === id)
+  const takumi = takumiFromList ?? cachedTakumi
+
+  useEffect(() => {
+    if (!id) return
+    getCachedTakumi(id).then((c) => c && setCachedTakumiState(c))
+  }, [id])
+  useEffect(() => {
+    if (takumiFromList) {
+      setCachedTakumi(id, takumiFromList)
+    }
+  }, [id, takumiFromList])
 
   useEffect(() => {
     if (!id) return
@@ -113,7 +127,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       })
       .catch(() => {})
   }, [id])
-  if (!takumi) notFound()
+  if (!isLoading && !takumi) notFound()
 
   const firstName = takumi?.name.split(" ")[0] ?? ""
 
@@ -140,12 +154,26 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       {/* Cover Area */}
       <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
-        <Link
-          href="/home"
-          className="absolute left-4 top-4 z-10 flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
-        >
-          <ArrowLeft className="size-4 text-white" />
-        </Link>
+        <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
+          <Link
+            href="/home"
+            className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
+          >
+            <ArrowLeft className="size-4 text-white" />
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              const url = `https://diaiway.com/takumi/${takumi.id}`
+              const ok = await shareNative({ title: takumi.name, text: takumi.bio?.slice(0, 120), url })
+              if (!ok) toast.info("Teilen ist nur in der App verfügbar.")
+            }}
+            className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
+            aria-label="Profil teilen"
+          >
+            <Share2 className="size-4 text-white" />
+          </button>
+        </div>
       </div>
 
       <PageContainer className="-mt-12 relative z-10">

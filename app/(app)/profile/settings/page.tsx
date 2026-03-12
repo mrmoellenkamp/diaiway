@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { NativeTestCenter } from "@/components/native-test-center"
 
 export default function SettingsPage() {
   const { t } = useI18n()
@@ -152,6 +153,9 @@ export default function SettingsPage() {
             </AlertDialog>
           </CardContent>
         </Card>
+
+        {/* Native Features (nur in der App) */}
+        <NativeTestCenter />
 
         {/* Passwortverwaltung */}
         <Card>

@@ -34,6 +34,8 @@ export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteBut
     setIsAnimating(true)
     const added = await toggleFavorite(takumiId)
 
+    import("@/lib/native-utils").then(({ hapticLight }) => hapticLight())
+
     if (added === true) {
       toast.success(t("favorites.added"))
     } else if (added === false) {

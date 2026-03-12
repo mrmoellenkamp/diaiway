@@ -28,4 +28,6 @@ ios/DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 **/xcshareddata/swiftpm/
-out/
+out/*
+!out/index.html
+!out/error.html
