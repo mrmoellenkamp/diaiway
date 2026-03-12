@@ -65,6 +65,9 @@ export async function GET(req: NextRequest) {
           senderName: m.sender?.name,
           timestamp: m.createdAt.getTime(),
           read: m.read,
+          attachmentUrl: m.attachmentUrl,
+          attachmentThumbnailUrl: m.attachmentThumbnailUrl,
+          attachmentFilename: m.attachmentFilename,
         })),
       })
     }
@@ -156,16 +159,20 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { recipientUserId, recipientExpertId, text, notifyByEmail } = body as {
+    const { recipientUserId, recipientExpertId, text, notifyByEmail, attachmentUrl, attachmentThumbnailUrl, attachmentFilename } = body as {
       recipientUserId?: string
       recipientExpertId?: string
       text?: string
       notifyByEmail?: boolean
+      attachmentUrl?: string
+      attachmentThumbnailUrl?: string
+      attachmentFilename?: string
     }
 
     const trimmed = typeof text === "string" ? text.trim() : ""
-    if (!trimmed) {
-      return NextResponse.json({ error: "Nachricht darf nicht leer sein." }, { status: 400 })
+    const hasAttachment = typeof attachmentUrl === "string" && attachmentUrl.length > 0
+    if (!trimmed && !hasAttachment) {
+      return NextResponse.json({ error: "Nachricht oder Anhang erforderlich." }, { status: 400 })
     }
 
     const recipientId = await resolveRecipientUserId(recipientExpertId, recipientUserId)
@@ -177,7 +184,10 @@ export async function POST(req: Request) {
       data: {
         senderId: session.user.id,
         recipientId,
-        text: trimmed,
+        text: trimmed || "(Anhang)",
+        attachmentUrl: hasAttachment ? attachmentUrl : null,
+        attachmentThumbnailUrl: attachmentThumbnailUrl || null,
+        attachmentFilename: attachmentFilename || null,
       },
     })
 
@@ -223,6 +233,9 @@ export async function POST(req: Request) {
       sender: "user",
       timestamp: message.createdAt.getTime(),
       recipientUserId: recipientId,
+      attachmentUrl: message.attachmentUrl,
+      attachmentThumbnailUrl: message.attachmentThumbnailUrl,
+      attachmentFilename: message.attachmentFilename,
     })
   } catch (err) {
     console.error("[messages] POST error:", err)
