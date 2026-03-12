@@ -12,7 +12,7 @@ export function BottomNav() {
   const { t } = useI18n()
 
   const navItems: { href: string; label: string; icon: typeof Home | null; brand?: boolean }[] = [
-    { href: "/home", label: t("common.home"), icon: Home },
+    { href: "/dashboard", label: t("common.home"), icon: Home },
     { href: "/categories", label: t("common.categories"), icon: LayoutGrid },
     { href: "/ai-guide", label: "diAiway", icon: MessageSquare, brand: true },
     { href: "/messages", label: t("messages.title"), icon: Mail },

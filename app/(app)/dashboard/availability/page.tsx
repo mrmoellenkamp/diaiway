@@ -176,7 +176,7 @@ export default function AvailabilityPage() {
   const appRole = (session?.user as { appRole?: string })?.appRole
   useEffect(() => {
     if (authStatus === "authenticated" && appRole !== "takumi" && userRole !== "admin") {
-      router.replace("/home")
+      router.replace("/dashboard")
     }
   }, [authStatus, appRole, userRole, router])
 

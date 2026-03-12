@@ -51,7 +51,7 @@ export default authMiddleware((req) => {
     if (!isLoggedIn)
       return NextResponse.redirect(new URL("/login?callbackUrl=/admin", req.url))
     if (role !== "admin")
-      return NextResponse.redirect(new URL("/home", req.url))
+      return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
   // Availability dashboard — only takumi (appRole) and admin (role)
@@ -61,7 +61,7 @@ export default authMiddleware((req) => {
         new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
       )
     if (appRole !== "takumi" && role !== "admin")
-      return NextResponse.redirect(new URL("/home", req.url))
+      return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
   // Takumi Portfolio — alle eingeloggten Nutzer (Projekte bleiben bei Rollenwechsel erhalten)

@@ -470,6 +470,28 @@ const es = {
   // Global Nav titles
   "globalNav.availability": "Mi disponibilidad",
 
+  // Dashboard
+  "dashboard.greeting": "Hola",
+  "dashboard.nextSessions": "Próximas sesiones",
+  "dashboard.liveRadar": "Radar en vivo (Favoritos online)",
+  "dashboard.projectStatus": "Estado del proyecto (Guía IA)",
+  "dashboard.wallet": "Monedero",
+  "dashboard.walletBalance": "Saldo",
+  "dashboard.pendingBookings": "Solicitudes de reserva (Pendientes)",
+  "dashboard.earningsOverview": "Resumen de ingresos",
+  "dashboard.availabilityCalendar": "Calendario de disponibilidad",
+  "dashboard.profileStatus": "Estado del perfil",
+  "dashboard.noNextSessions": "Sin sesiones programadas",
+  "dashboard.viewSessions": "Todas las sesiones",
+  "dashboard.noFavoritesOnline": "Sin favoritos online",
+  "dashboard.openAiGuide": "Abrir Guía IA",
+  "dashboard.openWallet": "Monedero y finanzas",
+  "dashboard.viewPending": "Revisar solicitudes",
+  "dashboard.pendingCount": "{count} abiertas",
+  "dashboard.earningsTotal": "Ganado (total)",
+  "dashboard.openAvailability": "Gestionar disponibilidad",
+  "dashboard.openProfile": "Ver perfil",
+
   // Edit Profile
   "editProfile.title": "Editar perfil",
   "editProfile.personalData": "Datos personales",

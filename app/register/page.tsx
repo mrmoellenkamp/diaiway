@@ -160,7 +160,7 @@ function RegisterForm() {
       setRole(selectedRole)
       setIsLoggedIn(true)
       toast.success(t("register.success"))
-      window.location.href = "/profile"
+      window.location.href = "/dashboard"
     } catch {
       setError(t("register.errorNetwork"))
     } finally {
