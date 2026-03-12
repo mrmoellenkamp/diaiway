@@ -17,6 +17,7 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   if (pathname.startsWith("/messages")) return t("messages.title")
   if (pathname.startsWith("/ai-guide")) return t("common.aiGuide")
   if (pathname.startsWith("/profile")) return t("common.profile")
+  if (pathname === "/dashboard") return t("common.home")
   if (pathname.startsWith("/dashboard/availability")) return t("globalNav.availability")
   if (pathname.startsWith("/admin")) return t("profile.adminDashboard")
   if (pathname.startsWith("/legal/agb")) return t("landing.terms")

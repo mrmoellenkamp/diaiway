@@ -184,7 +184,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
         <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
           <Link
-            href="/home"
+            href="/dashboard"
             className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
           >
             <ArrowLeft className="size-4 text-white" />
