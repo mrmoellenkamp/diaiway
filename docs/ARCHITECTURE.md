@@ -94,7 +94,8 @@ diAIway ist eine **Hybrid-App**: Next.js 16 (App Router) mit Capacitor 8 für iO
 | `/api/auth/heartbeat` | POST | Session-Liveness |
 | `/api/user/profile` | GET, PATCH | Profil |
 | `/api/user/profile-preview` | GET | Profil-Vorschau |
-| `/api/user/account` | PATCH | Konto |
+| `/api/user/account` | PATCH | Konto pausieren/resumieren; Takumi: sofort `liveStatus: offline` |
+| `/api/user/account` | DELETE | Konto anonymisieren (DSGVO); Blob-Bilder löschen; Admin geschützt |
 | `/api/user/favorites` | GET, PATCH | Favoriten |
 | `/api/user/balance` | GET | Guthaben |
 | `/api/user/takumi-profile` | GET | Takumi-Profil des Users |
@@ -175,8 +176,10 @@ diAIway ist eine **Hybrid-App**: Next.js 16 (App Router) mit Capacitor 8 für iO
 |-------|---------|--------------|
 | `/api/admin/stats` | GET | Statistiken |
 | `/api/admin/verify` | GET | Admin-Check |
-| `/api/admin/users` | GET | Nutzer-Liste |
+| `/api/admin/health-check` | GET | Cron-Logs, Stripe-Escrow-Risiken, Wallet-Integrität, Push-Reachability |
+| `/api/admin/users` | GET | Nutzer-Liste (inkl. Anonymisierte: `@anonymized.local`) |
 | `/api/admin/users/[id]` | GET, PATCH | Nutzer-Detail |
+| `/api/admin/users/[id]` | DELETE | Nutzer anonymisieren (nicht Admin); Blob-Delete |
 | `/api/admin/users/[id]/profile` | GET, PATCH | Nutzer-Profil |
 | `/api/admin/bookings` | GET | Buchungsübersicht |
 | `/api/admin/reset-db` | POST | DB zurücksetzen (Dev) |
@@ -215,6 +218,34 @@ diAIway ist eine **Hybrid-App**: Next.js 16 (App Router) mit Capacitor 8 für iO
 |-------|---------|--------------|
 | `/api/health` | GET | Health-Check |
 | `/api/test/*` | - | E2E/Dev-Endpoints |
+
+---
+
+## Admin-Architektur & Kontoverwaltung
+
+Details: [docs/ADMIN.md](./ADMIN.md)
+
+### Admin-Layout
+
+- `app/(app)/admin/layout.tsx`: Server Component mit Auth- und Prisma-Role-Check
+- Alle `/admin/*` Routen durch Layout geschützt; entkoppelt vom Profil-Kontext
+
+### Health-Check (`/admin/health-check`)
+
+- **CronRunLog**: Letzte Laufzeiten für `release-wallet`, `experts-offline`
+- **Stripe-Escrow**: Buchungen `paid` &gt; 6 Tage, Transaktion AUTHORIZED/PENDING; Force-Capture-Button
+- **Wallet-Integrität**: Summe `WalletTransaction.amountCents` vs. `User.balance`
+- **Push-Reachability**: Anteil verfügbarer Takumis ohne Push/FCM
+
+### DSGVO-Kontoverwaltung
+
+- **Anonymisierung** (`lib/anonymize-user.ts`): User-Record bleibt; Name/E-Mail → `user_deleted_xxx@anonymized.local`
+- **Blob**: Profilbilder physisch gelöscht; Wallet-Historie erhalten
+- **Admin-Schutz**: Admin-Konten können nicht anonymisiert werden
+
+### Pause-Logik
+
+- `PATCH /api/user/account` mit `action: "pause"` setzt `Expert.liveStatus: "offline"` → Takumi sofort nicht mehr im Instant-Connect
 
 ---
 
@@ -267,7 +298,8 @@ diAIway ist eine **Hybrid-App**: Next.js 16 (App Router) mit Capacitor 8 für iO
 - **Rate-Limiting**: Auth-Endpoints (Register, Login, Forgot-Password)
 - **Honeypot**: Anti-Bot bei Formularen
 - **Security-Headers**: X-Frame-Options, HSTS, etc. (middleware.ts)
-- **DSGVO**: Konto löschen anonymisiert Buchungen, löscht Reviews
+- **DSGVO-Kontoverwaltung**: Anonymisierung statt Hard-Delete (`lib/anonymize-user.ts`); Name/E-Mail → Platzhalter; Wallet-Historie erhalten; Blob-Bilder physisch gelöscht; Admin-Konten geschützt
+- **Admin-Guard**: `app/(app)/admin/layout.tsx` prüft NextAuth + Prisma-Rolle serverseitig
 - **Safety Enforcement**: Vision API, Vercel Blob für Incidents
 - **Secure Upload**: Cloudmersive-Virenscan, Streaming-Uploads
 

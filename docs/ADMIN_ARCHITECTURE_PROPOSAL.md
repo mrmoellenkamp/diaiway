@@ -1,7 +1,7 @@
 # Admin-Architektur: Vorschlag zur Bestätigung
 
-**Status:** Zur Freigabe vor Implementierung  
-**Priorität:** HOCH – Zero-Error für diaiway.com
+**Status:** ✅ Implementiert (März 2026)  
+**Dokumentation:** [docs/ADMIN.md](./ADMIN.md)
 
 ---
 

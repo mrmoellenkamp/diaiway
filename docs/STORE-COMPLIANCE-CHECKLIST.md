@@ -60,9 +60,35 @@
 
 ---
 
+## 5. DSGVO-konforme Kontoverwaltung (App Store)
+
+### Konto löschen (Anonymisierung)
+
+| Aspekt | Implementierung |
+|--------|------------------|
+| **Kein Hard-Delete** | User-Record bleibt; Name/E-Mail → Platzhalter `user_deleted_xxx@anonymized.local` |
+| **Wallet-Historie** | Erhalten (§ 147 AO); `WalletTransaction` weiterhin dem anonymisierten User zugeordnet |
+| **Profilbilder** | Physisch aus Vercel Blob gelöscht (`del()` nach DB-Transaktion) |
+| **DB-Transaktion** | Alle Schritte in `prisma.$transaction`; Blob-Delete danach |
+| **Admin-Schutz** | Admin-Konten können nicht gelöscht werden (Fehlermeldung) |
+
+**Routen:**
+- `DELETE /api/user/account` – Selbstlöschung (Profil → Konto)
+- `DELETE /api/admin/users/[id]` – Admin-Löschung (Dashboard → Nutzer)
+
+**Prüfung:** Test-User registrieren, löschen, im Admin-Dashboard prüfen: Badge „Anonymisiert“, E-Mail `@anonymized.local`.
+
+### Konto pausieren
+
+- Takumi: `liveStatus` wird sofort auf `offline` gesetzt → erscheint nicht mehr im Instant-Connect
+- Pausierte Nutzer: Redirect zu `/paused`; Reaktivierung jederzeit möglich
+
+---
+
 ## Pre-Submission
 
 - [ ] Replace placeholder/custom icons and splash with final brand assets
 - [ ] Confirm `google-services.json` present for FCM (Android push)
 - [ ] Test deep links: `https://diaiway.com/messages?waymail=...`
 - [ ] Verify `CFBundleDisplayName` / `app_name` for store listing
+- [ ] DSGVO: Test Konto löschen (Anonymisierung), im Admin prüfen

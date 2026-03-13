@@ -34,7 +34,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Handshake-Logik**: &lt; 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
 - **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
 - **Benachrichtigungen**: Buchungsbestätigungen; löschbar; **Push-Benachrichtigungen** (Web Push + Capacitor)
-- **Profil**: Favoriten, Sessions, Konto pausieren/löschen (DSGVO)
+- **Profil**: Favoriten, Sessions; **Konto pausieren** (sofort offline als Takumi); **Konto löschen** (DSGVO-Anonymisierung: Name/E-Mail → Platzhalter, Blob-Bilder gelöscht, Wallet-Historie erhalten)
 - **Safety**: Snapshot-Einwilligung, Live-Monitoring; bei Voice entfällt Pre-Check
 
 ### Für Takumi (Experten)
@@ -45,12 +45,14 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Instant Connect**: Anklopfen durch Shugyo; Takumi antwortet live
 
 ### Für Admins
-- **Admin-Dashboard**: Nutzer, Buchungen, Experten, Finanzen, DB-Tools
+- **Admin-Layout** (`app/(app)/admin/layout.tsx`): Dedizierter Guard – NextAuth + Prisma-Rolle; entkoppelt vom Profil
+- **Admin-Dashboard** (`/admin`): Nutzer, Buchungen, Experten, Finanzen, DB-Tools
+- **Health-Check** (`/admin/health-check`): Live-Monitoring – Cron-Laufzeiten, Stripe-Escrow-Risiken (6+ Tage), Wallet-Integrität, Push-Reachability; Force-Capture pro Buchung
 - **Finance Monitoring** (`/admin/finance`): Escrow-Holds, Stripe-Expiry (7 Tage), Shugyo-Wallet-Liability; Force Capture, Manual Release mit Doppelbestätigung
-- **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen
+- **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen; alle Finanz-Ops in `prisma.$transaction`
 - **CSV-Export**: Financial CSV (DATEV-ready), ZIP (PDFs), DATEV-CSV
 - **Safety Incidents**: Alert-Bilder unter `/admin/safety/incidents`
-- **AdminActionLog**: Alle Admin-Aktionen werden protokolliert
+- **AdminActionLog**: Alle Admin-Aktionen (force_capture, manual_release, refund)
 
 ### Technisch
 - **i18n**: Deutsch (Master), Englisch, Spanisch
@@ -90,7 +92,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 ```
 ├── app/
 │   ├── (app)/              # Geschützte App-Routen
-│   │   ├── admin/          # Admin-Dashboard, Finance Monitoring, Safety, Templates
+│   │   ├── admin/          # Admin (layout.tsx Guard), Dashboard, Health-Check, Finance, Safety, Templates
 │   │   ├── ai-guide/
 │   │   ├── booking/[id]/
 │   │   ├── session/[id]/   # Session-Seite (Daily.co)
@@ -198,13 +200,14 @@ Details: [docs/ENV.md](docs/ENV.md)
 ## Datenbank
 
 ### Wichtige Modelle
-- **User**: balance, pendingBalance (Wallet); appRole (shugyo/takumi)
+- **User**: balance, pendingBalance (Wallet); appRole (shugyo/takumi); Anonymisierte: `user_deleted_xxx@anonymized.local`
 - **Expert**: liveStatus (`offline` \| `available` \| `in_call` \| `busy`); priceVideo15Min, priceVoice15Min
 - **Booking**: status (incl. `cancelled_in_handshake`, `instant_expired`); bookingMode (scheduled \| instant)
 - **Transaction**: status (AUTHORIZED, CAPTURED, CANCELED, REFUNDED)
 - **WalletTransaction**: amountCents (positiv = Credit, negativ = Debit); type (topup, booking_payment, refund)
 - **PushSubscription**: endpoint, p256dh, auth für Web Push
-- **AdminActionLog**: Admin-Aktionen (force_capture, manual_release, finance_export_csv)
+- **CronRunLog**: cronName, lastRunAt (Health-Check; release-wallet, experts-offline)
+- **AdminActionLog**: Admin-Aktionen (force_capture, manual_release, refund)
 
 ```bash
 npx prisma generate
@@ -233,11 +236,11 @@ npx prisma studio
 |-------|--------------|
 | **shugyo** | Nutzer: Kategorien, Buchungen, Sessions, Profil |
 | **takumi** | Experte: + Verfügbarkeit, Takumi-Profil, Instant Connect |
-| **admin** | + Admin-Dashboard, Finance Monitoring, Safety |
+| **admin** | + Admin-Dashboard, Health-Check, Finance Monitoring, Safety; Admin-Konten sind vor Löschung geschützt |
 
 - `/dashboard/availability`: nur Takumi & Admin
-- `/admin`: nur Admin
-- Pausierte Konten: Redirect zu `/paused`
+- `/admin`: nur Admin; **Layout-Guard** (`app/(app)/admin/layout.tsx`) prüft NextAuth + Prisma-Rolle serverseitig
+- Pausierte Konten: Redirect zu `/paused`; Takumi wird sofort `liveStatus: offline`
 
 ---
 
@@ -247,23 +250,37 @@ npx prisma studio
 |-------|--------|
 | [README.md](README.md) | Übersicht, Setup |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API |
+| [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor bereits integriert) |
 | [docs/DEEP-LINKING-SETUP.md](docs/DEEP-LINKING-SETUP.md) | Deep-Links |
 | [docs/SECURE-FILE-EXCHANGE.md](docs/SECURE-FILE-EXCHANGE.md) | Sichere Datei-Übertragung |
+| [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance (DSGVO, Permissions) |
 
 ---
 
 ## Deployment
 
-### Vercel
+### Vercel (Git)
+
 1. Projekt mit GitHub verbinden
 2. Umgebungsvariablen setzen (inkl. `CRON_SECRET` für Cron-Routes)
 3. Build: `prisma generate && next build`
 4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`
 5. Cron-Jobs: `vercel.json` definiert `release-wallet`, `experts-offline`, `instant-request-cleanup`; alle benötigen `Authorization: Bearer <CRON_SECRET>`
 
+### Vercel CLI (ohne Git)
+
+```bash
+vercel --prod
+```
+
+- Lädt lokale Änderungen direkt hoch
+- `vercel.json` enthält Cron-Schedules; **Hobby-Plan**: Crons max. 1× täglich pro Route
+- `instant-request-cleanup`: `0 8 * * *` (8:00) – für Instant Connect mit 60s-Expiry: externer Cron oder Pro-Plan
+
 ### Nach dem ersten Deploy
+
 - `npx prisma migrate deploy` mit Production-DATABASE_URL
 - E-Mail-SMTP konfigurieren
 

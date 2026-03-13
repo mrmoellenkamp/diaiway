@@ -17,6 +17,7 @@ Diese Anleitung hilft, die GitHub-Dokumentation aktuell zu halten.
 | Neue Features, Tech-Stack | `README.md` |
 | Neue Env-Variablen | `docs/ENV.md`, `.env.example` |
 | Neue API-Routen, Abläufe | `docs/ARCHITECTURE.md` |
+| Admin, Kontoverwaltung | `docs/ADMIN.md` |
 | i18n-Regeln | `docs/CONTRIBUTING.md` |
 | Projektstruktur | `README.md` (Projektstruktur) |
 
@@ -35,4 +36,5 @@ Bei fehlenden i18n-Keys in `en.ts` oder `es.ts` schlägt der Check fehl.
 - [ ] docs/ENV.md: Alle genutzten Variablen, Stripe Webhook-Events dokumentiert
 - [ ] .env.example: Aktuell und ohne echte Secrets
 - [ ] docs/ARCHITECTURE.md: API-Routen, CallType, Abläufe, Stripe Hold & Capture aktuell
+- [ ] docs/ADMIN.md: Health-Check, DSGVO-Kontoverwaltung, Pause-Logik aktuell
 - [ ] "Letzte Aktualisierung" in README anpassen
