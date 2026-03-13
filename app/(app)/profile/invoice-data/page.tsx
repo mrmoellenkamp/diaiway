@@ -218,6 +218,9 @@ export default function InvoiceDataPage() {
                   <Input
                     id="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
                     value={data.email || ""}
                     onChange={(e) => setData((p) => ({ ...p, email: e.target.value }))}
                     className="mt-1"

@@ -345,7 +345,7 @@ export function UserChatBox({
       <div className="flex items-center gap-3 border-b border-primary/8 bg-primary/[0.04] px-4 py-3">
         <button
           onClick={onClose}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-primary/5"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full hover:bg-primary/5"
           aria-label={t("common.close")}
         >
           <X className="size-4 text-foreground" />
@@ -509,6 +509,7 @@ export function UserChatBox({
             inputMode="text"
             enterKeyHint="send"
             autoCorrect="on"
+            spellCheck={true}
             autoComplete="off"
             rows={1}
             className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"

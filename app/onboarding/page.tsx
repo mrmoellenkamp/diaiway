@@ -154,6 +154,8 @@ export default function OnboardingPage() {
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 className="w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none resize-none"
+                autoCorrect="on"
+                spellCheck={true}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -161,6 +163,7 @@ export default function OnboardingPage() {
               <Input
                 id="price"
                 type="number"
+                inputMode="decimal"
                 placeholder="29"
                 className="h-12 rounded-xl"
               />

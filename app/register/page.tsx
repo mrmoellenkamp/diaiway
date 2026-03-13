@@ -212,11 +212,13 @@ function RegisterForm() {
           <Input
             id="reg-email"
             type="email"
+            inputMode="email"
             placeholder={t("register.emailPlaceholder")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-12 rounded-xl"
             autoComplete="email"
+            autoCapitalize="none"
             required
           />
         </div>
