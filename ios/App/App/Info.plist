@@ -49,12 +49,12 @@
     <true/>
     
     <key>NSCameraUsageDescription</key>
-    <string>Wir benötigen Zugriff auf deine Kamera für die Video-Beratung zwischen Shugyo und Takumi.</string>
+    <string>We need access to your camera for video consultations between Shugyo and Takumi.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Wir benötigen Zugriff auf dein Mikrofon, damit du dich während der Beratung unterhalten kannst.</string>
+    <string>We need access to your microphone so you can communicate during your consultation.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Wir benötigen Zugriff auf deine Fotogalerie, um Bilder für dein Projekt oder dein Profil hochzuladen.</string>
+    <string>We need access to your photo library to upload images for your project or profile.</string>
     <key>NSFaceIDUsageDescription</key>
-    <string>Face ID wird zur sicheren Anmeldung und zum Schutz deiner Daten verwendet.</string>
+    <string>Face ID is used for secure sign-in and to protect your data.</string>
 </dict>
 </plist>

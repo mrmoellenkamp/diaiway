@@ -1,0 +1,68 @@
+# Store Compliance Checklist
+
+**Last check:** March 2026
+
+---
+
+## 1. iOS – Info.plist
+
+### Usage Descriptions (NSCameraUsageDescription, NSPhotoLibraryUsageDescription, etc.)
+
+| Key | English (base) | German (de.lproj/InfoPlist.strings) |
+|-----|----------------|-------------------------------------|
+| NSCameraUsageDescription | We need access to your camera for video consultations between Shugyo and Takumi. | Wir benötigen Zugriff auf deine Kamera für die Video-Beratung zwischen Shugyo und Takumi. |
+| NSMicrophoneUsageDescription | We need access to your microphone so you can communicate during your consultation. | Wir benötigen Zugriff auf dein Mikrofon, damit du dich während der Beratung unterhalten kannst. |
+| NSPhotoLibraryUsageDescription | We need access to your photo library to upload images for your project or profile. | Wir benötigen Zugriff auf deine Fotogalerie, um Bilder für dein Projekt oder dein Profil hochzuladen. |
+| NSFaceIDUsageDescription | Face ID is used for secure sign-in and to protect your data. | Face ID wird zur sicheren Anmeldung und zum Schutz deiner Daten verwendet. |
+
+**Localization:** `en.lproj/InfoPlist.strings` and `de.lproj/InfoPlist.strings` are present. Ensure they are added to the Xcode project (Target → Info → Localizations) if not picked up automatically.
+
+---
+
+## 2. Android – AndroidManifest.xml Permissions
+
+| Permission | Purpose |
+|------------|---------|
+| `android.permission.INTERNET` | Network (API, WebView) |
+| `android.permission.CAMERA` | Camera for video calls |
+| `android.permission.READ_MEDIA_IMAGES` | Photos (Android 13+) |
+| `android.permission.READ_EXTERNAL_STORAGE` (maxSdkVersion 32) | Photos (pre-Android 13) |
+| `android.permission.POST_NOTIFICATIONS` | Push notifications |
+| `android.permission.SCHEDULE_EXACT_ALARM` | Exact alarms (local notifications) |
+| `android.permission.USE_BIOMETRIC` | Biometric auth |
+| `android.permission.USE_FINGERPRINT` | Legacy fingerprint (older devices) |
+| `android.hardware.camera` (required=false) | Camera optional for voice-only |
+
+**App Links:** `autoVerify="true"` for `https://diaiway.com` and `https://www.diaiway.com`.
+
+---
+
+## 3. Assets (App Icons & Splash Screens)
+
+### iOS
+- **AppIcon:** `Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` (1024×1024)
+- **Splash:** `Splash.imageset` – 1x/2x/3x light + dark variants; custom blue-on-white branding (not Capacitor default)
+
+### Android
+- **Icons:** `mipmap-*/ic_launcher*.png` – full set (ldpi–xxxhdpi)
+- **Splash:** Via `@capacitor/core` splash screen (runtime)
+
+**Note:** Replace Capacitor defaults with brand assets before store submission. Use `npx @capacitor/assets generate` with your logo/splash source.
+
+---
+
+## 4. Versioning
+
+| Platform | Version | Build/Code |
+|----------|---------|------------|
+| iOS | 1.0.0 (MARKETING_VERSION) | 1 (CURRENT_PROJECT_VERSION) |
+| Android | 1.0.0 (versionName) | 1 (versionCode) |
+
+---
+
+## Pre-Submission
+
+- [ ] Replace placeholder/custom icons and splash with final brand assets
+- [ ] Confirm `google-services.json` present for FCM (Android push)
+- [ ] Test deep links: `https://diaiway.com/messages?waymail=...`
+- [ ] Verify `CFBundleDisplayName` / `app_name` for store listing
