@@ -1,6 +1,7 @@
 /**
- * E2E Setup API — nur aktiv wenn E2E_ENABLED=true
+ * E2E Setup API — nur aktiv wenn E2E_ENABLED=true und NODE_ENV !== production.
  * Bereitet Daten für den vollständigen Playwright-Flow vor.
+ * Erfordert Admin-Session (JWT).
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -9,6 +10,7 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/db"
 import { seedTakumis } from "@/lib/seed-data"
 import { processCompletion } from "@/app/actions/process-completion"
+import { requireAdmin } from "@/lib/api-auth"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,9 +27,14 @@ function emailForName(name: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "E2E API in Production deaktiviert." }, { status: 404 })
+  }
   if (process.env.E2E_ENABLED !== "true") {
     return NextResponse.json({ error: "E2E API deaktiviert." }, { status: 404 })
   }
+  const authResult = await requireAdmin()
+  if (authResult.response) return authResult.response
 
   const action = req.nextUrl.searchParams.get("action") || "setup"
 

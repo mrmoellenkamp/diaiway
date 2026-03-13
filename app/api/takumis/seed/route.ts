@@ -11,6 +11,9 @@ function emailForName(name: string): string {
 }
 
 export async function POST() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Seed in Production deaktiviert." }, { status: 404 })
+  }
   const session = await auth()
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json(
