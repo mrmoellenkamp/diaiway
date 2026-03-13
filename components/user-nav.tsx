@@ -122,7 +122,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
             <Settings className="size-4 text-muted-foreground" />
-            {t("nav.expertAdmin")}
+            {t("profile.adminDashboard")}
           </Link>
         )}
         <button
@@ -182,7 +182,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           <DropdownMenuItem asChild>
             <Link href="/admin" className="flex items-center gap-2">
               <Settings className="size-4" />
-              {t("nav.expertAdmin")}
+              {t("profile.adminDashboard")}
             </Link>
           </DropdownMenuItem>
         )}

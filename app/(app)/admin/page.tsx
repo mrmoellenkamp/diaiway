@@ -1586,20 +1586,25 @@ export default function AdminPage() {
             </Button>
           </div>
 
-          {/* Quick-KPI bar (always visible) */}
+          {/* Quick-KPI bar (always visible, klickbar → Tab-Wechsel) */}
           {stats && (
             <div className="grid grid-cols-4 gap-2">
               {[
-                { label: "Nutzer", value: stats.users.total, icon: Users, color: "text-blue-500" },
-                { label: "Takumis", value: stats.experts.live + "/" + stats.experts.total, icon: Activity, color: "text-green-500" },
-                { label: "Buchungen", value: stats.bookings.total, icon: CalendarDays, color: "text-purple-500" },
-                { label: "Umsatz", value: eur(stats.revenue.totalCents), icon: Euro, color: "text-orange-500" },
-              ].map(({ label, value, icon: Icon, color }) => (
-                <div key={label} className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center">
+                { label: "Nutzer", value: stats.users.total, icon: Users, color: "text-blue-500", tab: "users" as const },
+                { label: "Takumis", value: `${stats.experts.live}/${stats.experts.total}`, icon: Activity, color: "text-green-500", tab: "takumis" as const },
+                { label: "Buchungen", value: stats.bookings.total, icon: CalendarDays, color: "text-purple-500", tab: "bookings" as const },
+                { label: "Umsatz", value: eur(stats.revenue.totalCents), icon: Euro, color: "text-orange-500", tab: "finance" as const },
+              ].map(({ label, value, icon: Icon, color, tab }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center transition-colors hover:bg-muted/50 active:scale-[0.98]"
+                >
                   <Icon className={`size-4 ${color} mb-1`} />
                   <span className="text-sm font-bold text-foreground leading-tight">{value}</span>
                   <span className="text-[10px] text-muted-foreground">{label}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
