@@ -387,10 +387,15 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Nutzer „${name}" wirklich löschen? Diese Aktion ist unwiderruflich.`)) return
+    if (!confirm(`Nutzer „${name}" wirklich löschen? Persönliche Daten werden anonymisiert, Buchungs- und Wallet-Historie bleibt erhalten.`)) return
     const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" })
-    if (res.ok) { toast.success("Nutzer gelöscht"); void load() }
-    else toast.error("Fehler beim Löschen")
+    if (res.ok) {
+      toast.success("Nutzer anonymisiert")
+      void load()
+    } else {
+      const data = await res.json().catch(() => ({}))
+      toast.error(data.error ?? "Fehler beim Löschen")
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -484,6 +489,11 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                           admin
                         </span>
                       )}
+                      {u.email?.endsWith("@anonymized.local") && (
+                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                          Anonymisiert
+                        </span>
+                      )}
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
                     <p className="text-[10px] text-muted-foreground">{u._count.bookings} Buchungen · {relDate(u.createdAt)}</p>
@@ -502,10 +512,13 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                       onClick={(e) => { e.stopPropagation(); setEditingId(u.id); setEditForm({ role: u.role, appRole: u.appRole }) }}>
                       <Edit2 className="size-3.5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(u.id, u.name) }}>
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    {!u.email?.endsWith("@anonymized.local") && u.role !== "admin" && (
+                      <Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(u.id, u.name) }}
+                        title="Nutzer anonymisieren (DSGVO)">
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
