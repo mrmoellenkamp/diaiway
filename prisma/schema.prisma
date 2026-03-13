@@ -35,6 +35,7 @@ enum BookingStatus {
   declined
   cancelled
   cancelled_in_handshake  // Session < 5 min: payment released, no charge
+  instant_expired        // Instant: Takumi didn't answer within 60s; payment released
 }
 
 enum PaymentStatus {
