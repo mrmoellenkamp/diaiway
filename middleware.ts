@@ -108,7 +108,7 @@ export default authMiddleware((req) => {
   response.headers.set("X-XSS-Protection", "1; mode=block")
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.googleapis.com https://vercel.live wss:; frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.stripe.com https://vercel.live; font-src 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.googleapis.com https://vercel.live wss:; frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.stripe.com https://vercel.live; font-src 'self' https://fonts.gstatic.com;"
   )
   response.headers.set(
     "Permissions-Policy",
