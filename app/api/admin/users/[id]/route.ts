@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
+import { del } from "@vercel/blob"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { anonymizeUser } from "@/lib/anonymize-user"
 
 const VALID_ROLES = ["user", "admin"] as const
 const VALID_APP_ROLES = ["shugyo", "takumi"] as const
@@ -108,15 +110,21 @@ export async function DELETE(
     return NextResponse.json({ error: "Kann den eigenen Account nicht löschen" }, { status: 400 })
   }
 
-  // GDPR-compliant: anonymize booking records, then delete user
-  await prisma.$transaction([
-    prisma.booking.updateMany({
-      where: { userId: id },
-      data: { userName: "[Gelöschter Nutzer]", userEmail: "deleted@deleted" },
-    }),
-    prisma.review.deleteMany({ where: { userId: id } }),
-    prisma.user.delete({ where: { id } }),
-  ])
+  const result = await anonymizeUser(id)
+
+  if (!result.ok) {
+    // anonymizeUser blockiert Admin-Konten
+    return NextResponse.json({ error: result.error }, { status: 403 })
+  }
+
+  // Blob-Bilder physisch löschen
+  for (const url of result.imageUrls) {
+    try {
+      await del(url)
+    } catch (err) {
+      console.warn("[admin/users/delete] Blob delete failed:", url, err)
+    }
+  }
 
   return NextResponse.json({ ok: true })
 }
