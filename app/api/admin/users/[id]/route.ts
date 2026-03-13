@@ -51,9 +51,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Keine Änderungen angegeben." }, { status: 400 })
   }
 
+  // Revocation-Hammer: Admin-Änderungen an kritischen Feldern invalidieren alle bestehenden Sessions
   const updated = await prisma.user.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      tokenRevocationTime: Math.floor(Date.now() / 1000),
+    },
     select: { id: true, name: true, email: true, role: true, appRole: true, status: true },
   })
 
