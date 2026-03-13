@@ -470,6 +470,7 @@ const es = {
 
   // Global Nav titles
   "globalNav.availability": "Mi disponibilidad",
+  "admin.title": "Panel de administración",
 
   // Edit Profile
   "editProfile.title": "Editar perfil",

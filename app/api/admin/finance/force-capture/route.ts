@@ -30,23 +30,27 @@ export async function POST(req: Request) {
   try {
     const result = await processCompletion(bookingId)
     if (result.ok) {
-      await prisma.adminActionLog.create({
-        data: {
-          adminId: session.user.id,
-          action: "force_capture",
-          targetType: "booking",
-          targetId: bookingId,
-          details: { success: true },
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.adminActionLog.create({
+          data: {
+            adminId: session.user.id,
+            action: "force_capture",
+            targetType: "booking",
+            targetId: bookingId,
+            details: { success: true },
+          },
+        })
       })
       return NextResponse.json({ success: true, message: "Capture durchgeführt." })
     }
+    console.warn("[admin/finance/force-capture] processCompletion failed:", result.error)
     return NextResponse.json(
       { error: result.error ?? "Capture fehlgeschlagen." },
       { status: 400 }
     )
   } catch (err) {
-    console.error("[admin/finance/force-capture] Error:", err)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("[admin/finance/force-capture] Error:", msg)
     return NextResponse.json({ error: "Capture fehlgeschlagen." }, { status: 500 })
   }
 }

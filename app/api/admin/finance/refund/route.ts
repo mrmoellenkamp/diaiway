@@ -71,14 +71,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await prisma.booking.update({
-      where: { id: booking.id },
-      data: {
-        status: "cancelled",
-        cancelledBy: "admin",
-        cancelledAt: new Date(),
-        paymentStatus: "refunded",
-      },
+    // Atomar: Booking-Status + AdminActionLog
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: "cancelled",
+          cancelledBy: "admin",
+          cancelledAt: new Date(),
+          paymentStatus: "refunded",
+        },
+      })
+      await tx.adminActionLog.create({
+        data: {
+          adminId: session.user.id,
+          action: "refund",
+          targetType: "transaction",
+          targetId: transactionId,
+          details: { bookingId: booking.id, paymentType: isWallet ? "wallet" : "stripe" },
+        },
+      })
     })
 
     return NextResponse.json({ success: true, message: "Stornierung durchgeführt." })
