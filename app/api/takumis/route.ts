@@ -9,7 +9,7 @@ export const runtime = "nodejs"
 export async function GET() {
   try {
     const experts = await prisma.expert.findMany({
-      include: { user: { select: { appRole: true } } },
+      include: { user: { select: { appRole: true, isVerified: true } } },
       orderBy: { rating: "desc" },
     })
     // Nur aktive Takumis: Experten ohne User (Seed) ODER verknüpfter User hat appRole=takumi
@@ -45,7 +45,7 @@ export async function GET() {
         liveStatus: e.liveStatus ?? null,
         pricePerMinute: Math.round((Number(e.priceVideo15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)) * 100 / 15)),
         isPro: e.isPro,
-        verified: e.verified,
+        verified: e.verified || (e.user?.isVerified ?? false),
         portfolio: e.portfolio,
         joinedDate: e.joinedDate,
         imageUrl: e.imageUrl,

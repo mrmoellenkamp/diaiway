@@ -39,6 +39,7 @@ import {
   Shield,
   HelpCircle,
 } from "lucide-react"
+import { VerifiedBadge } from "@/components/verified-badge"
 import { TakumiStatusCard } from "@/components/takumi-status-card"
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
@@ -103,6 +104,7 @@ export default function ProfilePage() {
   const [dbName, setDbName] = useState("")
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")
+  const [dbIsVerified, setDbIsVerified] = useState(false)
   const [favorites, setFavorites] = useState<string[]>([])
   const [languages, setLanguages] = useState<string[]>([])
   const [skillLevel, setSkillLevel] = useState<string | null>(null)
@@ -136,7 +138,12 @@ export default function ProfilePage() {
           setDbName(data.name || "")
           setDbEmail(data.email || "")
           setDbImage(data.image || "")
+          setDbIsVerified(data.isVerified ?? false)
           setFavorites(data.favorites || [])
+          const currentVerified = (session?.user as { isVerified?: boolean })?.isVerified ?? false
+          if (typeof data.isVerified === "boolean" && data.isVerified !== currentVerified) {
+            updateSession({ isVerified: data.isVerified })
+          }
           setLanguages(Array.isArray(data.languages) ? data.languages : [])
           setSkillLevel(data.skillLevel ?? null)
         }
@@ -345,6 +352,7 @@ export default function ProfilePage() {
                   className="flex items-center gap-1.5 group"
                 >
                   <h2 className="text-xl font-bold text-foreground">{userName}</h2>
+                  {dbIsVerified && <VerifiedBadge size="md" />}
                   <Edit3 className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>
               )}

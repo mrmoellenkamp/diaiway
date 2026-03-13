@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { sendWelcomeWaymail } from "@/lib/onboarding"
+import { generateFallbackUsername } from "@/app/actions/username"
 
 export const runtime = "nodejs"
 
@@ -76,9 +77,16 @@ export async function POST(req: Request) {
 
     // ── Create user ───────────────────────────────────────────────────────────
     const hashed = await bcrypt.hash(password, 12)
+    let username = generateFallbackUsername(name)
+    for (let i = 0; i < 5; i++) {
+      const exists = await prisma.user.findUnique({ where: { username } })
+      if (!exists) break
+      username = generateFallbackUsername(name)
+    }
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
+        username,
         email: normalizedEmail,
         password: hashed,
         role: "user",

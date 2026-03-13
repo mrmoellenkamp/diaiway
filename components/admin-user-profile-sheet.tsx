@@ -22,7 +22,9 @@ type ProfileData = {
   user: {
     id: string
     name: string
+    username: string | null
     email: string
+    isVerified: boolean
     image: string
     role: string
     appRole: string
@@ -117,20 +119,24 @@ export function AdminUserProfileSheet({
   async function handleSave() {
     if (!userId || !editUser) return
     setSaving(true)
+    const isAnonymized = editUser.email?.endsWith("@anonymized.local")
     try {
-      const payload: Record<string, unknown> = {
-        user: {
-          name: editUser.name,
-          email: editUser.email,
-          image: editUser.image,
-          role: editUser.role,
-          appRole: editUser.appRole,
-          status: editUser.status,
-          isBanned: editUser.isBanned,
-          skillLevel: editUser.skillLevel || null,
-          refundPreference: editUser.refundPreference,
-        },
+      const userPayload: Record<string, unknown> = {
+        name: editUser.name,
+        email: editUser.email,
+        image: editUser.image,
+        role: editUser.role,
+        appRole: editUser.appRole,
+        status: editUser.status,
+        isBanned: editUser.isBanned,
+        skillLevel: editUser.skillLevel || null,
+        refundPreference: editUser.refundPreference,
       }
+      if (!isAnonymized) {
+        userPayload.username = editUser.username ?? undefined
+        userPayload.isVerified = editUser.isVerified
+      }
+      const payload: Record<string, unknown> = { user: userPayload }
       if (editExpert) {
         payload.expert = {
           name: editExpert.name,
@@ -247,6 +253,11 @@ export function AdminUserProfileSheet({
                   <CardContent className="flex flex-col gap-3">
                     {editUser && (
                       <>
+                        {editUser.email?.endsWith("@anonymized.local") && (
+                          <p className="col-span-full text-xs text-amber-600 dark:text-amber-500 mb-2">
+                            Anonymisierter Nutzer — Username und Verifizierung können nicht geändert werden.
+                          </p>
+                        )}
                         <div>
                           <Label className="text-xs">Profilbild</Label>
                           <ImageUpload
@@ -264,6 +275,17 @@ export function AdminUserProfileSheet({
                             className="h-9"
                           />
                         </div>
+                        {!editUser.email?.endsWith("@anonymized.local") && (
+                          <div>
+                            <Label className="text-xs">Username</Label>
+                            <Input
+                              value={editUser.username ?? ""}
+                              onChange={(e) => setEditUser({ ...editUser, username: e.target.value || null })}
+                              placeholder="z.B. max_mueller"
+                              className="h-9"
+                            />
+                          </div>
+                        )}
                         <div>
                           <Label className="text-xs">E-Mail</Label>
                           <Input
@@ -319,6 +341,18 @@ export function AdminUserProfileSheet({
                             />
                             <Label htmlFor="isBanned" className="text-xs">Gesperrt</Label>
                           </div>
+                          {!editUser.email?.endsWith("@anonymized.local") && (
+                            <div className="flex items-center gap-2 pt-2">
+                              <input
+                                type="checkbox"
+                                id="isVerified"
+                                checked={editUser.isVerified}
+                                onChange={(e) => setEditUser({ ...editUser, isVerified: e.target.checked })}
+                                className="rounded border-input"
+                              />
+                              <Label htmlFor="isVerified" className="text-xs">Verifiziert</Label>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <Label className="text-xs">Kenntnisstufe (Shugyo)</Label>

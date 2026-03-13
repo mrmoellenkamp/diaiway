@@ -55,6 +55,7 @@ export default function EditProfilePage() {
 
   // Base profile
   const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
   const [image, setImage] = useState("")
   const [languages, setLanguages] = useState<string[]>([])
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -97,6 +98,7 @@ export default function EditProfilePage() {
         if (res.ok) {
           const data = await res.json()
           setName(data.name || "")
+          setUsername(data.username || "")
           setImage(data.image || "")
           setLanguages(Array.isArray(data.languages) ? data.languages : [])
         }
@@ -238,8 +240,9 @@ export default function EditProfilePage() {
   async function handleSave() {
     setSaving(true)
     try {
-      const profilePayload: Record<string, string | string[]> = {}
+      const profilePayload: Record<string, string | string[] | null> = {}
       if (name.trim()) profilePayload.name = name.trim()
+      if (username !== undefined) profilePayload.username = username.trim() || null
       if (image !== undefined) profilePayload.image = image
       profilePayload.languages = languages
 
@@ -383,6 +386,17 @@ export default function EditProfilePage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t("editProfile.namePlaceholder")}
                   />
+                </div>
+                {/* Username (optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">{t("profile.username")}</label>
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="z.B. max_mustermann"
+                    className="font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground">{t("profile.usernameHint")}</p>
                 </div>
               </CardContent>
             </Card>

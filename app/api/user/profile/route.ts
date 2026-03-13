@@ -14,12 +14,13 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, languages: true, createdAt: true },
+      select: { name: true, username: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, languages: true, isVerified: true, createdAt: true },
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
     return NextResponse.json({
       name: user.name,
+      username: user.username ?? null,
       email: user.email,
       image: user.image || "",
       role: user.role,
@@ -29,6 +30,7 @@ export async function GET() {
       invoiceData: user.invoiceData ?? null,
       skillLevel: user.skillLevel ?? null,
       languages: user.languages ?? [],
+      isVerified: user.isVerified ?? false,
       createdAt: user.createdAt,
     })
   } catch (err: unknown) {
@@ -53,6 +55,25 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "Name muss mindestens 2 Zeichen lang sein." }, { status: 400 })
       }
       data.name = body.name.trim()
+    }
+    if (body.username !== undefined) {
+      const val = typeof body.username === "string" ? body.username.trim() : ""
+      if (val === "") {
+        data.username = null
+      } else {
+        const { validateUsername } = await import("@/app/actions/username")
+        const res = await validateUsername(val)
+        if (!res.ok) {
+          return NextResponse.json({ error: res.error }, { status: 400 })
+        }
+        const existing = await prisma.user.findFirst({
+          where: { username: val, NOT: { id: session.user.id } },
+        })
+        if (existing) {
+          return NextResponse.json({ error: "Dieser Benutzername ist bereits vergeben." }, { status: 409 })
+        }
+        data.username = val
+      }
     }
     if (body.image !== undefined) data.image = body.image
     if (body.appRole !== undefined) {

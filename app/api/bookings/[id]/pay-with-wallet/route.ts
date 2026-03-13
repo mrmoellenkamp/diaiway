@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { payBookingWithWallet } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
+import { markVerified } from "@/lib/verification-service"
 
 export const runtime = "nodejs"
 
@@ -46,6 +47,8 @@ export async function POST(
       { status: result.error === "INSUFFICIENT_FUNDS" ? 402 : 400 }
     )
   }
+
+  await markVerified(session.user.id, "STRIPE_PAYMENT").catch(() => {})
 
   try {
     await notifyTakumiAfterPayment(bookingId)

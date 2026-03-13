@@ -12,7 +12,7 @@ import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, CheckCircle, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2, Share2,
+  ArrowLeft, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2, Share2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -23,6 +23,7 @@ import { getCachedTakumi, setCachedTakumi } from "@/lib/offline-cache"
 import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 import { UserChatBox } from "@/components/user-chat-box"
+import { VerifiedBadge } from "@/components/verified-badge"
 import {
   Drawer,
   DrawerContent,
@@ -216,7 +217,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-foreground">{takumi.name}</h1>
-                {takumi.verified && <CheckCircle className="size-4 text-accent" />}
+                {takumi.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-jp text-sm text-primary/60">匠</span>
@@ -308,6 +309,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                       partnerName={chatPartner.partnerName}
                       partnerAvatar={chatPartner.partnerAvatar}
                       partnerImageUrl={chatPartner.partnerImageUrl}
+                      partnerIsVerified={takumi.verified}
                       expertId={chatPartner.expertId}
                       subcategory={chatPartner.subcategory}
                       onClose={() => setChatOpen(false)}
@@ -340,7 +342,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap gap-2">
             {takumi.verified && (
               <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5">
-                <CheckCircle className="size-3 text-accent" />
+                <VerifiedBadge size="sm" className="text-accent" />
                 <span className="text-xs text-accent font-medium">{t("takumiPage.verified")}</span>
               </div>
             )}

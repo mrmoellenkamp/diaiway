@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
+import { markVerified } from "@/lib/verification-service"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
 import { put } from "@vercel/blob"
 import { generateInvoicePdf, generateCreditNotePdf } from "@/lib/pdf-invoice"
@@ -207,6 +208,17 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
         ...(creditEmail.sent && { creditNoteEmailSentAt: now }),
       },
     })
+
+    // Shugyo-Verifizierung durch Aktivität: 3 abgeschlossene Sessions (Case B)
+    const shugyoId = booking.userId
+    if (shugyoId) {
+      const completedCount = await prisma.booking.count({
+        where: { userId: shugyoId, status: "completed" },
+      })
+      if (completedCount >= 3) {
+        await markVerified(shugyoId, "ACTIVITY").catch(() => {})
+      }
+    }
 
     return { ok: true }
   } catch (err) {

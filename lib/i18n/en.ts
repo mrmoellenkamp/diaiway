@@ -267,6 +267,8 @@ const en = {
   "profile.spent": "Spent",
   "profile.favorites": "Favorites",
   "profile.favoriteTakumis": "Favorite Takumis",
+  "profile.username": "Username",
+  "profile.usernameHint": "Optional. Min. 3 characters, letters, numbers and underscores only.",
   "profile.languages": "Languages",
   "profile.languagesDesc": "Which languages do you speak?",
   "profile.languagesSaved": "Languages saved.",

@@ -72,6 +72,14 @@ enum TemplateCategory {
   BOOKING
 }
 
+enum VerificationSource {
+  NONE
+  STRIPE_CONNECT   // Takumi: Connect-Onboarding abgeschlossen
+  STRIPE_PAYMENT   // Shugyo: Erste erfolgreiche Zahlung
+  ACTIVITY         // Shugyo: 3 abgeschlossene Sessions (Case B)
+  MANUAL           // Admin manuell verifiziert
+}
+
 // Instant-Connect: Takumi-Status für spontane Calls
 enum LiveStatus {
   offline   // Nicht erreichbar
@@ -95,6 +103,7 @@ enum TransactionStatus {
 model User {
   id               String     @id @default(cuid())
   name             String
+  username         String?    @unique  // Eindeutig, optional; Fallback: name_random
   email            String     @unique
   password         String
   role             UserRole   @default(user)
@@ -126,6 +135,10 @@ model User {
 
   // Gesprochene Sprachen (z.B. ["de","en","es"]) für Fahnen-Anzeige
   languages        String[]    @default([])
+
+  // Vertrauens-System: Silent-Verifizierung (Stripe, Aktivität, Admin)
+  isVerified       Boolean    @default(false)
+  verificationSource VerificationSource @default(NONE)
 
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt

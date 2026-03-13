@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, LogIn, ChevronDown, CalendarClock } from "lucide-react"
+import { VerifiedBadge } from "@/components/verified-badge"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -70,6 +71,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
   const userName = session.user.name || t("common.profile")
   const userRole = (session.user as { role?: string }).role
   const appRole = (session.user as { appRole?: string }).appRole
+  const isVerified = (session.user as { isVerified?: boolean }).isVerified ?? false
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -91,7 +93,10 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             )}
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">{userName}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-semibold text-foreground">{userName}</span>
+              {isVerified && <VerifiedBadge size="sm" />}
+            </div>
             <span className="text-[11px] text-muted-foreground">{session.user.email}</span>
           </div>
         </div>
@@ -152,7 +157,10 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <div className="px-3 py-2">
-          <p className="text-sm font-semibold text-foreground">{userName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold text-foreground">{userName}</p>
+            {isVerified && <VerifiedBadge size="sm" />}
+          </div>
           <p className="text-xs text-muted-foreground">{session.user.email}</p>
         </div>
         <DropdownMenuSeparator />
