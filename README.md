@@ -29,7 +29,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **diAIway intelligence**: AI-Mentor für Projektbeschreibung und Expertenempfehlung
 - **Kategorien durchsuchen**: 11 Kategorien (Heimwerken, Freizeit & Hobby, Haus & Garten, etc.)
 - **Buchungen**: Termine mit Takumis buchen; **Video oder Voice**; max. 7 Tage im Voraus; Vorauszahlung (Stripe oder Wallet)
-- **Instant Connect**: Spontaner Anruf bei verfügbaren Takumis (ohne Terminbuchung)
+- **Instant Connect**: Spontaner Anruf bei verfügbaren Takumis (ohne Terminbuchung); 60s Expiry bei keiner Antwort (Cron: `/api/cron/instant-request-cleanup`)
 - **Sessions**: Daily.co Video/Voice; 5 Min Handshake gratis, danach Zahlungsdialog (Stripe oder Wallet)
 - **Handshake-Logik**: &lt; 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
 - **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
@@ -54,11 +54,12 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 
 ### Technisch
 - **i18n**: Deutsch (Master), Englisch, Spanisch
-- **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard
-- **Push**: Web Push (VAPID) + Capacitor Push Notifications; `/api/push/subscribe`
+- **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard; 7-Tage-Stripe-Hold-Fenster
+- **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
+- **Safety**: Google Vision API (Live-Monitoring), Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
 - **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers
 - **Secure File Upload**: `/api/files/secure-upload` mit Cloudmersive-Virenscan, Busboy-Streaming
-- **Session-Terminierung**: `/api/sessions/[id]/terminate` für Handshake-Release oder Capture
+- **Session-Terminierung**: `/api/sessions/[id]/terminate` für 5-Min-Handshake (Case A) oder Capture (Case B)
 
 ---
 
@@ -70,14 +71,17 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 | Datenbank | PostgreSQL (Prisma ORM) |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
 | Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks) |
-| Video/Voice | Daily.co |
+| Video/Voice | Daily.co (`@daily-co/daily-js`) |
 | Mobile | Capacitor 8 (iOS, Android) |
-| AI | Vercel AI SDK |
+| AI | Vercel AI SDK (Gemini) |
 | Storage | Vercel Blob |
 | E-Mail | Nodemailer (SMTP) |
-| Push | web-push (VAPID), Capacitor Push Notifications |
+| Push | web-push (VAPID), Firebase Admin (FCM), @capacitor/push-notifications |
+| Safety | Google Cloud Vision API (SafeSearch), Cloudmersive (Virenscan) |
 | UI | Tailwind CSS, Radix UI, Shadcn |
 | i18n | Custom (de.ts, en.ts, es.ts) |
+
+**Dependencies (major):** Daily.co, Stripe, Firebase Admin, Cloudmersive, Google Vision, VAPID (web-push), Sharp (image), jspdf/pdf-lib (invoices).
 
 ---
 
@@ -178,12 +182,14 @@ npx cap open ios
 | `NEXTAUTH_SECRET`, `NEXTAUTH_URL` | NextAuth |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
-| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push (optional) |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push (optional) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | FCM für native Push (optional) |
 | `EMAIL_*` | SMTP (EMAIL_SERVER_HOST, PORT, USER, PASSWORD, EMAIL_FROM) |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini (diAIway intelligence) |
-| `GOOGLE_CLOUD_VISION_API_KEY` | Vision API (Safety) |
+| `GOOGLE_CLOUD_VISION_API_KEY` | Vision API (Safety, Live-Monitoring) |
 | `CLOUDMERSIVE_API_KEY` | Virenscan bei Secure-Upload (optional) |
 | `DAILY_API_KEY` | Daily.co (Video-Sessions) |
+| `CRON_SECRET` | Cron-Routes (instant-request-cleanup, release-wallet, etc.) |
 
 Details: [docs/ENV.md](docs/ENV.md)
 
@@ -193,8 +199,8 @@ Details: [docs/ENV.md](docs/ENV.md)
 
 ### Wichtige Modelle
 - **User**: balance, pendingBalance (Wallet); appRole (shugyo/takumi)
-- **Expert**: liveStatus; priceVideo15Min, priceVoice15Min
-- **Booking**: status (incl. `cancelled_in_handshake`); bookingMode (scheduled | instant)
+- **Expert**: liveStatus (`offline` \| `available` \| `in_call` \| `busy`); priceVideo15Min, priceVoice15Min
+- **Booking**: status (incl. `cancelled_in_handshake`, `instant_expired`); bookingMode (scheduled \| instant)
 - **Transaction**: status (AUTHORIZED, CAPTURED, CANCELED, REFUNDED)
 - **WalletTransaction**: amountCents (positiv = Credit, negativ = Debit); type (topup, booking_payment, refund)
 - **PushSubscription**: endpoint, p256dh, auth für Web Push
@@ -205,6 +211,19 @@ npx prisma generate
 npx prisma db push
 npx prisma studio
 ```
+
+---
+
+## Geschäftsregeln (kurz)
+
+| Regel | Implementierung |
+|-------|-----------------|
+| Buchungsfenster | Max. 7 Tage im Voraus (`lib/booking-date-validation.ts`) |
+| Stripe Hold | 7 Tage (nicht 24h); `STRIPE_HOLD_DAYS` in Finance-Summary |
+| 5-Min Handshake | \< 5 Min Dauer → Release (Case A); ≥ 5 Min → Capture (Case B) |
+| Wallet | Atomar: `updateMany` mit `balance >= amount` + `decrement`; Balance-Guard |
+| Instant Cleanup | 60s ohne Takumi-Antwort → Status `instant_expired`, Payment-Release, Push/Waymail |
+| Wallet-Release-Cron | 24h nach Session-Ende: `processPendingCompletions` |
 
 ---
 
@@ -239,9 +258,10 @@ npx prisma studio
 
 ### Vercel
 1. Projekt mit GitHub verbinden
-2. Umgebungsvariablen setzen
+2. Umgebungsvariablen setzen (inkl. `CRON_SECRET` für Cron-Routes)
 3. Build: `prisma generate && next build`
 4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`
+5. Cron-Jobs: `vercel.json` definiert `release-wallet`, `experts-offline`, `instant-request-cleanup`; alle benötigen `Authorization: Bearer <CRON_SECRET>`
 
 ### Nach dem ersten Deploy
 - `npx prisma migrate deploy` mit Production-DATABASE_URL
