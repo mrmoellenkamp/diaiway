@@ -883,7 +883,7 @@ function DatabaseTab({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs">E-Mail</Label>
-                <Input type="email" placeholder="expert@domain.de" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-9 text-sm" />
+                <Input type="email" inputMode="email" autoComplete="email" autoCapitalize="none" placeholder="expert@domain.de" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -903,12 +903,14 @@ function DatabaseTab({
               <Label className="text-xs">Kurzbio *</Label>
               <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3}
                 placeholder="Erfahrung, Qualifikationen…"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                autoCorrect="on"
+                spellCheck={true} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs">Preis / 30 Min (€)</Label>
-                <Input type="number" min={1} value={form.pricePerSession} onChange={(e) => setForm({ ...form, pricePerSession: e.target.value })} className="h-9 text-sm" />
+                <Input type="number" inputMode="decimal" min={1} value={form.pricePerSession} onChange={(e) => setForm({ ...form, pricePerSession: e.target.value })} className="h-9 text-sm" />
               </div>
               <div className="flex items-end pb-1">
                 <div className="flex items-center gap-2">

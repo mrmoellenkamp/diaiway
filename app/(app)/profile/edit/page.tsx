@@ -574,6 +574,8 @@ export default function EditProfilePage() {
                         onChange={(e) => setBio(e.target.value.slice(0, 500))}
                         className="min-h-[100px] w-full resize-none rounded-md border border-input bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         placeholder={t("editProfile.descriptionPlaceholder")}
+                        autoCorrect="on"
+                        spellCheck={true}
                       />
                       <p className="text-[10px] text-muted-foreground">
                         {t("editProfile.descriptionCount").replace("{count}", String(bio.length))}
@@ -590,6 +592,7 @@ export default function EditProfilePage() {
                           <span className="text-[11px] text-muted-foreground">{t("editProfile.priceVideo15Min")}</span>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             min="1"
                             step="0.01"
                             value={priceVideo15Min}
@@ -602,6 +605,7 @@ export default function EditProfilePage() {
                           <span className="text-[11px] text-muted-foreground">{t("editProfile.priceVoice15Min")}</span>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             min="1"
                             step="0.01"
                             value={priceVoice15Min}

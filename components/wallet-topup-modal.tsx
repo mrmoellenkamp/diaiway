@@ -155,6 +155,7 @@ export function WalletTopupModal({
                   <span className="text-sm text-muted-foreground">Oder:</span>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     min={MIN_EUR}
                     step={1}
                     value={amountEur}

@@ -290,6 +290,9 @@ export function AdminUserProfileSheet({
                           <Label className="text-xs">E-Mail</Label>
                           <Input
                             type="email"
+                            inputMode="email"
+                            autoComplete="email"
+                            autoCapitalize="none"
                             value={editUser.email}
                             onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
                             className="h-9"
@@ -410,6 +413,8 @@ export function AdminUserProfileSheet({
                           onChange={(e) => setEditExpert({ ...editExpert, bio: e.target.value })}
                           rows={3}
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          autoCorrect="on"
+                          spellCheck={true}
                         />
                       </div>
                       <div>
@@ -445,6 +450,7 @@ export function AdminUserProfileSheet({
                           <Label className="text-xs">Video €/15min</Label>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             step="0.01"
                             value={editExpert.priceVideo15Min ?? ""}
                             onChange={(e) =>
@@ -457,6 +463,7 @@ export function AdminUserProfileSheet({
                           <Label className="text-xs">Voice €/15min</Label>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             step="0.01"
                             value={editExpert.priceVoice15Min ?? ""}
                             onChange={(e) =>
@@ -469,6 +476,7 @@ export function AdminUserProfileSheet({
                           <Label className="text-xs">Session €</Label>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             value={editExpert.pricePerSession ?? ""}
                             onChange={(e) =>
                               setEditExpert({

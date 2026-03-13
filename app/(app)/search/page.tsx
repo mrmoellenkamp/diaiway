@@ -44,11 +44,15 @@ function SearchContent() {
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          type="search"
           placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="h-11 rounded-xl pl-10"
           autoFocus
+          enterKeyHint="search"
+          spellCheck={false}
+          autoCorrect="off"
         />
       </div>
 

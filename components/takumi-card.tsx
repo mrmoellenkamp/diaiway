@@ -96,7 +96,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
       <div className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-3 transition-shadow hover:shadow-md">
-        <FavoriteButton takumiId={takumi.id} size="sm" className="absolute top-2 right-2 z-10 size-7" />
+        <FavoriteButton takumiId={takumi.id} size="sm" className="absolute top-2 right-2 z-10 min-h-[44px] min-w-[44px]" />
         <div className="relative">
           <Avatar className="size-16 border-2 border-primary/10">
             {takumi.imageUrl ? (
