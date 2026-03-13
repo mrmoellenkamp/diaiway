@@ -88,7 +88,7 @@ export function ImageUpload({
       <div className={cn("relative inline-block", className)}>
         <div className="size-24 rounded-full overflow-hidden border-4 border-border bg-muted">
           {value ? (
-            <Image src={value} alt="Avatar" fill className="object-cover" sizes="96px" />
+            <Image src={value} alt="Avatar" fill className="object-cover" sizes="96px" quality={75} />
           ) : (
             <div className="flex size-full items-center justify-center text-2xl font-bold text-muted-foreground">
               {placeholder || <Camera className="size-8 text-muted-foreground/50" />}
@@ -146,6 +146,7 @@ export function ImageUpload({
               fill
               className="object-cover"
               sizes="300px"
+              quality={75}
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">

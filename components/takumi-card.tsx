@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { LiveBadge } from "@/components/live-badge"
@@ -20,12 +20,18 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
           <FavoriteButton takumiId={takumi.id} className="absolute top-3 right-3 z-10" />
           <div className="relative shrink-0">
             <Avatar className="size-14 border-2 border-primary/10">
-              {takumi.imageUrl && priority ? (
+              {takumi.imageUrl ? (
                 <span className="relative block size-full">
-                  <Image src={takumi.imageUrl} alt={takumi.name} fill className="object-cover" priority />
+                  <Image
+                    src={takumi.imageUrl}
+                    alt={takumi.name}
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                    quality={priority ? 85 : 75}
+                    priority={priority}
+                  />
                 </span>
-              ) : takumi.imageUrl ? (
-                <AvatarImage src={takumi.imageUrl} alt={takumi.name} />
               ) : null}
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                 {takumi.avatar}
@@ -93,12 +99,18 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
         <FavoriteButton takumiId={takumi.id} size="sm" className="absolute top-2 right-2 z-10 size-7" />
         <div className="relative">
           <Avatar className="size-16 border-2 border-primary/10">
-            {takumi.imageUrl && priority ? (
+            {takumi.imageUrl ? (
               <span className="relative block size-full">
-                <Image src={takumi.imageUrl} alt={takumi.name} fill className="object-cover" priority />
+                <Image
+                  src={takumi.imageUrl}
+                  alt={takumi.name}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                  quality={priority ? 85 : 75}
+                  priority={priority}
+                />
               </span>
-            ) : takumi.imageUrl ? (
-              <AvatarImage src={takumi.imageUrl} alt={takumi.name} />
             ) : null}
             <AvatarFallback className="bg-primary/10 text-primary font-bold">
               {takumi.avatar}
