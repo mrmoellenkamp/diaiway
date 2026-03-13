@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "mobile:sync": "node scripts/prepare-mobile-webdir.mjs && npx cap sync",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint .",

@@ -68,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" className={_notoJP.variable}>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased app-bottom-space">
         <ErrorBoundary>
           <SessionProvider>
             <SessionActivityProvider>

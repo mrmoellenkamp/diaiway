@@ -103,6 +103,11 @@
   }
 }
 
+/* Global bottom space so content is not hidden behind footer on mobile */
+.app-bottom-space {
+  padding-bottom: 100px;
+}
+
 /* Safe-Area Utilities: Footer/Content bleibt auf iPhone über dem Home-Indicator, Web behält Standard-Padding */
 .pb-safe {
   padding-bottom: max(1rem, var(--safe-area-inset-bottom));
