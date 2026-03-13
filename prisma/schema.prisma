@@ -332,7 +332,6 @@ model Booking {
   safetyReports   SafetyReport[]
   safetyIncidents SafetyIncident[]
 
-  @@unique([userId, expertId, date, startTime], name: "unique_booking_slot")
   @@index([expertId, date, status])
   @@index([userId])
   @@index([statusToken])

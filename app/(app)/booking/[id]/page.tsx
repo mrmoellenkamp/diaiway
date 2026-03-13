@@ -36,6 +36,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [step, setStep] = useState<"form" | "checkout" | "success">("form")
   const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(45)
   const [bookingIdForPayment, setBookingIdForPayment] = useState<string | null>(null)
+  const [bookingIdempotencyKey] = useState(() => crypto.randomUUID())
   const [walletBalanceCents, setWalletBalanceCents] = useState(0)
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedStart, setSelectedStart] = useState("")
@@ -168,7 +169,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": bookingIdempotencyKey,
+        },
         body: JSON.stringify({
           takumiId: id,
           date: selectedDate,
