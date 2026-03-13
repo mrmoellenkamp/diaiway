@@ -1618,6 +1618,12 @@ export default function AdminPage() {
                   Templates
                 </Link>
               </Button>
+              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                <Link href="/admin/health-check">
+                  <Activity className="size-3.5" />
+                  Health Check
+                </Link>
+              </Button>
             </div>
 
             <TabsContent value="overview" className="mt-4">

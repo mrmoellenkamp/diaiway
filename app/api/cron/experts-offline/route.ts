@@ -37,6 +37,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const result = await runExpertsOffline()
+  await prisma.cronRunLog.upsert({
+    where: { cronName: "experts-offline" },
+    create: { cronName: "experts-offline", lastRunAt: new Date() },
+    update: { lastRunAt: new Date() },
+  }).catch(() => {})
   return NextResponse.json(result)
 }
 
@@ -51,5 +56,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const result = await runExpertsOffline()
+  await prisma.cronRunLog.upsert({
+    where: { cronName: "experts-offline" },
+    create: { cronName: "experts-offline", lastRunAt: new Date() },
+    update: { lastRunAt: new Date() },
+  }).catch(() => {})
   return NextResponse.json(result)
 }
