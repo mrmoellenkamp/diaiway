@@ -1,6 +1,15 @@
 import { PrismaClient } from "@prisma/client"
 
-// Singleton pattern — prevents hot-reload from opening dozens of connections in dev
+/**
+ * Prisma Client Singleton — verhindert Connection Exhaustion in Serverless.
+ *
+ * - Development: Verhindert Hot-Reload-Verbindungslecks (nur eine Instanz pro Prozess).
+ * - Production (Vercel): Jede Lambda-Instanz recycelt den Client über global.
+ *
+ * WICHTIG für Neon/Serverless: DATABASE_URL muss den Pooler nutzen:
+ *   ?pgbouncer=true&connection_limit=1
+ * Siehe .env.example für Details.
+ */
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 export const prisma =
@@ -9,4 +18,4 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   })
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+globalForPrisma.prisma = prisma
