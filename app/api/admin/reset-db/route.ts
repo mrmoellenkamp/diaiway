@@ -8,9 +8,12 @@ export const runtime = "nodejs"
  * POST /api/admin/reset-db
  * Truncates all application data tables in the correct order
  * (respecting foreign key constraints).
- * Requires admin session.
+ * Requires admin session. Nur in Non-Production verfügbar.
  */
 export async function POST() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "DB-Reset in Production deaktiviert." }, { status: 404 })
+  }
   const session = await auth()
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Nicht autorisiert." }, { status: 401 })

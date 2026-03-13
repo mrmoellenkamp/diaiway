@@ -65,9 +65,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (trigger === "update" && updateData) {
         if (updateData.name)       token.name       = updateData.name
         if (updateData.image)      token.picture    = updateData.image
-        if (updateData.appRole)    token.appRole    = updateData.appRole
         if (updateData.status)     token.status     = updateData.status
         if (typeof updateData.isVerified === "boolean") token.isVerified = updateData.isVerified
+        // Anti-Privilege-Escalation: appRole → takumi nur wenn Expert-Record existiert
+        if (updateData.appRole === "takumi") {
+          const userId = (token.id as string) ?? (token.sub as string)
+          if (userId) {
+            const expert = await prisma.expert.findUnique({
+              where: { userId },
+              select: { id: true },
+            })
+            if (expert) {
+              token.appRole = "takumi"
+            } else {
+              token.appRole = "shugyo"
+              console.warn("[auth] Privilege-Escalation blockiert: userId=%s versuchte appRole=takumi ohne Expert-Record", userId)
+            }
+          } else {
+            token.appRole = "shugyo"
+          }
+        } else if (updateData.appRole === "shugyo") {
+          token.appRole = "shugyo"
+        }
       }
       return token
     },
