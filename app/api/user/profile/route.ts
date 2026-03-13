@@ -1,8 +1,49 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 
 export const runtime = "nodejs"
+
+const FIELD_LABELS: Record<string, string> = {
+  username: "Benutzername",
+  email: "E-Mail-Adresse",
+  name: "Name",
+}
+
+function parsePrismaError(err: unknown): { error: string; field?: string; message: string; status: number } {
+  if (err instanceof PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      const targets = (err.meta?.target as string[] | undefined) ?? []
+      const field = targets[0] ?? "unbekannt"
+      const label = FIELD_LABELS[field] ?? field
+      return {
+        error: "Validierungsfehler",
+        field,
+        message: `Dieser ${label} ist bereits vergeben.`,
+        status: 409,
+      }
+    }
+    if (err.code === "P2000") {
+      const field = (err.meta?.column_name as string | undefined) ?? "unbekannt"
+      const label = FIELD_LABELS[field] ?? field
+      return {
+        error: "Validierungsfehler",
+        field,
+        message: `Der Wert für „${label}" ist zu lang.`,
+        status: 400,
+      }
+    }
+    if (err.code === "P2003") {
+      return {
+        error: "Validierungsfehler",
+        message: "Ein referenzierter Datensatz wurde nicht gefunden.",
+        status: 400,
+      }
+    }
+  }
+  return { error: "Serverfehler", message: "Ein unbekannter Fehler ist aufgetreten.", status: 500 }
+}
 
 /** GET — return full profile from PostgreSQL */
 export async function GET() {
@@ -52,7 +93,11 @@ export async function PATCH(req: Request) {
 
     if (body.name !== undefined) {
       if (!body.name || body.name.trim().length < 2) {
-        return NextResponse.json({ error: "Name muss mindestens 2 Zeichen lang sein." }, { status: 400 })
+        return NextResponse.json({
+          error: "Validierungsfehler",
+          field: "name",
+          message: "Name muss mindestens 2 Zeichen lang sein.",
+        }, { status: 400 })
       }
       data.name = body.name.trim()
     }
@@ -64,13 +109,21 @@ export async function PATCH(req: Request) {
         const { validateUsername } = await import("@/app/actions/username")
         const res = await validateUsername(val)
         if (!res.ok) {
-          return NextResponse.json({ error: res.error }, { status: 400 })
+          return NextResponse.json({
+            error: "Validierungsfehler",
+            field: "username",
+            message: res.error,
+          }, { status: 400 })
         }
         const existing = await prisma.user.findFirst({
           where: { username: val, NOT: { id: session.user.id } },
         })
         if (existing) {
-          return NextResponse.json({ error: "Dieser Benutzername ist bereits vergeben." }, { status: 409 })
+          return NextResponse.json({
+            error: "Validierungsfehler",
+            field: "username",
+            message: "Dieser Benutzername ist bereits vergeben.",
+          }, { status: 409 })
         }
         data.username = val
       }
@@ -161,6 +214,13 @@ export async function PATCH(req: Request) {
       message: "Profil erfolgreich aktualisiert.",
     })
   } catch (err: unknown) {
+    const parsed = parsePrismaError(err)
+    if (parsed.status !== 500) {
+      return NextResponse.json(
+        { error: parsed.error, field: parsed.field, message: parsed.message },
+        { status: parsed.status }
+      )
+    }
     const { sanitizeErrorForClient } = await import("@/lib/security")
     return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
