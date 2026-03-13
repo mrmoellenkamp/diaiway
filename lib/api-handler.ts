@@ -3,7 +3,7 @@
  * Eliminiert redundante try-catch-Blöcke und ermöglicht einheitliche UI-Feedbacks.
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ZodError } from "zod"
 import { sanitizeErrorForClient } from "@/lib/security"
@@ -12,7 +12,7 @@ import { sanitizeErrorForClient } from "@/lib/security"
 export type RouteContext = { params: Promise<Record<string, string | string[]>> }
 
 export type ApiHandlerFn = (
-  req: Request,
+  req: NextRequest,
   context: RouteContext
 ) => Promise<NextResponse>
 
@@ -21,7 +21,7 @@ export type ApiHandlerFn = (
  * Alle geworfenen Fehler werden an translateError weitergeleitet.
  */
 export function apiHandler(handler: ApiHandlerFn) {
-  return async (req: Request, context: RouteContext): Promise<NextResponse> => {
+  return async (req: NextRequest, context: RouteContext): Promise<NextResponse> => {
     try {
       return await handler(req, context)
     } catch (err) {
