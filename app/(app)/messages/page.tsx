@@ -516,6 +516,7 @@ function MessagesPageContent() {
           )}
         </div>
       )}
+      <div className="scroll-end-spacer" aria-hidden />
     </PageContainer>
   )
 }

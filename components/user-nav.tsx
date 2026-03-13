@@ -34,7 +34,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             href="/login"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
-            <LogIn className="size-4 text-primary" />
+            <LogIn className="size-4 text-primary icon-paper" />
             {t("nav.login")}
           </Link>
           <Link
@@ -60,7 +60,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           }
         >
           <Link href="/login">
-            <LogIn className="mr-1.5 size-3.5" />
+            <LogIn className="mr-1.5 size-3.5 icon-paper" />
             {t("nav.login")}
           </Link>
         </Button>
@@ -104,7 +104,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           href="/profile"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
         >
-          <User className="size-4 text-muted-foreground" />
+          <User className="size-4 text-muted-foreground icon-paper" />
           {t("nav.myProfile")}
         </Link>
         {(appRole === "takumi" || userRole === "admin") && (
@@ -112,7 +112,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             href="/dashboard/availability"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
-            <CalendarClock className="size-4 text-muted-foreground" />
+            <CalendarClock className="size-4 text-muted-foreground icon-paper" />
             {t("nav.myAvailability")}
           </Link>
         )}
@@ -121,7 +121,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             href="/admin"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
-            <Settings className="size-4 text-muted-foreground" />
+            <Settings className="size-4 text-muted-foreground icon-paper" />
             {t("profile.adminDashboard")}
           </Link>
         )}
@@ -129,7 +129,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
         >
-          <LogOut className="size-4" />
+          <LogOut className="size-4 icon-paper" />
           {t("nav.logout")}
         </button>
       </div>
@@ -166,14 +166,14 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/profile" className="flex items-center gap-2">
-            <User className="size-4" />
+            <User className="size-4 icon-paper" />
             {t("nav.myProfile")}
           </Link>
         </DropdownMenuItem>
         {(appRole === "takumi" || userRole === "admin") && (
           <DropdownMenuItem asChild>
             <Link href="/dashboard/availability" className="flex items-center gap-2">
-              <CalendarClock className="size-4" />
+              <CalendarClock className="size-4 icon-paper" />
               {t("nav.myAvailability")}
             </Link>
           </DropdownMenuItem>
@@ -181,8 +181,8 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         {userRole === "admin" && (
           <DropdownMenuItem asChild>
             <Link href="/admin" className="flex items-center gap-2">
-              <Settings className="size-4" />
-              {t("profile.adminDashboard")}
+              <Settings className="size-4 icon-paper" />
+            {t("profile.adminDashboard")}
             </Link>
           </DropdownMenuItem>
         )}
@@ -191,7 +191,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-2 text-destructive focus:text-destructive"
         >
-          <LogOut className="size-4" />
+          <LogOut className="size-4 icon-paper" />
           {t("nav.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -31,13 +31,13 @@ export function AppHeader({ title }: { title?: string }) {
           <LanguageSwitcher variant="compact" />
           <Button variant="ghost" size="icon-sm" asChild>
             <Link href="/search">
-              <Search className="size-5" />
+              <Search className="size-5 icon-paper" />
               <span className="sr-only">{t("common.search")}</span>
             </Link>
           </Button>
           <Button variant="ghost" size="icon-sm" asChild className="relative">
             <Link href="/messages">
-              <Bell className="size-5" />
+              <Bell className="size-5 icon-paper" />
               <span className="sr-only">{t("messages.title")}</span>
               {totalUnread > 0 && (
                 <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" />

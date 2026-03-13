@@ -103,9 +103,14 @@
   }
 }
 
-/* Global bottom space so content is not hidden behind footer on mobile */
+/* Global bottom space so content is not hidden behind footer on mobile (BottomNav + Safe Area) */
 .app-bottom-space {
-  padding-bottom: 100px;
+  padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom)));
+}
+
+/* Seiten ohne PageContainer: Safe-Area statt pb-40 */
+.pb-safe {
+  padding-bottom: max(10rem, calc(6rem + env(safe-area-inset-bottom)));
 }
 
 /* Safe-Area Utilities: Footer/Content bleibt auf iPhone über dem Home-Indicator, Web behält Standard-Padding */
@@ -114,6 +119,11 @@
 }
 .pt-safe {
   padding-top: max(1rem, var(--safe-area-inset-top));
+}
+
+/* Scroll-End-Spacer: Am Ende von Listen, damit der letzte Eintrag voll sichtbar ist (BottomNav + Safe Area) */
+.scroll-end-spacer {
+  min-height: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
 @keyframes live-pulse {
@@ -203,6 +213,14 @@
 
 .font-jp {
   font-family: var(--font-jp);
+}
+
+/* Pappentwicklung: Cut-out-Look für Nav-Icons (App-Store: Differenzierung von SF Symbols) */
+.icon-paper {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
+}
+.icon-paper-active {
+  filter: drop-shadow(0 1px 2px rgba(6, 78, 59, 0.15));
 }
 
 .scrollbar-none {

@@ -631,6 +631,7 @@ export default function ProfilePage() {
           </Button>
           </>
           )}
+        <div className="scroll-end-spacer" aria-hidden />
       </div>
     </PageContainer>
   )

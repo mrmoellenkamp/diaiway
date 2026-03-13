@@ -75,6 +75,7 @@ export function CategoryDetailPageClient({ slug, category, categoryTakumis }: Ca
             )}
           </div>
         </div>
+        <div className="scroll-end-spacer" aria-hidden />
       </div>
     </PageContainer>
   )

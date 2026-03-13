@@ -35,7 +35,7 @@ function Todo({ children }: { children: React.ReactNode }) {
 export default function AGBPage() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-40">
+      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-safe">
 
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">

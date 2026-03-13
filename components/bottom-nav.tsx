@@ -63,8 +63,8 @@ export function BottomNav() {
                 {item.icon ? (
                   <item.icon
                     className={cn(
-                      "size-5 transition-all",
-                      isActive && "scale-110"
+                      "size-5 transition-all icon-paper",
+                      isActive && "scale-110 icon-paper-active"
                     )}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
