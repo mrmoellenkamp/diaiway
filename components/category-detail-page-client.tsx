@@ -1,5 +1,6 @@
 "use client"
 
+import useSWR from "swr"
 import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,8 @@ import Link from "next/link"
 import type { Takumi } from "@/lib/types"
 import type { Category } from "@/lib/types"
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json()) as Promise<Takumi[]>
+
 interface CategoryDetailPageClientProps {
   slug: string
   category: Category
@@ -21,6 +24,12 @@ export function CategoryDetailPageClient({ slug, category, categoryTakumis }: Ca
   const { t } = useI18n()
   const categories = useCategories()
   const resolvedCategory = categories.find((c) => c.slug === slug) ?? category
+
+  const { data: allTakumis } = useSWR<Takumi[]>("/api/takumis", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  })
+  const takumis = allTakumis ? allTakumis.filter((tk) => tk.categorySlug === slug) : categoryTakumis
 
   return (
     <PageContainer>
@@ -47,13 +56,13 @@ export function CategoryDetailPageClient({ slug, category, categoryTakumis }: Ca
 
         <div>
           <p className="text-sm text-muted-foreground mb-3">
-            {categoryTakumis.length > 0
-              ? t("categoryDetail.expertsFound").replace("{count}", String(categoryTakumis.length))
+            {takumis.length > 0
+              ? t("categoryDetail.expertsFound").replace("{count}", String(takumis.length))
               : t("categoryDetail.expertsInCategory").replace("{count}", String(resolvedCategory.takumiCount))}
           </p>
           <div className="flex flex-col gap-3">
-            {categoryTakumis.length > 0 ? (
-              categoryTakumis.map((tk, index) => (
+            {takumis.length > 0 ? (
+              takumis.map((tk, index) => (
                 <TakumiCard key={tk.id} takumi={tk} priority={index < 3} />
               ))
             ) : (
