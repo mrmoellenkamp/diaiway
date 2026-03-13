@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { X, Send, Paperclip, Loader2, User, Check, XCircle } from "lucide-react"
+import { X, Send, Paperclip, Loader2, User, Check, XCircle, AlertCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -11,11 +11,15 @@ import { toast } from "sonner"
 import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
 import { VerifiedBadge } from "@/components/verified-badge"
 
+type MessageStatus = "sent" | "pending" | "failed"
+
 interface MsgItem {
   id: string
   text: string
   sender: "user" | "partner"
   timestamp: number
+  status?: MessageStatus
+  retryCount?: number
   attachmentUrl?: string | null
   attachmentThumbnailUrl?: string | null
   attachmentFilename?: string | null
@@ -184,10 +188,80 @@ export function UserChatBox({
     setLoading(true)
     fetch(`/api/messages?with=${encodeURIComponent(partnerId)}`)
       .then((r) => r.json())
-      .then((data) => setMessages(data.messages ?? []))
+      .then((data) => {
+        const msgs = (data.messages ?? []) as MsgItem[]
+        setMessages(msgs.map((m) => ({ ...m, status: (m.status ?? "sent") as MessageStatus })))
+      })
       .catch(() => setMessages([]))
       .finally(() => setLoading(false))
   }, [partnerId])
+
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    }
+  }, [])
+
+  const sendMessage = useCallback(
+    async (payload: {
+      recipientUserId: string
+      text: string
+      communicationType: string
+      attachmentUrl?: string | null
+      attachmentThumbnailUrl?: string | null
+      attachmentFilename?: string | null
+    }, msgId: string, retries = 0) => {
+      let tempId = msgId
+      try {
+        const res = await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+        const data = await res.json()
+        if (res.ok) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === tempId
+                ? {
+                    ...m,
+                    id: data.id,
+                    timestamp: data.timestamp,
+                    status: "sent" as MessageStatus,
+                    attachmentUrl: data.attachmentUrl,
+                    attachmentThumbnailUrl: data.attachmentThumbnailUrl,
+                    attachmentFilename: data.attachmentFilename,
+                  }
+                : m
+            )
+          )
+          return
+        }
+        throw new Error(data.error || "Fehler")
+      } catch {
+        if (retries < 3) {
+          const delay = 2 ** retries * 1000
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === tempId ? { ...m, status: "pending" as MessageStatus, retryCount: retries + 1 } : m
+            )
+          )
+          retryTimeoutRef.current = setTimeout(() => {
+            retryTimeoutRef.current = null
+            sendMessage(payload, tempId, retries + 1)
+          }, delay)
+        } else {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === tempId ? { ...m, status: "failed" as MessageStatus } : m))
+          )
+          toast.error("Nachricht konnte nicht gesendet werden.")
+        }
+      }
+    },
+    []
+  )
 
   async function handleSend() {
     const text = input.trim()
@@ -200,6 +274,8 @@ export function UserChatBox({
       text: text || "(Anhang)",
       sender: "user",
       timestamp: Date.now(),
+      status: "pending",
+      retryCount: 0,
       attachmentUrl: attachment?.url,
       attachmentThumbnailUrl: attachment?.thumbnailUrl,
       attachmentFilename: attachment?.filename,
@@ -208,45 +284,42 @@ export function UserChatBox({
     setInput("")
     setPendingAttachment(null)
     setSending(true)
-    try {
-      const res = await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipientUserId: partnerId,
-          text: text || "(Anhang)",
-          communicationType: "CHAT",
-          attachmentUrl: attachment?.url,
-          attachmentThumbnailUrl: attachment?.thumbnailUrl,
-          attachmentFilename: attachment?.filename,
-        }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? {
-                  ...m,
-                  id: data.id,
-                  timestamp: data.timestamp,
-                  attachmentUrl: data.attachmentUrl,
-                  attachmentThumbnailUrl: data.attachmentThumbnailUrl,
-                  attachmentFilename: data.attachmentFilename,
-                }
-              : m
-          )
-        )
-      } else {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId))
-        toast.error(data.error || "Fehler")
-      }
-    } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId))
-      toast.error("Fehler – Nachricht konnte nicht gesendet werden.")
-    } finally {
-      setSending(false)
+    await sendMessage(
+      {
+        recipientUserId: partnerId,
+        text: text || "(Anhang)",
+        communicationType: "CHAT",
+        attachmentUrl: attachment?.url,
+        attachmentThumbnailUrl: attachment?.thumbnailUrl,
+        attachmentFilename: attachment?.filename,
+      },
+      tempId,
+      0
+    )
+    setSending(false)
+  }
+
+  function handleRetry(msg: MsgItem) {
+    if (msg.sender !== "user" || msg.status !== "failed") return
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
     }
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msg.id ? { ...m, status: "pending" as MessageStatus, retryCount: 0 } : m))
+    )
+    sendMessage(
+      {
+        recipientUserId: partnerId,
+        text: msg.text,
+        communicationType: "CHAT",
+        attachmentUrl: msg.attachmentUrl,
+        attachmentThumbnailUrl: msg.attachmentThumbnailUrl,
+        attachmentFilename: msg.attachmentFilename,
+      },
+      msg.id,
+      0
+    )
   }
 
   async function handleAttach() {
@@ -342,7 +415,9 @@ export function UserChatBox({
                   "max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
                   msg.sender === "user"
                     ? "rounded-tr-md bg-primary/10 text-foreground"
-                    : "rounded-tl-md border border-border/30 bg-white/80 text-foreground shadow-sm"
+                    : "rounded-tl-md border border-border/30 bg-white/80 text-foreground shadow-sm",
+                  msg.sender === "user" && msg.status === "pending" && "opacity-70",
+                  msg.sender === "user" && msg.status === "failed" && "ring-1 ring-destructive/30"
                 )}
               >
                 {msg.text}
@@ -352,6 +427,16 @@ export function UserChatBox({
                     thumbnailUrl={msg.attachmentThumbnailUrl}
                     filename={msg.attachmentFilename}
                   />
+                )}
+                {msg.sender === "user" && msg.status === "failed" && (
+                  <button
+                    type="button"
+                    onClick={() => handleRetry(msg)}
+                    className="mt-2 flex items-center gap-1.5 text-[10px] text-destructive hover:underline"
+                  >
+                    <AlertCircle className="size-3 shrink-0" />
+                    Tippe zum Wiederholen
+                  </button>
                 )}
               </div>
             </div>
@@ -410,12 +495,22 @@ export function UserChatBox({
               <Paperclip className="size-3.5" />
             )}
           </button>
-          <input
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
             placeholder={t("messages.placeholder")}
             disabled={sending || interactionLocked}
+            inputMode="text"
+            enterKeyHint="send"
+            autoCorrect="on"
+            autoComplete="off"
+            rows={1}
             className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
           />
           <button
