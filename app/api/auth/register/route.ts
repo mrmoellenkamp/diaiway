@@ -77,11 +77,11 @@ export async function POST(req: Request) {
 
     // ── Create user ───────────────────────────────────────────────────────────
     const hashed = await bcrypt.hash(password, 12)
-    let username = generateFallbackUsername(name)
+    let username = await generateFallbackUsername(name)
     for (let i = 0; i < 5; i++) {
       const exists = await prisma.user.findUnique({ where: { username } })
       if (!exists) break
-      username = generateFallbackUsername(name)
+      username = await generateFallbackUsername(name)
     }
     const user = await prisma.user.create({
       data: {
