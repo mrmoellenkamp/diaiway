@@ -138,60 +138,86 @@ export async function GET(req: NextRequest) {
       (id): id is string => id != null && id !== session.user.id
     )
 
-    const threads = await Promise.all(
-      partnerIds.map(async (partnerId) => {
-        const user = await prisma.user.findUnique({
-          where: { id: partnerId },
-          select: { id: true, name: true, image: true, isVerified: true },
-        })
-        const expert = await prisma.expert.findFirst({
-          where: { userId: partnerId },
-          select: { id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true, verified: true },
-        })
-        const lastMsg = await prisma.directMessage.findFirst({
-          where: {
-            communicationType: "CHAT",
-            OR: [
-              { senderId: session.user.id, recipientId: partnerId },
-              { senderId: partnerId, recipientId: session.user.id },
-            ],
-          },
-          orderBy: { createdAt: "desc" },
-        })
-        const unread = await prisma.directMessage.count({
-          where: { recipientId: session.user.id, senderId: partnerId, read: false, communicationType: "CHAT" },
-        })
-        const displayName = user?.name ?? "Nutzer"
-        const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
-        const subcategory = expert?.subcategory ?? ""
-        const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
+    if (partnerIds.length === 0) {
+      return NextResponse.json({ threads: [] })
+    }
 
-        const now = Date.now()
-        const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt
-        const lastSeen = expert?.lastSeenAt?.getTime()
-        const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
+    // Batch-Queries statt N+1: 4 Queries statt 4×N
+    const [users, experts, allLastMsgs, unreadCounts] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: partnerIds } },
+        select: { id: true, name: true, image: true, isVerified: true },
+      }),
+      prisma.expert.findMany({
+        where: { userId: { in: partnerIds } },
+        select: { userId: true, id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true, verified: true },
+      }),
+      prisma.directMessage.findMany({
+        where: {
+          communicationType: "CHAT",
+          OR: partnerIds.flatMap((pid) => [
+            { senderId: session.user.id, recipientId: pid },
+            { senderId: pid, recipientId: session.user.id },
+          ]),
+        },
+        orderBy: { createdAt: "desc" },
+        select: { senderId: true, recipientId: true, text: true, createdAt: true },
+      }),
+      prisma.directMessage.groupBy({
+        by: ["senderId"],
+        where: {
+          recipientId: session.user.id,
+          senderId: { in: partnerIds },
+          read: false,
+          communicationType: "CHAT",
+        },
+        _count: { id: true },
+      }),
+    ])
 
-        const partnerIsVerified = expert?.verified ?? user?.isVerified ?? false
-        return {
-          partnerId,
-          partnerName: displayName,
-          partnerAvatar: avatar,
-          partnerImageUrl: partnerImageUrl ?? null,
-          partnerIsVerified,
-          subcategory,
-          expertId: expert?.id ?? null,
-          isOnline: !!isOnline,
-          lastMessage: lastMsg
-            ? {
-                text: lastMsg.text,
-                sender: lastMsg.senderId === session.user.id ? "user" : "partner",
-                timestamp: lastMsg.createdAt.getTime(),
-              }
-            : null,
-          unread,
-        }
-      })
-    )
+    const userMap = new Map(users.map((u) => [u.id, u]))
+    const expertMap = new Map(experts.map((e) => [e.userId, e]))
+    const lastMsgByPartner = new Map<string, { text: string; sender: string; timestamp: number }>()
+    for (const m of allLastMsgs) {
+      const partnerId = m.senderId === session.user.id ? m.recipientId : m.senderId
+      if (!lastMsgByPartner.has(partnerId)) {
+        lastMsgByPartner.set(partnerId, {
+          text: m.text,
+          sender: m.senderId === session.user.id ? "user" : "partner",
+          timestamp: m.createdAt.getTime(),
+        })
+      }
+    }
+    const unreadByPartner = new Map(unreadCounts.map((u) => [u.senderId, u._count.id]))
+
+    const now = Date.now()
+    const ONLINE_MS = 30 * 1000
+
+    const threads = partnerIds.map((partnerId) => {
+      const user = userMap.get(partnerId)
+      const expert = expertMap.get(partnerId)
+      const lastMsg = lastMsgByPartner.get(partnerId)
+      const unread = unreadByPartner.get(partnerId) ?? 0
+      const displayName = user?.name ?? "Nutzer"
+      const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
+      const subcategory = expert?.subcategory ?? ""
+      const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
+      const lastSeen = expert?.lastSeenAt?.getTime()
+      const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
+      const partnerIsVerified = expert?.verified ?? user?.isVerified ?? false
+      return {
+        partnerId,
+        partnerName: displayName,
+        partnerAvatar: avatar,
+        partnerImageUrl: partnerImageUrl ?? null,
+        partnerIsVerified,
+        subcategory,
+        expertId: expert?.id ?? null,
+        isOnline: !!isOnline,
+        lastMessage: lastMsg ?? null,
+        unread,
+      }
+    })
 
     threads.sort((a, b) => {
       const aTime = a.lastMessage?.timestamp ?? 0
