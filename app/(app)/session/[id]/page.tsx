@@ -444,6 +444,24 @@ function SessionCallContent() {
     )
   }
 
+  // Instant-Anfrage abgelaufen (60s ohne Antwort)
+  if (isWaitMode && !booking.isExpert && booking.status === "instant_expired") {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+        <div className="flex size-20 items-center justify-center rounded-full bg-muted">
+          <span className="text-4xl">⏱️</span>
+        </div>
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-foreground">Kein Experte verfügbar</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/home")}>Später erneut versuchen</Button>
+      </div>
+    )
+  }
+
   // Takumi hat abgelehnt
   if (isWaitMode && !booking.isExpert && ["declined", "cancelled"].includes(booking.status)) {
     return (
