@@ -3,6 +3,7 @@ import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { isWithinInstantSlots } from "@/lib/availability-utils"
+import { sendPushToUser } from "@/lib/push"
 import type { WeeklySlots } from "@/lib/availability-utils"
 
 /**
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
     )
     const totalPrice = price15Min * 2 // 30 Min als Platzhalter
 
+    const statusToken = randomBytes(24).toString("hex")
     const booking = await prisma.booking.create({
       data: {
         expertId: expert.id,
@@ -112,16 +114,30 @@ export async function POST(req: Request) {
         endTime,
         status: "pending",
         totalPrice,
-        statusToken: randomBytes(24).toString("hex"),
+        statusToken,
       },
     })
+
+    if (takumiUserId) {
+    sendPushToUser(takumiUserId, {
+      title: "Instant-Anfrage",
+      body: `${user.name ?? "Ein Nutzer"} möchte mit dir verbinden.`,
+      url: `/session/${booking.id}`,
+      tag: `instant-${booking.id}`,
+      data: {
+        type: "BOOKING_REQUEST",
+        bookingId: booking.id,
+        statusToken,
+      },
+    }).catch(() => {})
+    }
 
     return NextResponse.json({
       ok: true,
       booking: {
         id: booking.id,
         status: booking.status,
-        statusToken: booking.statusToken,
+        statusToken,
       },
     })
   } catch (err) {

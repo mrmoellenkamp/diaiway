@@ -9,6 +9,7 @@ import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PushNotificationProvider } from '@/components/push-notification-provider'
+import { QuickActionPushProvider } from '@/components/quick-action-push-provider'
 import { SessionActivityProvider } from '@/components/session-activity-provider'
 import { SessionTimeoutWarning } from '@/components/session-timeout-warning'
 import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
@@ -75,6 +76,7 @@ export default function RootLayout({
                 <AppProvider>
                   <WalletTopupProvider>
                   <PushNotificationProvider>
+                    <QuickActionPushProvider>
                     <DeepLinkHandler />
                     <SplashScreenHider />
                     <ScrollToTop />
@@ -84,6 +86,7 @@ export default function RootLayout({
                     <SessionTimeoutWarning />
                     <TakumiPresenceUpdater />
                     <InstantRequestOverlay />
+                    </QuickActionPushProvider>
                   </PushNotificationProvider>
                   </WalletTopupProvider>
                 </AppProvider>

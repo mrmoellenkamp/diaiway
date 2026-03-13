@@ -66,6 +66,13 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 | `VAPID_PUBLIC_KEY` | Öffentlicher VAPID-Key (auch als `NEXT_PUBLIC_VAPID_PUBLIC_KEY` für Client) |
 | `VAPID_PRIVATE_KEY` | Privater VAPID-Key (nur serverseitig) |
 
+## FCM (Native Push / Quick Actions)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Service Account JSON (als String) für FCM |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Alternativ: Pfad zur Service-Account-JSON-Datei |
+
 VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+v.publicKey);console.log('VAPID_PRIVATE_KEY='+v.privateKey);console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY='+v.publicKey);"`
 
 ## Daily.co (Video/Voice)
