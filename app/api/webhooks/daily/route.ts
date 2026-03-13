@@ -32,7 +32,12 @@ export async function POST(req: Request) {
   const signature = req.headers.get("x-webhook-signature") ?? req.headers.get("x-daily-signature")
   const secret = process.env.DAILY_WEBHOOK_SECRET
 
-  if (secret && !verifyWebhook(body, signature, secret)) {
+  if (!secret?.trim()) {
+    console.error("[Daily Webhook] DAILY_WEBHOOK_SECRET not configured – refusing in production")
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
+    }
+  } else if (!verifyWebhook(body, signature, secret)) {
     console.warn("[Daily Webhook] Invalid signature")
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
   }
