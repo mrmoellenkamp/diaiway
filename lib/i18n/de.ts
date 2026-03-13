@@ -267,6 +267,8 @@ const de = {
   "profile.spent": "Ausgegeben",
   "profile.favorites": "Favoriten",
   "profile.favoriteTakumis": "Favoriten-Takumis",
+  "profile.username": "Benutzername",
+  "profile.usernameHint": "Optional. Min. 3 Zeichen, nur Buchstaben, Ziffern und Unterstriche.",
   "profile.languages": "Sprachen",
   "profile.languagesDesc": "Welche Sprachen sprichst du?",
   "profile.languagesSaved": "Sprachen gespeichert.",

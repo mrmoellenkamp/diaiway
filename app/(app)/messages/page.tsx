@@ -13,6 +13,7 @@ import { useApp } from "@/lib/app-context"
 import { formatTimeBerlin } from "@/lib/date-utils"
 import { toast } from "sonner"
 import { UserChatBox } from "@/components/user-chat-box"
+import { VerifiedBadge } from "@/components/verified-badge"
 
 interface NotificationItem {
   id: string
@@ -29,6 +30,7 @@ interface ThreadInfo {
   partnerName: string
   partnerAvatar: string
   partnerImageUrl?: string | null
+  partnerIsVerified?: boolean
   subcategory: string
   expertId: string | null
   isOnline?: boolean
@@ -465,18 +467,21 @@ function MessagesPageContent() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          {th.expertId ? (
-                            <Link
-                              href={`/takumi/${th.expertId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-sm font-semibold text-foreground underline-offset-2 hover:underline truncate"
-                            >
-                              {th.partnerName}
-                            </Link>
-                          ) : (
-                            <span className="text-sm font-semibold text-foreground truncate">{th.partnerName}</span>
-                          )}
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1 min-w-0 min-h-0">
+                            {th.expertId ? (
+                              <Link
+                                href={`/takumi/${th.expertId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-sm font-semibold text-foreground underline-offset-2 hover:underline truncate"
+                              >
+                                {th.partnerName}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-semibold text-foreground truncate">{th.partnerName}</span>
+                            )}
+                            {th.partnerIsVerified && <VerifiedBadge size="sm" className="shrink-0" />}
+                          </div>
                           <span className="text-[10px] text-muted-foreground shrink-0">
                             {formatTimeBerlin(time)}
                           </span>
@@ -500,6 +505,7 @@ function MessagesPageContent() {
                   partnerName={thread.partnerName}
                   partnerAvatar={thread.partnerAvatar}
                   partnerImageUrl={thread.partnerImageUrl}
+                  partnerIsVerified={thread.partnerIsVerified}
                   expertId={thread.expertId}
                   subcategory={thread.subcategory}
                   onClose={() => setActiveThread(null)}

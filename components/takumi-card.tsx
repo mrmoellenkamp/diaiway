@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { LiveBadge } from "@/components/live-badge"
 import { ReviewStars } from "@/components/review-stars"
-import { CheckCircle } from "lucide-react"
+import { VerifiedBadge } from "@/components/verified-badge"
 import { FavoriteButton } from "@/components/favorite-button"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import type { Takumi } from "@/lib/types"
@@ -41,9 +41,7 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
               <span className="truncate font-semibold text-foreground">
                 {takumi.name}
               </span>
-              {takumi.verified && (
-                <CheckCircle className="size-3.5 shrink-0 text-accent" />
-              )}
+              {takumi.verified && <VerifiedBadge size="sm" className="shrink-0" />}
               {takumi.isPro && (
                 <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-none">
                   PRO

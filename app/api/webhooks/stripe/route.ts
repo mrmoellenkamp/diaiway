@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
+import { markVerified } from "@/lib/verification-service"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -94,6 +95,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     try {
       await creditWalletTopup(userId, amountTotal, session.id)
       console.log(`[Stripe Webhook] Wallet topup: ${amountTotal / 100} € für User ${userId}`)
+      await markVerified(userId, "STRIPE_PAYMENT")
     } catch (err) {
       console.error("[Stripe Webhook] creditWalletTopup failed:", err)
     }
@@ -132,7 +134,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
   }
 
-  // Bei Vorauszahlung (booking_payment): E-Mail + Notification an Takumi senden
+  // Shugyo-Verifizierung: Erste erfolgreiche Zahlung
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { userId: true },
+  })
+  if (booking?.userId) {
+    await markVerified(booking.userId, "STRIPE_PAYMENT").catch(() => {})
+  }
+
   if (paymentType === "booking_payment") {
     try {
       await notifyTakumiAfterPayment(bookingId)
@@ -170,6 +180,14 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
     await onPaymentReceived(bookingId, amountTotal)
   } catch (walletErr) {
     console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { userId: true },
+  })
+  if (booking?.userId) {
+    await markVerified(booking.userId, "STRIPE_PAYMENT").catch(() => {})
   }
 
   if (pi.metadata?.type === "booking_payment") {

@@ -43,6 +43,9 @@ export async function GET(
           refundPreference: true,
           invoiceData: true,
           customerNumber: true,
+          isVerified: true,
+          verificationSource: true,
+          username: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -165,18 +168,28 @@ export async function PATCH(
   try {
     await prisma.$transaction(async (tx) => {
       if (body.user && Object.keys(body.user).length > 0) {
+        const existing = await tx.user.findUnique({
+          where: { id },
+          select: { email: true },
+        })
+        const isAnonymized = existing?.email?.endsWith("@anonymized.local") ?? false
+
         const allowed = [
           "name", "email", "image", "role", "appRole", "status", "isBanned",
-          "skillLevel", "refundPreference", "invoiceData",
+          "skillLevel", "refundPreference", "invoiceData", "isVerified", "username",
         ] as const
         const data: Record<string, unknown> = {}
         const { sanitizeInvoiceData } = await import("@/lib/security")
         for (const k of allowed) {
           if (body.user![k] === undefined) continue
+          if (isAnonymized && (k === "username" || k === "isVerified")) continue
           if (k === "invoiceData") {
             const sanitized = sanitizeInvoiceData(body.user!.invoiceData)
             if (sanitized !== null) data[k] = sanitized
-          } else {
+          } else if (k === "isVerified") {
+            data.isVerified = !!body.user!.isVerified
+            data.verificationSource = body.user!.isVerified ? "MANUAL" : "NONE"
+          } else if (k !== "isVerified") {
             data[k] = body.user![k]
           }
         }

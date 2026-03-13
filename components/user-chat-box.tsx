@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
+import { VerifiedBadge } from "@/components/verified-badge"
 
 interface MsgItem {
   id: string
@@ -107,6 +108,7 @@ export interface UserChatBoxProps {
   partnerName: string
   partnerAvatar: string
   partnerImageUrl?: string | null
+  partnerIsVerified?: boolean
   expertId?: string | null
   subcategory?: string
   onClose: () => void
@@ -121,6 +123,7 @@ export function UserChatBox({
   partnerName,
   partnerAvatar,
   partnerImageUrl,
+  partnerIsVerified,
   expertId,
   subcategory,
   onClose,
@@ -279,7 +282,7 @@ export function UserChatBox({
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{partnerAvatar}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate">
+          <p className="text-sm font-semibold text-foreground truncate flex items-center gap-1.5">
             {expertId ? (
               <Link href={`/takumi/${expertId}`} className="underline-offset-2 hover:underline">
                 {partnerName}
@@ -287,6 +290,7 @@ export function UserChatBox({
             ) : (
               partnerName
             )}
+            {partnerIsVerified && <VerifiedBadge size="sm" />}
           </p>
           {subcategory ? <p className="text-[10px] text-muted-foreground truncate">{subcategory}</p> : null}
         </div>

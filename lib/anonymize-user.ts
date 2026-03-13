@@ -10,6 +10,16 @@ const ANON_EMAIL = (id: string) =>
   `${ANON_PREFIX}${ANON_SUFFIX(id)}@anonymized.local`
 const ANON_NAME = (id: string) => `${ANON_PREFIX}${ANON_SUFFIX(id)}`
 
+/**
+ * Anonymisierter Username: Gibt den ursprünglichen Username frei (@unique) und
+ * vermeidet Kollisionen. Format: deleted_user_{userId}_{timestamp}
+ * Max. Länge: ~52 Zeichen (Postgres TEXT, keine App-Limitierung).
+ */
+function anonUsername(userId: string): string {
+  const ts = Date.now()
+  return `deleted_user_${userId}_${ts}`
+}
+
 /** Prüft, ob eine URL ein Vercel-Blob ist. */
 function isBlobUrl(url: string): boolean {
   return (
@@ -95,11 +105,13 @@ export async function anonymizeUser(userId: string): Promise<
     }
 
     // 6. User anonymisieren — Record bleibt (Wallet-Historie!)
+    const anonUsernameValue = anonUsername(userId)
     await tx.user.update({
       where: { id: userId },
       data: {
         name: anonName,
         email: anonEmail,
+        username: anonUsernameValue, // Gibt ursprünglichen Username frei (@unique)
         password: randomPassword,
         image: "",
         resetToken: null,
@@ -107,6 +119,8 @@ export async function anonymizeUser(userId: string): Promise<
         invoiceData: Prisma.DbNull,
         favorites: [],
         status: "paused",
+        isVerified: false,
+        verificationSource: "NONE",
       },
     })
   })

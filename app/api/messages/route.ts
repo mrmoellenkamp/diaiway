@@ -142,11 +142,11 @@ export async function GET(req: NextRequest) {
       partnerIds.map(async (partnerId) => {
         const user = await prisma.user.findUnique({
           where: { id: partnerId },
-          select: { id: true, name: true, image: true },
+          select: { id: true, name: true, image: true, isVerified: true },
         })
         const expert = await prisma.expert.findFirst({
           where: { userId: partnerId },
-          select: { id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true },
+          select: { id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true, verified: true },
         })
         const lastMsg = await prisma.directMessage.findFirst({
           where: {
@@ -171,11 +171,13 @@ export async function GET(req: NextRequest) {
         const lastSeen = expert?.lastSeenAt?.getTime()
         const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
 
+        const partnerIsVerified = expert?.verified ?? user?.isVerified ?? false
         return {
           partnerId,
           partnerName: displayName,
           partnerAvatar: avatar,
           partnerImageUrl: partnerImageUrl ?? null,
+          partnerIsVerified,
           subcategory,
           expertId: expert?.id ?? null,
           isOnline: !!isOnline,
