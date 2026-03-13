@@ -1,0 +1,5 @@
+/* German localization for usage descriptions */
+"NSCameraUsageDescription" = "Wir benötigen Zugriff auf deine Kamera für die Video-Beratung zwischen Shugyo und Takumi.";
+"NSMicrophoneUsageDescription" = "Wir benötigen Zugriff auf dein Mikrofon, damit du dich während der Beratung unterhalten kannst.";
+"NSPhotoLibraryUsageDescription" = "Wir benötigen Zugriff auf deine Fotogalerie, um Bilder für dein Projekt oder dein Profil hochzuladen.";
+"NSFaceIDUsageDescription" = "Face ID wird zur sicheren Anmeldung und zum Schutz deiner Daten verwendet.";
