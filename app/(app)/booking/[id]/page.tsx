@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { ReviewStars } from "@/components/review-stars"
 import { BookingCalendar } from "@/components/booking-calendar"
 import { PageContainer } from "@/components/page-container"
+import { Drawer, DrawerContent } from "@/components/ui/drawer"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
@@ -33,6 +34,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const takumi = takumis.find((tk) => tk.id === id)
 
   const [step, setStep] = useState<"form" | "checkout" | "success">("form")
+  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(45)
   const [bookingIdForPayment, setBookingIdForPayment] = useState<string | null>(null)
   const [walletBalanceCents, setWalletBalanceCents] = useState(0)
   const [selectedDate, setSelectedDate] = useState("")
@@ -52,6 +54,11 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         .catch(() => {})
     }
   }, [step, session?.user])
+
+  useEffect(() => {
+    if (step === "checkout") setActiveSnapPoint(92)
+    else setActiveSnapPoint(45)
+  }, [step])
 
   if (isTakumisLoading) {
     return (
@@ -191,27 +198,41 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <PageContainer>
-      <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          {step === "checkout" ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0"
-              onClick={() => setStep("form")}
-              aria-label={t("handshake.back")}
-            >
-              <ArrowLeft className="size-5" />
-            </Button>
-          ) : (
-            <Button asChild variant="ghost" size="icon" className="shrink-0">
-              <Link href={`/takumi/${takumi.id}`}>
+    <Drawer
+      open={true}
+      snapPoints={[45, 92]}
+      activeSnapPoint={activeSnapPoint}
+      setActiveSnapPoint={setActiveSnapPoint}
+      modal={true}
+      onOpenChange={(open) => {
+        if (!open) router.push(`/takumi/${takumi.id}`)
+      }}
+    >
+      <DrawerContent className="max-h-[92vh] rounded-t-2xl">
+        <div className="flex flex-col gap-6 overflow-y-auto overscroll-contain p-4 pb-safe">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            {step === "checkout" ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => setStep("form")}
+                aria-label={t("handshake.back")}
+              >
                 <ArrowLeft className="size-5" />
-              </Link>
-            </Button>
-          )}
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => router.push(`/takumi/${takumi.id}`)}
+                aria-label={t("common.back")}
+              >
+                <ArrowLeft className="size-5" />
+              </Button>
+            )}
           <h1 className="text-lg font-bold text-foreground">
             {step === "checkout" ? t("handshake.paymentTitle") : t("booking.title")}
           </h1>
@@ -506,7 +527,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         </form>
           </>
         )}
-      </div>
-    </PageContainer>
+        </div>
+      </DrawerContent>
+    </Drawer>
   )
 }

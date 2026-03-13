@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"
 import { Home, MessageSquare, User, LayoutGrid, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
+import { hapticLight } from "@/lib/native-utils"
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -19,6 +21,10 @@ export function BottomNav() {
     { href: "/profile", label: t("common.profile"), icon: User },
   ]
 
+  function handleNavClick(e: React.MouseEvent, href: string) {
+    if (!pathname.startsWith(href)) hapticLight()
+  }
+
   return (
     <footer
       className={cn(
@@ -28,6 +34,7 @@ export function BottomNav() {
         "shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.2)]",
         "rounded-t-2xl"
       )}
+      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } as React.CSSProperties}
       role="contentinfo"
       aria-label="Hauptnavigation"
     >
@@ -36,10 +43,7 @@ export function BottomNav() {
         role="navigation"
         aria-label="Hauptnavigation"
       >
-        <div
-          className="flex items-center justify-around pt-3"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } as React.CSSProperties}
-        >
+        <div className="flex items-center justify-around pt-3">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href)
             const isBrand = item.brand === true
@@ -47,8 +51,9 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(e) => handleNavClick(e, item.href)}
                 className={cn(
-                  "flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 px-4 py-2.5 text-xs transition-colors active:scale-95 touch-manipulation",
+                  "relative flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 px-4 py-2.5 text-xs transition-colors active:scale-95 touch-manipulation",
                   isActive
                     ? "text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground"
@@ -66,7 +71,11 @@ export function BottomNav() {
                 ) : null}
                 {isBrand ? <DiAiwayBrand className="text-xs" /> : <span>{item.label}</span>}
                 {isActive && (
-                  <span className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary pointer-events-none" />
+                  <motion.span
+                    layoutId="nav-pill"
+                    className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary pointer-events-none"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
                 )}
               </Link>
             )
