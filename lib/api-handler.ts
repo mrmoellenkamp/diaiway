@@ -66,6 +66,11 @@ export function translateError(err: unknown): NextResponse {
     }
   }
 
+  // Slot-Konflikt (Buchung)
+  if (err instanceof Error && err.message === "SLOT_CONFLICT") {
+    return NextResponse.json({ error: "Dieser Zeitraum ist bereits belegt." }, { status: 409 })
+  }
+
   // Zod: Validierungsfehler
   if (err instanceof ZodError) {
     const details = err.issues.map((i) => ({

@@ -141,6 +141,9 @@ model User {
   isVerified       Boolean    @default(false)
   verificationSource VerificationSource @default(NONE)
 
+  // Session-Revokation: Unix-Timestamp; JWT mit iat < tokenRevocationTime gilt als ungültig
+  tokenRevocationTime Int?
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -292,6 +295,7 @@ model Booking {
   price                 Int?          // Legacy: EUR, Fallback für Bestandsbuchungen
   note                  String        @default("")
   statusToken           String        @unique
+  idempotencyKey        String?       @unique
 
   // Video session
   dailyRoomUrl          String        @default("")
@@ -328,6 +332,7 @@ model Booking {
   safetyReports   SafetyReport[]
   safetyIncidents SafetyIncident[]
 
+  @@unique([userId, expertId, date, startTime], name: "unique_booking_slot")
   @@index([expertId, date, status])
   @@index([userId])
   @@index([statusToken])
