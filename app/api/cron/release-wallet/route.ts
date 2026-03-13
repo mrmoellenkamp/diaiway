@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/db"
 import { processPendingCompletions } from "@/app/actions/process-completion"
 
 export const runtime = "nodejs"
@@ -24,6 +25,11 @@ export async function GET(req: NextRequest) {
     const results = await processPendingCompletions()
     const ok = results.filter((r) => r.ok).length
     const failed = results.filter((r) => !r.ok)
+    await prisma.cronRunLog.upsert({
+      where: { cronName: "release-wallet" },
+      create: { cronName: "release-wallet", lastRunAt: new Date() },
+      update: { lastRunAt: new Date() },
+    }).catch(() => {})
     return NextResponse.json({
       processed: ok,
       failed: failed.length,

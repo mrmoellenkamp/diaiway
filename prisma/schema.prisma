@@ -486,6 +486,14 @@ model AdminActionLog {
   createdAt   DateTime @default(now())
 }
 
+// Cron-Monitor: letzter Lauf pro Cron-Job
+model CronRunLog {
+  id         String   @id @default(cuid())
+  cronName   String   @unique // release-wallet | experts-offline
+  lastRunAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+}
+
 // Daily.co Ghost Session: participant.left → 60s wait for rejoin → terminate (Case A/B)
 model DailyParticipantLeft {
   id          String    @id @default(cuid())
