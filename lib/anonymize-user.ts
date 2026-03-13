@@ -121,6 +121,7 @@ export async function anonymizeUser(userId: string): Promise<
         status: "paused",
         isVerified: false,
         verificationSource: "NONE",
+        tokenRevocationTime: Math.floor(Date.now() / 1000), // Alle Sessions ungültig
       },
     })
   })

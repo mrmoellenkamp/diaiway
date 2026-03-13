@@ -55,13 +55,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   callbacks: {
     async jwt({ token, user, trigger, session: updateData }) {
+      // 1. Initialer Login
       if (user) {
+        token.id         = user.id
         token.role       = (user as { role?: string }).role       || "user"
         token.appRole    = (user as { appRole?: string }).appRole  || "shugyo"
-        token.status     = (user as { status?: string }).status     || "active"
-        token.id         = user.id
+        token.status     = (user as { status?: string }).status   || "active"
         token.isVerified = (user as { isVerified?: boolean }).isVerified ?? false
       }
+
+      // 2. Client-initiiertes Session-Update (updateSession)
       if (trigger === "update" && updateData) {
         if (updateData.name)       token.name       = updateData.name
         if (updateData.image)      token.picture    = updateData.image
@@ -88,9 +91,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.appRole = "shugyo"
         }
       }
+
+      // 3. DB-Sync: Revocation-Check + Rollen-Sync (Admin-Änderungen greifen sofort)
+      const userId = (token.id as string) ?? (token.sub as string)
+      if (userId) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true, appRole: true, status: true, tokenRevocationTime: true },
+          })
+          if (!dbUser) {
+            token.id = undefined
+            token.error = "SessionRevoked"
+            return token
+          }
+
+          // P0.2: Session Revocation Check
+          const tokenIssuedAt = (token.iat as number) ?? 0
+          if (dbUser.tokenRevocationTime != null && tokenIssuedAt < dbUser.tokenRevocationTime) {
+            token.id = undefined
+            token.error = "SessionRevoked"
+            return token
+          }
+
+          // P1.3: Rollen-Sync (Änderungen durch Admin greifen ohne Relogin)
+          token.role = dbUser.role
+          token.appRole = dbUser.appRole
+          token.status = dbUser.status
+        } catch (err) {
+          console.error("[auth] DB-Sync-Error:", err)
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
+      if ((token as { error?: string }).error === "SessionRevoked") {
+        return { ...session, user: { ...session.user, id: undefined } }
+      }
       if (session.user) {
         (session.user as { role?: string }).role       = token.role    as string
         ;(session.user as { appRole?: string }).appRole = token.appRole as string
