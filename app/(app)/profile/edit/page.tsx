@@ -61,6 +61,7 @@ export default function EditProfilePage() {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   // Takumi fields
   const [categorySlug, setCategorySlug] = useState("")
@@ -239,6 +240,7 @@ export default function EditProfilePage() {
 
   async function handleSave() {
     setSaving(true)
+    setFieldErrors({})
     try {
       const profilePayload: Record<string, string | string[] | null> = {}
       if (name.trim()) profilePayload.name = name.trim()
@@ -254,7 +256,11 @@ export default function EditProfilePage() {
         })
         if (!profileRes.ok) {
           const data = await profileRes.json()
-          toast.error(data.error || t("editProfile.saveError"))
+          if (data.field && data.message) {
+            setFieldErrors({ [data.field]: data.message })
+          } else {
+            toast.error(data.error || t("editProfile.saveError"))
+          }
           setSaving(false)
           return
         }
@@ -383,20 +389,34 @@ export default function EditProfilePage() {
                   <label className="text-xs font-medium text-muted-foreground">{t("register.name")}</label>
                   <Input
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => { setName(e.target.value); setFieldErrors((prev) => ({ ...prev, name: "" })) }}
                     placeholder={t("editProfile.namePlaceholder")}
+                    className={fieldErrors.name ? "border-destructive focus-visible:ring-destructive" : ""}
                   />
+                  {fieldErrors.name && (
+                    <p className="flex items-center gap-1 text-[11px] text-destructive">
+                      <AlertCircle className="size-3 shrink-0" />
+                      {fieldErrors.name}
+                    </p>
+                  )}
                 </div>
                 {/* Username (optional) */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("profile.username")}</label>
                   <Input
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => { setUsername(e.target.value); setFieldErrors((prev) => ({ ...prev, username: "" })) }}
                     placeholder="z.B. max_mustermann"
-                    className="font-mono"
+                    className={`font-mono${fieldErrors.username ? " border-destructive focus-visible:ring-destructive" : ""}`}
                   />
-                  <p className="text-[10px] text-muted-foreground">{t("profile.usernameHint")}</p>
+                  {fieldErrors.username ? (
+                    <p className="flex items-center gap-1 text-[11px] text-destructive">
+                      <AlertCircle className="size-3 shrink-0" />
+                      {fieldErrors.username}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground">{t("profile.usernameHint")}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
