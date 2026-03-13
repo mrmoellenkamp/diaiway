@@ -1,227 +1,173 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
+import { apiHandler } from "@/lib/api-handler"
 
 export const runtime = "nodejs"
 
-const FIELD_LABELS: Record<string, string> = {
-  username: "Benutzername",
-  email: "E-Mail-Adresse",
-  name: "Name",
-}
-
-function parsePrismaError(err: unknown): { error: string; field?: string; message: string; status: number } {
-  if (err instanceof PrismaClientKnownRequestError) {
-    if (err.code === "P2002") {
-      const targets = (err.meta?.target as string[] | undefined) ?? []
-      const field = targets[0] ?? "unbekannt"
-      const label = FIELD_LABELS[field] ?? field
-      return {
-        error: "Validierungsfehler",
-        field,
-        message: `Dieser ${label} ist bereits vergeben.`,
-        status: 409,
-      }
-    }
-    if (err.code === "P2000") {
-      const field = (err.meta?.column_name as string | undefined) ?? "unbekannt"
-      const label = FIELD_LABELS[field] ?? field
-      return {
-        error: "Validierungsfehler",
-        field,
-        message: `Der Wert für „${label}" ist zu lang.`,
-        status: 400,
-      }
-    }
-    if (err.code === "P2003") {
-      return {
-        error: "Validierungsfehler",
-        message: "Ein referenzierter Datensatz wurde nicht gefunden.",
-        status: 400,
-      }
-    }
-  }
-  return { error: "Serverfehler", message: "Ein unbekannter Fehler ist aufgetreten.", status: 500 }
-}
-
 /** GET — return full profile from PostgreSQL */
-export async function GET() {
+async function getProfile(_req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { name: true, username: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, languages: true, isVerified: true, createdAt: true },
-    })
-    if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { name: true, username: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, skillLevel: true, languages: true, isVerified: true, createdAt: true },
+  })
+  if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
-    return NextResponse.json({
-      name: user.name,
-      username: user.username ?? null,
-      email: user.email,
-      image: user.image || "",
-      role: user.role,
-      appRole: user.appRole || "shugyo",
-      favorites: user.favorites || [],
-      refundPreference: user.refundPreference || "payout",
-      invoiceData: user.invoiceData ?? null,
-      skillLevel: user.skillLevel ?? null,
-      languages: user.languages ?? [],
-      isVerified: user.isVerified ?? false,
-      createdAt: user.createdAt,
-    })
-  } catch (err: unknown) {
-    const { sanitizeErrorForClient } = await import("@/lib/security")
-    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
-  }
+  return NextResponse.json({
+    name: user.name,
+    username: user.username ?? null,
+    email: user.email,
+    image: user.image || "",
+    role: user.role,
+    appRole: user.appRole || "shugyo",
+    favorites: user.favorites || [],
+    refundPreference: user.refundPreference || "payout",
+    invoiceData: user.invoiceData ?? null,
+    skillLevel: user.skillLevel ?? null,
+    languages: user.languages ?? [],
+    isVerified: user.isVerified ?? false,
+    createdAt: user.createdAt,
+  })
 }
 
 /** PATCH — update user profile */
-export async function PATCH(req: Request) {
+async function patchProfile(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
 
-  try {
-    const body = await req.json()
-    const data: Record<string, string | object | string[] | null> = {}
+  const body = await req.json()
+  const data: Record<string, string | object | string[] | null> = {}
 
-    if (body.name !== undefined) {
-      if (!body.name || body.name.trim().length < 2) {
+  if (body.name !== undefined) {
+    if (!body.name || body.name.trim().length < 2) {
+      return NextResponse.json({
+        error: "Validierungsfehler",
+        field: "name",
+        message: "Name muss mindestens 2 Zeichen lang sein.",
+      }, { status: 400 })
+    }
+    data.name = body.name.trim()
+  }
+  if (body.username !== undefined) {
+    const val = typeof body.username === "string" ? body.username.trim() : ""
+    if (val === "") {
+      data.username = null
+    } else {
+      const { validateUsername } = await import("@/app/actions/username")
+      const res = await validateUsername(val)
+      if (!res.ok) {
         return NextResponse.json({
           error: "Validierungsfehler",
-          field: "name",
-          message: "Name muss mindestens 2 Zeichen lang sein.",
+          field: "username",
+          message: res.error,
         }, { status: 400 })
       }
-      data.name = body.name.trim()
-    }
-    if (body.username !== undefined) {
-      const val = typeof body.username === "string" ? body.username.trim() : ""
-      if (val === "") {
-        data.username = null
-      } else {
-        const { validateUsername } = await import("@/app/actions/username")
-        const res = await validateUsername(val)
-        if (!res.ok) {
-          return NextResponse.json({
-            error: "Validierungsfehler",
-            field: "username",
-            message: res.error,
-          }, { status: 400 })
-        }
-        const existing = await prisma.user.findFirst({
-          where: { username: val, NOT: { id: session.user.id } },
-        })
-        if (existing) {
-          return NextResponse.json({
-            error: "Validierungsfehler",
-            field: "username",
-            message: "Dieser Benutzername ist bereits vergeben.",
-          }, { status: 409 })
-        }
-        data.username = val
-      }
-    }
-    if (body.image !== undefined) data.image = body.image
-    if (body.appRole !== undefined) {
-      if (!["shugyo", "takumi"].includes(body.appRole)) {
-        return NextResponse.json({ error: "Ungueltige Rolle." }, { status: 400 })
-      }
-      data.appRole = body.appRole
-    }
-    if (body.refundPreference !== undefined) {
-      if (!["payout", "wallet"].includes(body.refundPreference)) {
-        return NextResponse.json({ error: "Ungueltige Refund-Präferenz." }, { status: 400 })
-      }
-      data.refundPreference = body.refundPreference
-    }
-    if (body.invoiceData !== undefined) {
-      if (body.invoiceData === null) {
-        data.invoiceData = null
-      } else {
-        const { sanitizeInvoiceData } = await import("@/lib/security")
-        const sanitized = sanitizeInvoiceData(body.invoiceData)
-        if (!sanitized) return NextResponse.json({ error: "Ungültige Rechnungsdaten." }, { status: 400 })
-        data.invoiceData = sanitized
-      }
-    }
-    if (body.skillLevel !== undefined) {
-      const valid = ["NEULING", "FORTGESCHRITTEN", "PROFI"]
-      if (body.skillLevel !== null && !valid.includes(body.skillLevel)) {
-        return NextResponse.json({ error: "Ungueltige Kenntnisstufe." }, { status: 400 })
-      }
-      data.skillLevel = body.skillLevel
-    }
-    if (body.languages !== undefined) {
-      const valid = ["de", "en", "es", "fr", "it"]
-      const arr = Array.isArray(body.languages) ? body.languages : []
-      const filtered = arr.filter((l: string) => valid.includes(String(l).toLowerCase()))
-      data.languages = [...new Set(filtered)]
-    }
-
-    if (Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "Keine Aenderungen angegeben." }, { status: 400 })
-    }
-
-    const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data,
-    })
-
-    // Sync: Bei appRole takumi muss ein Expert existieren (konsistente Admin-Anzeige)
-    if (data.appRole === "takumi") {
-      const existing = await prisma.expert.findUnique({
-        where: { userId: session.user.id },
+      const existing = await prisma.user.findFirst({
+        where: { username: val, NOT: { id: session.user.id } },
       })
-      if (!existing) {
-        await prisma.expert.create({
-          data: {
-            userId: session.user.id,
-            name: user.name,
-            avatar: (user.name && user.name.charAt(0).toUpperCase()) || "T",
-            email: user.email ?? "",
-            categorySlug: "dienstleistungen",
-            categoryName: "Dienstleistungen",
-            subcategory: "",
-            bio: "",
-            priceVideo15Min: 1,
-            priceVoice15Min: 1,
-            pricePerSession: 0,
-            rating: 0,
-            reviewCount: 0,
-            sessionCount: 0,
-            isLive: false,
-            isPro: false,
-            verified: false,
-            portfolio: [],
-            joinedDate: new Date().toISOString().slice(0, 10),
-            matchRate: 0,
-          },
-        })
+      if (existing) {
+        return NextResponse.json({
+          error: "Bereits vergeben",
+          field: "username",
+          message: "Dieser Benutzername ist bereits vergeben.",
+        }, { status: 409 })
       }
+      data.username = val
     }
-
-    return NextResponse.json({
-      success: true,
-      name: user.name,
-      image: user.image,
-      message: "Profil erfolgreich aktualisiert.",
-    })
-  } catch (err: unknown) {
-    const parsed = parsePrismaError(err)
-    if (parsed.status !== 500) {
-      return NextResponse.json(
-        { error: parsed.error, field: parsed.field, message: parsed.message },
-        { status: parsed.status }
-      )
-    }
-    const { sanitizeErrorForClient } = await import("@/lib/security")
-    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }
+  if (body.image !== undefined) data.image = body.image
+  if (body.appRole !== undefined) {
+    if (!["shugyo", "takumi"].includes(body.appRole)) {
+      return NextResponse.json({ error: "Ungueltige Rolle." }, { status: 400 })
+    }
+    data.appRole = body.appRole
+  }
+  if (body.refundPreference !== undefined) {
+    if (!["payout", "wallet"].includes(body.refundPreference)) {
+      return NextResponse.json({ error: "Ungueltige Refund-Präferenz." }, { status: 400 })
+    }
+    data.refundPreference = body.refundPreference
+  }
+  if (body.invoiceData !== undefined) {
+    if (body.invoiceData === null) {
+      data.invoiceData = null
+    } else {
+      const { sanitizeInvoiceData } = await import("@/lib/security")
+      const sanitized = sanitizeInvoiceData(body.invoiceData)
+      if (!sanitized) return NextResponse.json({ error: "Ungültige Rechnungsdaten." }, { status: 400 })
+      data.invoiceData = sanitized
+    }
+  }
+  if (body.skillLevel !== undefined) {
+    const valid = ["NEULING", "FORTGESCHRITTEN", "PROFI"]
+    if (body.skillLevel !== null && !valid.includes(body.skillLevel)) {
+      return NextResponse.json({ error: "Ungueltige Kenntnisstufe." }, { status: 400 })
+    }
+    data.skillLevel = body.skillLevel
+  }
+  if (body.languages !== undefined) {
+    const valid = ["de", "en", "es", "fr", "it"]
+    const arr = Array.isArray(body.languages) ? body.languages : []
+    const filtered = arr.filter((l: string) => valid.includes(String(l).toLowerCase()))
+    data.languages = [...new Set(filtered)]
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Keine Aenderungen angegeben." }, { status: 400 })
+  }
+
+  const user = await prisma.user.update({
+    where: { id: session.user.id },
+    data,
+  })
+
+  // Sync: Bei appRole takumi muss ein Expert existieren (konsistente Admin-Anzeige)
+  if (data.appRole === "takumi") {
+    const existing = await prisma.expert.findUnique({
+      where: { userId: session.user.id },
+    })
+    if (!existing) {
+      await prisma.expert.create({
+        data: {
+          userId: session.user.id,
+          name: user.name,
+          avatar: (user.name && user.name.charAt(0).toUpperCase()) || "T",
+          email: user.email ?? "",
+          categorySlug: "dienstleistungen",
+          categoryName: "Dienstleistungen",
+          subcategory: "",
+          bio: "",
+          priceVideo15Min: 1,
+          priceVoice15Min: 1,
+          pricePerSession: 0,
+          rating: 0,
+          reviewCount: 0,
+          sessionCount: 0,
+          isLive: false,
+          isPro: false,
+          verified: false,
+          portfolio: [],
+          joinedDate: new Date().toISOString().slice(0, 10),
+          matchRate: 0,
+        },
+      })
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    name: user.name,
+    image: user.image,
+    message: "Profil erfolgreich aktualisiert.",
+  })
 }
+
+export const GET = apiHandler(getProfile)
+export const PATCH = apiHandler(patchProfile)
