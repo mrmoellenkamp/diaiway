@@ -186,10 +186,11 @@ export async function PATCH(
           if (k === "invoiceData") {
             const sanitized = sanitizeInvoiceData(body.user!.invoiceData)
             if (sanitized !== null) data[k] = sanitized
-          } else if (k === "isVerified") {
+          } else if (k === ("isVerified" as any)) {
             data.isVerified = !!body.user!.isVerified
             data.verificationSource = body.user!.isVerified ? "MANUAL" : "NONE"
-          } else if (k !== "isVerified") {
+          } else {
+            // @ts-ignore - dynamische Keys
             data[k] = body.user![k]
           }
         }
