@@ -24,7 +24,7 @@ export async function validateUsername(
 /**
  * Generiert einen Fallback-Username: Vorname_Zufallszahl (eindeutig prüfbar via Prisma)
  */
-export function generateFallbackUsername(firstName: string): string {
+export async function generateFallbackUsername(firstName: string): Promise<string> {
   const clean = firstName
     .trim()
     .split(/\s+/)[0]
