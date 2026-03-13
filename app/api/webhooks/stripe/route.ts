@@ -161,7 +161,7 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true },
+    select: { paymentStatus: true, userId: true },
   })
   if (!booking || booking.paymentStatus === "paid") return
 
@@ -182,11 +182,7 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
     console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
   }
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    select: { userId: true },
-  })
-  if (booking?.userId) {
+  if (booking.userId) {
     await markVerified(booking.userId, "STRIPE_PAYMENT").catch(() => {})
   }
 
