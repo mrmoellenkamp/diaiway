@@ -28,7 +28,9 @@
 | Touch-Ziele | ⚠️ Mind. 44×44px prüfen |
 | Apple Icon | ✅ Referenz in metadata |
 | Deep-Linking | ✅ `deep-link-handler.tsx`, `App.getLaunchUrl()` |
-| Push (Web + Native) | ✅ Web Push + Capacitor Push Notifications |
+| Push (Web + Native) | ✅ Web Push (VAPID) + Capacitor Push (FCM/APNs); Quick Actions (ACCEPT/DECLINE) |
+| Biometric Auth | ✅ capacitor-native-biometric (optional) |
+| Haptics | ✅ @capacitor/haptics (Quick Action: hapticHeavy) |
 
 ---
 
@@ -65,24 +67,30 @@
 
 ---
 
-## Capacitor & Native Plugins
+## Capacitor 8 & Native Plugins
 
-Die App nutzt **Capacitor 8**. Verwendete Plugins:
+Die App nutzt **Capacitor 8**. Alle Plugins sind in Produktion:
 
-| Plugin | Verwendung |
-|--------|------------|
-| `@capacitor/camera` | Foto-Capture |
-| `@capacitor/push-notifications` | FCM/APNs für Push |
-| `@capacitor/local-notifications` | Lokale Benachrichtigungen |
-| `@capacitor/haptics` | Haptisches Feedback |
-| `@capacitor/network` | Netzwerkstatus |
-| `@capacitor/preferences` | Key-Value-Speicher |
-| `@capacitor/share` | System-Share |
-| `@capacitor/splash-screen` | Splash-Screen |
-| `@capacitor/app` | Lifecycle, Deep-Links |
-| `capacitor-native-biometric` | Biometrie (optional) |
+| Plugin | Version | Verwendung |
+|--------|---------|------------|
+| `@capacitor/core` | ^8.2.0 | Core Runtime |
+| `@capacitor/app` | ^8.0.1 | Lifecycle, Deep-Links, `getLaunchUrl()` |
+| `@capacitor/camera` | ^8.0.2 | Foto-Capture |
+| `@capacitor/haptics` | ^8.0.1 | Haptisches Feedback; `hapticHeavy()` bei Quick Action Accept |
+| `@capacitor/local-notifications` | ^8.0.2 | Lokale Benachrichtigungen |
+| `@capacitor/network` | ^8.0.1 | Netzwerkstatus |
+| `@capacitor/preferences` | ^8.0.1 | Key-Value-Speicher |
+| `@capacitor/push-notifications` | ^8.0.2 | FCM/APNs-Token; Quick Action Listener |
+| `@capacitor/share` | ^8.0.1 | System-Share |
+| `@capacitor/splash-screen` | ^8.0.1 | Splash-Screen |
+| `capacitor-native-biometric` | ^4.2.2 | Biometrische Authentifizierung (optional) |
 
-**Relevante Dateien:** `capacitor.config.ts`, `use-native-bridge.ts`, `native-utils.ts`, `deep-link-handler.tsx`, `native-test-center.tsx`
+### Quick Action Push (Instant Connect)
+- **Native**: `lib/quick-action-push-handler.ts` – `pushNotificationActionPerformed`; ACCEPT/DECLINE navigieren zu Session bzw. Decline-API
+- **Web**: `public/sw.js` – `notificationclick` mit actions; Redirect zu `/api/bookings/[id]/instant-accept|instant-decline?token=`
+- Android-Kanal: `BOOKING_REQUEST` (via `registerBookingRequestChannel`)
+
+**Relevante Dateien:** `capacitor.config.ts`, `hooks/use-native-bridge.ts`, `lib/native-utils.ts`, `components/deep-link-handler.tsx`, `components/quick-action-push-provider.tsx`, `components/native-test-center.tsx`
 
 ---
 
@@ -134,7 +142,7 @@ Aktuell in `public/manifest.json`:
 
 ---
 
-## Nächste Schritte (laufend)
+## Nächste Schritte
 
 1. **Touch-Ziele** auf 44×44px prüfen (Checkliste)
 2. **Store-Listing**: Icons, Screenshots, Beschreibungen aktuell halten
