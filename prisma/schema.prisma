@@ -135,6 +135,7 @@ model User {
   availability        Availability?
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
+  fcmTokens           FcmToken[]
   transactionsPaid   Transaction[]     @relation("UserPaidTransactions")
   walletTransactions WalletTransaction[]
   shugyoProjects      ShugyoProject[]
@@ -180,6 +181,17 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@unique([userId, endpoint])
+  @@index([userId])
+}
+
+// FCM/APNs token for native push (Capacitor)
+model FcmToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+
   @@index([userId])
 }
 

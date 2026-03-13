@@ -2,16 +2,23 @@
 
 import { useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { Capacitor } from "@capacitor/core"
 
 /**
- * Registers the service worker and subscribes the user to push notifications
- * when logged in. Runs once per session.
+ * Registers push notifications when logged in.
+ * - Web: Service worker + Web Push (VAPID)
+ * - Native: Capacitor Push + FCM/APNs token
  */
 export function PushNotificationProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
 
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return
+
+    if (Capacitor.isNativePlatform()) {
+      setupNativePush()
+      return
+    }
 
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     if (!publicKey?.trim()) return
@@ -65,6 +72,23 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
   }, [status, session?.user])
 
   return <>{children}</>
+}
+
+async function setupNativePush() {
+  try {
+    const { registerPushAndGetToken } = await import("@/hooks/use-native-bridge")
+    const token = await registerPushAndGetToken()
+    if (token) {
+      await fetch("/api/push/fcm-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+        credentials: "include",
+      })
+    }
+  } catch (err) {
+    console.warn("[Push] Native setup failed:", err)
+  }
 }
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {

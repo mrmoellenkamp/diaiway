@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DailyCallContainer } from "@/components/video-call/DailyCallContainer"
+import { ConnectingSplash } from "@/components/connecting-splash"
 import { ReviewStars } from "@/components/review-stars"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -338,10 +339,12 @@ function SessionCallContent() {
   const { t } = useI18n()
   const bookingId = params.id as string
   const isWaitMode = searchParams.get("wait") === "true"
+  const isConnecting = searchParams.get("connecting") === "1"
 
   const [data, setData] = useState<BookingData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"call" | "post-call">("call")
+  const [hasJoinedCall, setHasJoinedCall] = useState(false)
 
   const fetchBooking = useCallback(async () => {
     try {
@@ -409,7 +412,9 @@ function SessionCallContent() {
     )
   }
 
-  if (!data) return <SessionSkeleton />
+  if (!data) {
+    return isConnecting ? <ConnectingSplash /> : <SessionSkeleton />
+  }
 
   const { booking } = data
   const callMode: CallMode = booking.callType === "VIDEO" ? "video" : "voice"
@@ -454,6 +459,12 @@ function SessionCallContent() {
     )
   }
 
+  const showConnecting =
+    isConnecting &&
+    booking.status === "confirmed" &&
+    viewMode === "call" &&
+    !hasJoinedCall
+
   if (viewMode === "post-call") {
     return (
       <PostCallScreen
@@ -470,7 +481,8 @@ function SessionCallContent() {
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden md:min-h-[80vh]">
+    <div className="relative flex h-dvh flex-col overflow-hidden md:min-h-[80vh]">
+      {showConnecting && <ConnectingSplash />}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <DailyCallContainer
           bookingId={booking.id}
@@ -479,6 +491,7 @@ function SessionCallContent() {
           partnerImageUrl={partnerImageUrl || undefined}
           partnerName={partnerName}
           safetyAcceptedAt={booking.safetyAcceptedAt}
+          onSessionStarted={() => setHasJoinedCall(true)}
           onCallEnded={() => {
             setViewMode("post-call")
             fetchBooking()
