@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import Image from "next/image"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { LiveBadge } from "@/components/live-badge"
@@ -11,7 +12,7 @@ import { FavoriteButton } from "@/components/favorite-button"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import type { Takumi } from "@/lib/types"
 
-export function TakumiCard({ takumi }: { takumi: Takumi }) {
+export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: boolean }) {
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
       <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
@@ -19,6 +20,13 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
           <FavoriteButton takumiId={takumi.id} className="absolute top-3 right-3 z-10" />
           <div className="relative shrink-0">
             <Avatar className="size-14 border-2 border-primary/10">
+              {takumi.imageUrl && priority ? (
+                <span className="relative block size-full">
+                  <Image src={takumi.imageUrl} alt={takumi.name} fill className="object-cover" priority />
+                </span>
+              ) : takumi.imageUrl ? (
+                <AvatarImage src={takumi.imageUrl} alt={takumi.name} />
+              ) : null}
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                 {takumi.avatar}
               </AvatarFallback>
@@ -77,7 +85,7 @@ export function TakumiCard({ takumi }: { takumi: Takumi }) {
   )
 }
 
-export function TakumiCardCompact({ takumi }: { takumi: Takumi }) {
+export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priority?: boolean }) {
   const offersInstant = takumi.liveStatus === "available"
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
@@ -85,6 +93,13 @@ export function TakumiCardCompact({ takumi }: { takumi: Takumi }) {
         <FavoriteButton takumiId={takumi.id} size="sm" className="absolute top-2 right-2 z-10 size-7" />
         <div className="relative">
           <Avatar className="size-16 border-2 border-primary/10">
+            {takumi.imageUrl && priority ? (
+              <span className="relative block size-full">
+                <Image src={takumi.imageUrl} alt={takumi.name} fill className="object-cover" priority />
+              </span>
+            ) : takumi.imageUrl ? (
+              <AvatarImage src={takumi.imageUrl} alt={takumi.name} />
+            ) : null}
             <AvatarFallback className="bg-primary/10 text-primary font-bold">
               {takumi.avatar}
             </AvatarFallback>

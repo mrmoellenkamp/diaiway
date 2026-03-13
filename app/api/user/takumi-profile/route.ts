@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
@@ -120,6 +121,9 @@ export async function PUT(req: Request) {
       data: { appRole: "takumi" },
     })
 
+    revalidatePath("/categories")
+    revalidatePath("/takumis")
+
     return NextResponse.json({
       success: true,
       id: expert.id,
@@ -151,6 +155,9 @@ export async function PATCH(req: Request) {
     if (expert.count === 0) {
       return NextResponse.json({ error: "Kein Takumi-Profil gefunden." }, { status: 404 })
     }
+
+    revalidatePath("/categories")
+    revalidatePath("/takumis")
 
     return NextResponse.json({
       success: true,
