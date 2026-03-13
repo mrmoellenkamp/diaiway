@@ -250,6 +250,7 @@ npx prisma studio
 |-------|--------|
 | [README.md](README.md) | Übersicht, Setup |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API |
+| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Asset-Pipeline |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor bereits integriert) |

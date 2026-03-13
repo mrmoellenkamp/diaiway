@@ -2,7 +2,9 @@
 
 ## Übersicht
 
-diAIway ist eine **Hybrid-App**: Next.js 16 (App Router) mit Capacitor 8 für iOS und Android. Backend: PostgreSQL (Prisma), NextAuth.js, Stripe (Hold & Capture), Daily.co (Video/Voice), Web Push + Capacitor Push.
+diAIway ist eine **Hybrid-App**:
+
+> **Hidden Mechanics**: Verborgene Funktionsweisen (Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Asset-Pipeline) sind in [docs/HIDDEN-MECHANICS.md](./HIDDEN-MECHANICS.md) detailliert dokumentiert. Next.js 16 (App Router) mit Capacitor 8 für iOS und Android. Backend: PostgreSQL (Prisma), NextAuth.js, Stripe (Hold & Capture), Daily.co (Video/Voice), Web Push + Capacitor Push.
 
 ---
 
