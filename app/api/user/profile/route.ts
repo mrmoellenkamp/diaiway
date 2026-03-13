@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { apiHandler } from "@/lib/api-handler"
+import { apiHandler, type RouteContext } from "@/lib/api-handler"
 
 export const runtime = "nodejs"
 
 /** GET — return full profile from PostgreSQL */
-async function getProfile(_req: Request) {
+async function getProfile(_req: Request, _context: RouteContext) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
@@ -36,7 +36,7 @@ async function getProfile(_req: Request) {
 }
 
 /** PATCH — update user profile */
-async function patchProfile(req: Request) {
+async function patchProfile(req: Request, _context: RouteContext) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })

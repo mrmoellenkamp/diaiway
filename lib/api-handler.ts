@@ -8,21 +8,20 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ZodError } from "zod"
 import { sanitizeErrorForClient } from "@/lib/security"
 
-export type RouteContext = { params?: Promise<Record<string, string>> }
+/** Next.js App Router: context ist immer vorhanden (params als Promise). */
+export type RouteContext = { params: Promise<Record<string, string | string[]>> }
 
-export type ApiHandlerFn<T extends RouteContext | undefined = undefined> = (
+export type ApiHandlerFn = (
   req: Request,
-  context?: T
+  context: RouteContext
 ) => Promise<NextResponse>
 
 /**
  * Higher-Order Function: Umschließt API-Handler mit zentralem try-catch.
  * Alle geworfenen Fehler werden an translateError weitergeleitet.
  */
-export function apiHandler<T extends RouteContext | undefined = undefined>(
-  handler: ApiHandlerFn<T>
-) {
-  return async (req: Request, context?: T): Promise<NextResponse> => {
+export function apiHandler(handler: ApiHandlerFn) {
+  return async (req: Request, context: RouteContext): Promise<NextResponse> => {
     try {
       return await handler(req, context)
     } catch (err) {

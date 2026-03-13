@@ -180,13 +180,12 @@ export async function GET(req: NextRequest) {
     const lastMsgByPartner = new Map<string, { text: string; sender: string; timestamp: number }>()
     for (const m of allLastMsgs) {
       const partnerId = m.senderId === session.user.id ? m.recipientId : m.senderId
-      if (!lastMsgByPartner.has(partnerId)) {
-        lastMsgByPartner.set(partnerId, {
-          text: m.text,
-          sender: m.senderId === session.user.id ? "user" : "partner",
-          timestamp: m.createdAt.getTime(),
-        })
-      }
+      if (partnerId == null || lastMsgByPartner.has(partnerId)) continue
+      lastMsgByPartner.set(partnerId, {
+        text: m.text,
+        sender: m.senderId === session.user.id ? "user" : "partner",
+        timestamp: m.createdAt.getTime(),
+      })
     }
     const unreadByPartner = new Map(unreadCounts.map((u) => [u.senderId, u._count.id]))
 
