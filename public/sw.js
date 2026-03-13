@@ -16,8 +16,8 @@ self.addEventListener("push", (event) => {
   const pushData = data.data || {}
   const options = {
     body,
-    icon: "/icon.svg",
-    badge: "/icon.svg",
+    icon: "/icons/camera-switch.svg",
+    badge: "/icons/camera-switch.svg",
     tag: data.tag || "diaiway-notification",
     data: { url, ...pushData },
     requireInteraction: pushData.type === "BOOKING_REQUEST",
