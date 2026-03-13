@@ -18,7 +18,7 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   if (pathname.startsWith("/ai-guide")) return t("common.aiGuide")
   if (pathname.startsWith("/profile")) return t("common.profile")
   if (pathname.startsWith("/dashboard/availability")) return t("globalNav.availability")
-  if (pathname.startsWith("/admin")) return t("profile.adminDashboard")
+  if (pathname.startsWith("/admin")) return t("admin.title")
   if (pathname.startsWith("/legal/agb")) return t("landing.terms")
   if (pathname.startsWith("/legal/impressum")) return t("footer.imprint")
   if (pathname.startsWith("/legal/datenschutz")) return t("footer.privacy")

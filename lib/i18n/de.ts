@@ -472,6 +472,7 @@ const de = {
 
   // Global Nav titles
   "globalNav.availability": "Meine Verfügbarkeit",
+  "admin.title": "Admin-Dashboard",
 
   // Edit Profile
   "editProfile.title": "Profil bearbeiten",
