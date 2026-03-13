@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { apiHandler, type RouteContext } from "@/lib/api-handler"
@@ -160,6 +161,9 @@ async function patchProfile(req: Request, _context: RouteContext) {
       })
     }
   }
+
+  revalidatePath("/categories")
+  revalidatePath("/takumis")
 
   return NextResponse.json({
     success: true,
