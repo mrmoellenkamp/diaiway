@@ -43,7 +43,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-40">
+    <div className="flex min-h-screen flex-col bg-background pb-safe">
       {/* Progress */}
       <div className="sticky top-0 z-10 bg-background px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-3">

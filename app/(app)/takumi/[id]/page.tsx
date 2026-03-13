@@ -179,7 +179,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="min-h-screen bg-background pb-40">
+    <div className="min-h-screen bg-background pb-safe">
       {/* Cover Area */}
       <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />

@@ -393,7 +393,7 @@ export default function AvailabilityPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background pb-40">
+    <div className="min-h-screen bg-background pb-safe">
       <PageContainer>
         <div className="flex flex-col gap-5">
 

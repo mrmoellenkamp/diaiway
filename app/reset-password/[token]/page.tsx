@@ -61,7 +61,7 @@ export default function ResetPasswordPage({
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-40">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-safe">
       <div className="w-full max-w-sm flex flex-col gap-8">
         {/* Header */}
         <div className="flex flex-col items-center gap-3">
