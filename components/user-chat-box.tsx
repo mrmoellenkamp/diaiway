@@ -10,6 +10,16 @@ import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
 import { VerifiedBadge } from "@/components/verified-badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type MessageStatus = "sent" | "pending" | "failed"
 
@@ -144,6 +154,7 @@ export function UserChatBox({
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
   const [interactionLocked, setInteractionLocked] = useState(inDrawer)
+  const [deleteMessageConfirm, setDeleteMessageConfirm] = useState<MsgItem | null>(null)
 
   useEffect(() => {
     if (!uploadError || !inDrawer) return
@@ -299,13 +310,17 @@ export function UserChatBox({
     setSending(false)
   }
 
-  async function handleDeleteMessage(msg: MsgItem, e: React.MouseEvent) {
+  function requestDeleteMessage(msg: MsgItem, e: React.MouseEvent) {
     e.stopPropagation()
     if (msg.sender !== "user") return
     if (msg.id.startsWith("temp-")) {
       setMessages((prev) => prev.filter((m) => m.id !== msg.id))
       return
     }
+    setDeleteMessageConfirm(msg)
+  }
+
+  async function doDeleteMessage(msg: MsgItem) {
     try {
       const r = await fetch(`/api/messages?message=${encodeURIComponent(msg.id)}`, { method: "DELETE" })
       if (r.ok) {
@@ -462,7 +477,7 @@ export function UserChatBox({
                 {msg.sender === "user" && (
                   <button
                     type="button"
-                    onClick={(e) => handleDeleteMessage(msg, e)}
+                    onClick={(e) => requestDeleteMessage(msg, e)}
                     className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
                     aria-label={t("common.delete")}
                   >
@@ -560,6 +575,30 @@ export function UserChatBox({
           </button>
         </div>
       </div>
+
+      {/* Lösch-Bestätigung für Nachricht */}
+      <AlertDialog open={!!deleteMessageConfirm} onOpenChange={(open) => !open && setDeleteMessageConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("messages.deleteMessageConfirm")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("messages.deleteMessageConfirmDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteMessageConfirm) {
+                  doDeleteMessage(deleteMessageConfirm)
+                  setDeleteMessageConfirm(null)
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

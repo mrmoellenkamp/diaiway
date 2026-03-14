@@ -15,6 +15,16 @@ import { formatTimeBerlin } from "@/lib/date-utils"
 import { toast } from "sonner"
 import { UserChatBox } from "@/components/user-chat-box"
 import { VerifiedBadge } from "@/components/verified-badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface NotificationItem {
   id: string
@@ -79,6 +89,7 @@ function MessagesPageContent() {
     attachmentUrl?: string | null
     read?: boolean
   } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "notification" | "waymail" | "chat"; id: string } | null>(null)
   const redirectingRef = useRef(false)
 
   const fetchThreads = useCallback(async () => {
@@ -123,8 +134,7 @@ function MessagesPageContent() {
       .catch(() => {})
   }
 
-  async function deleteNotification(id: string, e: React.MouseEvent) {
-    e.stopPropagation()
+  async function doDeleteNotification(id: string) {
     try {
       const r = await fetch("/api/notifications", {
         method: "DELETE",
@@ -141,8 +151,7 @@ function MessagesPageContent() {
     }
   }
 
-  async function deleteWaymail(id: string, e: React.MouseEvent) {
-    e.stopPropagation()
+  async function doDeleteWaymail(id: string) {
     try {
       const r = await fetch(`/api/messages?waymail=${encodeURIComponent(id)}`, { method: "DELETE" })
       if (r.ok) {
@@ -161,8 +170,7 @@ function MessagesPageContent() {
     }
   }
 
-  async function deleteChatThread(partnerId: string, e: React.MouseEvent) {
-    e.stopPropagation()
+  async function doDeleteChatThread(partnerId: string) {
     try {
       const r = await fetch(`/api/messages?thread=${encodeURIComponent(partnerId)}`, { method: "DELETE" })
       if (r.ok) {
@@ -176,6 +184,15 @@ function MessagesPageContent() {
     } catch {
       toast.error(t("common.networkError"))
     }
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return
+    const { type, id } = deleteConfirm
+    setDeleteConfirm(null)
+    if (type === "notification") await doDeleteNotification(id)
+    else if (type === "waymail") await doDeleteWaymail(id)
+    else if (type === "chat") await doDeleteChatThread(id)
   }
 
   async function handleBookingAction(bookingId: string, action: "confirmed" | "declined", notificationId: string) {
@@ -374,7 +391,7 @@ function MessagesPageContent() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={(e) => deleteNotification(n.id, e)}
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "notification", id: n.id }) }}
                       aria-label={t("common.delete")}
                     >
                       <Trash2 className="size-4" />
@@ -449,7 +466,7 @@ function MessagesPageContent() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  onClick={(e) => deleteWaymail(waymailDetail.id, e)}
+                  onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: waymailDetail.id }) }}
                   aria-label={t("common.delete")}
                 >
                   <X className="size-4" />
@@ -544,7 +561,7 @@ function MessagesPageContent() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={(e) => deleteWaymail(wm.id, e)}
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: wm.id }) }}
                       aria-label={t("common.delete")}
                     >
                       <X className="size-4" />
@@ -642,7 +659,7 @@ function MessagesPageContent() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => deleteChatThread(th.partnerId, e)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "chat", id: th.partnerId }) }}
                           aria-label={t("common.delete")}
                         >
                           <X className="size-4" />
@@ -672,6 +689,30 @@ function MessagesPageContent() {
         </div>
       )}
       <div className="scroll-end-spacer" aria-hidden />
+
+      {/* Lösch-Bestätigung */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteConfirm?.type === "notification" && t("messages.deleteNotificationConfirm")}
+              {deleteConfirm?.type === "waymail" && t("messages.deleteWaymailConfirm")}
+              {deleteConfirm?.type === "chat" && t("messages.deleteChatConfirm")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === "notification" && t("messages.deleteNotificationConfirmDesc")}
+              {deleteConfirm?.type === "waymail" && t("messages.deleteWaymailConfirmDesc")}
+              {deleteConfirm?.type === "chat" && t("messages.deleteChatConfirmDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   )
 }
