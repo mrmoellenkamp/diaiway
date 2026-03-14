@@ -1,6 +1,6 @@
 "use client"
 
-import { useI18n, localeNames, type Locale } from "@/lib/i18n"
+import { useI18n, type Locale } from "@/lib/i18n"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,12 +39,13 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
           <DropdownMenuItem
             key={l}
             onClick={() => setLocale(l)}
+            aria-label={l === "de" ? "Deutsch" : l === "en" ? "English" : "Español"}
             className={cn(
               "flex items-center gap-2 text-sm",
               l === locale && "font-semibold text-primary"
             )}
           >
-            <LanguageFlagSticker lang={l} showLabel="full" size="sm" />
+            <LanguageFlagSticker lang={l} showLabel="flagOnly" size="sm" />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

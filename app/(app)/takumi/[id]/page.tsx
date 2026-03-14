@@ -205,7 +205,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      <PageContainer className="-mt-12 relative z-10">
+      <PageContainer className="-mt-12 relative z-10 pb-[max(11rem,calc(7rem+env(safe-area-inset-bottom)))]">
         <div className="flex flex-col gap-6">
           {/* Avatar + Name */}
           <div className="flex flex-col items-center gap-3 text-center">
@@ -379,8 +379,8 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </PageContainer>
 
-      {/* Sticky Bottom Bar: Preis + Termin buchen + Instant Connect (wenn verfügbar) */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 py-4">
+      {/* Sticky Bottom Bar: Preis + Termin buchen + Instant Connect (wenn verfügbar) — oberhalb BottomNav */}
+      <div className="fixed left-0 right-0 z-40 above-bottom-nav border-t border-border bg-card/95 backdrop-blur-md px-4 py-4">
         <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-lg font-bold text-foreground">
