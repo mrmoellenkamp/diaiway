@@ -29,12 +29,20 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   return undefined
 }
 
+// Auth-only pages – kein App-Header, kein Avatar
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"]
+
 export function GlobalNavigation() {
   const pathname = usePathname()
   const { t } = useI18n()
 
   if (pathname === "/") {
     return <LandingHeader />
+  }
+
+  // Auf Anmelde-/Registrierungsseiten keinen Header mit Avatar zeigen
+  if (AUTH_PATHS.some((p) => pathname?.startsWith(p))) {
+    return null
   }
 
   const title = titleForPath(pathname, t)

@@ -65,10 +65,15 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
         setShowWarning(true)
       } else if (remaining <= 0) {
         setShowWarning(false)
-        // Tatsächliches Ausloggen – Session invalidiert, replace verhindert Zurück-Button zu geschützter Seite
-        signOut({ redirect: false }).finally(() => {
-          window.location.replace("/login?reason=timeout")
-        })
+        // Tatsächliches Ausloggen: Session invalidieren, dann hard-replace verhindert Zurück-Button
+        signOut({ redirect: false })
+          .catch(() => {})
+          .finally(() => {
+            // Cookies zusätzlich client-seitig löschen (defense in depth)
+            document.cookie = "authjs.session-token=; max-age=0; path=/"
+            document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
+            window.location.replace("/login?reason=timeout")
+          })
       }
     }, COUNTDOWN_INTERVAL_MS)
 

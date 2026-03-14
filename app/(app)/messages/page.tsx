@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -51,7 +51,6 @@ interface ThreadInfo {
 
 function MessagesPageContent() {
   const { t } = useI18n()
-  const router = useRouter()
   const { data: session } = useSession()
   const { refreshNotificationCount } = useApp()
   const searchParams = useSearchParams()
@@ -236,9 +235,14 @@ function MessagesPageContent() {
     if (withParam && session?.user?.id && withParam === session.user.id && !redirectingRef.current) {
       redirectingRef.current = true
       const callbackUrl = `/messages?with=${encodeURIComponent(withParam)}`
-      signOut({ redirect: false }).then(() => {
-        router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-      })
+      // Harte Navigation: React-State und Session vollständig zurücksetzen
+      signOut({ redirect: false })
+        .catch(() => {})
+        .finally(() => {
+          document.cookie = "authjs.session-token=; max-age=0; path=/"
+          document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
+          window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+        })
       return
     }
     if (withParam && threads.length > 0 && !activeThread) {
@@ -256,12 +260,17 @@ function MessagesPageContent() {
         .then(async (r) => {
           const d = await r.json()
           if (!r.ok || d.error) {
-            // Waymail gehört nicht dem eingeloggten Nutzer (Absender eingeloggt, Empfänger klickt Link)
-            // Abmelden und zur Login-Seite mit callbackUrl → Empfänger kann sich anmelden
+            // Waymail gehört nicht dem eingeloggten Nutzer → Abmelden, Empfänger kann sich einloggen
             redirectingRef.current = true
             const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
-            await signOut({ redirect: false })
-            router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+            // Harte Navigation: React-State und Session vollständig zurücksetzen
+            signOut({ redirect: false })
+              .catch(() => {})
+              .finally(() => {
+                document.cookie = "authjs.session-token=; max-age=0; path=/"
+                document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
+                window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+              })
             return
           }
           setWaymailFolder(d.isFromMe ? "sent" : "inbox")
