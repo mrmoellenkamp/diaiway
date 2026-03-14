@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useI18n } from "@/lib/i18n"
 
 // Pages where the footer should NOT appear (full-screen flows)
-const HIDDEN_ON = ["/", "/login", "/register", "/signup", "/onboarding", "/session"]
+const HIDDEN_ON = ["/login", "/register", "/signup", "/onboarding", "/session", "/booking"]
 
 export function GlobalFooter() {
   const pathname = usePathname()
