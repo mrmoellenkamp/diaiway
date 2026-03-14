@@ -93,8 +93,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // 3. DB-Sync: Revocation-Check + Rollen-Sync (Admin-Änderungen greifen sofort)
+      // Nur alle 5 Minuten, nicht bei jeder Session-Anfrage – schützt vor DB-Überlastung
+      const DB_SYNC_INTERVAL_SEC = 5 * 60
+      const now = Math.floor(Date.now() / 1000)
+      const lastSynced = (token.dbSyncedAt as number) ?? 0
       const userId = (token.id as string) ?? (token.sub as string)
-      if (userId) {
+      if (userId && now - lastSynced >= DB_SYNC_INTERVAL_SEC) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: userId },
@@ -118,8 +122,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.role = dbUser.role
           token.appRole = dbUser.appRole
           token.status = dbUser.status
+          token.dbSyncedAt = now
         } catch (err) {
           console.error("[auth] DB-Sync-Error:", err)
+          // Bei DB-Fehler: bestehende Token-Daten beibehalten, kein sync-Timestamp setzen
+          // → nächster Request versucht es erneut
         }
       }
 

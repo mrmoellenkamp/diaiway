@@ -253,12 +253,16 @@ function MessagesPageContent() {
       fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`)
         .then(async (r) => {
           const d = await r.json()
-          if (!r.ok || d.error) {
-            // Waymail gehört nicht dem eingeloggten Nutzer → direkt zur Login-Seite
-            // Kein signOut nötig: die neue Session des Empfängers ersetzt die alte beim Login
+          if (r.status === 401 || r.status === 403 || r.status === 404) {
+            // Waymail gehört nicht dem eingeloggten Nutzer (oder existiert nicht)
+            // → direkt zur Login-Seite, damit der richtige Empfänger sich anmelden kann
             redirectingRef.current = true
             const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
             window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+            return
+          }
+          if (!r.ok) {
+            // Server-Fehler (z.B. DB nicht erreichbar) → nicht ausloggen, nur silent fail
             return
           }
           setWaymailFolder(d.isFromMe ? "sent" : "inbox")
