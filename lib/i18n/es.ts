@@ -32,6 +32,17 @@ const es = {
   "footer.privacy": "Privacidad",
   "footer.helpSupport": "Ayuda y soporte",
   "footer.imprint": "Aviso legal",
+  "footer.discover": "Descubrir",
+  "footer.support": "Soporte",
+  "footer.legal": "Legal",
+  "footer.mission": "Misión",
+  "footer.howItWorks": "Cómo funciona",
+  "footer.categories": "Categorías",
+  "footer.faq": "Preguntas frecuentes",
+  "footer.supportTicket": "Ticket de soporte",
+  "footer.missionText": "Intercambio valioso de conocimiento. Tu camino hacia la maestría.",
+  "footer.newsletterContact": "Newsletter y contacto",
+  "footer.copyright": "© diAiway · Todos los derechos reservados",
 
   // Nav
   "nav.login": "Iniciar sesión",
