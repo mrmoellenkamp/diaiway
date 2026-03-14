@@ -585,7 +585,7 @@ const en = {
   "portfolio.loadError": "Error loading.",
   "takumiPage.contactChat": "Write with {name} now",
   "takumiPage.chatNow": "Chat with {name} now",
-  "takumiPage.sendMail": "Send {name} an email",
+  "takumiPage.sendMail": "Send a Waymail",
   "takumiPage.preparingChat": "Preparing chat...",
   "takumiPage.directMessage": "Message to {name}",
   "takumiPage.writeTo": "Message to {name}",

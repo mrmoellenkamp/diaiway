@@ -326,7 +326,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               className="h-12 w-full gap-2.5 rounded-xl border-primary/30 text-base font-semibold text-primary hover:bg-primary/5"
             >
               <Mail className="size-4" />
-              {t("takumiPage.sendMail").replace("{name}", firstName)}
+              {t("takumiPage.sendMail")}
             </Button>
           </div>
 

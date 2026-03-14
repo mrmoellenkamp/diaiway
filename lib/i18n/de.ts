@@ -588,7 +588,7 @@ const de = {
   "portfolio.loadError": "Fehler beim Laden.",
   "takumiPage.contactChat": "Jetzt mit {name} schreiben",
   "takumiPage.chatNow": "Jetzt mit {name} chatten",
-  "takumiPage.sendMail": "{name} eine Mail senden",
+  "takumiPage.sendMail": "Eine Waymail senden",
   "takumiPage.preparingChat": "Chat wird vorbereitet...",
   "takumiPage.directMessage": "Nachricht an {name}",
   "takumiPage.writeTo": "Nachricht an {name}",

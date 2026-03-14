@@ -91,7 +91,7 @@ export default function RootLayout({
             </SessionActivityProvider>
           </SessionProvider>
         </ErrorBoundary>
-        <Toaster position="top-center" richColors />
+        <Toaster position="top-center" richColors expand={false} />
         <Analytics />
       </body>
     </html>
