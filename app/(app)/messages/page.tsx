@@ -298,11 +298,15 @@ function MessagesPageContent() {
 
   useEffect(() => {
     if (activeTab === "waymails") {
-      setSelectedWaymailId(null)
-      setWaymailDetail(null)
+      // Beim Deep-Link (waymailParam) NICHT zurücksetzen – der waymailParam-Effect
+      // hat bereits selectedWaymailId gesetzt; Löschen passiert nur bei manuellem Tab-Klick
+      if (!waymailParam) {
+        setSelectedWaymailId(null)
+        setWaymailDetail(null)
+      }
       fetchWaymails()
     }
-  }, [activeTab, waymailFolder, fetchWaymails])
+  }, [activeTab, waymailFolder, fetchWaymails, waymailParam])
 
   // Postfach: E-Mail-Browser-Layout — Benachrichtigungen + Chats getrennt
   return (
@@ -337,7 +341,12 @@ function MessagesPageContent() {
           {t("messages.tabChats")}
         </button>
         <button
-          onClick={() => setActiveTab("waymails")}
+          onClick={() => {
+            // Manueller Klick → Auswahl immer zurücksetzen (zeigt Listenansicht)
+            setSelectedWaymailId(null)
+            setWaymailDetail(null)
+            setActiveTab("waymails")
+          }}
           className={cn(
             "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             activeTab === "waymails"
