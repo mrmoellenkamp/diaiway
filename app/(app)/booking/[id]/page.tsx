@@ -79,7 +79,20 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  if (!takumi) notFound()
+  if (!takumi) {
+    // takumis loaded but this ID not found – show back button instead of blank page
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
+          <p className="text-sm text-muted-foreground">{t("booking.networkError")}</p>
+          <Button variant="outline" onClick={() => router.back()} className="gap-2">
+            <ArrowLeft className="size-4" />
+            {t("common.back")}
+          </Button>
+        </div>
+      </PageContainer>
+    )
+  }
 
   const priceVideo15 = takumi.priceVideo15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
   const priceVoice15 = takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
