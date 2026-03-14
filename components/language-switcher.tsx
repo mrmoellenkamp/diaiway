@@ -34,7 +34,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
           <LanguageFlagSticker lang={locale} showLabel="abbrev" size="sm" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
+      <DropdownMenuContent align="end" className="min-w-[80px]">
         {locales.map((l) => (
           <DropdownMenuItem
             key={l}
@@ -45,7 +45,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
               l === locale && "font-semibold text-primary"
             )}
           >
-            <LanguageFlagSticker lang={l} showLabel="flagOnly" size="sm" />
+            <LanguageFlagSticker lang={l} showLabel="abbrev" size="sm" />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
