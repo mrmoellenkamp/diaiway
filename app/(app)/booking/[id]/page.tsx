@@ -34,7 +34,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const takumi = takumis.find((tk) => tk.id === id)
 
   const [step, setStep] = useState<"form" | "checkout" | "success">("form")
-  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(45)
+  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(0.45)
   const [bookingIdForPayment, setBookingIdForPayment] = useState<string | null>(null)
   const [bookingIdempotencyKey] = useState(() => crypto.randomUUID())
   const [walletBalanceCents, setWalletBalanceCents] = useState(0)
@@ -57,8 +57,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   }, [step, session?.user])
 
   useEffect(() => {
-    if (step === "checkout") setActiveSnapPoint(92)
-    else setActiveSnapPoint(45)
+    if (step === "checkout") setActiveSnapPoint(0.92)
+    else setActiveSnapPoint(0.45)
   }, [step])
 
   if (isTakumisLoading) {
@@ -204,7 +204,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   return (
     <Drawer
       open={true}
-      snapPoints={[45, 92]}
+      snapPoints={[0.45, 0.92]}
       activeSnapPoint={activeSnapPoint}
       setActiveSnapPoint={setActiveSnapPoint}
       modal={true}
