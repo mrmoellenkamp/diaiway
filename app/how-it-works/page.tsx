@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
             step={2}
             icon={Handshake}
             title="Die ersten 5 Minuten sind gratis"
-            desc="Starte deine Video- oder Sprachanruf-Session. Die ersten fünf Minuten heißen wir „Handshake" – sie gehören dir. Nutze sie, um zu prüfen, ob die Chemie stimmt und die Expertise passt."
+            desc="Starte deine Video- oder Sprachanruf-Session. Die ersten fünf Minuten heißen wir Handshake - sie gehören dir. Nutze sie, um zu prüfen, ob die Chemie stimmt und die Expertise passt."
           />
           <StepCard
             step={3}
