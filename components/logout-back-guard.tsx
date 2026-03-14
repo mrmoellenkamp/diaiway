@@ -2,31 +2,23 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
 
 const PROTECTED_PREFIXES = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages"]
 
 /**
  * Verhindert, dass nach Logout/Timeout die geschützte Seite per Zurück-Button
- * (BFCache oder normaler History-Cache) angezeigt wird.
+ * aus dem BFCache (Back-Forward Cache) angezeigt wird.
  *
- * Drei Mechanismen:
- * 1. pageshow(persisted) → BFCache-Seite erscheint → Session prüfen → redirect
- * 2. visibilitychange(visible) → Tab kommt in Vordergrund → Session prüfen
- * 3. useSession(unauthenticated) auf geschützter Seite → sofort redirect
+ * Mechanismus 1 (BFCache): pageshow mit persisted=true → Seite kommt aus dem Cache →
+ * Session-API prüfen → bei ungültiger Session zu /login weiterleiten.
+ *
+ * Hinweis: Mechanismus "unauthenticated status auf geschützter Seite" wurde entfernt,
+ * da er mit intentionellen Redirects (Deep-Link-Login) kollidiert hat.
+ * Der SessionActivityProvider übernimmt das Ausloggen bei Inaktivität selbstständig.
  */
 export function LogoutBackGuard() {
   const pathname = usePathname()
-  const { status } = useSession()
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname?.startsWith(p))
-
-  // Mechanismus 3: useSession meldet unauthenticated auf geschützter Seite
-  useEffect(() => {
-    if (!isProtected) return
-    if (status === "unauthenticated") {
-      window.location.replace("/login")
-    }
-  }, [status, isProtected])
 
   useEffect(() => {
     if (!isProtected) return
@@ -36,31 +28,20 @@ export function LogoutBackGuard() {
         const res = await fetch("/api/auth/session", { credentials: "include", cache: "no-store" })
         const data = await res.json()
         if (!data?.user) {
-          await signOut({ redirect: false })
           window.location.replace("/login")
         }
       } catch {
-        // Bei Netzwerkfehler nichts tun – Nutzer ist wahrscheinlich offline
+        // Bei Netzwerkfehler nichts tun
       }
     }
 
-    // Mechanismus 1: BFCache – Seite erscheint aus dem Cache
+    // Nur BFCache-Schutz: Seite erscheint aus dem Browser-Cache (Zurück-Button)
     const handlePageShow = (ev: PageTransitionEvent) => {
       if (ev.persisted) checkSession()
     }
 
-    // Mechanismus 2: Tab wird wieder aktiv (z.B. nach Wechsel zu anderem Tab)
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") checkSession()
-    }
-
     window.addEventListener("pageshow", handlePageShow)
-    document.addEventListener("visibilitychange", handleVisibility)
-
-    return () => {
-      window.removeEventListener("pageshow", handlePageShow)
-      document.removeEventListener("visibilitychange", handleVisibility)
-    }
+    return () => window.removeEventListener("pageshow", handlePageShow)
   }, [pathname, isProtected])
 
   return null

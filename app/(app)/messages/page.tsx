@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -235,14 +235,8 @@ function MessagesPageContent() {
     if (withParam && session?.user?.id && withParam === session.user.id && !redirectingRef.current) {
       redirectingRef.current = true
       const callbackUrl = `/messages?with=${encodeURIComponent(withParam)}`
-      // Harte Navigation: React-State und Session vollständig zurücksetzen
-      signOut({ redirect: false })
-        .catch(() => {})
-        .finally(() => {
-          document.cookie = "authjs.session-token=; max-age=0; path=/"
-          document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
-          window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-        })
+      // Direkt zur Login-Seite – kein signOut nötig, die neue Session ersetzt die alte
+      window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
       return
     }
     if (withParam && threads.length > 0 && !activeThread) {
@@ -260,17 +254,11 @@ function MessagesPageContent() {
         .then(async (r) => {
           const d = await r.json()
           if (!r.ok || d.error) {
-            // Waymail gehört nicht dem eingeloggten Nutzer → Abmelden, Empfänger kann sich einloggen
+            // Waymail gehört nicht dem eingeloggten Nutzer → direkt zur Login-Seite
+            // Kein signOut nötig: die neue Session des Empfängers ersetzt die alte beim Login
             redirectingRef.current = true
             const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
-            // Harte Navigation: React-State und Session vollständig zurücksetzen
-            signOut({ redirect: false })
-              .catch(() => {})
-              .finally(() => {
-                document.cookie = "authjs.session-token=; max-age=0; path=/"
-                document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
-                window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-              })
+            window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
             return
           }
           setWaymailFolder(d.isFromMe ? "sent" : "inbox")
