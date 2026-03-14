@@ -71,11 +71,13 @@ function LoginContent() {
       })
 
       if (result?.error) {
-        // Parse rate-limit error thrown from lib/auth.ts
         if (result.error.includes("TOO_MANY_ATTEMPTS")) {
           const sec = result.error.split(":")[1]
           const min = Math.ceil(Number(sec) / 60)
           setError(t("login.tooManyAttempts").replace("{min}", String(min)))
+        } else if (result.error.includes("DB_ERROR")) {
+          // Datenbankverbindungsfehler – Passwort ist korrekt, Server hat Probleme
+          setError(t("login.errorNetwork"))
         } else {
           setError(t("login.errorInvalid"))
         }
