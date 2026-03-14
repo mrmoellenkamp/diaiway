@@ -302,6 +302,7 @@ export const POST = apiHandler(async (req) => {
       console.warn("[messages] Notification/Push failed:", e)
     }
   } else {
+    // Link zur Waymail-Inbox des Empfängers (recipientId), nicht des Absenders
     const waymailUrl = `${baseUrl}/messages?waymail=${message.id}`
     try {
       await prisma.notification.create({

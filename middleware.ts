@@ -130,6 +130,7 @@ export const config = {
     "/booking/:path*",
     "/sessions/:path*",
     "/session/:path*",
+    "/messages",        // Waymail/Chat: nur mit Login zugänglich
     "/messages/:path*",
     "/api/auth/heartbeat",
     // Apply security headers to all non-static routes

@@ -13,6 +13,8 @@ import { apiHandler } from "@/lib/api-handler"
 
 export const runtime = "nodejs"
 
+const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
+
 /** GET — list bookings for the current user (as booker or as expert)
  * Query: view=takumi — only bookings where user is the expert (for availability dashboard)
  *        view=shugyo — only bookings where user is the booker (default: both)
@@ -252,10 +254,11 @@ export const POST = apiHandler(async (req) => {
           subject: "Neue Buchungsanfrage",
           body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
         }).catch(() => null)
+        const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(expert.userId, {
           title: "Neue Buchungsanfrage",
           body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
-          url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
+          url: waymailUrl,
         }).catch(() => {})
       } catch { /* notification errors must not block */ }
     }
