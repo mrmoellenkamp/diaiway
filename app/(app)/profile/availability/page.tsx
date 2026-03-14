@@ -465,16 +465,16 @@ export default function AvailabilityPage() {
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="schedule" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="schedule" className="gap-1 text-xs">
+              <TabsTrigger value="schedule" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Clock className="size-3" /> {t("avail.tabWeekly")}
               </TabsTrigger>
-              <TabsTrigger value="instant" className="gap-1 text-xs">
+              <TabsTrigger value="instant" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Phone className="size-3" /> {t("avail.tabInstant")}
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1 text-xs">
+              <TabsTrigger value="calendar" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Calendar className="size-3" /> {t("avail.tabCalendar")}
               </TabsTrigger>
-              <TabsTrigger value="rules" className="gap-1 text-xs">
+              <TabsTrigger value="rules" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <CalendarDays className="size-3" /> {t("avail.tabSeasonal")}
               </TabsTrigger>
             </TabsList>
