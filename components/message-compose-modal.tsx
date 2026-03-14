@@ -8,9 +8,55 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Send, Loader2 } from "lucide-react"
+import { Send, Loader2, Paperclip, Check, XCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
+import { toast } from "sonner"
+
+function PendingAttachmentPreview({
+  filename,
+  thumbnailUrl,
+  onConfirm,
+  onRemove,
+  sending,
+}: {
+  filename: string
+  thumbnailUrl: string | null
+  onConfirm: () => void
+  onRemove: () => void
+  sending: boolean
+}) {
+  const [thumbError, setThumbError] = useState(false)
+  const showThumb = thumbnailUrl && !thumbError
+  const isPdf = filename.toLowerCase().endsWith(".pdf")
+
+  return (
+    <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+      {showThumb ? (
+        <img
+          src={thumbnailUrl!}
+          alt=""
+          className="size-14 shrink-0 rounded-lg object-cover"
+          onError={() => setThumbError(true)}
+        />
+      ) : (
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-2xl">
+          {isPdf ? "📄" : "🖼️"}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-foreground">{filename}</p>
+        <p className="text-xs text-muted-foreground">Zum Senden auf ✓ tippen</p>
+      </div>
+      <Button size="icon" className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
+        <Check className="size-5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onRemove} aria-label="Anhang entfernen">
+        <XCircle className="size-4" />
+      </Button>
+    </div>
+  )
+}
 
 interface MessageComposeModalProps {
   open: boolean
@@ -31,11 +77,15 @@ export function MessageComposeModal({
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
+  const { upload, isScanning: uploadScanning, statusLabel, error: uploadError, reset: resetUpload, clearError: clearUploadError } = useSecureFileUpload()
 
   async function handleSend() {
     const sub = subject.trim()
     const text = message.trim()
-    if (!sub || !text || sending) return
+    const attachment = pendingAttachment
+    const hasAttachment = !!attachment
+    if (!sub || (!text && !hasAttachment) || sending) return
     setSending(true)
     try {
       const res = await fetch("/api/messages", {
@@ -43,24 +93,40 @@ export function MessageComposeModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipientExpertId,
-          text,
+          text: text || "(Anhang)",
           subject: sub,
           communicationType: "MAIL",
+          attachmentUrl: attachment?.url,
+          attachmentThumbnailUrl: attachment?.thumbnailUrl,
+          attachmentFilename: attachment?.filename,
         }),
       })
       const data = await res.json()
       if (res.ok) {
         setSubject("")
         setMessage("")
+        setPendingAttachment(null)
         onOpenChange(false)
         onSent?.()
       } else {
-        throw new Error(data.error)
+        toast.error(data?.error ?? "Fehler beim Senden.")
       }
     } catch (e) {
       console.error(e)
+      toast.error("Fehler beim Senden.")
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleAttach() {
+    if (sending || uploadScanning) return
+    const res = await upload()
+    if (res.ok) {
+      setPendingAttachment({ url: res.result.url, thumbnailUrl: res.result.thumbnailUrl, filename: res.result.filename })
+      resetUpload()
+    } else if (res.error) {
+      toast.error(res.error)
     }
   }
 
@@ -92,6 +158,26 @@ export function MessageComposeModal({
             />
           </div>
           <div className="flex flex-1 flex-col p-4">
+            {uploadError && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {uploadError}
+                <button type="button" onClick={clearUploadError} className="shrink-0 ml-auto" aria-label="Schließen">
+                  <XCircle className="size-3.5" />
+                </button>
+              </div>
+            )}
+            {pendingAttachment && (
+              <PendingAttachmentPreview
+                filename={pendingAttachment.filename}
+                thumbnailUrl={pendingAttachment.thumbnailUrl}
+                onConfirm={handleSend}
+                onRemove={() => setPendingAttachment(null)}
+                sending={sending}
+              />
+            )}
+            {uploadScanning && (
+              <p className="mb-2 text-xs text-muted-foreground">{statusLabel}</p>
+            )}
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -99,10 +185,23 @@ export function MessageComposeModal({
               className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
               rows={4}
             />
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleAttach}
+                disabled={sending || uploadScanning}
+                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary transition-colors"
+                aria-label="Datei anhängen"
+              >
+                {uploadScanning ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Paperclip className="size-4" />
+                )}
+              </button>
               <Button
                 onClick={handleSend}
-                disabled={!subject.trim() || !message.trim() || sending}
+                disabled={!subject.trim() || (!message.trim() && !pendingAttachment) || sending}
                 className="gap-2"
               >
                 {sending ? (
