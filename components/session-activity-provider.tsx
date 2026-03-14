@@ -65,9 +65,9 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
         setShowWarning(true)
       } else if (remaining <= 0) {
         setShowWarning(false)
-        // Tatsächliches Ausloggen – Session invalidiert, nicht nur Redirect (verhindert Zurück-Button-Bypass)
+        // Tatsächliches Ausloggen – Session invalidiert, replace verhindert Zurück-Button zu geschützter Seite
         signOut({ redirect: false }).finally(() => {
-          window.location.href = "/login?reason=timeout"
+          window.location.replace("/login?reason=timeout")
         })
       }
     }, COUNTDOWN_INTERVAL_MS)

@@ -18,6 +18,7 @@ import { WalletTopupProvider } from '@/lib/wallet-topup-context'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { SplashScreenHider } from '@/components/splash-screen-hider'
 import { DeepLinkHandler } from '@/components/deep-link-handler'
+import { LogoutBackGuard } from '@/components/logout-back-guard'
 import { Footer } from '@/components/footer'
 import './globals.css'
 
@@ -74,6 +75,7 @@ export default function RootLayout({
                   <PushNotificationProvider>
                     <QuickActionPushProvider>
                     <DeepLinkHandler />
+                    <LogoutBackGuard />
                     <SplashScreenHider />
                     <ScrollToTop />
                     <GlobalNavigation />

@@ -53,7 +53,8 @@ export default function SettingsPage() {
       const res = await fetch("/api/user/account", { method: "DELETE" })
       if (res.ok) {
         toast.success(t("profile.accountDeleted"))
-        await signOut({ callbackUrl: "/" })
+        await signOut({ redirect: false })
+        window.location.replace("/")
       } else {
         toast.error(t("profile.deleteError"))
       }
