@@ -109,7 +109,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         </Link>
         {(appRole === "takumi" || userRole === "admin") && (
           <Link
-            href="/dashboard/availability"
+            href="/profile/availability"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
             <CalendarClock className="size-4 text-muted-foreground icon-paper" />
@@ -172,7 +172,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         </DropdownMenuItem>
         {(appRole === "takumi" || userRole === "admin") && (
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/availability" className="flex items-center gap-2">
+            <Link href="/profile/availability" className="flex items-center gap-2">
               <CalendarClock className="size-4 icon-paper" />
               {t("nav.myAvailability")}
             </Link>

@@ -54,8 +54,8 @@ export default authMiddleware((req) => {
       return NextResponse.redirect(new URL("/home", req.url))
   }
 
-  // Availability dashboard — only takumi (appRole) and admin (role)
-  if (pathname.startsWith("/dashboard/availability")) {
+  // Verfügbarkeit — only takumi (appRole) and admin (role)
+  if (pathname.startsWith("/profile/availability")) {
     if (!isLoggedIn)
       return NextResponse.redirect(
         new URL(`/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)

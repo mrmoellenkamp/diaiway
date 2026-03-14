@@ -1,6 +1,6 @@
 "use client"
 
-import { useI18n, localeNames, localeFlags, type Locale } from "@/lib/i18n"
+import { useI18n, localeNames, type Locale } from "@/lib/i18n"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 
 const locales: Locale[] = ["de", "en", "es"]
 
@@ -30,7 +31,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
           aria-label="Change language"
         >
           <Globe className="size-3.5" />
-          <span>{localeFlags[locale]}</span>
+          <LanguageFlagSticker lang={locale} showLabel="code" size="sm" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[140px]">
@@ -43,8 +44,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
               l === locale && "font-semibold text-primary"
             )}
           >
-            <span className="text-xs font-mono w-5">{localeFlags[l]}</span>
-            <span>{localeNames[l]}</span>
+            <LanguageFlagSticker lang={l} showLabel="full" size="sm" />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

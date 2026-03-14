@@ -80,10 +80,10 @@
   --color-chart-5: var(--chart-5);
   --color-amber: var(--amber);
   --color-amber-foreground: var(--amber-foreground);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 0.25rem);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -113,17 +113,35 @@
   padding-bottom: max(10rem, calc(6rem + env(safe-area-inset-bottom)));
 }
 
-/* Safe-Area Utilities: Footer/Content bleibt auf iPhone über dem Home-Indicator, Web behält Standard-Padding */
-.pb-safe {
-  padding-bottom: max(1rem, var(--safe-area-inset-bottom));
-}
+/* Safe-Area Utilities: dynamisch für alle Notch-Größen */
 .pt-safe {
-  padding-top: max(1rem, var(--safe-area-inset-top));
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+}
+.pb-safe-inline {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
 
 /* Scroll-End-Spacer: Am Ende von Listen, damit der letzte Eintrag voll sichtbar ist (BottomNav + Safe Area) */
 .scroll-end-spacer {
   min-height: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Responsive: Papp-Karten-Container – max-width, zentriert, flexibles Grid */
+.card-grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr));
+  gap: 0.5rem;
+}
+@media (min-width: 640px) {
+  .card-grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Viewport-relative Abstände für kleine Displays */
+.px-viewport {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
 }
 
 @keyframes live-pulse {

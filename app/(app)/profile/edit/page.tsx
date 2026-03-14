@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { useCategories } from "@/lib/categories-i18n"
+import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 import { toast } from "sonner"
 import {
   ArrowLeft,
@@ -434,7 +435,6 @@ export default function EditProfilePage() {
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 {(["de", "en", "es", "fr", "it"] as const).map((lang) => {
-                  const flags: Record<string, string> = { de: "🇩🇪", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹" }
                   const isSelected = languages.includes(lang)
                   return (
                     <button
@@ -450,8 +450,7 @@ export default function EditProfilePage() {
                           : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
                       }`}
                     >
-                      <span className="text-base">{flags[lang]}</span>
-                      <span>{lang.toUpperCase()}</span>
+                      <LanguageFlagSticker lang={lang} showLabel="code" size="sm" />
                     </button>
                   )
                 })}

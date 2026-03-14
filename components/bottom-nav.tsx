@@ -39,7 +39,7 @@ export function BottomNav() {
       aria-label="Hauptnavigation"
     >
       <nav
-        className="mx-auto max-w-lg"
+        className="mx-auto w-full max-w-lg min-w-0"
         role="navigation"
         aria-label="Hauptnavigation"
       >

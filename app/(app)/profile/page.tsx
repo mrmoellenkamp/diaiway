@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { VerifiedBadge } from "@/components/verified-badge"
 import { TakumiStatusCard } from "@/components/takumi-status-card"
+import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -185,7 +186,6 @@ export default function ProfilePage() {
 
   const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
 
-  const LANG_FLAGS: Record<string, string> = { de: "🇩🇪", en: "🇬🇧", es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹" }
 
   async function handleSkillLevelChange(level: "NEULING" | "FORTGESCHRITTEN" | "PROFI") {
     setSavingSkill(true)
@@ -373,11 +373,9 @@ export default function ProfilePage() {
                   )}
                 </div>
                 {languages.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1">
+                  <div className="flex flex-wrap justify-center gap-1.5">
                     {languages.map((lang) => (
-                      <span key={lang} className="text-lg leading-none" title={lang.toUpperCase()}>
-                        {LANG_FLAGS[lang] ?? lang}
-                      </span>
+                      <LanguageFlagSticker key={lang} lang={lang} showLabel="code" size="sm" />
                     ))}
                   </div>
                 )}
@@ -596,7 +594,7 @@ export default function ProfilePage() {
               <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
               <MenuItem icon={Calendar} label={t("profile.myBookings")} href="/sessions" />
               {isTakumi && (
-                <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/dashboard/availability" />
+                <MenuItem icon={CalendarClock} label={t("nav.myAvailability")} href="/profile/availability" />
               )}
               {isTakumi && (
                 <MenuItem icon={Images} label={t("nav.myPortfolio")} href="/dashboard/takumi/portfolio" />

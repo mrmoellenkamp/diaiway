@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },
+    ]
+  },
   typescript: {
     ignoreBuildErrors: false,
   },
