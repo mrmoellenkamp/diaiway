@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import {
   INACTIVITY_TIMEOUT_SEC,
   INACTIVITY_WARNING_SEC,
@@ -65,7 +65,10 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
         setShowWarning(true)
       } else if (remaining <= 0) {
         setShowWarning(false)
-        window.location.href = "/login?reason=timeout"
+        // Tatsächliches Ausloggen – Session invalidiert, nicht nur Redirect (verhindert Zurück-Button-Bypass)
+        signOut({ redirect: false }).finally(() => {
+          window.location.href = "/login?reason=timeout"
+        })
       }
     }, COUNTDOWN_INTERVAL_MS)
 
