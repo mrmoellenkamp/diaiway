@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,8 @@ interface ThreadInfo {
 
 function MessagesPageContent() {
   const { t } = useI18n()
+  const router = useRouter()
+  const { data: session } = useSession()
   const { refreshNotificationCount } = useApp()
   const searchParams = useSearchParams()
   const withParam = searchParams.get("with")
@@ -54,6 +57,7 @@ function MessagesPageContent() {
   const [loadingWaymails, setLoadingWaymails] = useState(false)
   const [selectedWaymailId, setSelectedWaymailId] = useState<string | null>(null)
   const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null; read?: boolean } | null>(null)
+  const redirectingRef = useRef(false)
 
   const fetchThreads = useCallback(async () => {
     const r = await fetch("/api/messages")
@@ -151,22 +155,39 @@ function MessagesPageContent() {
   const unreadNotifications = notifications.filter((n) => !n.read)
 
   // Beim ersten Laden: URL-Params (with, waymail) setzen
+  // Wenn with=eingeloggter Nutzer → Empfänger hat Link geklickt, aber Absender ist eingeloggt → Abmelden
   useEffect(() => {
+    if (withParam && session?.user?.id && withParam === session.user.id && !redirectingRef.current) {
+      redirectingRef.current = true
+      const callbackUrl = `/messages?with=${encodeURIComponent(withParam)}`
+      signOut({ redirect: false }).then(() => {
+        router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+      })
+      return
+    }
     if (withParam && threads.length > 0 && !activeThread) {
       setActiveThread(withParam)
       setActiveTab("chats")
     }
-  }, [withParam, threads, activeThread])
+  }, [withParam, threads, activeThread, session?.user?.id])
 
   const waymailParam = searchParams.get("waymail")
   useEffect(() => {
-    if (waymailParam) {
+    if (waymailParam && !redirectingRef.current) {
       setActiveTab("waymails")
       setSelectedWaymailId(waymailParam)
       fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`)
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.error) return
+        .then(async (r) => {
+          const d = await r.json()
+          if (!r.ok || d.error) {
+            // Waymail gehört nicht dem eingeloggten Nutzer (z.B. Absender ist eingeloggt, Empfänger klickt Link)
+            // Abmelden und zur Login-Seite mit callbackUrl → Empfänger kann sich anmelden
+            redirectingRef.current = true
+            const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
+            await signOut({ redirect: false })
+            router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+            return
+          }
           setWaymailDetail(d)
           const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
           if (!alreadyRead) {
