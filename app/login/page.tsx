@@ -1,7 +1,7 @@
 "use client"
 
-import { Suspense, useRef, useState } from "react"
-import { signIn } from "next-auth/react"
+import { Suspense, useEffect, useRef, useState } from "react"
+import { signIn, signOut } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,13 @@ function LoginContent() {
   const reasonTimeout = searchParams.get("reason") === "timeout"
   const { setIsLoggedIn } = useApp()
   const { t } = useI18n()
+
+  // Bei Timeout-Redirect: Client-Session leeren, damit Avatar/Profil nicht mehr erreichbar sind
+  useEffect(() => {
+    if (reasonTimeout) {
+      signOut({ redirect: false })
+    }
+  }, [reasonTimeout])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
