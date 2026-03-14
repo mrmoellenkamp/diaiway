@@ -299,6 +299,27 @@ export function UserChatBox({
     setSending(false)
   }
 
+  async function handleDeleteMessage(msg: MsgItem, e: React.MouseEvent) {
+    e.stopPropagation()
+    if (msg.sender !== "user") return
+    if (msg.id.startsWith("temp-")) {
+      setMessages((prev) => prev.filter((m) => m.id !== msg.id))
+      return
+    }
+    try {
+      const r = await fetch(`/api/messages?message=${encodeURIComponent(msg.id)}`, { method: "DELETE" })
+      if (r.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== msg.id))
+        toast.success(t("messages.messageDeleted"))
+      } else {
+        const data = await r.json().catch(() => ({}))
+        toast.error(data.error ?? t("common.networkError"))
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    }
+  }
+
   function handleRetry(msg: MsgItem) {
     if (msg.sender !== "user" || msg.status !== "failed") return
     if (retryTimeoutRef.current) {
@@ -412,7 +433,7 @@ export function UserChatBox({
               </div>
               <div
                 className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
+                  "relative max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
                   msg.sender === "user"
                     ? "rounded-tr-md bg-primary/10 text-foreground"
                     : "rounded-tl-md border border-border/30 bg-white/80 text-foreground shadow-sm",
@@ -436,6 +457,16 @@ export function UserChatBox({
                   >
                     <AlertCircle className="size-3 shrink-0" />
                     Tippe zum Wiederholen
+                  </button>
+                )}
+                {msg.sender === "user" && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteMessage(msg, e)}
+                    className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
+                    aria-label={t("common.delete")}
+                  >
+                    <X className="size-3" />
                   </button>
                 )}
               </div>
