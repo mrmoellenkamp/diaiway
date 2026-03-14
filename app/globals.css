@@ -108,6 +108,11 @@
   padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom)));
 }
 
+/* Fixed elements above BottomNav — responsive für alle Displaygrößen + Safe Area */
+.above-bottom-nav {
+  bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
+}
+
 /* Seiten ohne PageContainer: Safe-Area statt pb-40 */
 .pb-safe {
   padding-bottom: max(10rem, calc(6rem + env(safe-area-inset-bottom)));

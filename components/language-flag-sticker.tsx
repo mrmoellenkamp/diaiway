@@ -36,8 +36,8 @@ const LANG_NAMES: Record<string, string> = {
 
 interface LanguageFlagStickerProps {
   lang: string
-  /** "code" = DE/EN, "full" = Deutsch/English, "none" = only flag, "abbrev" = nur Länderkürzel (DE/EN/ES) ohne Flag, ohne Rahmen */
-  showLabel?: "code" | "full" | "none" | "abbrev"
+  /** "code" = Flag+DE, "full" = Flag+Deutsch, "none" = only flag mit Rahmen, "abbrev" = nur DE (ohne Flag/Rahmen), "flagOnly" = nur Fahne ohne Rahmen/Kürzel */
+  showLabel?: "code" | "full" | "none" | "abbrev" | "flagOnly"
   size?: "sm" | "md"
   className?: string
 }
@@ -64,6 +64,28 @@ export function LanguageFlagSticker({
         title={LANG_NAMES[lang.toLowerCase()] ?? lang}
       >
         {lang.toUpperCase()}
+      </span>
+    )
+  }
+
+  if (showLabel === "flagOnly") {
+    const FlagSvg = hasFlag ? FLAG_COMPONENTS[countryCode] : null
+    return FlagSvg ? (
+      <span
+        className={cn(
+          "inline-block flex-shrink-0 overflow-hidden rounded-[0.2rem]",
+          size === "sm" && "size-[1rem]",
+          size === "md" && "size-4",
+          className
+        )}
+        title={LANG_NAMES[lang.toLowerCase()] ?? lang}
+        aria-hidden
+      >
+        <FlagSvg className="size-full object-cover" />
+      </span>
+    ) : (
+      <span className={cn("text-[10px] font-medium text-muted-foreground", size === "sm" && "text-xs", className)}>
+        {countryCode.slice(0, 1)}
       </span>
     )
   }
