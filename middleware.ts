@@ -101,6 +101,14 @@ export default authMiddleware((req) => {
     })
   }
 
+  // ── No-cache for protected pages — prevents browser back-button from showing stale content ──
+  const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages", "/admin"]
+  if (protectedPrefixes.some((p) => pathname.startsWith(p))) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+  }
+
   // ── Security headers ──────────────────────────────────────────────────────
   response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
