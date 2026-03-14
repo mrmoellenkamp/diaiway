@@ -193,7 +193,7 @@ export const POST = apiHandler(async (req) => {
           expertName: expert.name,
           expertEmail,
           userId: session.user.id,
-          userName: session.user.name || "Nutzer",
+          userName: (session.user as { username?: string | null }).username ?? session.user.name || "Nutzer",
           userEmail: session.user.email || "",
           date,
           startTime,
@@ -222,7 +222,7 @@ export const POST = apiHandler(async (req) => {
       await sendBookingRequestEmail({
         to: expertEmail,
         takumiName: expert.name,
-        userName: session.user.name || "Nutzer",
+        userName: (session.user as { username?: string | null }).username ?? session.user.name || "Nutzer",
         userEmail: session.user.email || "",
         date,
         startTime,
@@ -246,18 +246,19 @@ export const POST = apiHandler(async (req) => {
             type: "booking_request",
             bookingId: booking.id,
             title: "Neue Buchungsanfrage",
-            body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+            body: `${(session.user as { username?: string | null }).username ?? session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           },
         })
+        const displayName = (session.user as { username?: string | null }).username ?? session.user.name || "Ein Nutzer"
         const waymail = await createSystemWaymail({
           recipientId: expert.userId,
           subject: "Neue Buchungsanfrage",
-          body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          body: `${displayName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
         }).catch(() => null)
         const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(expert.userId, {
           title: "Neue Buchungsanfrage",
-          body: `${session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          body: `${displayName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           url: waymailUrl,
         }).catch(() => {})
       } catch { /* notification errors must not block */ }

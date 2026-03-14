@@ -70,17 +70,19 @@ export const GET = apiHandler(async (req: NextRequest) => {
         OR: [{ recipientId: session.user.id }, { senderId: session.user.id }],
       },
       include: {
-        sender: { select: { name: true, image: true } },
-        recipient: { select: { name: true, image: true } },
+        sender: { select: { name: true, username: true, image: true } },
+        recipient: { select: { name: true, username: true, image: true } },
       },
     })
     if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
     const isFromMe = wm.senderId === session.user.id
+    const sn = wm.sender as { name?: string; username?: string | null } | null
+    const rn = wm.recipient as { name?: string; username?: string | null } | null
     return NextResponse.json({
       id: wm.id,
-      senderName: wm.senderDisplayName ?? wm.sender?.name ?? "Unbekannt",
+      senderName: wm.senderDisplayName ?? (sn?.username ?? sn?.name) ?? "Unbekannt",
       senderImageUrl: wm.sender?.image && wm.sender.image.length > 0 ? wm.sender.image : null,
-      recipientName: wm.recipient?.name ?? "Unbekannt",
+      recipientName: (rn?.username ?? rn?.name) ?? "Unbekannt",
       recipientImageUrl: wm.recipient?.image && wm.recipient.image.length > 0 ? wm.recipient.image : null,
       isFromMe,
       subject: wm.subject,
@@ -101,14 +103,15 @@ export const GET = apiHandler(async (req: NextRequest) => {
       },
       orderBy: { createdAt: "desc" },
       take: 100,
-      include: { sender: { select: { name: true, image: true } } },
+      include: { sender: { select: { name: true, username: true, image: true } } },
     })
     const mapped = raw.map((m) => {
       const isSystem = !m.senderId || m.senderDisplayName === "diAiway System"
+      const sn = m.sender as { name?: string; username?: string | null } | null
       return {
         id: m.id,
         folder: "inbox" as const,
-        senderName: m.senderDisplayName ?? m.sender?.name ?? "Unbekannt",
+        senderName: m.senderDisplayName ?? (sn?.username ?? sn?.name) ?? "Unbekannt",
         senderImageUrl: m.sender?.image && m.sender.image.length > 0 ? m.sender.image : null,
         subject: m.subject ?? "(ohne Betreff)",
         textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
@@ -128,18 +131,21 @@ export const GET = apiHandler(async (req: NextRequest) => {
       },
       orderBy: { createdAt: "desc" },
       take: 100,
-      include: { recipient: { select: { name: true, image: true } } },
+      include: { recipient: { select: { name: true, username: true, image: true } } },
     })
-    const mapped = raw.map((m) => ({
-      id: m.id,
-      folder: "sent" as const,
-      recipientName: m.recipient?.name ?? "Unbekannt",
-      recipientImageUrl: m.recipient?.image && m.recipient.image.length > 0 ? m.recipient.image : null,
-      subject: m.subject ?? "(ohne Betreff)",
-      textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
-      timestamp: m.createdAt.getTime(),
-      read: true,
-    }))
+    const mapped = raw.map((m) => {
+      const rn = m.recipient as { name?: string; username?: string | null } | null
+      return {
+        id: m.id,
+        folder: "sent" as const,
+        recipientName: (rn?.username ?? rn?.name) ?? "Unbekannt",
+        recipientImageUrl: m.recipient?.image && m.recipient.image.length > 0 ? m.recipient.image : null,
+        subject: m.subject ?? "(ohne Betreff)",
+        textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
+        timestamp: m.createdAt.getTime(),
+        read: true,
+      }
+    })
     return NextResponse.json({ waymails: mapped })
   }
 
@@ -158,7 +164,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
       },
       orderBy: { createdAt: "asc" },
       include: {
-        sender: { select: { id: true, name: true, image: true } },
+        sender: { select: { id: true, name: true, username: true, image: true } },
       },
     })
     await prisma.directMessage.updateMany({
@@ -166,17 +172,20 @@ export const GET = apiHandler(async (req: NextRequest) => {
       data: { read: true },
     })
     return NextResponse.json({
-      messages: messages.map((m) => ({
-        id: m.id,
-        text: m.text,
-        sender: m.senderId === session.user.id ? "user" : "partner",
-        senderName: m.sender?.name,
+      messages: messages.map((m) => {
+        const sn = m.sender as { name?: string; username?: string | null } | null
+        return {
+          id: m.id,
+          text: m.text,
+          sender: m.senderId === session.user.id ? "user" : "partner",
+          senderName: (sn?.username ?? sn?.name) ?? undefined,
         timestamp: m.createdAt.getTime(),
         read: m.read,
         attachmentUrl: m.attachmentUrl,
         attachmentThumbnailUrl: m.attachmentThumbnailUrl,
         attachmentFilename: m.attachmentFilename,
-      })),
+        }
+      }),
     })
   }
 
@@ -201,7 +210,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const [users, experts, allLastMsgs, unreadCounts] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: partnerIds } },
-      select: { id: true, name: true, image: true, isVerified: true },
+      select: { id: true, name: true, username: true, image: true, isVerified: true },
     }),
     prisma.expert.findMany({
       where: { userId: { in: partnerIds } },
@@ -252,7 +261,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
     const expert = expertMap.get(partnerId)
     const lastMsg = lastMsgByPartner.get(partnerId)
     const unread = unreadByPartner.get(partnerId) ?? 0
-    const displayName = user?.name ?? "Nutzer"
+    const displayName = (user as { username?: string | null })?.username ?? user?.name ?? "Nutzer"
     const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
     const subcategory = expert?.subcategory ?? ""
     const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
@@ -314,9 +323,9 @@ export const POST = apiHandler(async (req) => {
 
   const recipient = await prisma.user.findUnique({
     where: { id: recipientId },
-    select: { name: true, email: true },
+    select: { name: true, username: true, email: true },
   })
-  const senderName = session.user.name ?? "Jemand"
+  const senderName = (session.user as { username?: string | null }).username ?? session.user.name ?? "Jemand"
 
   if (body.communicationType === "CHAT") {
     try {
@@ -359,7 +368,7 @@ export const POST = apiHandler(async (req) => {
     if (recipient?.email) {
       sendWaymailNotificationEmail({
         to: recipient.email,
-        recipientName: recipient.name ?? "Nutzer",
+        recipientName: (recipient as { username?: string | null }).username ?? recipient.name ?? "Nutzer",
         senderName,
         subject: message.subject ?? "(ohne Betreff)",
         waymailUrl,

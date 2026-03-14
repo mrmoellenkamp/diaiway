@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     let userContext = ""
     if (session?.user?.name) {
         const userCtxFn = USER_CONTEXT[locale] ?? USER_CONTEXT.de
-        userContext = `\n\n${userCtxFn(session.user.name)}`
+        userContext = `\n\n${userCtxFn((session.user as { username?: string | null }).username ?? session.user.name ?? "")}`
     }
 
     let expertContext = ""

@@ -20,6 +20,7 @@ export async function GET() {
       where: { id: userId },
       select: {
         name: true,
+        username: true,
         image: true,
         createdAt: true,
         appRole: true,
@@ -84,7 +85,8 @@ export async function GET() {
 
     return NextResponse.json({
       appRole: user.appRole ?? "shugyo",
-      name: user.name,
+      name: (user as { username?: string | null }).username ?? user.name,
+      username: (user as { username?: string | null }).username ?? null,
       image: user.image || "",
       createdAt: user.createdAt,
       shugyo,

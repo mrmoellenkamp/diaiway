@@ -26,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const user = await prisma.user.findUnique({
             where: { email },
-            select: { id: true, name: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true },
+            select: { id: true, name: true, username: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true },
           })
           if (!user) return null
           if ((user as { isBanned?: boolean }).isBanned) return null
@@ -37,6 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return {
             id: user.id,
             name: user.name,
+            username: (user as { username?: string | null }).username ?? null,
             email: user.email,
             role: user.role,
             appRole: user.appRole,
@@ -74,12 +75,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.appRole    = (user as { appRole?: string }).appRole  || "shugyo"
         token.status     = (user as { status?: string }).status   || "active"
         token.isVerified = (user as { isVerified?: boolean }).isVerified ?? false
+        token.username   = (user as { username?: string | null }).username ?? null
       }
 
       // 2. Client-initiiertes Session-Update (updateSession)
       if (trigger === "update" && updateData) {
-        if (updateData.name)       token.name       = updateData.name
-        if (updateData.image)      token.picture    = updateData.image
+        if (updateData.name !== undefined)     token.name     = updateData.name
+        if (updateData.username !== undefined) token.username = updateData.username
+        if (updateData.image)                  token.picture  = updateData.image
         if (updateData.status)     token.status     = updateData.status
         if (typeof updateData.isVerified === "boolean") token.isVerified = updateData.isVerified
         // Anti-Privilege-Escalation: appRole → takumi nur wenn Expert-Record existiert
@@ -154,6 +157,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ;(session.user as { status?: string }).status     = token.status     as string
         ;(session.user as { id?: string }).id             = token.id        as string
         ;(session.user as { isVerified?: boolean }).isVerified = token.isVerified as boolean ?? false
+        ;(session.user as { username?: string | null }).username = (token.username as string | null) ?? null
         if (token.name)    session.user.name  = token.name    as string
         if (token.picture) session.user.image = token.picture as string
       }
