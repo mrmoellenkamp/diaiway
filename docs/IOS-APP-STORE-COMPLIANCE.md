@@ -13,6 +13,7 @@
 | Scroll-Ende | ✅ | `scroll-end-spacer` in Listen/Seiten mit Bottom-Nav |
 | Bottom-Padding | ✅ | `pb-40` durch `pb-safe` ersetzt (Safe-Area-aware) |
 | Icons | ✅ | `icon-paper` für Cut-out-Look, Differenzierung von SF Symbols |
+| Responsive | ✅ | Relative Einheiten, Flex/Grid Wrap, max-width für Papp-Karten |
 
 ---
 
@@ -45,7 +46,7 @@
 
 - `app/(app)/dashboard/takumi/portfolio/page.tsx`
 - `app/booking/respond/[id]/page.tsx`
-- `app/(app)/dashboard/availability/page.tsx`
+- `app/(app)/profile/availability/page.tsx`
 - `app/(app)/profile/edit/page.tsx`
 - `app/paused/page.tsx`
 - `app/legal/datenschutz/page.tsx`
@@ -111,6 +112,28 @@ Apple erwartet, dass Icons nicht 1:1 wie SF Symbols wirken. Lucide-Icons (Home, 
 - [ ] `pb-safe` oder `PageContainer` statt festem `pb-40`
 - [ ] Scroll-Listen: `scroll-end-spacer` am Ende
 - [ ] Icons: `icon-paper` bei Navigation/Header-Icons
+
+---
+
+## 5. Responsive Design (alle Displaygrößen)
+
+### Relative Einheiten
+- **Hero-Höhe**: `min-h-[min(18rem,40vh)]` statt festem `280px` – skaliert mit Viewport
+- **Radius**: `rem` statt `px` in globals.css (`--radius-sm`, `--radius-xl`)
+
+### Flexbox/Grid mit Wrap
+- **Kategorie-Grids**: `grid-cols-2 sm:grid-cols-3` – 2 Spalten auf kleinen iPhones (SE), 3 auf größeren
+- **Card-Grid-Utility**: `.card-grid-responsive` für auto-fill Grids mit `minmax(min(100%,6.5rem),1fr)`
+
+### Maximale Breiten & Zentrierung
+- **PageContainer, Header, Bottom-Nav**: `w-full max-w-lg min-w-0 mx-auto`
+- **Card-Komponente**: `max-w-full min-w-0` – verhindert Überlauf
+- **Legal/Help-Seiten**: `max-w-lg min-w-0` für zentrierte Inhalte
+
+### Safe-Area für alle Notch-Größen
+- `.pt-safe`: `max(1rem, env(safe-area-inset-top))`
+- `.pb-safe`: `max(10rem, calc(6rem + env(safe-area-inset-bottom)))` für Seiten
+- `.px-viewport`: horizontal `max(1rem, env(safe-area-inset-left/right))`
 
 ---
 

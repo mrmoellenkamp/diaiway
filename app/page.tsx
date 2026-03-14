@@ -24,7 +24,7 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* Hero Section */}
       <section className="relative flex flex-col overflow-hidden bg-primary">
-        <div className="relative w-full aspect-[16/9] min-h-[280px] max-h-[420px]">
+        <div className="relative w-full aspect-[16/9] min-h-[min(18rem,40vh)] max-h-[min(26rem,50vh)]">
           <Image
             src="/images/hero-landing.png"
             alt="diAiway - Expert video consultation platform"
@@ -35,7 +35,7 @@ export default function LandingPage() {
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary to-transparent" />
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-5 px-6 pb-10 pt-2 text-center">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
           <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-primary-foreground">
             {t("landing.heroTitle")}
           </h1>
@@ -87,7 +87,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="mx-auto max-w-lg px-6 py-16">
+      <section className="mx-auto w-full max-w-lg px-4 py-12 sm:px-6 sm:py-16">
         <h2 className="mb-8 text-center text-2xl font-bold text-foreground">
           {t("landing.howItWorks")}
         </h2>
@@ -114,7 +114,7 @@ export default function LandingPage() {
       </section>
 
       {/* Live Takumis */}
-      <section className="mx-auto max-w-lg px-6 pb-12">
+      <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
           {liveTakumis.length > 0 && (
@@ -155,9 +155,9 @@ export default function LandingPage() {
       </section>
 
       {/* Categories Preview */}
-      <section className="mx-auto max-w-lg px-6 pb-12">
+      <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
         <h2 className="mb-4 text-lg font-bold text-foreground">{t("common.categories")}</h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {categories.slice(0, 6).map((cat) => (
             <CategoryCard key={cat.slug} category={cat} />
           ))}
@@ -173,7 +173,7 @@ export default function LandingPage() {
       </section>
 
       {/* Trust Section */}
-      <section className="mx-auto max-w-lg px-6 pb-12">
+      <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
         <h2 className="mb-4 text-lg font-bold text-foreground">{t("landing.whyDiaiway")}</h2>
         <div className="flex flex-col gap-3">
           {[
@@ -195,7 +195,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="mx-auto max-w-lg px-6 pb-16">
+      <section className="mx-auto w-full max-w-lg px-4 pb-12 sm:px-6 sm:pb-16">
         <div className="rounded-2xl bg-primary p-8 text-center">
           <p className="font-jp text-3xl text-accent/70 mb-3">道</p>
           <h2 className="text-xl font-bold text-primary-foreground mb-2">
@@ -217,8 +217,8 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card px-6 py-8">
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-4 text-center">
+      <footer className="border-t border-border bg-card px-4 py-8 sm:px-6">
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-4 text-center">
           <span className="text-sm font-semibold text-foreground">
             di<span className="text-accent">Ai</span>way
           </span>

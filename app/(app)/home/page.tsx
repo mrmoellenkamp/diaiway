@@ -94,7 +94,7 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {categories.slice(0, 6).map((cat) => (
               <CategoryCard key={cat.slug} category={cat} />
             ))}

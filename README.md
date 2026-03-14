@@ -238,7 +238,7 @@ npx prisma studio
 | **takumi** | Experte: + Verfügbarkeit, Takumi-Profil, Instant Connect |
 | **admin** | + Admin-Dashboard, Health-Check, Finance Monitoring, Safety; Admin-Konten sind vor Löschung geschützt |
 
-- `/dashboard/availability`: nur Takumi & Admin
+- `/profile/availability`: nur Takumi & Admin (Kalender)
 - `/admin`: nur Admin; **Layout-Guard** (`app/(app)/admin/layout.tsx`) prüft NextAuth + Prisma-Rolle serverseitig
 - Pausierte Konten: Redirect zu `/paused`; Takumi wird sofort `liveStatus: offline`
 

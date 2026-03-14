@@ -16,7 +16,7 @@ function Todo({ children }: { children: React.ReactNode }) {
 export default function ImpressumPage() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-safe">
+      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-safe min-w-0">
 
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
