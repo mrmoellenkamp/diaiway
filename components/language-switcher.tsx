@@ -31,7 +31,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
           aria-label="Change language"
         >
           <Globe className="size-3.5" />
-          <LanguageFlagSticker lang={locale} showLabel="codeNoFrame" size="sm" />
+          <LanguageFlagSticker lang={locale} showLabel="abbrev" size="sm" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[140px]">
