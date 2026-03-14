@@ -18,6 +18,7 @@ import { WalletTopupProvider } from '@/lib/wallet-topup-context'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { SplashScreenHider } from '@/components/splash-screen-hider'
 import { DeepLinkHandler } from '@/components/deep-link-handler'
+import { Footer } from '@/components/footer'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -77,6 +78,7 @@ export default function RootLayout({
                     <ScrollToTop />
                     <GlobalNavigation />
                     {children}
+                    <Footer />
                     <AiMentorFab />
                     <SessionTimeoutWarning />
                     <TakumiPresenceUpdater />

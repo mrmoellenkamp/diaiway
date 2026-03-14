@@ -22,6 +22,8 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   if (pathname.startsWith("/legal/agb")) return t("landing.terms")
   if (pathname.startsWith("/legal/impressum")) return t("footer.imprint")
   if (pathname.startsWith("/legal/datenschutz")) return t("footer.privacy")
+  if (pathname.startsWith("/how-it-works")) return t("footer.howItWorks")
+  if (pathname.startsWith("/help")) return t("footer.helpSupport")
   if (pathname.startsWith("/booking")) return t("booking.title")
   if (pathname.startsWith("/session")) return t("sessions.title")
   return undefined

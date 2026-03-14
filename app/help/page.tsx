@@ -1,5 +1,17 @@
 import Link from "next/link"
-import { ArrowLeft, Construction, Mail, MessageCircle, BookOpen, Video, CreditCard, ShieldCheck, HelpCircle } from "lucide-react"
+import {
+  ArrowLeft,
+  Mail,
+  MessageCircle,
+  BookOpen,
+  Video,
+  CreditCard,
+  ShieldCheck,
+  HelpCircle,
+  Ticket,
+} from "lucide-react"
+import { HelpFaqSection } from "@/components/help-faq-section"
+import { SupportTicketForm } from "@/components/support-ticket-form"
 
 export const metadata = { title: "Hilfe & Support – diAiway" }
 
@@ -29,7 +41,6 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto w-full max-w-lg px-4 py-6 pb-safe min-w-0">
-
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <Link
@@ -44,17 +55,7 @@ export default function HelpPage() {
           </div>
         </div>
 
-        {/* Placeholder notice */}
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-          <Construction className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-            <span className="font-semibold">Platzhalter – </span>
-            Diese Seite wird noch ausgebaut. Bei dringenden Fragen wende dich direkt per E-Mail an uns.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-6">
-
+        <div className="flex flex-col gap-8">
           {/* Contact CTA */}
           <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center gap-2">
@@ -62,7 +63,7 @@ export default function HelpPage() {
               <span className="font-semibold text-foreground">Direkter Support</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Unser Support-Team hilft dir gerne weiter. Schreib uns einfach eine E-Mail und wir melden uns schnellstmöglich.
+              Unser Support-Team hilft dir gerne weiter. Schreib uns eine E-Mail oder nutze das Support-Ticket unten.
             </p>
             <a
               href="mailto:support@diaiway.com"
@@ -105,32 +106,22 @@ export default function HelpPage() {
             </div>
           </div>
 
-          {/* FAQ placeholder */}
-          <div className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-foreground">Häufige Fragen (FAQ)</h2>
-            <div className="flex flex-col gap-2">
-              {[
-                "Wie funktioniert die kostenlose Probezeit?",
-                "Wann wird meine Zahlung belastet?",
-                "Kann ich eine Session verlängern?",
-                "Wie werde ich Takumi?",
-                "Wie melde ich einen Nutzer?",
-              ].map((q) => (
-                <div
-                  key={q}
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3 text-sm text-muted-foreground"
-                >
-                  <span>{q}</span>
-                  <span className="text-xs text-primary">[Antwort folgt]</span>
-                </div>
-              ))}
+          {/* FAQ: 3 Shugyo + 3 Takumi */}
+          <section id="faq" className="scroll-mt-4">
+            <h2 className="mb-3 text-sm font-semibold text-foreground">
+              Häufige Fragen (FAQ)
+            </h2>
+            <HelpFaqSection />
+          </section>
+
+          {/* Support Ticket (Platzhalter) */}
+          <section id="ticket" className="scroll-mt-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Ticket className="size-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Support-Ticket</h2>
             </div>
-          </div>
-
-          <div className="rounded-xl bg-muted/40 p-4 text-xs text-muted-foreground">
-            Weitere Hilfeseiten und ein vollständiges FAQ werden demnächst hinzugefügt.
-          </div>
-
+            <SupportTicketForm />
+          </section>
         </div>
       </main>
     </div>

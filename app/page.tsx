@@ -216,18 +216,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card px-4 py-8 sm:px-6">
-        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-4 text-center">
-          <span className="text-sm font-semibold text-foreground">
-            di<span className="text-accent">Ai</span>way
-          </span>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <Link href="/legal/impressum" className="hover:text-foreground">{t("landing.imprint")}</Link>
-            <Link href="/legal/datenschutz" className="hover:text-foreground">{t("landing.privacy")}</Link>
-            <Link href="/legal/agb" className="hover:text-foreground">{t("landing.terms")}</Link>
+      {/* Footer — 4-Spalten-Struktur: Entdecken, Support, Legal, Mission */}
+      <footer className="border-t border-border bg-card px-4 py-8 sm:px-6" aria-label="Footer">
+        <div className="mx-auto w-full max-w-lg">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 text-left">
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("footer.discover")}
+              </span>
+              <Link href="/how-it-works" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.howItWorks")}
+              </Link>
+              <Link href="/categories" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.categories")}
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("footer.support")}
+              </span>
+              <Link href="/help" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.helpSupport")}
+              </Link>
+              <Link href="/help#faq" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.faq")}
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("footer.legal")}
+              </span>
+              <Link href="/legal/impressum" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.imprint")}
+              </Link>
+              <Link href="/legal/datenschutz" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("footer.privacy")}
+              </Link>
+              <Link href="/legal/agb" className="text-xs text-muted-foreground hover:text-foreground">
+                {t("landing.terms")}
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("footer.mission")}
+              </span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t("footer.missionText")}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{t("landing.copyright")}</p>
+          <div className="mt-6 flex flex-col items-center gap-1 border-t border-border/40 pt-6 text-center">
+            <span className="text-sm font-semibold text-foreground">
+              di<span className="text-accent">Ai</span>way
+            </span>
+            <p className="text-xs text-muted-foreground">{t("landing.copyright")}</p>
+          </div>
         </div>
       </footer>
     </div>
