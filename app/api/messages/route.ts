@@ -64,14 +64,25 @@ export const GET = apiHandler(async (req: NextRequest) => {
 
   if (waymailId) {
     const wm = await prisma.directMessage.findFirst({
-      where: { id: waymailId, recipientId: session.user.id, communicationType: "MAIL" },
-      include: { sender: { select: { name: true, image: true } } },
+      where: {
+        id: waymailId,
+        communicationType: "MAIL",
+        OR: [{ recipientId: session.user.id }, { senderId: session.user.id }],
+      },
+      include: {
+        sender: { select: { name: true, image: true } },
+        recipient: { select: { name: true, image: true } },
+      },
     })
     if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
+    const isFromMe = wm.senderId === session.user.id
     return NextResponse.json({
       id: wm.id,
       senderName: wm.senderDisplayName ?? wm.sender?.name ?? "Unbekannt",
       senderImageUrl: wm.sender?.image && wm.sender.image.length > 0 ? wm.sender.image : null,
+      recipientName: wm.recipient?.name ?? "Unbekannt",
+      recipientImageUrl: wm.recipient?.image && wm.recipient.image.length > 0 ? wm.recipient.image : null,
+      isFromMe,
       subject: wm.subject,
       text: wm.text,
       attachmentUrl: wm.attachmentUrl,
@@ -82,7 +93,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
     })
   }
 
-  if (typeParam === "waymail") {
+  if (typeParam === "waymail" || typeParam === "waymail-inbox") {
     const raw = await prisma.directMessage.findMany({
       where: {
         recipientId: session.user.id,
@@ -96,6 +107,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
       const isSystem = !m.senderId || m.senderDisplayName === "diAiway System"
       return {
         id: m.id,
+        folder: "inbox" as const,
         senderName: m.senderDisplayName ?? m.sender?.name ?? "Unbekannt",
         senderImageUrl: m.sender?.image && m.sender.image.length > 0 ? m.sender.image : null,
         subject: m.subject ?? "(ohne Betreff)",
@@ -105,6 +117,29 @@ export const GET = apiHandler(async (req: NextRequest) => {
         isSystemWaymail: isSystem,
       }
     })
+    return NextResponse.json({ waymails: mapped })
+  }
+
+  if (typeParam === "waymail-sent") {
+    const raw = await prisma.directMessage.findMany({
+      where: {
+        senderId: session.user.id,
+        communicationType: "MAIL",
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { recipient: { select: { name: true, image: true } } },
+    })
+    const mapped = raw.map((m) => ({
+      id: m.id,
+      folder: "sent" as const,
+      recipientName: m.recipient?.name ?? "Unbekannt",
+      recipientImageUrl: m.recipient?.image && m.recipient.image.length > 0 ? m.recipient.image : null,
+      subject: m.subject ?? "(ohne Betreff)",
+      textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
+      timestamp: m.createdAt.getTime(),
+      read: true,
+    }))
     return NextResponse.json({ waymails: mapped })
   }
 

@@ -53,10 +53,32 @@ function MessagesPageContent() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actingId, setActingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"notifications" | "chats" | "waymails">("chats")
-  const [waymails, setWaymails] = useState<Array<{ id: string; senderName: string; senderImageUrl: string | null; subject: string; textPreview: string; timestamp: number; read: boolean; isSystemWaymail?: boolean }>>([])
+  const [waymailFolder, setWaymailFolder] = useState<"inbox" | "sent">("inbox")
+  const [waymails, setWaymails] = useState<Array<{
+    id: string
+    folder?: "inbox" | "sent"
+    senderName?: string
+    senderImageUrl?: string | null
+    recipientName?: string
+    recipientImageUrl?: string | null
+    subject: string
+    textPreview: string
+    timestamp: number
+    read: boolean
+    isSystemWaymail?: boolean
+  }>>([])
   const [loadingWaymails, setLoadingWaymails] = useState(false)
   const [selectedWaymailId, setSelectedWaymailId] = useState<string | null>(null)
-  const [waymailDetail, setWaymailDetail] = useState<{ id: string; senderName: string; subject: string | null; text: string; attachmentUrl?: string | null; read?: boolean } | null>(null)
+  const [waymailDetail, setWaymailDetail] = useState<{
+    id: string
+    senderName?: string
+    recipientName?: string
+    isFromMe?: boolean
+    subject: string | null
+    text: string
+    attachmentUrl?: string | null
+    read?: boolean
+  } | null>(null)
   const redirectingRef = useRef(false)
 
   const fetchThreads = useCallback(async () => {
@@ -180,7 +202,7 @@ function MessagesPageContent() {
         .then(async (r) => {
           const d = await r.json()
           if (!r.ok || d.error) {
-            // Waymail gehört nicht dem eingeloggten Nutzer (z.B. Absender ist eingeloggt, Empfänger klickt Link)
+            // Waymail gehört nicht dem eingeloggten Nutzer (Absender eingeloggt, Empfänger klickt Link)
             // Abmelden und zur Login-Seite mit callbackUrl → Empfänger kann sich anmelden
             redirectingRef.current = true
             const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
@@ -188,9 +210,10 @@ function MessagesPageContent() {
             router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
             return
           }
+          setWaymailFolder(d.isFromMe ? "sent" : "inbox")
           setWaymailDetail(d)
           const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
-          if (!alreadyRead) {
+          if (!alreadyRead && !d.isFromMe) {
             fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
             setWaymails((prev) => prev.map((x) => (x.id === waymailParam ? { ...x, read: true } : x)))
           }
@@ -201,17 +224,22 @@ function MessagesPageContent() {
 
   const fetchWaymails = useCallback(async () => {
     setLoadingWaymails(true)
-    const r = await fetch("/api/messages?type=waymail")
+    const type = waymailFolder === "sent" ? "waymail-sent" : "waymail"
+    const r = await fetch(`/api/messages?type=${type}`)
     if (r.ok) {
       const data = await r.json()
       setWaymails(data.waymails ?? [])
     }
     setLoadingWaymails(false)
-  }, [])
+  }, [waymailFolder])
 
   useEffect(() => {
-    if (activeTab === "waymails") fetchWaymails()
-  }, [activeTab, fetchWaymails])
+    if (activeTab === "waymails") {
+      setSelectedWaymailId(null)
+      setWaymailDetail(null)
+      fetchWaymails()
+    }
+  }, [activeTab, waymailFolder, fetchWaymails])
 
   // Postfach: E-Mail-Browser-Layout — Benachrichtigungen + Chats getrennt
   return (
@@ -344,18 +372,46 @@ function MessagesPageContent() {
         </div>
       )}
 
-      {/* Waymails — E-Mail-Listenansicht (Avatar | Betreff fett | Vorschau | Zeit) */}
+      {/* Waymails — Posteingang | Postausgang */}
       {activeTab === "waymails" && (
         <div className="flex flex-col gap-1">
+          <div className="mb-2 flex gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+            <button
+              onClick={() => { setWaymailFolder("inbox"); setSelectedWaymailId(null); setWaymailDetail(null) }}
+              className={cn(
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                waymailFolder === "inbox"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("messages.waymailInbox")}
+            </button>
+            <button
+              onClick={() => { setWaymailFolder("sent"); setSelectedWaymailId(null); setWaymailDetail(null) }}
+              className={cn(
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                waymailFolder === "sent"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("messages.waymailSent")}
+            </button>
+          </div>
           {selectedWaymailId && waymailDetail ? (
             <div className="rounded-xl border border-border/60 bg-card/50 p-4">
               <button
                 onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
                 className="mb-3 text-sm text-primary hover:underline"
               >
-                ← Zurück
+                ← {t("common.back")}
               </button>
-              <p className="text-xs text-muted-foreground">{waymailDetail.senderName}</p>
+              <p className="text-xs text-muted-foreground">
+                {waymailDetail.isFromMe
+                  ? `${t("messages.waymailTo")}: ${waymailDetail.recipientName ?? ""}`
+                  : `${t("messages.waymailFrom")}: ${waymailDetail.senderName ?? ""}`}
+              </p>
               <h2 className="mt-1 text-lg font-bold text-foreground">{waymailDetail.subject || "(ohne Betreff)"}</h2>
               <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">{waymailDetail.text}</p>
               {waymailDetail.attachmentUrl && (
@@ -373,11 +429,17 @@ function MessagesPageContent() {
               <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
                 <MailOpen className="size-7 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">{t("messages.waymailEmpty")}</h2>
-              <p className="max-w-xs text-sm text-muted-foreground">{t("messages.waymailEmptyDesc")}</p>
-              <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href="/takumis">{t("messages.findExperts")}</Link>
-              </Button>
+              <h2 className="text-lg font-semibold text-foreground">
+                {waymailFolder === "sent" ? t("messages.waymailSentEmpty") : t("messages.waymailEmpty")}
+              </h2>
+              <p className="max-w-xs text-sm text-muted-foreground">
+                {waymailFolder === "sent" ? t("messages.waymailSentEmptyDesc") : t("messages.waymailEmptyDesc")}
+              </p>
+              {waymailFolder === "inbox" && (
+                <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Link href="/takumis">{t("messages.findExperts")}</Link>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
@@ -393,7 +455,7 @@ function MessagesPageContent() {
                       .then((d) => {
                         if (d.error) return
                         setWaymailDetail(d)
-                        if (!wm.read) {
+                        if (!wm.read && waymailFolder === "inbox") {
                           fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" }).catch(() => {})
                           setWaymails((prev) => prev.map((w) => (w.id === wm.id ? { ...w, read: true } : w)))
                         }
@@ -403,15 +465,17 @@ function MessagesPageContent() {
                   onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}
                   className="flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30"
                 >
-                  {wm.isSystemWaymail ? (
+                  {waymailFolder === "inbox" && wm.isSystemWaymail ? (
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title="diAiway System">
                       <Building2 className="size-5" />
                     </div>
                   ) : (
                     <Avatar className="size-10 shrink-0">
-                      {wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null}
+                      {waymailFolder === "sent"
+                        ? (wm.recipientImageUrl ? <AvatarImage src={wm.recipientImageUrl} alt={wm.recipientName} /> : null)
+                        : (wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null)}
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                        {wm.senderName.slice(0, 2).toUpperCase()}
+                        {(waymailFolder === "sent" ? wm.recipientName : wm.senderName)?.slice(0, 2).toUpperCase() ?? "??"}
                       </AvatarFallback>
                     </Avatar>
                   )}
