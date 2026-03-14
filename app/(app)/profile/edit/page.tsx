@@ -268,6 +268,9 @@ export default function EditProfilePage() {
         if (profilePayload.name) {
           await updateSession({ name: profilePayload.name })
         }
+        if (profilePayload.username !== undefined) {
+          await updateSession({ username: profilePayload.username })
+        }
       }
 
       if (isTakumi) {

@@ -135,11 +135,12 @@ async function patchProfile(req: Request, _context: RouteContext) {
       where: { userId: session.user.id },
     })
     if (!existing) {
+      const displayName = (user as { username?: string | null }).username ?? user.name
       await prisma.expert.create({
         data: {
           userId: session.user.id,
-          name: user.name,
-          avatar: (user.name && user.name.charAt(0).toUpperCase()) || "T",
+          name: displayName,
+          avatar: (displayName && displayName.charAt(0).toUpperCase()) || "T",
           email: user.email ?? "",
           categorySlug: "dienstleistungen",
           categoryName: "Dienstleistungen",
@@ -168,6 +169,7 @@ async function patchProfile(req: Request, _context: RouteContext) {
   return NextResponse.json({
     success: true,
     name: user.name,
+    username: user.username ?? null,
     image: user.image,
     message: "Profil erfolgreich aktualisiert.",
   })

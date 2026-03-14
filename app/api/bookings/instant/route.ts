@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       }),
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { name: true, email: true },
+        select: { name: true, username: true, email: true },
       }),
     ])
 
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
         expertName: expert.name,
         expertEmail: expert.email ?? "",
         userId: session.user.id,
-        userName: user.name ?? "Shugyo",
+        userName: (user as { username?: string | null }).username ?? user.name ?? "Shugyo",
         userEmail: user.email ?? "",
         bookingMode: "instant",
         callType,
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     if (takumiUserId) {
     sendPushToUser(takumiUserId, {
       title: "Instant-Anfrage",
-      body: `${user.name ?? "Ein Nutzer"} möchte mit dir verbinden.`,
+      body: `${(user as { username?: string | null }).username ?? user.name ?? "Ein Nutzer"} möchte mit dir verbinden.`,
       url: `/session/${booking.id}`,
       tag: `instant-${booking.id}`,
       data: {

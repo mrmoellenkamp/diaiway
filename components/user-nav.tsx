@@ -68,12 +68,14 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
     )
   }
 
-  const userName = session.user.name || t("common.profile")
+  const userName = (session.user as { username?: string | null }).username ?? session.user.name ?? t("common.profile")
   const userRole = (session.user as { role?: string }).role
   const appRole = (session.user as { appRole?: string }).appRole
   const isVerified = (session.user as { isVerified?: boolean }).isVerified ?? false
   const initials = userName
+    .replace(/[^a-zA-Z0-9]/g, " ")
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .slice(0, 2)

@@ -103,6 +103,7 @@ export default function ProfilePage() {
   // Profile data from DB
   const [profileLoading, setProfileLoading] = useState(true)
   const [dbName, setDbName] = useState("")
+  const [dbUsername, setDbUsername] = useState<string | null>(null)
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")
   const [dbIsVerified, setDbIsVerified] = useState(false)
@@ -137,6 +138,7 @@ export default function ProfilePage() {
         if (profileRes.ok) {
           const data = await profileRes.json()
           setDbName(data.name || "")
+          setDbUsername(data.username ?? null)
           setDbEmail(data.email || "")
           setDbImage(data.image || "")
           setDbIsVerified(data.isVerified ?? false)
@@ -178,11 +180,18 @@ export default function ProfilePage() {
     }
   }, [session, status, isTakumi])
 
-  // Prefer DB data, fall back to session
-  const userName = dbName || session?.user?.name || t("profile.userFallback")
+  // Prefer username as profile name, then name
+  const userName = dbUsername ?? dbName || (session?.user as { username?: string | null })?.username ?? session?.user?.name || t("profile.userFallback")
   const userEmail = dbEmail || session?.user?.email || ""
   const userImage = dbImage || session?.user?.image || ""
-  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+  const userInitials = userName
+    .replace(/[^a-zA-Z0-9]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
   const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
 
@@ -210,13 +219,18 @@ export default function ProfilePage() {
   }
 
   async function handleSaveProfile() {
-    const updates: Record<string, string | string[]> = {}
+    const updates: Record<string, string | string[] | null> = {}
     if (isEditingName && editName.trim() && editName.trim() !== userName) {
-      if (editName.trim().length < 2) {
+      const trimmed = editName.trim()
+      if (trimmed.length < 2) {
         toast.error(t("profile.nameMinLength"))
         return
       }
-      updates.name = editName.trim()
+      if (dbUsername != null) {
+        updates.username = trimmed
+      } else {
+        updates.name = trimmed
+      }
     }
     if (isEditingImage && editImage !== userImage) {
       updates.image = editImage
@@ -235,7 +249,10 @@ export default function ProfilePage() {
       const data = await res.json()
       if (res.ok) {
         toast.success(data.message)
-        if (typeof updates.name === "string") {
+        if (typeof updates.username === "string") {
+          setDbUsername(updates.username)
+          await updateSession({ username: updates.username })
+        } else if (typeof updates.name === "string") {
           setDbName(updates.name)
           await updateSession({ name: updates.name })
         }
