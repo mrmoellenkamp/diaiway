@@ -375,7 +375,7 @@ export default function ProfilePage() {
                 {languages.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1.5">
                     {languages.map((lang) => (
-                      <LanguageFlagSticker key={lang} lang={lang} showLabel="code" size="sm" />
+                      <LanguageFlagSticker key={lang} lang={lang} showLabel="flagOnly" size="sm" />
                     ))}
                   </div>
                 )}
