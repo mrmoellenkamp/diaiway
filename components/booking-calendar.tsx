@@ -148,6 +148,14 @@ export function BookingCalendar({
       .finally(() => setLoadingAvail(false))
   }, [takumiId])
 
+  // ── Bei Daueränderung: Endezeit aktualisieren, falls Termin gewählt ─────
+  useEffect(() => {
+    if (pickedDate && selectedDate === pickedDate && selectedTime) {
+      const endTime = minutesToTime(timeToMinutes(selectedTime) + duration)
+      onSelect(pickedDate, selectedTime, endTime)
+    }
+  }, [duration])
+
   // ── Load resolved slots + blocked for picked date ───────────────────────
   useEffect(() => {
     if (!pickedDate) return

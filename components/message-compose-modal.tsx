@@ -1,12 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Send, Loader2, Paperclip, Check, XCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
@@ -132,14 +127,21 @@ export function MessageComposeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0 overflow-hidden h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] sm:h-auto sm:max-h-[90vh] sm:w-auto sm:max-w-md rounded-none sm:rounded-lg">
-        <DialogHeader className="border-b border-border px-4 py-3">
-          <DialogTitle className="text-base font-semibold">
-            {t("takumiPage.writeTo", { name: recipientName })}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent showCloseButton={false} className="gap-0 p-0 overflow-hidden w-[min(420px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] sm:max-h-[90vh] pb-safe rounded-xl border-0 shadow-xl">
+        {/* Grüner Header: Waymail + X rechts */}
+        <div className="flex items-center justify-between gap-3 bg-primary px-4 py-3 rounded-t-xl shrink-0">
+          <span className="text-base font-semibold text-primary-foreground">Waymail</span>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full text-primary-foreground/90 hover:bg-white/20 transition-colors"
+            aria-label={t("common.close")}
+          >
+            <XCircle className="size-5" />
+          </button>
+        </div>
         {/* E-Mail-Editor-ähnliches Layout */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-0 overflow-y-auto">
           <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
             <span className="w-12 shrink-0 text-xs font-medium text-muted-foreground">
               {t("takumiPage.to")}:

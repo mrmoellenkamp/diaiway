@@ -265,3 +265,9 @@
 [data-sonner-toast] {
   pointer-events: auto;
 }
+/* Systemmeldungen mittig, außerhalb der Safe-Zone auf Mobile */
+[data-sonner-toaster][data-x-position="center"][data-y-position="top"] {
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+}
