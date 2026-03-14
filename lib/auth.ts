@@ -17,29 +17,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const email = (credentials.email as string).toLowerCase().trim()
 
-        // Rate limit: 10 failed attempts per email per 15 min
-        const rl = rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
-        if (!rl.success) {
-          // Throw so NextAuth surfaces the error to the client
-          throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
-        }
+        try {
+          // Rate limit: 10 failed attempts per email per 15 min
+          const rl = rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
+          if (!rl.success) {
+            throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
+          }
 
-        const user = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true } })
-        if (!user) return null
-        if ((user as { isBanned?: boolean }).isBanned) return null // diaiway Safety: gesperrte Nutzer
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, name: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true },
+          })
+          if (!user) return null
+          if ((user as { isBanned?: boolean }).isBanned) return null
 
-        const isValid = await bcrypt.compare(credentials.password as string, user.password)
-        if (!isValid) return null
+          const isValid = await bcrypt.compare(credentials.password as string, user.password)
+          if (!isValid) return null
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          appRole: user.appRole,
-          status: (user as { status?: string }).status ?? "active",
-          image: user.image || "",
-          isVerified: (user as { isVerified?: boolean }).isVerified ?? false,
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            appRole: user.appRole,
+            status: (user as { status?: string }).status ?? "active",
+            image: user.image || "",
+            isVerified: (user as { isVerified?: boolean }).isVerified ?? false,
+          }
+        } catch (err) {
+          // TOO_MANY_ATTEMPTS weitergeben (bewusst geworfener Fehler)
+          if (err instanceof Error && err.message.startsWith("TOO_MANY_ATTEMPTS")) {
+            throw err
+          }
+          // DB-Verbindungsfehler (z.B. Prisma P1001) → Nutzer NICHT ausloggen/sperren
+          console.error("[auth] authorize DB-Error:", err)
+          throw new Error("DB_ERROR")
         }
       },
     }),
