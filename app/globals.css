@@ -105,20 +105,20 @@
 
 /* Global bottom space so content is not hidden behind footer on mobile (BottomNav + Safe Area) */
 .app-bottom-space {
-  padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom)));
+  padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)));
 }
 
 /* Fixed elements above BottomNav — responsive für alle Displaygrößen + Safe Area */
 .above-bottom-nav {
-  bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
+  bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 0px)));
 }
 
 /* Seiten ohne PageContainer: Safe-Area statt pb-40 */
 .pb-safe {
-  padding-bottom: max(10rem, calc(6rem + env(safe-area-inset-bottom)));
+  padding-bottom: max(10rem, calc(6rem + env(safe-area-inset-bottom, 0px)));
 }
 
-/* Safe-Area Utilities: dynamisch für alle Notch-Größen */
+/* Safe-Area Utilities: dynamisch für iOS/Android Notch, Fallback für Desktop */
 .pt-safe {
   padding-top: max(1rem, env(safe-area-inset-top, 0px));
 }
@@ -126,7 +126,7 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* Scroll-End-Spacer: Am Ende von Listen, damit der letzte Eintrag voll sichtbar ist (BottomNav + Safe Area) */
+/* Scroll-End-Spacer: Am Ende von Listen (BottomNav + Safe Area) */
 .scroll-end-spacer {
   min-height: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
@@ -143,10 +143,14 @@
   }
 }
 
-/* Viewport-relative Abstände für kleine Displays */
+/* Viewport-relative Abstände: Safe Area links/rechts (iOS/Android Display-Cutout) */
 .px-viewport {
   padding-left: max(1rem, env(safe-area-inset-left, 0px));
   padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+.px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 @keyframes live-pulse {

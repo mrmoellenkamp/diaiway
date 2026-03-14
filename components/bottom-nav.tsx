@@ -34,7 +34,11 @@ export function BottomNav() {
         "shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.2)]",
         "rounded-t-2xl"
       )}
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } as React.CSSProperties}
+      style={{
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+      } as React.CSSProperties}
       role="contentinfo"
       aria-label="Hauptnavigation"
     >

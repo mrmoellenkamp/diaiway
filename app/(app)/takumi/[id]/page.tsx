@@ -205,7 +205,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      <PageContainer className="-mt-12 relative z-10 pb-[max(11rem,calc(7rem+env(safe-area-inset-bottom)))]">
+      <PageContainer className="-mt-12 relative z-10 pb-[max(11rem,calc(7rem+env(safe-area-inset-bottom,0px)))]">
         <div className="flex flex-col gap-6">
           {/* Avatar + Name */}
           <div className="flex flex-col items-center gap-3 text-center">
