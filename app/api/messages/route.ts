@@ -399,3 +399,55 @@ export const PATCH = apiHandler(async (req: NextRequest) => {
   await prisma.directMessage.update({ where: { id: wm.id }, data: { read: true } })
   return NextResponse.json({ ok: true })
 })
+
+/** DELETE — Waymail, einzelne Chat-Nachricht oder ganzen Chat-Thread löschen */
+export const DELETE = apiHandler(async (req: NextRequest) => {
+  const authResult = await requireAuth()
+  if (authResult.response) return authResult.response
+  const session = authResult.session
+
+  const waymailId = req.nextUrl.searchParams.get("waymail")
+  const messageId = req.nextUrl.searchParams.get("message")
+  const threadPartnerId = req.nextUrl.searchParams.get("thread")
+
+  if (waymailId) {
+    const wm = await prisma.directMessage.findFirst({
+      where: {
+        id: waymailId,
+        communicationType: "MAIL",
+        OR: [{ senderId: session.user.id }, { recipientId: session.user.id }],
+      },
+    })
+    if (!wm) return NextResponse.json({ error: "Waymail nicht gefunden." }, { status: 404 })
+    await prisma.directMessage.delete({ where: { id: wm.id } })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (messageId) {
+    const msg = await prisma.directMessage.findFirst({
+      where: {
+        id: messageId,
+        communicationType: "CHAT",
+        senderId: session.user.id,
+      },
+    })
+    if (!msg) return NextResponse.json({ error: "Nachricht nicht gefunden." }, { status: 404 })
+    await prisma.directMessage.delete({ where: { id: msg.id } })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (threadPartnerId) {
+    const deleted = await prisma.directMessage.deleteMany({
+      where: {
+        communicationType: "CHAT",
+        OR: [
+          { senderId: session.user.id, recipientId: threadPartnerId },
+          { senderId: threadPartnerId, recipientId: session.user.id },
+        ],
+      },
+    })
+    return NextResponse.json({ ok: true, count: deleted.count })
+  }
+
+  return NextResponse.json({ error: "waymail, message oder thread Parameter erforderlich." }, { status: 400 })
+})

@@ -6,7 +6,7 @@ import { signOut, useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed, Trash2 } from "lucide-react"
+import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed, Trash2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -135,6 +135,43 @@ function MessagesPageContent() {
         setNotifications((prev) => prev.filter((n) => n.id !== id))
         refreshNotificationCount?.()
         toast.success(t("messages.notificationDeleted"))
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    }
+  }
+
+  async function deleteWaymail(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      const r = await fetch(`/api/messages?waymail=${encodeURIComponent(id)}`, { method: "DELETE" })
+      if (r.ok) {
+        setWaymails((prev) => prev.filter((w) => w.id !== id))
+        if (selectedWaymailId === id) {
+          setSelectedWaymailId(null)
+          setWaymailDetail(null)
+        }
+        toast.success(t("messages.waymailDeleted"))
+      } else {
+        const data = await r.json().catch(() => ({}))
+        toast.error(data.error ?? t("common.networkError"))
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    }
+  }
+
+  async function deleteChatThread(partnerId: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      const r = await fetch(`/api/messages?thread=${encodeURIComponent(partnerId)}`, { method: "DELETE" })
+      if (r.ok) {
+        setThreads((prev) => prev.filter((th) => th.partnerId !== partnerId))
+        if (activeThread === partnerId) setActiveThread(null)
+        toast.success(t("messages.chatDeleted"))
+      } else {
+        const data = await r.json().catch(() => ({}))
+        toast.error(data.error ?? t("common.networkError"))
       }
     } catch {
       toast.error(t("common.networkError"))
@@ -401,12 +438,23 @@ function MessagesPageContent() {
           </div>
           {selectedWaymailId && waymailDetail ? (
             <div className="rounded-xl border border-border/60 bg-card/50 p-4">
-              <button
-                onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
-                className="mb-3 text-sm text-primary hover:underline"
-              >
-                ← {t("common.back")}
-              </button>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  ← {t("common.back")}
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => deleteWaymail(waymailDetail.id, e)}
+                  aria-label={t("common.delete")}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 {waymailDetail.isFromMe
                   ? `${t("messages.waymailTo")}: ${waymailDetail.recipientName ?? ""}`
@@ -490,6 +538,17 @@ function MessagesPageContent() {
                         {new Date(wm.timestamp).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                       </p>
                     </div>
+                  </div>
+                  <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => deleteWaymail(wm.id, e)}
+                      aria-label={t("common.delete")}
+                    >
+                      <X className="size-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -577,6 +636,17 @@ function MessagesPageContent() {
                             {lastMsg.text}
                           </p>
                         )}
+                      </div>
+                      <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => deleteChatThread(th.partnerId, e)}
+                          aria-label={t("common.delete")}
+                        >
+                          <X className="size-4" />
+                        </Button>
                       </div>
                     </div>
                   )
