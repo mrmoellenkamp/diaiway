@@ -13,8 +13,8 @@ export function AppHeader({ title }: { title?: string }) {
   const { t } = useI18n()
 
   return (
-    <header className="sticky top-0 z-50 isolate border-b border-border bg-card/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex w-full max-w-lg min-w-0 items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-50 isolate border-b border-border bg-card/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex w-full max-w-lg min-w-0 items-center justify-between py-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
         <Link href="/" className="flex min-h-11 min-w-11 items-center justify-center gap-2 -m-1 p-1 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary shrink-0">
             <span className="text-sm font-bold text-primary-foreground">di</span>

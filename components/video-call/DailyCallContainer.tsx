@@ -1567,7 +1567,7 @@ export function DailyCallContainer({
       <div
         className={cn(
           "flex h-20 flex-shrink-0 items-center justify-center gap-3 border-t bg-card px-4 sm:h-24 sm:gap-4",
-          "pb-[env(safe-area-inset-bottom)]"
+          "pb-[env(safe-area-inset-bottom,0px)]"
         )}
       >
         <Button
