@@ -126,7 +126,10 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           </Link>
         )}
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={async () => {
+            await signOut({ redirect: false })
+            window.location.replace("/")
+          }}
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
         >
           <LogOut className="size-4 icon-paper" />
@@ -188,7 +191,10 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={async () => {
+            await signOut({ redirect: false })
+            window.location.replace("/")
+          }}
           className="flex items-center gap-2 text-destructive focus:text-destructive"
         >
           <LogOut className="size-4 icon-paper" />

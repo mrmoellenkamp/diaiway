@@ -260,8 +260,7 @@ export default function ProfilePage() {
     setIsLoggedIn(false)
     await signOut({ redirect: false })
     toast.success(t("profile.loggedOut"))
-    router.push("/")
-    router.refresh()
+    window.location.replace("/")
   }
 
   return (
