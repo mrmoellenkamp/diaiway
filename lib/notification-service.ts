@@ -121,10 +121,11 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
           body: waymailBody,
         }).catch(() => null)
         notificationCreated = true
+        const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(notifyUserId, {
           title: "Neue Buchung (bezahlt)",
           body: `${booking.userName} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
-          url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
+          url: waymailUrl,
         }).catch(() => {})
       }
     } else {

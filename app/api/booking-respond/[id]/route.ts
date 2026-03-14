@@ -168,10 +168,11 @@ export async function POST(
         subject: title,
         body,
       }).catch(() => null)
+      const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
       sendPushToUser(booking.userId, {
         title,
         body,
-        url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
+        url: waymailUrl,
       }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
@@ -246,10 +247,11 @@ export async function POST(
         subject: "Rückfrage zu deiner Buchung",
         body: notifBody,
       }).catch(() => null)
+      const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
       sendPushToUser(booking.userId, {
         title: "Rückfrage zu deiner Buchung",
         body: notifBody,
-        url: waymail ? `/messages?waymail=${waymail.id}` : "/messages",
+        url: waymailUrl,
       }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
