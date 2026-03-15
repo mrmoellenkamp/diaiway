@@ -287,7 +287,10 @@ export const TAKUMI_STALE_OFFLINE_SEC = 5 * 60  // 5 Minuten
 const STALE_MS = TAKUMI_STALE_OFFLINE_SEC * 1000
 const staleThreshold = new Date(Date.now() - STALE_MS)
 await prisma.expert.updateMany({
-  where: { liveStatus: "available", lastActivity: { lt: staleThreshold } },
+  where: {
+    liveStatus: "available",
+    OR: [{ lastSeenAt: { lt: staleThreshold } }, { lastSeenAt: null }],
+  },
   data: { liveStatus: "offline" },
 })
 ```
