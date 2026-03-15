@@ -30,6 +30,7 @@ export const { auth: authMiddleware } = NextAuth({
         token.role = (user as { role?: string }).role || "user"
         token.appRole = (user as { appRole?: string }).appRole || "shugyo"
         token.id = user.id
+        token.emailConfirmedAt = (user as { emailConfirmedAt?: number | null }).emailConfirmedAt ?? null
       }
       return token
     },
@@ -38,6 +39,7 @@ export const { auth: authMiddleware } = NextAuth({
         (session.user as { role?: string }).role = token.role as string
         ;(session.user as { appRole?: string }).appRole = (token.appRole as string) || "shugyo"
         ;(session.user as { id?: string }).id = token.id as string
+        ;(session.user as { emailConfirmedAt?: number | null }).emailConfirmedAt = (token.emailConfirmedAt as number | null) ?? null
       }
       return session
     },

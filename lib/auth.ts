@@ -26,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const user = await prisma.user.findUnique({
             where: { email },
-            select: { id: true, name: true, username: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true },
+            select: { id: true, name: true, username: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true, emailConfirmedAt: true },
           })
           if (!user) return null
           if ((user as { isBanned?: boolean }).isBanned) return null
@@ -34,6 +34,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const isValid = await bcrypt.compare(credentials.password as string, user.password)
           if (!isValid) return null
 
+          const emailConfirmedAt = (user as { emailConfirmedAt?: Date | null }).emailConfirmedAt
           return {
             id: user.id,
             name: user.name,
@@ -44,6 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             status: (user as { status?: string }).status ?? "active",
             image: user.image || "",
             isVerified: (user as { isVerified?: boolean }).isVerified ?? false,
+            emailConfirmedAt: emailConfirmedAt ? emailConfirmedAt.getTime() : null,
           }
         } catch (err) {
           // TOO_MANY_ATTEMPTS weitergeben (bewusst geworfener Fehler)
@@ -70,12 +72,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session: updateData }) {
       // 1. Initialer Login
       if (user) {
-        token.id         = user.id
-        token.role       = (user as { role?: string }).role       || "user"
-        token.appRole    = (user as { appRole?: string }).appRole  || "shugyo"
-        token.status     = (user as { status?: string }).status   || "active"
-        token.isVerified = (user as { isVerified?: boolean }).isVerified ?? false
-        token.username   = (user as { username?: string | null }).username ?? null
+        token.id               = user.id
+        token.role             = (user as { role?: string }).role       || "user"
+        token.appRole          = (user as { appRole?: string }).appRole  || "shugyo"
+        token.status           = (user as { status?: string }).status   || "active"
+        token.isVerified       = (user as { isVerified?: boolean }).isVerified ?? false
+        token.username        = (user as { username?: string | null }).username ?? null
+        token.emailConfirmedAt = (user as { emailConfirmedAt?: number | null }).emailConfirmedAt ?? null
       }
 
       // 2. Client-initiiertes Session-Update (updateSession)
@@ -85,6 +88,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (updateData.image)                  token.picture  = updateData.image
         if (updateData.status)     token.status     = updateData.status
         if (typeof updateData.isVerified === "boolean") token.isVerified = updateData.isVerified
+        if (updateData.emailConfirmedAt !== undefined) token.emailConfirmedAt = updateData.emailConfirmedAt
         // Anti-Privilege-Escalation: appRole → takumi nur wenn Expert-Record existiert
         if (updateData.appRole === "takumi") {
           const userId = (token.id as string) ?? (token.sub as string)
@@ -117,7 +121,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: userId },
-            select: { role: true, appRole: true, status: true, tokenRevocationTime: true },
+            select: { role: true, appRole: true, status: true, tokenRevocationTime: true, emailConfirmedAt: true },
           })
           if (!dbUser) {
             token.id = undefined
@@ -133,10 +137,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return token
           }
 
-          // P1.3: Rollen-Sync (Änderungen durch Admin greifen ohne Relogin)
+          // P1.3: Rollen-Sync + E-Mail-Verifizierung
           token.role = dbUser.role
           token.appRole = dbUser.appRole
           token.status = dbUser.status
+          token.emailConfirmedAt = dbUser.emailConfirmedAt ? dbUser.emailConfirmedAt.getTime() : null
           token.dbSyncedAt = now
         } catch (err) {
           console.error("[auth] DB-Sync-Error:", err)
@@ -158,6 +163,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ;(session.user as { id?: string }).id             = token.id        as string
         ;(session.user as { isVerified?: boolean }).isVerified = token.isVerified as boolean ?? false
         ;(session.user as { username?: string | null }).username = (token.username as string | null) ?? null
+        ;(session.user as { emailConfirmedAt?: number | null }).emailConfirmedAt = (token.emailConfirmedAt as number | null) ?? null
         if (token.name)    session.user.name  = token.name    as string
         if (token.picture) session.user.image = token.picture as string
       }

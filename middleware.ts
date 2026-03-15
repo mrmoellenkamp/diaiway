@@ -14,6 +14,36 @@ export default authMiddleware((req) => {
   const role   = (token?.user as { role?: string })?.role   || "user"
   const appRole = (token?.user as { appRole?: string })?.appRole || "shugyo"
   const status = (token?.user as { status?: string })?.status || "active"
+  const emailConfirmedAt = (token?.user as { emailConfirmedAt?: number | null })?.emailConfirmedAt ?? null
+  const isEmailVerified = !!emailConfirmedAt
+
+  // ── E-Mail-Verifizierung (Double Opt-In) ───────────────────────────────────
+  // Ohne bestätigte E-Mail: nur /verify-email, /login, /api/auth, öffentliche Seiten
+  const allowedWithoutVerification = [
+    "/verify-email",
+    "/verify-email/success",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/legal",
+    "/how-it-works",
+    "/categories",
+    "/takumis",
+    "/search",
+    "/ai-guide",
+    "/help",
+    "/booking/respond",
+  ]
+  const isAllowedWithoutVerification =
+    allowedWithoutVerification.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
+    pathname === "/" ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/takumi/")
+
+  if (isLoggedIn && !isEmailVerified && !isAllowedWithoutVerification) {
+    return NextResponse.redirect(new URL("/verify-email", req.url))
+  }
 
   // ── Inactivity Lockout (15 min) ───────────────────────────────────────────
   // Heartbeat bypasses expiry so user can extend session from warning modal

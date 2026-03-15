@@ -7,13 +7,15 @@ import type { CancelPolicy, Takumi } from "@/lib/types"
 
 export async function getTakumisForServer(): Promise<Takumi[]> {
   const experts = await prisma.expert.findMany({
-    include: { user: { select: { appRole: true, isVerified: true } } },
+    include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
     orderBy: { rating: "desc" },
   })
 
-  const active = experts.filter(
-    (e) => !e.userId || (e.user?.appRole === "takumi")
-  )
+  const active = experts.filter((e) => {
+    if (!e.userId) return true
+    const u = e.user
+    return u && u.appRole === "takumi" && !!u.emailConfirmedAt
+  })
 
   const now = Date.now()
   const ONLINE_MS = 30 * 1000

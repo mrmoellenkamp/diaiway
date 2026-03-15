@@ -116,6 +116,11 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // E-Mail-Verifizierung (Double Opt-In)
+  emailConfirmedAt          DateTime?
+  emailVerificationToken   String?   @unique
+  emailVerificationExpiry   DateTime?
+
   // Kundennummer für Belege (Format KD-10000)
   customerNumber   String?   @unique
 

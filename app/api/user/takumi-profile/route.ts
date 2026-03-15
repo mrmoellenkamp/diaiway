@@ -147,6 +147,19 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "isLive muss true oder false sein." }, { status: 400 })
     }
 
+    if (body.isLive) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { emailConfirmedAt: true },
+      })
+      if (!user?.emailConfirmedAt) {
+        return NextResponse.json(
+          { error: "Bitte bestätige zuerst deine E-Mail-Adresse, um sichtbar zu werden." },
+          { status: 403 }
+        )
+      }
+    }
+
     const expert = await prisma.expert.updateMany({
       where: { userId: session.user.id },
       data: { isLive: body.isLive },

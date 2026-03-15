@@ -119,6 +119,47 @@ export async function sendPasswordResetEmail(
   })
 }
 
+/* ----- E-Mail-Verifizierung (Double Opt-In) ----- */
+export async function sendVerificationEmail(opts: {
+  to: string
+  name: string
+  verifyUrl: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.name}</strong>,<br/>
+      willkommen bei diAiway! Bitte bestätige deine E-Mail-Adresse, indem du auf den Button klickst.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0 24px;">
+          <a href="${opts.verifyUrl}" target="_blank" style="display:inline-block;padding:14px 36px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            E-Mail bestätigen
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:#78716c;">
+      Dieser Link ist <strong style="color:#1c1917;">24 Stunden</strong> gültig.
+    </p>
+    <p style="margin:0;font-size:11px;line-height:1.5;color:#a8a29e;word-break:break-all;">
+      Falls der Button nicht funktioniert: <a href="${opts.verifyUrl}" style="color:#064e3b;text-decoration:underline;">${opts.verifyUrl}</a>
+    </p>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: "diAiway – E-Mail bestätigen",
+      html: emailWrapper("E-Mail bestätigen", body),
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown"
+    return { sent: false, error: msg }
+  }
+}
+
 /* ----- Shared email wrapper ----- */
 function emailWrapper(title: string, body: string): string {
   return `<!DOCTYPE html>
