@@ -150,6 +150,7 @@ const es = {
   "register.usernameAvailable": "Disponible",
   "register.usernameTaken": "Ya está en uso",
   "register.usernameInvalid": "Nombre de usuario no válido",
+  "profile.editUsername": "Editar",
   "register.shugyoIcon": "修行",
   "register.shugyoSubtitle": "Aprendiz y buscador",
   "register.shugyoDesc": "Encuentra expertos para tus preguntas y problemas",

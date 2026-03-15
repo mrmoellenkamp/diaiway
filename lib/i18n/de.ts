@@ -156,6 +156,7 @@ const de = {
   "register.usernameAvailable": "Verfügbar",
   "register.usernameTaken": "Bereits vergeben",
   "register.usernameInvalid": "Ungültiger Benutzername",
+  "profile.editUsername": "Bearbeiten",
 
   // Forgot Password
   "forgot.title": "Passwort vergessen?",
