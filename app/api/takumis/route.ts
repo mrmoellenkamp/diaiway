@@ -8,16 +8,26 @@ export const runtime = "nodejs"
 
 export async function GET() {
   try {
-    const experts = await prisma.expert.findMany({
-      include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
-      orderBy: { rating: "desc" },
-    })
-    // Nur aktive Takumis: Experten ohne User (Seed) ODER verknüpfter User hat appRole=takumi UND verifizierte E-Mail
+    let experts: Awaited<ReturnType<typeof prisma.expert.findMany>>
+    try {
+      experts = await prisma.expert.findMany({
+        include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
+        orderBy: { rating: "desc" },
+      })
+    } catch (colErr: unknown) {
+      if ((colErr as { code?: string })?.code === "P2022") {
+        experts = await prisma.expert.findMany({
+          include: { user: { select: { appRole: true, isVerified: true } } },
+          orderBy: { rating: "desc" },
+        })
+      } else throw colErr
+    }
+    const hasEmailCheck = experts[0]?.user && "emailConfirmedAt" in experts[0].user
     const active = experts.filter((e) => {
       if (!e.userId) return true
       const u = e.user
       if (!u || u.appRole !== "takumi") return false
-      return !!u.emailConfirmedAt
+      return hasEmailCheck ? !!(u as { emailConfirmedAt?: Date }).emailConfirmedAt : true
     })
 
     const now = Date.now()
