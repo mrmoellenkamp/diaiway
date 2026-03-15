@@ -262,7 +262,57 @@ Der **Largest Contentful Paint** (LCP) wird durch `priority={true}` für das ers
 
 ---
 
-## 7. Übersicht: Wo was lebt
+## 7. Session Activity & Inactivity Lockout
+
+### Problem
+
+Eingeloggte Nutzer sollen nach längerer Inaktivität automatisch ausgeloggt werden – aus Sicherheitsgründen (vergessener Bildschirm) und Ressourcenschonung.
+
+### Implementierung
+
+- **Middleware** (`middleware.ts`): Liest `LAST_ACTIVITY_COOKIE`; bei `elapsed >= INACTIVITY_TIMEOUT_SEC` (15 Min) → Cookie und Session-Token löschen, Redirect zu `/login?reason=timeout`
+- **SessionActivityProvider** (`components/session-activity-provider.tsx`): Client-seitiger Countdown; Nutzeraktivität (Klicks, Navigation) setzt Timer zurück; 60 Sek vor Ablauf erscheint Warnungs-Modal
+- **Heartbeat** (`POST /api/auth/heartbeat`): Während Video-Sessions alle 2 Min aufgerufen; Cookie wird aktualisiert → Session bleibt während Call aktiv
+- **lib/session-activity.ts**: `INACTIVITY_TIMEOUT_SEC = 15 * 60`, `INACTIVITY_WARNING_SEC = 60`
+
+### LogoutBackGuard (BFCache-Schutz)
+
+Nach Logout oder Timeout kann der Browser bei **Zurück**-Klick eine gecachte geschützte Seite anzeigen (Back-Forward Cache). Der **LogoutBackGuard** (`components/logout-back-guard.tsx`) fängt das ab:
+
+- **Event**: `pageshow` mit `ev.persisted === true` → Seite kam aus BFCache
+- **Aktion**: `fetch /api/auth/session`; bei fehlendem `user` → `window.location.replace("/login")`
+
+Geschützte Pfade: `/dashboard`, `/profile`, `/booking`, `/sessions`, `/session`, `/messages`.
+
+### Cache-Control
+
+Die Middleware setzt für alle geschützten Routen:
+
+```
+Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
+Pragma: no-cache
+Expires: 0
+```
+
+→ Browser speichert keine geschützten Seiten im BFCache; kombiniert mit LogoutBackGuard wird doppelte Absicherung erreicht.
+
+---
+
+## 8. DB-Resilienz im Auth-Flow
+
+### Problem
+
+Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()` in `authorize` fehl. NextAuth meldet dann typisch „CredentialsSignin“ → Login-Seite zeigt „E-Mail oder Passwort ist falsch“, obwohl die Credentials korrekt sind.
+
+### Lösung
+
+- **authorize**: `try/catch` um DB-Operationen; bei Fehler → `throw new Error("DB_ERROR")`
+- **Login-Seite**: Prüft `result.error.includes("DB_ERROR")` → zeigt `t("login.errorNetwork")` („Verbindungsfehler. Bitte erneut versuchen.“) statt „falsches Passwort“
+- **JWT-Callback**: DB-Sync (Rollen, Revocation) nur alle 5 Min (`DB_SYNC_INTERVAL_SEC`) → reduziert DB-Last bei vielen Requests
+
+---
+
+## 9. Übersicht: Wo was lebt
 
 | Mechanismus | Datei(en) |
 |-------------|-----------|
@@ -274,10 +324,14 @@ Der **Largest Contentful Paint** (LCP) wird durch `priority={true}` für das ers
 | Optimistic UI + Exponential Backoff | `components/user-chat-box.tsx` |
 | ISR + revalidatePath | `app/(app)/categories/page.tsx`, `app/api/user/profile/route.ts`, `app/api/user/takumi-profile/route.ts` |
 | Image priority, Skeleton | `components/takumi-card.tsx`, `components/takumi-card-skeleton.tsx` |
+| Session Activity, Inactivity | `lib/session-activity.ts`, `components/session-activity-provider.tsx`, `components/session-timeout-warning.tsx`, `middleware.ts` |
+| LogoutBackGuard | `components/logout-back-guard.tsx` |
+| Cache-Control (geschützte Routen) | `middleware.ts` |
+| DB_ERROR Handling | `lib/auth.ts` (authorize), `app/login/page.tsx` |
 
 ---
 
-## 8. Umgebungsvariablen (Platzhalter)
+## 10. Umgebungsvariablen (Platzhalter)
 
 Keine echten Keys in dieser Dokumentation. Relevante Platzhalter:
 

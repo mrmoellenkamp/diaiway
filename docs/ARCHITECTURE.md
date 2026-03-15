@@ -29,8 +29,12 @@ diAIway ist eine **Hybrid-App**:
 
 ### Authentifizierung
 - **NextAuth.js v5** mit Credentials Provider
-- JWT: `id`, `name`, `email`, `role`, `appRole`, `status`
-- Middleware: geschützte Routen, pausierte Konten, Admin-Routing
+- JWT: `id`, `name`, `username`, `email`, `role`, `appRole`, `status`
+- **Profilname**: `username ?? name` wird überall als Anzeigename verwendet
+- **DB-Resilienz**: `authorize` fängt P1001 ab → `DB_ERROR` (kein „falsches Passwort“); JWT-DB-Sync nur alle 5 Min (throttled)
+- **Session Revocation**: `tokenRevocationTime` invalidiert alte Tokens sofort
+- Middleware: geschützte Routen, pausierte Konten, Admin-Routing, **Inactivity Lockout** (15 Min)
+- **Cache-Control**: `no-store` für geschützte Seiten (kein BFCache); **LogoutBackGuard** bei `pageshow` mit `persisted`
 
 ### Buchungsablauf (Vorauszahlung)
 
@@ -78,8 +82,21 @@ diAIway ist eine **Hybrid-App**:
 - **Manueller Report**: Notfall-Button im Call unterbricht und meldet; Admin prüft unter `/admin/safety/incidents`
 
 ### Sichere Dateiübertragung
-- `POST /api/files/secure-upload`: Busboy-Streaming, Cloudmersive-Virenscan (optional), Vercel Blob
+- `POST /api/files/secure-upload`: Busboy-Streaming, Cloudmersive-Virenscan (optional), Vercel Blob (max 2,5 MB)
 - Für Chat (CHAT vs MAIL/Waymail) und Projektdateien
+
+### Nachrichten (Chat + Waymails)
+- **DirectMessage.communicationType**: `CHAT` (Direktnachricht) vs `MAIL` (Waymail mit Betreff)
+- **Posteingang/Postausgang**: Waymails nach `recipientId`/`senderId`; UI-Tabs in `/messages`
+- **Löschen**: Waymail, Einzelnachricht, ganzer Thread via `DELETE /api/messages`; Bestätigungsdialog vor jedem Löschen
+- **Deep-Link**: `/messages?waymail={id}` – E-Mail-Link führt Empfänger nach Login ins Postfach; `callbackUrl` erhalten
+- **Username als Profilname**: Sender/Empfänger-Namen = `username ?? name` in Messages-API
+
+### Session Activity & Inactivity Lockout
+- **15 Min Timeout**: `LAST_ACTIVITY_COOKIE` in Middleware; bei Ablauf → Cookie löschen, Redirect `/login?reason=timeout`
+- **SessionActivityProvider**: Client-seitiger Countdown; Warnung 60 Sek vor Ablauf; Heartbeat via `/api/auth/heartbeat` verlängert
+- **LogoutBackGuard**: `pageshow` mit `persisted` (BFCache) → Session-API prüfen → bei ungültiger Session zu `/login`
+- **Cache-Control**: `no-store, no-cache` für `/dashboard`, `/profile`, `/messages`, `/admin` → kein Zurück-Button-Cache
 
 ---
 
@@ -152,7 +169,8 @@ diAIway ist eine **Hybrid-App**:
 | `/api/push/subscribe` | POST | Web-Push-Abonnement speichern |
 | `/api/push/fcm-token` | POST | FCM/APNs Token (native) |
 | `/api/notifications` | GET, PATCH, DELETE | In-App-Notifications |
-| `/api/messages` | GET, POST, PATCH | Chat, Waymails |
+| `/api/messages` | GET, POST, PATCH | Chat, Waymails (Posteingang/Postausgang), Threads |
+| `/api/messages` | DELETE | Waymail (`?waymail=id`), Einzelnachricht (`?message=id`), ganzer Thread (`?thread=partnerId`) |
 | `/api/messages/recipient-id` | GET | Recipient ID für Chat |
 
 ### Dateien
@@ -299,11 +317,14 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 
 - **Rate-Limiting**: Auth-Endpoints (Register, Login, Forgot-Password)
 - **Honeypot**: Anti-Bot bei Formularen
-- **Security-Headers**: X-Frame-Options, HSTS, etc. (middleware.ts)
+- **Security-Headers**: X-Frame-Options, HSTS, X-Content-Type-Options, CSP, etc. (middleware.ts)
+- **Cache-Control**: `no-store` für geschützte Seiten → verhindert BFCache-Anzeige nach Logout
+- **LogoutBackGuard**: Client-Check bei `pageshow` (persisted) → Session validieren → Redirect bei ungültig
 - **DSGVO-Kontoverwaltung**: Anonymisierung statt Hard-Delete (`lib/anonymize-user.ts`); Name/E-Mail → Platzhalter; Wallet-Historie erhalten; Blob-Bilder physisch gelöscht; Admin-Konten geschützt
 - **Admin-Guard**: `app/(app)/admin/layout.tsx` prüft NextAuth + Prisma-Rolle serverseitig
 - **Safety Enforcement**: Vision API, Vercel Blob für Incidents
 - **Secure Upload**: Cloudmersive-Virenscan, Streaming-Uploads
+- **DB-Error-Handling**: `authorize` wirft `DB_ERROR` bei P1001 → Login zeigt „Verbindungsfehler“ statt „falsches Passwort“
 
 ---
 
@@ -318,7 +339,9 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 | Instant Cleanup | 60s ohne Takumi-Antwort → `instant_expired`, Payment-Release, Push/Waymail |
 | Wallet-Release-Cron | 24h nach Session-Ende: `processPendingCompletions` (Capture, Rechnung, Takumi-Guthaben) |
 | AdminActionLog | Alle Admin-Aktionen (force_capture, manual_release, etc.) |
-| DirectMessage | `communicationType`: CHAT vs MAIL (Waymail) |
+| DirectMessage | `communicationType`: CHAT vs MAIL (Waymail); löschbar (Waymail, Nachricht, Thread) |
+| User.username | Optional, eindeutig; als Profilname (`username ?? name`) überall verwendet |
+| Session Activity | 15 Min Inactivity Timeout; LAST_ACTIVITY_COOKIE; Heartbeat verlängert |
 
 ---
 

@@ -33,9 +33,12 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Sessions**: Daily.co Video/Voice; 5 Min Handshake gratis, danach Zahlungsdialog (Stripe oder Wallet)
 - **Handshake-Logik**: &lt; 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
 - **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
-- **Benachrichtigungen**: Buchungsbestätigungen; löschbar; **Push-Benachrichtigungen** (Web Push + Capacitor)
-- **Profil**: Favoriten, Sessions; **Konto pausieren** (sofort offline als Takumi); **Konto löschen** (DSGVO-Anonymisierung: Name/E-Mail → Platzhalter, Blob-Bilder gelöscht, Wallet-Historie erhalten)
+- **Benachrichtigungen**: Buchungsbestätigungen; **löschbar mit Bestätigungsdialog**
+- **Nachrichten (Postfach)**: **Chat** (Direktnachrichten) und **Waymails** (E-Mail-ähnlich mit Betreff); **Posteingang** und **Postausgang**; Waymails/Chats/Nachrichten **löschbar mit Bestätigungsdialog**; Anhänge (Bilder, PDF) via Secure Upload; Waymail-Deep-Links (`/messages?waymail={id}`) mit callbackUrl nach Login
+- **Profil**: **Username** als Profilname (optional, eindeutig); Favoriten, Sessions; **Konto pausieren** (sofort offline als Takumi); **Konto löschen** (DSGVO-Anonymisierung)
+- **Session-Aktivität**: 15 Min Inaktivitäts-Time-out; Warnung 60 Sek vor Ablauf; Heartbeat verlängert Session; automatischer Logout
 - **Safety**: Snapshot-Einwilligung, Live-Monitoring; bei Voice entfällt Pre-Check
+- **Push-Benachrichtigungen**: Web Push (VAPID) + Capacitor (FCM/APNs)
 
 ### Für Takumi (Experten)
 - **Profil & Verfügbarkeit**: 15-Min-Intervall-Kalender; Preis Video/Voice pro 15 Min
@@ -55,13 +58,15 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **AdminActionLog**: Alle Admin-Aktionen (force_capture, manual_release, refund)
 
 ### Technisch
-- **i18n**: Deutsch (Master), Englisch, Spanisch
+- **i18n**: Deutsch (Master), Englisch, Spanisch; Sprachenauswahl im Header (Länderkürzel: DE, EN, ES)
 - **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard; 7-Tage-Stripe-Hold-Fenster
 - **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
 - **Safety**: Google Vision API (Live-Monitoring), Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
-- **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers
-- **Secure File Upload**: `/api/files/secure-upload` mit Cloudmersive-Virenscan, Busboy-Streaming
+- **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers; **Cache-Control: no-store** für geschützte Seiten (kein BFCache); **LogoutBackGuard** verhindert Zurück-Button-Cache nach Logout
+- **Auth-Resilienz**: DB-Verbindungsfehler (P1001) → `DB_ERROR` statt „falsches Passwort“; JWT-DB-Sync alle 5 Min (throttled)
+- **Secure File Upload**: `/api/files/secure-upload` mit Cloudmersive-Virenscan, Busboy-Streaming (max 2,5 MB)
 - **Session-Terminierung**: `/api/sessions/[id]/terminate` für 5-Min-Handshake (Case A) oder Capture (Case B)
+- **Messages API**: GET (Waymails, Chat-Threads), POST (senden), PATCH (als gelesen), **DELETE** (Waymail, Einzelnachricht, ganzer Thread)
 
 ---
 
@@ -200,7 +205,7 @@ Details: [docs/ENV.md](docs/ENV.md)
 ## Datenbank
 
 ### Wichtige Modelle
-- **User**: balance, pendingBalance (Wallet); appRole (shugyo/takumi); Anonymisierte: `user_deleted_xxx@anonymized.local`
+- **User**: `name`, `username` (optional, eindeutig; wird als Profilname verwendet); balance, pendingBalance (Wallet); appRole (shugyo/takumi); Anonymisierte: `user_deleted_xxx@anonymized.local`
 - **Expert**: liveStatus (`offline` \| `available` \| `in_call` \| `busy`); priceVideo15Min, priceVoice15Min
 - **Booking**: status (incl. `cancelled_in_handshake`, `instant_expired`); bookingMode (scheduled \| instant)
 - **Transaction**: status (AUTHORIZED, CAPTURED, CANCELED, REFUNDED)
@@ -248,15 +253,20 @@ npx prisma studio
 
 | Datei | Inhalt |
 |-------|--------|
-| [README.md](README.md) | Übersicht, Setup |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API |
-| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Asset-Pipeline |
+| [docs/INDEX.md](docs/INDEX.md) | **Dokumentations-Index** – alle Docs auf einen Blick |
+| [README.md](README.md) | Übersicht, Setup, Features |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API-Übersicht |
+| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Session Activity, LogoutBackGuard |
+| [docs/HIDDEN-FEATURES-SUMMARY.md](docs/HIDDEN-FEATURES-SUMMARY.md) | Dokumentations-Gap-Analyse (Capacitor, Push, Instant Connect, Admin Finance, etc.) |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
-| [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor bereits integriert) |
-| [docs/DEEP-LINKING-SETUP.md](docs/DEEP-LINKING-SETUP.md) | Deep-Links |
+| [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor integriert) |
+| [docs/MOBILE-BUILD.md](docs/MOBILE-BUILD.md) | Mobile Build (Capacitor) |
+| [docs/DEEP-LINKING-SETUP.md](docs/DEEP-LINKING-SETUP.md) | Deep-Links (Waymail, Chat) |
 | [docs/SECURE-FILE-EXCHANGE.md](docs/SECURE-FILE-EXCHANGE.md) | Sichere Datei-Übertragung |
-| [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance (DSGVO, Permissions) |
+| [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance |
+| [docs/IOS-APP-STORE-COMPLIANCE.md](docs/IOS-APP-STORE-COMPLIANCE.md) | iOS App Store Compliance |
+| [docs/CHAT-PROTOKOLL-2025-03-06.md](docs/CHAT-PROTOKOLL-2025-03-06.md) | Chat-Protokoll |
 
 ---
 
