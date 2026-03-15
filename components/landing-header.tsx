@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { Menu, X } from "lucide-react"
+import { useSession, signOut } from "next-auth/react"
+import { Menu, X, User, Mail, FolderOpen, LogOut } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useI18n } from "@/lib/i18n"
@@ -13,6 +14,18 @@ export function LandingHeader() {
   const isLoggedIn = !!session?.user
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { t } = useI18n()
+
+  const userName = session?.user
+    ? ((session.user as { username?: string | null }).username ?? session.user.name ?? t("common.profile"))
+    : ""
+  const initials = userName
+    .replace(/[^a-zA-Z0-9]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
@@ -42,28 +55,77 @@ export function LandingHeader() {
 
       {mobileMenuOpen && (
         <div className="border-t border-primary-foreground/10 bg-card px-4 py-3 sm:hidden">
-          <nav className="flex flex-col gap-1">
-            <Link
-              href="/categories"
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              {t("common.categories")}
-            </Link>
-            <Link
-              href={isLoggedIn ? "/home" : "/login"}
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              {t("nav.expertsOverview")}
-            </Link>
-          </nav>
           <div className="flex items-center gap-2 px-3 py-2">
             <LanguageSwitcher variant="compact" />
           </div>
-          <div onClick={() => setMobileMenuOpen(false)}>
-            <UserNav variant="mobile" />
-          </div>
+          {isLoggedIn ? (
+            <nav className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <Avatar className="size-10 border-2 border-primary/10">
+                  {session?.user?.image ? (
+                    <img src={session.user.image} alt={userName} className="size-full rounded-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-foreground">{userName}</span>
+                  {session?.user?.email && (
+                    <span className="text-[11px] text-muted-foreground">{session.user.email}</span>
+                  )}
+                </div>
+              </div>
+              <Link
+                href="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <User className="size-4 text-muted-foreground" />
+                1. {t("common.profile")}
+              </Link>
+              <Link
+                href="/messages"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Mail className="size-4 text-muted-foreground" />
+                2. {t("messages.title")}
+              </Link>
+              <Link
+                href="/categories"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <FolderOpen className="size-4 text-muted-foreground" />
+                3. {t("common.categories")}
+              </Link>
+              <Link
+                href="/home"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <span className="size-4 flex items-center justify-center text-muted-foreground font-bold text-xs">di</span>
+                4. {t("nav.menuDiAiway")}
+              </Link>
+              <button
+                onClick={async () => {
+                  setMobileMenuOpen(false)
+                  await signOut({ redirect: false })
+                  window.location.replace("/")
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <LogOut className="size-4" />
+                {t("nav.logout")}
+              </button>
+            </nav>
+          ) : (
+            <div onClick={() => setMobileMenuOpen(false)}>
+              <UserNav variant="mobile" />
+            </div>
+          )}
         </div>
       )}
     </header>

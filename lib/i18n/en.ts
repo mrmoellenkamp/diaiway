@@ -53,6 +53,7 @@ const en = {
   "nav.expertAdmin": "Expert Management",
   "nav.logout": "Log out",
   "nav.expertsOverview": "Experts Overview",
+  "nav.menuDiAiway": "diAIway",
 
   // Landing
   "landing.heroTitle": "DIY help at the push of a button. Safe. Fast. Everywhere.",
@@ -186,7 +187,7 @@ const en = {
   "home.newOnPlatform": "New on diAiway",
 
   // Sessions
-  "sessions.title": "My Sessions",
+  "sessions.title": "My Bookings",
   "sessions.tabActive": "Active",
   "sessions.tabUpcoming": "Upcoming",
   "sessions.tabCompleted": "Completed",
@@ -311,8 +312,8 @@ const en = {
   "profile.switchRole": "Switch role",
   "profile.currentRoleTakumi": "Current: Takumi (Expert)",
   "profile.currentRoleShugyo": "Current: Shugyo (Learner)",
-  "shugyo.dashboardTitle": "My Shugyo Profile",
-  "shugyo.dashboardDesc": "Select your skill level and upload project images. The expert will see this info in the video call.",
+  "shugyo.dashboardTitle": "My Projects",
+  "shugyo.dashboardDesc": "Present your project and upload a few images. Your Takumi can see what it's about. State your skill level and you'll meet on equal footing.",
   "shugyo.selectSkillLevel": "Skill Level",
   "shugyo.skillLevelDesc": "Helps experts advise you better.",
   "shugyo.skillNeuling": "Beginner",

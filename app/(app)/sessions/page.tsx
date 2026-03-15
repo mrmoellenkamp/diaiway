@@ -9,7 +9,8 @@ import { scheduleSessionReminder, cancelPastReminders } from "@/lib/native-utils
 import { getCachedBookings, setCachedBookings } from "@/lib/offline-cache"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { Video, CalendarCheck, CheckCircle2, Inbox } from "lucide-react"
+import Link from "next/link"
+import { Video, CalendarCheck, CheckCircle2, Inbox, ArrowLeft } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import type { BookingRecord } from "@/lib/types"
 
@@ -141,6 +142,13 @@ function SessionsContent() {
 
   return (
     <PageContainer>
+      <Link
+        href="/profile"
+        className="mb-3 inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        aria-label={t("common.back")}
+      >
+        <ArrowLeft className="size-5" />
+      </Link>
       {/* Tab bar */}
       <div className="flex gap-1 rounded-xl bg-muted p-1" role="tablist">
         {tabs.map((tab) => (

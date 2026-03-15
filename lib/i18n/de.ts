@@ -53,6 +53,7 @@ const de = {
   "nav.expertAdmin": "Experten-Verwaltung",
   "nav.logout": "Abmelden",
   "nav.expertsOverview": "Experten-Übersicht",
+  "nav.menuDiAiway": "diAIway",
 
   // Landing
   "landing.heroTitle": "DIY-Hilfe auf Knopfdruck. Sicher. Schnell. Überall.",
@@ -186,7 +187,7 @@ const de = {
   "home.newOnPlatform": "Neu auf diAiway",
 
   // Sessions
-  "sessions.title": "Meine Sessions",
+  "sessions.title": "Meine Buchungen",
   "sessions.tabActive": "Aktiv",
   "sessions.tabUpcoming": "Geplant",
   "sessions.tabCompleted": "Fertig",
@@ -196,7 +197,7 @@ const de = {
   "sessions.emptyUpcomingDesc": "Buche einen Takumi, um deine nächste Session zu planen.",
   "sessions.emptyCompletedTitle": "Noch keine abgeschlossenen Sessions",
   "sessions.emptyCompletedDesc": "Deine beendeten Sessions erscheinen hier.",
-  "sessions.backToSessions": "Zurück zu Sessions",
+  "sessions.backToSessions": "Zurück zu Buchungen",
 
   // Messages / Postfach
   "messages.title": "Postfach",
@@ -313,8 +314,8 @@ const de = {
   "profile.currentRoleShugyo": "Aktuell: Shugyo (Lerner)",
 
   // Shugyo Dashboard
-  "shugyo.dashboardTitle": "Mein Shugyo Profil",
-  "shugyo.dashboardDesc": "Wähle deine Kenntnisstufe und lade Projektbilder hoch. Der Experte sieht diese Infos im Video-Call.",
+  "shugyo.dashboardTitle": "Meine Projekte",
+  "shugyo.dashboardDesc": "Stelle dein Projekt vor und lade ein paar Bilder hoch. Dein Takumi kann so schon mal sehen, worum es geht. Gib deinen Kenntnisstand an und ihr begegnet euch auf Augenhöhe.",
   "shugyo.selectSkillLevel": "Kenntnisstufe",
   "shugyo.skillLevelDesc": "So können Experten dich besser beraten.",
   "shugyo.skillNeuling": "Neuling",
