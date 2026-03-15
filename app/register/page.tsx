@@ -12,9 +12,9 @@ import { useApp } from "@/lib/app-context"
 import { toast } from "sonner"
 import type { UserRole } from "@/lib/types"
 import { Suspense } from "react"
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, UserPlus, XCircle } from "lucide-react"
+import { CheckCircle2, Eye, EyeOff, Loader2, UserPlus, XCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
-import { LanguageSwitcher } from "@/components/language-switcher"
+import { PageContainer } from "@/components/page-container"
 
 // ─── Password strength ──────────────────────────────────────────────────────
 
@@ -401,33 +401,11 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  const { t } = useI18n()
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-safe">
-      <Link
-        href="/"
-        className="absolute left-4 top-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <ArrowLeft className="size-5" />
-        <span className="hidden sm:inline">{t("common.startPage")}</span>
-      </Link>
-
-      <div className="absolute right-4 top-4">
-        <LanguageSwitcher variant="compact" />
-      </div>
-
-      <Link href="/" className="mb-6 flex items-center gap-2">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-primary">
-          <span className="text-sm font-bold text-primary-foreground">di</span>
-        </div>
-        <span className="text-lg font-bold text-foreground">
-          di<span className="text-accent">Ai</span>way
-        </span>
-      </Link>
-
+    <PageContainer className="flex flex-col items-center justify-center">
       <Suspense>
         <RegisterForm />
       </Suspense>
-    </div>
+    </PageContainer>
   )
 }

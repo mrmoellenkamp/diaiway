@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { AppHeader } from "@/components/app-header"
+import { AuthHeader } from "@/components/auth-header"
 import { BottomNav } from "@/components/bottom-nav"
 import { LandingHeader } from "@/components/landing-header"
 import { useI18n } from "@/lib/i18n"
@@ -29,8 +30,17 @@ function titleForPath(pathname: string, t: (key: string, params?: Record<string,
   return undefined
 }
 
-// Auth-only pages – kein App-Header, kein Avatar
+// Auth-only pages – AuthHeader (Layout wie Profilseite)
 const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"]
+
+function authTitleForPath(pathname: string, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (pathname.startsWith("/register")) return t("register.title")
+  if (pathname.startsWith("/login")) return t("nav.login")
+  if (pathname.startsWith("/forgot-password")) return t("forgot.title")
+  if (pathname.startsWith("/reset-password")) return t("reset.title")
+  if (pathname.startsWith("/verify-email")) return t("verify.title")
+  return t("common.profile")
+}
 
 export function GlobalNavigation() {
   const pathname = usePathname()
@@ -40,9 +50,9 @@ export function GlobalNavigation() {
     return <LandingHeader />
   }
 
-  // Auf Anmelde-/Registrierungsseiten keinen Header mit Avatar zeigen
+  // Auth-Seiten: Header im gleichen Layout wie Profilseite
   if (AUTH_PATHS.some((p) => pathname?.startsWith(p))) {
-    return null
+    return <AuthHeader title={authTitleForPath(pathname ?? "", t)} />
   }
 
   const title = titleForPath(pathname, t)
