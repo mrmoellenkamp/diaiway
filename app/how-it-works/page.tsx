@@ -16,7 +16,7 @@ export default function HowItWorksPage() {
             href="/"
             className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
           >
-            <ArrowLeft className="size-4 text-foreground" />
+            <ArrowLeft className="size-5 text-foreground" />
           </Link>
           <div>
             <h1 className="text-lg font-semibold text-foreground">

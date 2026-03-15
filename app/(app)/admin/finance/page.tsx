@@ -35,7 +35,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Loader2,
-  ChevronLeft,
+  ArrowLeft,
   Lock,
   FileText,
   ExternalLink,
@@ -194,7 +194,7 @@ export default function AdminFinancePage() {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/admin">
-                  <ChevronLeft className="size-4" />
+                  <ArrowLeft className="size-5" />
                 </Link>
               </Button>
               <div>

@@ -188,7 +188,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             href="/home"
             className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
           >
-            <ArrowLeft className="size-4 text-white" />
+            <ArrowLeft className="size-5 text-white" />
           </Link>
           <button
             type="button"

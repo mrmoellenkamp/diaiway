@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import {
-  ChevronLeft,
+  ArrowLeft,
   RefreshCw,
   Loader2,
   Clock,
@@ -138,7 +138,7 @@ export default function AdminHealthCheckPage() {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/admin">
-                  <ChevronLeft className="size-4" />
+                  <ArrowLeft className="size-5" />
                 </Link>
               </Button>
               <div>
