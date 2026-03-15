@@ -6,15 +6,26 @@ import { prisma } from "@/lib/db"
 import type { CancelPolicy, Takumi } from "@/lib/types"
 
 export async function getTakumisForServer(): Promise<Takumi[]> {
-  const experts = await prisma.expert.findMany({
-    include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
-    orderBy: { rating: "desc" },
-  })
-
+  let experts: Awaited<ReturnType<typeof prisma.expert.findMany>>
+  try {
+    experts = await prisma.expert.findMany({
+      include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
+      orderBy: { rating: "desc" },
+    })
+  } catch (colErr: unknown) {
+    if ((colErr as { code?: string })?.code === "P2022") {
+      experts = await prisma.expert.findMany({
+        include: { user: { select: { appRole: true, isVerified: true } } },
+        orderBy: { rating: "desc" },
+      })
+    } else throw colErr
+  }
+  const hasEmailCheck = experts[0]?.user && "emailConfirmedAt" in experts[0].user
   const active = experts.filter((e) => {
     if (!e.userId) return true
     const u = e.user
-    return u && u.appRole === "takumi" && !!u.emailConfirmedAt
+    if (!u || u.appRole !== "takumi") return false
+    return hasEmailCheck ? !!(u as { emailConfirmedAt?: Date }).emailConfirmedAt : true
   })
 
   const now = Date.now()
