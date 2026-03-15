@@ -32,8 +32,9 @@ export default function DatenschutzPage() {
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <Link
-            href="/"
+            href="/profile"
             className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
+            aria-label="Zurück"
           >
             <ArrowLeft className="size-4 text-foreground" />
           </Link>

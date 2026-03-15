@@ -199,45 +199,14 @@ export default function ShugyoDashboardPage() {
       <div className="flex flex-col gap-6">
         <Link
           href="/profile"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors -ml-1"
+          aria-label={t("common.back")}
         >
-          <ArrowLeft className="size-4" />
-          {t("common.back")}
+          <ArrowLeft className="size-5" />
         </Link>
 
         <h1 className="text-xl font-bold text-foreground">{t("shugyo.dashboardTitle")}</h1>
         <p className="text-sm text-muted-foreground">{t("shugyo.dashboardDesc")}</p>
-
-        {/* Skill Level */}
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <h2 className="text-sm font-semibold text-foreground mb-3">{t("shugyo.selectSkillLevel")}</h2>
-            <p className="text-xs text-muted-foreground mb-4">{t("shugyo.skillLevelDesc")}</p>
-            <div className="flex flex-wrap gap-2">
-              {SKILL_LEVELS.map(({ value, color }) => (
-                <button
-                  key={value}
-                  onClick={() => handleSaveSkillLevel(value)}
-                  disabled={savingSkill}
-                  className="focus:outline-none"
-                >
-                  <Badge
-                    variant="outline"
-                    className={`cursor-pointer transition-all ${
-                      skillLevel === value ? color : "bg-muted/50 text-muted-foreground border-border"
-                    } ${savingSkill ? "opacity-70" : ""}`}
-                  >
-                    {value === "NEULING"
-                      ? t("shugyo.skillNeuling")
-                      : value === "FORTGESCHRITTEN"
-                        ? t("shugyo.skillFortgeschritten")
-                        : t("shugyo.skillProfi")}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Projects */}
         <div className="flex flex-col gap-4">
@@ -360,6 +329,37 @@ export default function ShugyoDashboardPage() {
             </Card>
           )}
         </div>
+
+        {/* Kenntnisstufe – unterhalb Projekte */}
+        <Card className="border-border/60">
+          <CardContent className="p-4">
+            <h2 className="text-sm font-semibold text-foreground mb-3">{t("shugyo.selectSkillLevel")}</h2>
+            <p className="text-xs text-muted-foreground mb-4">{t("shugyo.skillLevelDesc")}</p>
+            <div className="flex flex-wrap gap-2">
+              {SKILL_LEVELS.map(({ value, color }) => (
+                <button
+                  key={value}
+                  onClick={() => handleSaveSkillLevel(value)}
+                  disabled={savingSkill}
+                  className="focus:outline-none"
+                >
+                  <Badge
+                    variant="outline"
+                    className={`cursor-pointer transition-all ${
+                      skillLevel === value ? color : "bg-muted/50 text-muted-foreground border-border"
+                    } ${savingSkill ? "opacity-70" : ""}`}
+                  >
+                    {value === "NEULING"
+                      ? t("shugyo.skillNeuling")
+                      : value === "FORTGESCHRITTEN"
+                        ? t("shugyo.skillFortgeschritten")
+                        : t("shugyo.skillProfi")}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Add Project Modal */}

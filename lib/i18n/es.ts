@@ -53,6 +53,7 @@ const es = {
   "nav.expertAdmin": "Gestión de expertos",
   "nav.logout": "Cerrar sesión",
   "nav.expertsOverview": "Resumen de expertos",
+  "nav.menuDiAiway": "diAIway",
 
   // Landing
   "landing.heroTitle": "Ayuda DIY al alcance de un clic. Seguro. Rápido. En todas partes.",
@@ -186,7 +187,7 @@ const es = {
   "home.newOnPlatform": "Nuevo en diAiway",
 
   // Sessions
-  "sessions.title": "Mis sesiones",
+  "sessions.title": "Mis reservas",
   "sessions.tabActive": "Activas",
   "sessions.tabUpcoming": "Próximas",
   "sessions.tabCompleted": "Completadas",
@@ -311,8 +312,8 @@ const es = {
   "profile.switchRole": "Cambiar rol",
   "profile.currentRoleTakumi": "Actual: Takumi (Experto)",
   "profile.currentRoleShugyo": "Actual: Shugyo (Aprendiz)",
-  "shugyo.dashboardTitle": "Mi perfil Shugyo",
-  "shugyo.dashboardDesc": "Elige tu nivel y sube imágenes de proyectos. El experto lo verá en la videollamada.",
+  "shugyo.dashboardTitle": "Mis proyectos",
+  "shugyo.dashboardDesc": "Presenta tu proyecto y sube algunas imágenes. Tu Takumi puede ver de qué se trata. Indica tu nivel y os encontraréis al mismo nivel.",
   "shugyo.selectSkillLevel": "Nivel",
   "shugyo.skillLevelDesc": "Ayuda a los expertos a asesorarte mejor.",
   "shugyo.skillNeuling": "Principiante",
