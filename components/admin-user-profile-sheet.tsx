@@ -14,9 +14,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner"
 import {
   Loader2, User as UserIcon, Star, FolderOpen, Images, Trash2, Plus, Save,
-  Mail, ChevronDown, ChevronRight, FileText,
+  Mail, ChevronDown, ChevronRight, FileText, Clock,
 } from "lucide-react"
 import { useCategories } from "@/lib/categories-i18n"
+import { EMPTY_WEEKLY_SLOTS } from "@/lib/availability-utils"
+import type { ITimeSlot, WeeklySlots, IWeeklyRule, IDateException } from "@/lib/availability-utils"
 
 function eur(cents: number) {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100)
@@ -67,6 +69,97 @@ function InvoiceDataEditor({
           </label>
         </>
       )}
+    </div>
+  )
+}
+
+const DAY_NAMES = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+const ORDERED_DAYS = [1, 2, 3, 4, 5, 6, 0] as const
+
+function normalizeSlots(raw: unknown): WeeklySlots {
+  if (!raw || typeof raw !== "object") return { ...EMPTY_WEEKLY_SLOTS }
+  const obj = raw as Record<string, unknown>
+  const out: WeeklySlots = { ...EMPTY_WEEKLY_SLOTS }
+  for (const d of [0, 1, 2, 3, 4, 5, 6]) {
+    const arr = obj[String(d)] ?? obj[d]
+    if (Array.isArray(arr)) {
+      out[d as keyof WeeklySlots] = arr
+        .filter((s): s is ITimeSlot => s && typeof s === "object" && typeof (s as ITimeSlot).start === "string" && typeof (s as ITimeSlot).end === "string")
+        .map((s) => ({ start: String((s as ITimeSlot).start), end: String((s as ITimeSlot).end) }))
+    }
+  }
+  return out
+}
+
+function AdminWeeklySlotsEditor({
+  slots,
+  onChange,
+  title,
+}: {
+  slots: WeeklySlots
+  onChange: (s: WeeklySlots) => void
+  title?: string
+}) {
+  const d = (day: number) => day as 0 | 1 | 2 | 3 | 4 | 5 | 6
+  const addSlot = (day: number) =>
+    onChange({ ...slots, [d(day)]: [...(slots[d(day)] || []), { start: "09:00", end: "17:00" }] })
+  const removeSlot = (day: number, idx: number) =>
+    onChange({ ...slots, [d(day)]: (slots[d(day)] || []).filter((_, i) => i !== idx) })
+  const changeSlot = (day: number, idx: number, field: "start" | "end", value: string) =>
+    onChange({ ...slots, [d(day)]: (slots[d(day)] || []).map((s, i) => (i === idx ? { ...s, [field]: value } : s)) })
+  const toggleDay = (day: number) => {
+    if ((slots[d(day)] || []).length > 0) onChange({ ...slots, [d(day)]: [] })
+    else onChange({ ...slots, [d(day)]: [{ start: "09:00", end: "17:00" }] })
+  }
+
+  return (
+    <div className="space-y-2">
+      {title && <p className="text-xs font-medium text-muted-foreground">{title}</p>}
+      <div className="flex flex-col gap-2">
+        {ORDERED_DAYS.map((day) => {
+          const daySlots = slots[d(day)] || []
+          const isActive = daySlots.length > 0
+          return (
+            <div key={day} className={`flex flex-col gap-1.5 rounded-lg px-2.5 py-2 ${isActive ? "bg-primary/5" : ""}`}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch checked={isActive} onCheckedChange={() => toggleDay(day)} className="scale-90" />
+                  <span className={`w-8 text-xs font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{DAY_NAMES[day]}</span>
+                </div>
+                {isActive && (
+                  <Button size="sm" variant="ghost" className="h-6 gap-0.5 text-[10px] px-1.5" onClick={() => addSlot(day)}>
+                    <Plus className="size-3" /> Zeitslot
+                  </Button>
+                )}
+              </div>
+              {isActive && daySlots.map((slot, idx) => (
+                <div key={idx} className="flex items-center gap-1.5 pl-9">
+                  <input
+                    type="time"
+                    step="900"
+                    value={slot.start}
+                    onChange={(e) => changeSlot(day, idx, "start", e.target.value)}
+                    className="h-7 w-24 rounded border border-input bg-background px-2 text-[11px]"
+                  />
+                  <span className="text-[10px] text-muted-foreground">–</span>
+                  <input
+                    type="time"
+                    step="900"
+                    value={slot.end}
+                    onChange={(e) => changeSlot(day, idx, "end", e.target.value)}
+                    className="h-7 w-24 rounded border border-input bg-background px-2 text-[11px]"
+                  />
+                  {daySlots.length > 1 && (
+                    <Button size="icon" variant="ghost" className="size-6 text-destructive/70 hover:text-destructive" onClick={() => removeSlot(day, idx)}>
+                      <Trash2 className="size-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -164,8 +257,12 @@ export function AdminUserProfileSheet({
   const [editExpert, setEditExpert] = useState<ProfileData["expert"] | null>(null)
   const [editShugyo, setEditShugyo] = useState<ProfileData["shugyoProjects"]>([])
   const [editTakumi, setEditTakumi] = useState<ProfileData["takumiPortfolio"]>([])
-  const [editAvailability, setEditAvailability] = useState<ProfileData["availability"]>(null)
-  const [availabilityJson, setAvailabilityJson] = useState("")
+  const [editSlots, setEditSlots] = useState<WeeklySlots>(() => ({ ...EMPTY_WEEKLY_SLOTS }))
+  const [editInstantSlots, setEditInstantSlots] = useState<WeeklySlots>(() => ({ ...EMPTY_WEEKLY_SLOTS }))
+  const [editYearlyRules, setEditYearlyRules] = useState<IWeeklyRule[]>([])
+  const [editExceptions, setEditExceptions] = useState<IDateException[]>([])
+  const [advancedAvailJson, setAdvancedAvailJson] = useState("")
+  const [advancedAvailOpen, setAdvancedAvailOpen] = useState(false)
   const categories = useCategories()
 
   const load = useCallback(async () => {
@@ -186,8 +283,13 @@ export function AdminUserProfileSheet({
         setEditShugyo(json.shugyoProjects ?? [])
         setEditTakumi(json.takumiPortfolio ?? [])
         const av = json.availability ?? null
-        setEditAvailability(av)
-        setAvailabilityJson(av ? JSON.stringify(av, null, 2) : "{}")
+        setEditSlots(normalizeSlots(av?.slots))
+        setEditInstantSlots(normalizeSlots(av?.instantSlots))
+        setEditYearlyRules(Array.isArray(av?.yearlyRules) ? av.yearlyRules : [])
+        setEditExceptions(Array.isArray(av?.exceptions) ? av.exceptions : [])
+        setAdvancedAvailJson(
+          av ? JSON.stringify({ yearlyRules: av.yearlyRules ?? [], exceptions: av.exceptions ?? [] }, null, 2) : '{"yearlyRules":[],"exceptions":[]}'
+        )
       } else {
         toast.error(json.error ?? "Fehler beim Laden")
       }
@@ -252,20 +354,22 @@ export function AdminUserProfileSheet({
         .map((p) => p.id)
         .filter((id) => !takumiToSave.some((p) => p.id === id))
 
+      let yearlyRules: IWeeklyRule[] = editYearlyRules
+      let exceptions: IDateException[] = editExceptions
       try {
-        const avParsed = JSON.parse(availabilityJson)
-        if (avParsed && typeof avParsed === "object") {
-          payload.availability = {
-            slots: avParsed.slots ?? {},
-            yearlyRules: Array.isArray(avParsed.yearlyRules) ? avParsed.yearlyRules : [],
-            exceptions: Array.isArray(avParsed.exceptions) ? avParsed.exceptions : [],
-            instantSlots: avParsed.instantSlots ?? {},
-          }
+        const adv = JSON.parse(advancedAvailJson)
+        if (adv && typeof adv === "object") {
+          if (Array.isArray(adv.yearlyRules)) yearlyRules = adv.yearlyRules
+          if (Array.isArray(adv.exceptions)) exceptions = adv.exceptions
         }
       } catch {
-        toast.error("Verfügbarkeit: Ungültiges JSON.")
-        setSaving(false)
-        return
+        // Fallback: use state
+      }
+      payload.availability = {
+        slots: editSlots,
+        yearlyRules,
+        exceptions,
+        instantSlots: editInstantSlots,
       }
 
       const res = await fetch(`/api/admin/users/${userId}/profile`, {
@@ -848,23 +952,55 @@ export function AdminUserProfileSheet({
               </TabsContent>
 
               <TabsContent value="availability" className="mt-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Verfügbarkeit (JSON)</CardTitle>
-                    <p className="text-[11px] text-muted-foreground">
-                      slots, yearlyRules, exceptions, instantSlots. Bei Speichern wird das JSON validiert.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <textarea
-                      value={availabilityJson}
-                      onChange={(e) => setAvailabilityJson(e.target.value)}
-                      rows={12}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
-                      spellCheck={false}
-                    />
-                  </CardContent>
-                </Card>
+                <div className="flex flex-col gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Clock className="size-4" />
+                        Buchbare Zeiten (geplante Termine)
+                      </CardTitle>
+                      <p className="text-[11px] text-muted-foreground">
+                        Wochentage aktivieren und Zeitslots festlegen (z.B. 09:00–17:00).
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <AdminWeeklySlotsEditor slots={editSlots} onChange={setEditSlots} title="" />
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Clock className="size-4" />
+                        Instant-Call Zeiten (Sprechzeiten)
+                      </CardTitle>
+                      <p className="text-[11px] text-muted-foreground">
+                        Wann der Takumi für spontane Instant-Calls erreichbar ist.
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <AdminWeeklySlotsEditor slots={editInstantSlots} onChange={setEditInstantSlots} title="" />
+                    </CardContent>
+                  </Card>
+                  <Collapsible open={advancedAvailOpen} onOpenChange={setAdvancedAvailOpen}>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                      {advancedAvailOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                      <FileText className="size-3.5" />
+                      Jahresregeln & Ausnahmen (JSON)
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <p className="text-[11px] text-muted-foreground mt-1 mb-2">
+                        yearlyRules, exceptions – für erweiterte Übersteuerungen.
+                      </p>
+                      <textarea
+                        value={advancedAvailJson}
+                        onChange={(e) => setAdvancedAvailJson(e.target.value)}
+                        rows={8}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
+                        spellCheck={false}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               </TabsContent>
             </Tabs>
 
