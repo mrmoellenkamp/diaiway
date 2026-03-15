@@ -48,7 +48,7 @@ Live-Monitoring für kritische Systemkomponenten.
 ### CRON-MONITOR
 
 - **Quelle**: `CronRunLog` (Prisma)
-- **Logs**: `release-wallet`, `experts-offline`
+- **Logs**: `release-wallet`, `experts-offline`, `cleanup-safety-data`
 - **Anzeige**: Letzter Laufzeitpunkt pro Cron
 - **Cron-Routen** schreiben nach jedem Lauf `upsert` in `CronRunLog`
 
@@ -95,6 +95,12 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 - Aktionen: `force_capture`, `manual_release`, `refund`
 - `targetType`, `targetId`, `details` für Audit
 
+### Wallet-Auflade-Limit
+
+- **Maximum**: 100 € pro Aufladung (psychologische Grenze)
+- **Frontend** (`components/wallet-topup-modal.tsx`): Buttons [20, 40, 60, 100 €]; Input max 100 €; 200 € entfernt
+- **Backend** (`/api/wallet/topup`): `MAX_AMOUNT_CENTS = 10000`; Beträge > 100 € → HTTP 400
+
 ---
 
 ## 4. DSGVO-konforme Kontoverwaltung
@@ -113,7 +119,8 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
    - Reviews (von User + über Expert) löschen
    - Availability löschen
    - Expert anonymisieren: `name`, `email`, `avatar`, `imageUrl`, `bio`, `isLive`, `liveStatus`
-   - User anonymisieren: `name`, `email`, `password` (random hash), `image`, `resetToken`, `invoiceData`, `favorites`, `status`
+   - **WalletTransactions**: `referenceId → null`, `metadata → null` (DSGVO Art. 5 Abs. 1 lit. c – Datenminimierung; `amountCents` + `type` bleiben für § 147 AO)
+   - User anonymisieren: `name`, `email`, `password` (random hash), `image`, `resetToken`, `invoiceData`, `favorites`, `status`, `tokenRevocationTime` (alle Sessions ungültig)
 3. **Blob-Löschung** (nach Transaktion): `del()` für User.image, Expert.avatar, Expert.imageUrl (nur Vercel-Blob-URLs)
 
 ### Platzhalter-Format
@@ -144,7 +151,25 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 
 ---
 
-## 5. Pause-Logik
+## 5. DSGVO-Cleanup-Cron
+
+### `cleanup-safety-data` (täglich, 03:00 UTC)
+
+**Route**: `app/api/cron/cleanup-safety-data/route.ts`  
+**Zweck**: Automatische Datenlöschung nach dem DSGVO-Grundsatz der Speicherbegrenzung (Art. 5 Abs. 1 lit. e)
+
+**Ablauf**:
+1. Alle `SafetyIncident`-Einträge auslesen → Schutzliste der gebundenen Blob-URLs
+2. Alle Blobs im Prefix `safety-incidents/` paginiert auflisten
+3. Blobs **älter als 48 h** und **nicht in der Schutzliste** → löschen (bis zu 50 parallel)
+4. `CronRunLog` upsert nach jedem Lauf
+
+**Kriterium**: `uploadedAt < now - 48h` AND `url not in SafetyIncident.imageUrl`  
+**Cron-Schedule**: `"0 3 * * *"` (vercel.json)
+
+---
+
+## 6. Pause-Logik
 
 ### PATCH `/api/user/account` – `action: "pause"`
 

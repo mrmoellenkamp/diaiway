@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { TAKUMI_STALE_OFFLINE_SEC } from "@/lib/session-activity"
 
-const STALE_MS = 3 * 60 * 1000 // 3 Minuten
+const STALE_MS = TAKUMI_STALE_OFFLINE_SEC * 1000
 
 /**
  * GET/POST /api/cron/experts-offline
- * Setzt Experten mit lastSeenAt älter als 3 Min. auf offline.
+ * Setzt Experten mit lastSeenAt älter als 5 Min. auf offline.
  * Sichern: CRON_SECRET prüfen (Vercel sendet Authorization: Bearer <CRON_SECRET>).
  */
 async function runExpertsOffline() {

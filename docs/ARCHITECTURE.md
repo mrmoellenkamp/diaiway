@@ -61,9 +61,15 @@ diAIway ist eine **Hybrid-App**:
 - **Implementiert**: Daily.co Video/Voice; keine Neuimplementierung geplant
 - `POST /api/daily/meeting` erstellt Raum; `DailyCallContainer` für UI
 - Start: max. 5 Min vor Termin (Scheduled); Instant: sofort nach Accept
-- **5-Minuten-Handshake (Case A/B)** (`lib/session-terminate.ts`, `POST /api/sessions/[id]/terminate`):
+- **5-Minuten-Handshake – Scheduled Sessions** (`lib/session-terminate.ts`, `POST /api/sessions/[id]/terminate`):
   - **Case A** (Dauer \< 5 Min): Automatische Rückerstattung / Hold-Freigabe; Status `cancelled_in_handshake`; Stripe: `cancelOrRefundPaymentIntent`, Wallet: `releaseReservation`; `paymentStatus: refunded`
   - **Case B** (Dauer ≥ 5 Min): Status `completed`; `processCompletion` → Stripe Capture / Wallet-Freigabe, Rechnung/Gutschrift, Takumi-Guthaben
+- **Instant-Call-Abrechnung** (`lib/wallet-service.ts`: `chargeInstantCallToWallet`):
+  - Abrechnung nach Session-Ende via Wallet (keine Vorauszahlung)
+  - **Erstkontakt** (`hasPaidBefore = false`): 5 Min kostenlos, danach Preis/Min
+  - **Zweitkontakt** (`hasPaidBefore = true`): 30 Sek kostenlos, danach Preis/Min
+  - `hasPaidBefore` = vorherige bezahlte Buchung zwischen User + Experten (`prisma.booking.findFirst`)
+  - UI-Countdown in `DailyCallContainer` spiegelt exakt diese Logik wider
 
 ### Zahlung
 - **Stripe**: Hold & Capture (manual capture); **7-Tage-Hold-Fenster** (nicht 24h); Capture nach Session oder via Cron
@@ -78,7 +84,11 @@ diAIway ist eine **Hybrid-App**:
 
 ### Safety Enforcement
 - **Automated AI-Scanning**: Google Vision API (SafeSearch) prüft Bildinhalte; `lib/vision-safety.ts`; Kategorien: adult, violence, racy (LIKELY/VERY_LIKELY = Verstoß)
-- **Live-Monitoring**: `DailyCallContainer` sendet zufällige Snapshots (45–90s Intervall) an `POST /api/safety/snapshot`; nur bei Video + Safety-Einwilligung; bei Verstoß: Blob speichern, `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`
+- **EU-Region-Locking**: Vision API nutzt `eu-vision.googleapis.com` – Bilddaten verlassen die EU nicht (DSGVO Art. 44)
+- **PRE_CHECK Gate** (0s): Vor dem Daily-Beitritt wird ein Snapshot der Lokal-Kamera an `POST /api/safety/pre-check` gesendet; bei `safe: false` → Beitritt blockiert. Kein `SafetyIncident` wird angelegt; nur Vision-Check. Der „Beitreten"-Button ist während der Prüfung deaktiviert.
+- **Blitzlicht-Protokoll (feste Intervalle)**: Nach Session-Start werden Snapshots zu exakt **5 s, 30 s, 60 s, 90 s, 120 s** gesendet. Hard-Stop nach 120 Sekunden – kein weiteres Monitoring. Nur bei Video + Safety-Einwilligung.
+- **Bei Verstoß (Live)**: Blob speichern (`safety-incidents/`), `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`
+- **DSGVO-Datenminimierung**: Snapshots ohne zugehörigen `SafetyIncident`-Eintrag werden nach 48 h durch den Cron `cleanup-safety-data` gelöscht
 - **Manueller Report**: Notfall-Button im Call unterbricht und meldet; Admin prüft unter `/admin/safety/incidents`
 
 ### Sichere Dateiübertragung
@@ -336,7 +346,9 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 | 7-Tage-Stripe-Hold | Stripe Hold verfällt nach 7 Tagen; `STRIPE_HOLD_DAYS` in `admin/finance/summary` |
 | 5-Min-Handshake | Case A: \< 5 Min → Release (cancelled_in_handshake); Case B: ≥ 5 Min → Capture |
 | Atomic Wallet | `balance >= amountCents` vor `decrement`; nie negativ; `WalletTransaction`-Audit |
+| Wallet-Auflade-Limit | Max. 100 € pro Aufladung (Frontend + Backend); Buttons: 20, 40, 60, 100 € |
 | Instant Cleanup | 60s ohne Takumi-Antwort → `instant_expired`, Payment-Release, Push/Waymail |
+| Instant-Abrechnung | Wallet nach Session: Erstkontakt 5 Min gratis, Zweitkontakt 30 Sek gratis (`chargeInstantCallToWallet`) |
 | Wallet-Release-Cron | 24h nach Session-Ende: `processPendingCompletions` (Capture, Rechnung, Takumi-Guthaben) |
 | AdminActionLog | Alle Admin-Aktionen (force_capture, manual_release, etc.) |
 | DirectMessage | `communicationType`: CHAT vs MAIL (Waymail); löschbar (Waymail, Nachricht, Thread) |

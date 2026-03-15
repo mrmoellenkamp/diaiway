@@ -2,8 +2,13 @@
  * Google Cloud Vision API - SafeSearch
  * Prüft Bilder auf explizite Inhalte (adult, violence, racy) vor dem Speichern.
  * Erfordert: GOOGLE_CLOUD_VISION_API_KEY (API-Key mit aktivierter Vision API)
+ *
+ * DSGVO / Art. 44 DSGVO – Drittlandübermittlung:
+ * Explizit EU-regionaler Endpunkt (eu-vision.googleapis.com).
+ * Bilddaten verbleiben in Google EU-Rechenzentren (Belgien/Frankfurt).
+ * Kein Transfer zu US-Rechenzentren. Datenstandort: Google Cloud EU.
  */
-const VISION_API = "https://vision.googleapis.com/v1/images:annotate"
+const VISION_API = "https://eu-vision.googleapis.com/v1/images:annotate"
 const UNSAFE_LEVELS = ["LIKELY", "VERY_LIKELY"]
 
 export type SafeSearchLevel = "UNKNOWN" | "VERY_UNLIKELY" | "UNLIKELY" | "POSSIBLE" | "LIKELY" | "VERY_LIKELY"
