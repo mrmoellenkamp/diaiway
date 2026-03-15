@@ -13,7 +13,6 @@
 | **Verborgene Mechaniken** | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) |
 | **Admin** | [ADMIN.md](ADMIN.md) |
 | **Umgebungsvariablen** | [ENV.md](ENV.md) |
-| **Dokumentations-Gap** | [HIDDEN-FEATURES-SUMMARY.md](HIDDEN-FEATURES-SUMMARY.md) |
 
 ---
 
@@ -21,7 +20,8 @@
 
 ### Shugyo (Nutzer)
 - AI-Guide (diAIway intelligence), Kategorien, Buchungen (Video/Voice, max. 7 Tage)
-- Instant Connect (60s Expiry), Sessions (5-Min-Handshake), Wallet (Stripe/Wallet)
+- Instant Connect (60s Expiry); Abrechnung: Erstkontakt 5 Min gratis, Zweitkontakt 30 Sek gratis
+- Sessions (5-Min-Handshake für Scheduled), Wallet (Stripe/Wallet)
 - Postfach: Chat + Waymails (Posteingang/Postausgang), Löschen mit Bestätigung
 - Username als Profilname, Favoriten, Konto pausieren/löschen
 - Session Activity (15 Min Timeout, Warnung, Heartbeat)
@@ -49,8 +49,7 @@
 |-------|--------|
 | [README.md](../README.md) | Setup, Features, Tech-Stack, Deployment |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Datenflüsse, API-Übersicht, Geschäftsregeln |
-| [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) | Idempotenz, Revocation, Optimistic UI, Session Activity, LogoutBackGuard |
-| [HIDDEN-FEATURES-SUMMARY.md](HIDDEN-FEATURES-SUMMARY.md) | Gap-Analyse: Capacitor, Push, Instant, Admin Finance |
+| [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) | Idempotenz, Revocation, Optimistic UI, Instant-Abrechnung, Session Activity, LogoutBackGuard |
 | [ADMIN.md](ADMIN.md) | Admin-Layout, Health-Check, DSGVO, Pause |
 | [ENV.md](ENV.md) | Umgebungsvariablen |
 | [MOBILE-READINESS.md](MOBILE-READINESS.md) | Mobile-Richtlinien |
@@ -59,7 +58,6 @@
 | [SECURE-FILE-EXCHANGE.md](SECURE-FILE-EXCHANGE.md) | Virenscan, Upload-Limits |
 | [STORE-COMPLIANCE-CHECKLIST.md](STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance |
 | [IOS-APP-STORE-COMPLIANCE.md](IOS-APP-STORE-COMPLIANCE.md) | iOS-spezifisch |
-| [CHAT-PROTOKOLL-2025-03-06.md](CHAT-PROTOKOLL-2025-03-06.md) | Chat-Protokoll |
 | [CALL-KEEP-SETUP.md](CALL-KEEP-SETUP.md) | Call-Keep (native Calls) |
 | [PREFLIGHT-AUDIT.md](PREFLIGHT-AUDIT.md) | Preflight-Audit |
 

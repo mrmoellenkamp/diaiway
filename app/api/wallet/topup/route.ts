@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth"
 import { stripe } from "@/lib/stripe"
 
 const MIN_AMOUNT_CENTS = 2000 // 20 €
+const MAX_AMOUNT_CENTS = 10000 // 100 € (psychologische Grenze)
 
 /**
  * POST /api/wallet/topup
  * Erstellt eine Stripe-Checkout-Session für Wallet-Aufladung.
- * Body: { amountCents?: number } – frei wählbar, mindestens 20 €.
+ * Body: { amountCents?: number } – 20–100 €.
  */
 export async function POST(req: Request) {
   const session = await auth()
@@ -28,6 +29,13 @@ export async function POST(req: Request) {
       }
     }
   } catch { /* use default */ }
+
+  if (amountCents > MAX_AMOUNT_CENTS) {
+    return NextResponse.json(
+      { error: `Maximal ${MAX_AMOUNT_CENTS / 100} € pro Aufladung.` },
+      { status: 400 }
+    )
+  }
 
   try {
     const checkoutSession = await stripe.checkout.sessions.create({

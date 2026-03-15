@@ -30,8 +30,9 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Kategorien durchsuchen**: 11 Kategorien (Heimwerken, Freizeit & Hobby, Haus & Garten, etc.)
 - **Buchungen**: Termine mit Takumis buchen; **Video oder Voice**; max. 7 Tage im Voraus; Vorauszahlung (Stripe oder Wallet)
 - **Instant Connect**: Spontaner Anruf bei verfügbaren Takumis (ohne Terminbuchung); 60s Expiry bei keiner Antwort (Cron: `/api/cron/instant-request-cleanup`)
-- **Sessions**: Daily.co Video/Voice; 5 Min Handshake gratis, danach Zahlungsdialog (Stripe oder Wallet)
-- **Handshake-Logik**: &lt; 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
+- **Sessions (Scheduled)**: Daily.co Video/Voice; 5 Min Handshake gratis, danach Capture (Stripe oder Wallet)
+- **Handshake-Logik**: \< 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
+- **Instant-Call-Abrechnung**: Wallet post-session; **Erstkontakt: 5 Min gratis**, **Zweitkontakt: 30 Sek gratis** (`hasPaidBefore`-Logik)
 - **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
 - **Benachrichtigungen**: Buchungsbestätigungen; **löschbar mit Bestätigungsdialog**
 - **Nachrichten (Postfach)**: **Chat** (Direktnachrichten) und **Waymails** (E-Mail-ähnlich mit Betreff); **Posteingang** und **Postausgang**; Waymails/Chats/Nachrichten **löschbar mit Bestätigungsdialog**; Anhänge (Bilder, PDF) via Secure Upload; Waymail-Deep-Links (`/messages?waymail={id}`) mit callbackUrl nach Login
@@ -231,6 +232,7 @@ npx prisma studio
 | 5-Min Handshake | \< 5 Min Dauer → Release (Case A); ≥ 5 Min → Capture (Case B) |
 | Wallet | Atomar: `updateMany` mit `balance >= amount` + `decrement`; Balance-Guard |
 | Instant Cleanup | 60s ohne Takumi-Antwort → Status `instant_expired`, Payment-Release, Push/Waymail |
+| Instant-Abrechnung | Erstkontakt: 5 Min gratis; Zweitkontakt: 30 Sek gratis; Wallet post-session (`chargeInstantCallToWallet`) |
 | Wallet-Release-Cron | 24h nach Session-Ende: `processPendingCompletions` |
 
 ---
@@ -256,8 +258,7 @@ npx prisma studio
 | [docs/INDEX.md](docs/INDEX.md) | **Dokumentations-Index** – alle Docs auf einen Blick |
 | [README.md](README.md) | Übersicht, Setup, Features |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API-Übersicht |
-| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Session Activity, LogoutBackGuard |
-| [docs/HIDDEN-FEATURES-SUMMARY.md](docs/HIDDEN-FEATURES-SUMMARY.md) | Dokumentations-Gap-Analyse (Capacitor, Push, Instant Connect, Admin Finance, etc.) |
+| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Instant-Abrechnung, Session Activity, LogoutBackGuard |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor integriert) |
@@ -266,7 +267,6 @@ npx prisma studio
 | [docs/SECURE-FILE-EXCHANGE.md](docs/SECURE-FILE-EXCHANGE.md) | Sichere Datei-Übertragung |
 | [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance |
 | [docs/IOS-APP-STORE-COMPLIANCE.md](docs/IOS-APP-STORE-COMPLIANCE.md) | iOS App Store Compliance |
-| [docs/CHAT-PROTOKOLL-2025-03-06.md](docs/CHAT-PROTOKOLL-2025-03-06.md) | Chat-Protokoll |
 
 ---
 

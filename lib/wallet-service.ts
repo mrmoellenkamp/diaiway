@@ -252,13 +252,15 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 /**
  * Instant-Call: Belastet Shugyo-Wallet nach Session-Ende.
  * Kosten = (Dauer - kostenlose Phase) × Preis/Min. Erstellt Transaction AUTHORIZED.
+ * Erstkontakt: 5 Min gratis. Zweitkontakt (hasPaidBefore): 30 Sek gratis.
  */
 export async function chargeInstantCallToWallet(
   bookingId: string,
   durationMin: number,
-  pricePerMinuteCents: number
+  pricePerMinuteCents: number,
+  hasPaidBefore: boolean
 ): Promise<{ ok: boolean; amountCents?: number; error?: string }> {
-  const FREE_MIN = 0.5 // Instant Connect: immer 30 Sek gratis
+  const FREE_MIN = hasPaidBefore ? 0.5 : 5 // 30 Sek oder 5 Min gratis
   const billingMin = Math.max(0, durationMin - FREE_MIN)
   const amountCents = Math.round(billingMin * pricePerMinuteCents) || 0
 

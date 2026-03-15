@@ -273,7 +273,26 @@ Eingeloggte Nutzer sollen nach längerer Inaktivität automatisch ausgeloggt wer
 - **Middleware** (`middleware.ts`): Liest `LAST_ACTIVITY_COOKIE`; bei `elapsed >= INACTIVITY_TIMEOUT_SEC` (15 Min) → Cookie und Session-Token löschen, Redirect zu `/login?reason=timeout`
 - **SessionActivityProvider** (`components/session-activity-provider.tsx`): Client-seitiger Countdown; Nutzeraktivität (Klicks, Navigation) setzt Timer zurück; 60 Sek vor Ablauf erscheint Warnungs-Modal
 - **Heartbeat** (`POST /api/auth/heartbeat`): Während Video-Sessions alle 2 Min aufgerufen; Cookie wird aktualisiert → Session bleibt während Call aktiv
-- **lib/session-activity.ts**: `INACTIVITY_TIMEOUT_SEC = 15 * 60`, `INACTIVITY_WARNING_SEC = 60`
+- **lib/session-activity.ts**: `INACTIVITY_TIMEOUT_SEC = 15 * 60`, `INACTIVITY_WARNING_SEC = 60`, `TAKUMI_STALE_OFFLINE_SEC = 5 * 60`
+
+### Takumi-Präsenz-Heartbeat (5-Min-Regel)
+
+Takumis senden über `lib/session-activity.ts` regelmäßige Aktivitäts-Pings. Der Cron `experts-offline` (`app/api/cron/experts-offline/route.ts`) läuft minütlich und setzt alle Takumis auf `liveStatus: "offline"`, deren letzte Aktivität älter als `TAKUMI_STALE_OFFLINE_SEC` (5 Minuten) ist.
+
+```typescript
+// lib/session-activity.ts
+export const TAKUMI_STALE_OFFLINE_SEC = 5 * 60  // 5 Minuten
+
+// app/api/cron/experts-offline/route.ts
+const STALE_MS = TAKUMI_STALE_OFFLINE_SEC * 1000
+const staleThreshold = new Date(Date.now() - STALE_MS)
+await prisma.expert.updateMany({
+  where: { liveStatus: "available", lastActivity: { lt: staleThreshold } },
+  data: { liveStatus: "offline" },
+})
+```
+
+**Zusammenspiel**: Nutzer-Inaktivity-Timeout (15 Min) und Takumi-Präsenz-Timeout (5 Min) sind bewusst verschieden: Takumis müssen aktiv ansprechbar bleiben; Shugyo-Nutzer haben mehr Spielraum.
 
 ### LogoutBackGuard (BFCache-Schutz)
 
@@ -298,7 +317,73 @@ Expires: 0
 
 ---
 
-## 8. DB-Resilienz im Auth-Flow
+## 8. Instant-Call-Abrechnungslogik
+
+### Problem
+
+Instant Calls haben kein festes Preismodell im Voraus – der Nutzer weiß beim Anruf noch nicht, wie lang er spricht. Gleichzeitig soll ein **Erstgespräch** großzügiger behandelt werden als Folgegespräche.
+
+### Lösung: hasPaidBefore-Logik
+
+Nach Session-Ende (`PATCH /api/bookings/[id]`, `action: end-session`) wird die Wallet-Abrechnung ausgelöst:
+
+```typescript
+const hasPaidBefore = !!(await prisma.booking.findFirst({
+  where: {
+    userId: booking.userId,
+    expertId: booking.expertId,
+    paymentStatus: "paid",
+    id: { not: id },
+  },
+}))
+await chargeInstantCallToWallet(id, duration, pricePerMinuteCents, hasPaidBefore)
+```
+
+In `lib/wallet-service.ts`:
+
+```typescript
+const FREE_MIN = hasPaidBefore ? 0.5 : 5  // 30 Sek oder 5 Min gratis
+const billingMin = Math.max(0, durationMin - FREE_MIN)
+const amountCents = Math.round(billingMin * pricePerMinuteCents)
+```
+
+| Kontakt | Kostenlose Phase | Begründung |
+|---------|-----------------|------------|
+| **Erstkontakt** (`hasPaidBefore = false`) | 5 Minuten | Kennenlernen ohne Risiko |
+| **Zweitkontakt+** (`hasPaidBefore = true`) | 30 Sekunden | Kurzer Puffer, danach volle Abrechnung |
+
+### UI-Synchronisation
+
+`DailyCallContainer.tsx` (`calculateRemainingTime`) spiegelt exakt dieselbe Logik wider:
+
+```typescript
+const freePeriodSec = hasPaidBefore ? 30 : 5 * 60
+```
+
+Der Countdown im Call zeigt dem Nutzer korrekt an, ab wann Kosten entstehen.
+
+### Idempotenz bei Instant-Call-Abrechnung
+
+`chargeInstantCallToWallet` läuft innerhalb einer `prisma.$transaction`. Bereits abgerechnete Bookings (`paymentStatus: "paid"`) werden übersprungen – mehrfache Aufrufe (z. B. durch Retry bei Netzwerkfehler) sind sicher:
+
+```typescript
+// lib/wallet-service.ts
+const existing = await tx.booking.findUnique({ where: { id: bookingId }, select: { paymentStatus: true } })
+if (existing?.paymentStatus === "paid") return { ok: true }  // Idempotenz-Guard
+```
+
+### Abgrenzung zu Scheduled Sessions
+
+| Feature | Scheduled | Instant |
+|---------|-----------|---------|
+| Vorauszahlung | ✅ Stripe oder Wallet | ❌ (Wallet post-session) |
+| Kostenlose Phase | 5 Min (fix) | 5 Min Erstkontakt / 30 Sek Folge |
+| Abrechnung | Capture via Cron/Event | `chargeInstantCallToWallet` bei end-session |
+| Idempotenz | `paymentStatus`-Guard | `paymentStatus`-Guard in `$transaction` |
+
+---
+
+## 9. DB-Resilienz im Auth-Flow
 
 ### Problem
 
@@ -312,7 +397,7 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 
 ---
 
-## 9. Übersicht: Wo was lebt
+## 10. Übersicht: Wo was lebt
 
 | Mechanismus | Datei(en) |
 |-------------|-----------|
@@ -325,13 +410,20 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | ISR + revalidatePath | `app/(app)/categories/page.tsx`, `app/api/user/profile/route.ts`, `app/api/user/takumi-profile/route.ts` |
 | Image priority, Skeleton | `components/takumi-card.tsx`, `components/takumi-card-skeleton.tsx` |
 | Session Activity, Inactivity | `lib/session-activity.ts`, `components/session-activity-provider.tsx`, `components/session-timeout-warning.tsx`, `middleware.ts` |
+| Takumi-Präsenz (5-Min-Heartbeat) | `lib/session-activity.ts` (`TAKUMI_STALE_OFFLINE_SEC`), `app/api/cron/experts-offline/route.ts` |
 | LogoutBackGuard | `components/logout-back-guard.tsx` |
 | Cache-Control (geschützte Routen) | `middleware.ts` |
 | DB_ERROR Handling | `lib/auth.ts` (authorize), `app/login/page.tsx` |
+| Instant-Abrechnung (hasPaidBefore) | `lib/wallet-service.ts`, `app/api/bookings/[id]/route.ts`, `components/video-call/DailyCallContainer.tsx` |
+| Instant-Abrechnung Idempotenz | `lib/wallet-service.ts` (paymentStatus-Guard in `$transaction`) |
+| Video-Safety PRE_CHECK Gate | `app/api/safety/pre-check/route.ts`, `components/video-call/DailyCallContainer.tsx` |
+| Video-Safety Blitzlicht-Protokoll | `components/video-call/DailyCallContainer.tsx` (SNAPSHOT_DELAYS_MS, Hard-Stop 120s) |
+| DSGVO Cleanup (Safety-Blobs) | `app/api/cron/cleanup-safety-data/route.ts` |
+| WalletTransaction-Anonymisierung | `lib/anonymize-user.ts` (referenceId → null, metadata → null) |
 
 ---
 
-## 10. Umgebungsvariablen (Platzhalter)
+## 11. Umgebungsvariablen (Platzhalter)
 
 Keine echten Keys in dieser Dokumentation. Relevante Platzhalter:
 

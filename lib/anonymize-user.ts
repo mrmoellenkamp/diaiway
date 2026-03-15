@@ -65,7 +65,7 @@ export async function anonymizeUser(userId: string): Promise<
   const randomPassword = await bcrypt.hash(`anon_${userId}_${Date.now()}_${Math.random()}`, 10)
 
   await prisma.$transaction(async (tx) => {
-    // 1. Buchungen: User als Shugyo (Zahler)
+    // 1. Buchungen: User als Shugyo (Zahler) – userName/userEmail anonymisieren
     await tx.booking.updateMany({
       where: { userId },
       data: { userName: anonName, userEmail: anonEmail },
@@ -104,7 +104,19 @@ export async function anonymizeUser(userId: string): Promise<
       })
     }
 
-    // 6. User anonymisieren — Record bleibt (Wallet-Historie!)
+    // 6. WalletTransactions: personenbeziehbare Referenzen entfernen.
+    // amountCents + type bleiben für Buchhaltung (§ 147 AO). referenceId und
+    // metadata können Stripe-Session-IDs, E-Mail-Adressen oder interne Notizen
+    // enthalten → null / leeres Objekt (DSGVO Art. 5 Abs. 1 lit. c – Datenminimierung).
+    await tx.walletTransaction.updateMany({
+      where: { userId },
+      data: {
+        referenceId: null,
+        metadata: Prisma.DbNull,
+      },
+    })
+
+    // 7. User anonymisieren — Record bleibt (Wallet-Historie!)
     const anonUsernameValue = anonUsername(userId)
     await tx.user.update({
       where: { id: userId },

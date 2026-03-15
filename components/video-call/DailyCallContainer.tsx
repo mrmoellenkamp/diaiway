@@ -78,7 +78,7 @@ function calculateRemainingTime(
   frozenDurationMs = 0
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
-  const freePeriodSec = 30 // Instant Connect: immer 30 Sek gratis
+  const freePeriodSec = hasPaidBefore ? 30 : 5 * 60 // 30 Sek Zweitkontakt, 5 Min Erstkontakt
   const elapsedSec = (Date.now() - sessionStartMs - frozenDurationMs) / 1000
   const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
   const balanceMinutes = userBalanceCents / pricePerMinuteCents
@@ -144,11 +144,81 @@ export function DailyCallContainer({
   const [safetyCheck5, setSafetyCheck5] = useState(false)
   const [safetySubmitting, setSafetySubmitting] = useState(false)
 
-  const canJoin = !needsSafetyModal || safetyAccepted
+  // PRE_CHECK Gate (nur Video): Blitzlicht-Snapshot bei 0s muss safe sein
+  const [preCheckPassed, setPreCheckPassed] = useState(false)
+  const [preCheckLoading, setPreCheckLoading] = useState(false)
+  const [preCheckError, setPreCheckError] = useState<string | null>(null)
+
+  const canJoin =
+    (!needsSafetyModal || safetyAccepted) &&
+    (callMode !== "video" || preCheckPassed)
 
   useEffect(() => {
     if (safetyAcceptedAt) setSafetyAccepted(true)
   }, [safetyAcceptedAt])
+
+  // PRE_CHECK: Blitzlicht bei 0s (nur Video, nur wenn Safety bestätigt + localStream da)
+  const preCheckRanRef = useRef(false)
+  useEffect(() => {
+    if (callMode !== "video" || phase !== "LOBBY") {
+      if (callMode === "voice") setPreCheckPassed(true)
+      return
+    }
+    if (!safetyAccepted || !localStream) {
+      setPreCheckPassed(false)
+      preCheckRanRef.current = false
+      return
+    }
+    if (preCheckRanRef.current) return
+    preCheckRanRef.current = true
+    setPreCheckLoading(true)
+    setPreCheckError(null)
+    const t = setTimeout(async () => {
+      const videoEl = localVideoRef.current
+      if (!videoEl?.srcObject || videoEl.readyState < 2 || videoEl.videoWidth === 0) {
+        setPreCheckPassed(false)
+        setPreCheckError("Kamerabild noch nicht bereit. Bitte warte einen Moment.")
+        setPreCheckLoading(false)
+        preCheckRanRef.current = false
+        return
+      }
+      try {
+        const canvas = document.createElement("canvas")
+        const w = Math.min(videoEl.videoWidth, 640)
+        const h = Math.round((w / videoEl.videoWidth) * videoEl.videoHeight)
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          setPreCheckPassed(false)
+          return
+        }
+        ctx.drawImage(videoEl, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7)
+        const res = await fetch("/api/safety/pre-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, imageBase64: dataUrl }),
+        })
+        const data = await res.json()
+        if (data.safe) {
+          setPreCheckPassed(true)
+          setPreCheckError(null)
+        } else {
+          setPreCheckPassed(false)
+          setPreCheckError(data.reason ?? "Bildprüfung fehlgeschlagen.")
+          preCheckRanRef.current = false
+        }
+      } catch (e) {
+        setPreCheckPassed(false)
+        setPreCheckError(e instanceof Error ? e.message : "Prüfung fehlgeschlagen.")
+        preCheckRanRef.current = false
+      } finally {
+        setPreCheckLoading(false)
+      }
+    }, 800)
+    return () => clearTimeout(t)
+  }, [callMode, phase, safetyAccepted, localStream, bookingId])
 
   const handleSafetyConfirm = useCallback(async () => {
     if (!safetyCheck1 || !safetyCheck2 || !safetyCheck3 || !safetyCheck4 || !safetyCheck5) return
@@ -1164,8 +1234,9 @@ export function DailyCallContainer({
     return () => videoEl.removeEventListener("leavepictureinpicture", onLeave)
   }, [phase])
 
-  // --- Live-Monitoring: zufällige Snapshots → Vision API (nur Video, bei Safety-Einwilligung) ---
-  const snapshotIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // --- Live-Monitoring: Feste Intervalle 5s, 30s, 60s, 90s, 120s; Hard-Stop nach 120s ---
+  const SNAPSHOT_DELAYS_MS = [5, 30, 60, 90, 120].map((s) => s * 1000)
+  const snapshotTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
   useEffect(() => {
     if (phase !== "IN_CALL" || callMode !== "video" || !safetyAccepted) return
 
@@ -1209,21 +1280,14 @@ export function DailyCallContainer({
       }
     }
 
-    const scheduleNext = () => {
-      const delayMs = 45000 + Math.random() * 45000
-      snapshotIntervalRef.current = setTimeout(() => {
-        captureAndSend()
-        scheduleNext()
-      }, delayMs)
-    }
-
-    scheduleNext()
+    SNAPSHOT_DELAYS_MS.forEach((delayMs) => {
+      const id = setTimeout(captureAndSend, delayMs)
+      snapshotTimeoutsRef.current.push(id)
+    })
 
     return () => {
-      if (snapshotIntervalRef.current) {
-        clearTimeout(snapshotIntervalRef.current)
-        snapshotIntervalRef.current = null
-      }
+      snapshotTimeoutsRef.current.forEach((id) => clearTimeout(id))
+      snapshotTimeoutsRef.current = []
     }
   }, [phase, callMode, safetyAccepted, bookingId])
 
@@ -1356,7 +1420,23 @@ export function DailyCallContainer({
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleJoin} disabled={!canJoin} className="h-12">Beitreten</Button>
+            {callMode === "video" && preCheckError && (
+              <p className="text-sm text-destructive">{preCheckError}</p>
+            )}
+            <Button
+              onClick={handleJoin}
+              disabled={!canJoin || preCheckLoading}
+              className="h-12 gap-2"
+            >
+              {preCheckLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Sicherheitsprüfung...
+                </>
+              ) : (
+                "Beitreten"
+              )}
+            </Button>
             <Button variant="ghost" onClick={() => forceCleanupAndRedirect("Lobby-Abbrechen")}>
               Abbrechen
             </Button>

@@ -21,6 +21,7 @@ import { useI18n } from "@/lib/i18n"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const MIN_EUR = 20
+const MAX_EUR = 100 // Psychologische Grenze
 
 interface WalletTopupModalProps {
   open: boolean
@@ -58,6 +59,10 @@ export function WalletTopupModal({
     const amount = Number(amountEur)
     if (isNaN(amount) || amount < MIN_EUR) {
       setError(`Mindestens ${MIN_EUR} € erforderlich.`)
+      return
+    }
+    if (amount > MAX_EUR) {
+      setError(`Maximal ${MAX_EUR} € pro Aufladung.`)
       return
     }
     setLoading(true)
@@ -136,11 +141,11 @@ export function WalletTopupModal({
           {step === "amount" && (
             <div className="flex flex-col gap-4 py-2">
               <p className="text-sm text-muted-foreground">
-                Wähle den Betrag (mindestens {MIN_EUR} €):
+                Wähle den Betrag ({MIN_EUR}–{MAX_EUR} €):
               </p>
               <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  {[20, 50, 100, 200].map((val) => (
+                <div className="flex flex-wrap gap-2">
+                  {[20, 40, 60, 100].map((val) => (
                     <Button
                       key={val}
                       variant={amountEur === val ? "default" : "outline"}
@@ -157,11 +162,12 @@ export function WalletTopupModal({
                     type="number"
                     inputMode="decimal"
                     min={MIN_EUR}
+                    max={MAX_EUR}
                     step={1}
                     value={amountEur}
                     onChange={(e) => {
                       const v = parseFloat(e.target.value)
-                      setAmountEur(isNaN(v) ? MIN_EUR : Math.max(MIN_EUR, v))
+                      setAmountEur(isNaN(v) ? MIN_EUR : Math.max(MIN_EUR, Math.min(MAX_EUR, v)))
                       setError(null)
                     }}
                     className="w-24"
@@ -174,7 +180,7 @@ export function WalletTopupModal({
               )}
               <Button
                 onClick={startCheckout}
-                disabled={loading || amountEur < MIN_EUR}
+                disabled={loading || amountEur < MIN_EUR || amountEur > MAX_EUR}
                 className="w-full gap-2"
               >
                 {loading ? (
