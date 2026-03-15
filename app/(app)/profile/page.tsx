@@ -181,7 +181,7 @@ export default function ProfilePage() {
   }, [session, status, isTakumi])
 
   // Prefer username as profile name, then name
-  const userName = dbUsername ?? dbName || (session?.user as { username?: string | null })?.username ?? session?.user?.name || t("profile.userFallback")
+  const userName = (dbUsername ?? dbName) || ((session?.user as { username?: string | null })?.username ?? session?.user?.name) || t("profile.userFallback")
   const userEmail = dbEmail || session?.user?.email || ""
   const userImage = dbImage || session?.user?.image || ""
   const userInitials = userName
