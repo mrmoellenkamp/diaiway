@@ -246,10 +246,10 @@ export const POST = apiHandler(async (req) => {
             type: "booking_request",
             bookingId: booking.id,
             title: "Neue Buchungsanfrage",
-            body: `${(session.user as { username?: string | null }).username ?? session.user.name || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+            body: `${((session.user as { username?: string | null }).username ?? session.user.name) || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           },
         })
-        const displayName = (session.user as { username?: string | null }).username ?? session.user.name || "Ein Nutzer"
+        const displayName = ((session.user as { username?: string | null }).username ?? session.user.name) || "Ein Nutzer"
         const waymail = await createSystemWaymail({
           recipientId: expert.userId,
           subject: "Neue Buchungsanfrage",
