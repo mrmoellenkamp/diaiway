@@ -42,6 +42,7 @@ export async function GET(
           pendingBalance: true,
           refundPreference: true,
           invoiceData: true,
+          languages: true,
           customerNumber: true,
           isVerified: true,
           verificationSource: true,
@@ -176,7 +177,7 @@ export async function PATCH(
 
         const allowed = [
           "name", "email", "image", "role", "appRole", "status", "isBanned",
-          "skillLevel", "refundPreference", "invoiceData", "isVerified", "username",
+          "skillLevel", "refundPreference", "invoiceData", "languages", "isVerified", "username",
         ] as const
         const data: Record<string, unknown> = {}
         const { sanitizeInvoiceData } = await import("@/lib/security")
@@ -189,6 +190,10 @@ export async function PATCH(
           } else if (k === ("isVerified" as any)) {
             data.isVerified = !!body.user!.isVerified
             data.verificationSource = body.user!.isVerified ? "MANUAL" : "NONE"
+          } else if (k === "languages") {
+            const valid = ["de", "en", "es", "fr", "it"]
+            const arr = Array.isArray(body.user!.languages) ? body.user!.languages : []
+            data.languages = [...new Set(arr.filter((l: string) => valid.includes(String(l).toLowerCase())))]
           } else {
             // @ts-ignore - dynamische Keys
             data[k] = body.user![k]
