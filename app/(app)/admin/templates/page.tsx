@@ -170,8 +170,7 @@ export default function AdminTemplatesPage() {
             href="/admin"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="size-4" />
-            Zurück
+            <ArrowLeft className="size-5" />
           </Link>
           <Button
             variant="outline"

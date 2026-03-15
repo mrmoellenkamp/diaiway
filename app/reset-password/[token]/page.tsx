@@ -189,7 +189,7 @@ export default function ResetPasswordPage({
           href="/login"
           className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="size-3.5" />
+          <ArrowLeft className="size-5" />
           {t("reset.backToLogin")}
         </Link>
       </div>

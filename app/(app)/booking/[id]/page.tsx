@@ -86,7 +86,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
           <p className="text-sm text-muted-foreground">{t("booking.networkError")}</p>
           <Button variant="outline" onClick={() => router.back()} className="gap-2">
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-5" />
             {t("common.back")}
           </Button>
         </div>

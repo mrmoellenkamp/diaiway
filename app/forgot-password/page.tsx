@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
         href="/"
         className="absolute left-4 top-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-5" />
         <span className="hidden sm:inline">{t("common.startPage")}</span>
       </Link>
 
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
           href="/login"
           className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="size-3.5" />
+          <ArrowLeft className="size-5" />
           {t("forgot.backToLogin")}
         </Link>
       </div>
