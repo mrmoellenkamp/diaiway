@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -20,6 +20,7 @@ import { useI18n } from "@/lib/i18n"
 import {
   Calendar,
   CalendarClock,
+  CheckCircle2,
   CreditCard,
   FileText,
   Settings,
@@ -33,6 +34,7 @@ import {
   Loader2,
   Check,
   X,
+  XCircle,
   FolderOpen,
   Images,
   Eye,
@@ -122,6 +124,44 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [savingSkill, setSavingSkill] = useState(false)
+
+  // Username edit + availability check
+  const [isEditingUsername, setIsEditingUsername] = useState(false)
+  const [editUsername, setEditUsername] = useState("")
+  const [isSavingUsername, setIsSavingUsername] = useState(false)
+  type UCheckState = "idle" | "checking" | "available" | "taken" | "invalid"
+  const [usernameCheck, setUsernameCheck] = useState<UCheckState>("idle")
+  const [usernameReason, setUsernameReason] = useState("")
+  const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!isEditingUsername) return
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current)
+    const trimmed = editUsername.trim()
+    if (!trimmed || trimmed === dbUsername) {
+      setUsernameCheck("idle")
+      setUsernameReason("")
+      return
+    }
+    setUsernameCheck("checking")
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/user/check-username?username=${encodeURIComponent(trimmed)}`)
+        const data = await res.json()
+        if (data.available) {
+          setUsernameCheck("available")
+          setUsernameReason("")
+        } else {
+          const isFormat = data.reason && !data.reason.includes("vergeben") && !data.reason.includes("taken")
+          setUsernameCheck(isFormat ? "invalid" : "taken")
+          setUsernameReason(data.reason ?? "")
+        }
+      } catch {
+        setUsernameCheck("idle")
+      }
+    }, 500)
+    return () => { if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current) }
+  }, [editUsername, isEditingUsername, dbUsername])
 
   // Load full profile + booking stats + takumi isLive
   // Shugyo: use view=shugyo for spent/sessions. Takumi: use view=takumi for earnings/sessions.
@@ -270,6 +310,44 @@ export default function ProfilePage() {
       toast.error(t("common.networkError"))
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleSaveUsername() {
+    const trimmed = editUsername.trim()
+    if (!trimmed) {
+      toast.error(t("register.usernameInvalid"))
+      return
+    }
+    if (usernameCheck === "taken" || usernameCheck === "invalid") {
+      toast.error(usernameReason || t("register.usernameInvalid"))
+      return
+    }
+    if (usernameCheck === "checking") {
+      toast.info(t("register.usernameChecking"))
+      return
+    }
+    setIsSavingUsername(true)
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: trimmed }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setDbUsername(trimmed)
+        await updateSession({ username: trimmed })
+        setIsEditingUsername(false)
+        setUsernameCheck("idle")
+        toast.success(data.message)
+      } else {
+        toast.error(data.message || data.error)
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    } finally {
+      setIsSavingUsername(false)
     }
   }
 
@@ -428,6 +506,86 @@ export default function ProfilePage() {
               <StatBox label={isTakumi ? t("profile.earned") : t("profile.spent")} value={`${totalSpent}\u20AC`} />
               <div className="h-8 w-px bg-border" />
               <StatBox label={t("profile.favorites")} value={String(favorites.length)} />
+            </CardContent>
+          </Card>
+
+          {/* Benutzername */}
+          <Card className="border-border/60 gap-0 py-0">
+            <CardContent className="flex flex-col gap-3 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">{t("register.username")}</span>
+                {!isEditingUsername && (
+                  <button
+                    onClick={() => { setEditUsername(dbUsername ?? ""); setIsEditingUsername(true); setUsernameCheck("idle") }}
+                    className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <Edit3 className="size-3" />
+                    {t("profile.editProfile")}
+                  </button>
+                )}
+              </div>
+              {isEditingUsername ? (
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <Input
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value)}
+                      placeholder={t("register.usernamePlaceholder")}
+                      className={`h-10 rounded-xl pr-10 text-sm ${
+                        usernameCheck === "taken" || usernameCheck === "invalid"
+                          ? "border-destructive focus-visible:ring-destructive/30"
+                          : usernameCheck === "available"
+                          ? "border-green-500 focus-visible:ring-green-500/30"
+                          : ""
+                      }`}
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      autoFocus
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {usernameCheck === "checking" && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+                      {usernameCheck === "available" && <CheckCircle2 className="size-4 text-green-500" />}
+                      {(usernameCheck === "taken" || usernameCheck === "invalid") && <XCircle className="size-4 text-destructive" />}
+                    </span>
+                  </div>
+                  {usernameCheck === "available" && (
+                    <p className="text-[11px] text-green-600">{t("register.usernameAvailable")}</p>
+                  )}
+                  {(usernameCheck === "taken" || usernameCheck === "invalid") && usernameReason && (
+                    <p className="text-[11px] text-destructive">{usernameReason}</p>
+                  )}
+                  {usernameCheck === "idle" && (
+                    <p className="text-[11px] text-muted-foreground">{t("register.usernameHint")}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveUsername}
+                      disabled={isSavingUsername || usernameCheck === "checking" || usernameCheck === "taken" || usernameCheck === "invalid"}
+                      className="flex-1 rounded-xl"
+                    >
+                      {isSavingUsername ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+                      {t("profile.saveChanges")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setIsEditingUsername(false); setUsernameCheck("idle") }}
+                      className="rounded-xl"
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {dbUsername ? (
+                    <span className="font-mono text-foreground">@{dbUsername}</span>
+                  ) : (
+                    <span className="italic">{t("register.usernameHint")}</span>
+                  )}
+                </p>
+              )}
             </CardContent>
           </Card>
 
