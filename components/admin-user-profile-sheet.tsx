@@ -8,14 +8,82 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUpload } from "@/components/image-upload"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { toast } from "sonner"
 import {
   Loader2, User as UserIcon, Star, FolderOpen, Images, Trash2, Plus, Save,
+  Mail, ChevronDown, ChevronRight, FileText,
 } from "lucide-react"
 import { useCategories } from "@/lib/categories-i18n"
 
 function eur(cents: number) {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100)
+}
+
+function InvoiceDataEditor({
+  data,
+  onChange,
+}: {
+  data: InvoiceData | null | undefined
+  onChange: (d: InvoiceData) => void
+}) {
+  const d = data || { type: "privat" as const }
+  const isCompany = d.type === "unternehmen"
+  const update = (k: keyof InvoiceData, v: string | boolean | undefined) =>
+    onChange({ ...d, [k]: v })
+  return (
+    <div className="mt-2 space-y-2 rounded-lg border border-border/60 p-3">
+      <RadioGroup value={d.type || "privat"} onValueChange={(v) => update("type", v as "privat" | "unternehmen")} className="flex gap-4">
+        <label className="flex items-center gap-2 cursor-pointer text-xs">
+          <RadioGroupItem value="privat" />
+          Privat
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer text-xs">
+          <RadioGroupItem value="unternehmen" />
+          Unternehmen
+        </label>
+      </RadioGroup>
+      <div className="grid grid-cols-2 gap-2">
+        <Input placeholder="Name" value={d.fullName ?? ""} onChange={(e) => update("fullName", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="Straße" value={d.street ?? ""} onChange={(e) => update("street", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="Hausnr." value={d.houseNumber ?? ""} onChange={(e) => update("houseNumber", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="PLZ" value={d.zip ?? ""} onChange={(e) => update("zip", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="Ort" value={d.city ?? ""} onChange={(e) => update("city", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="Land" value={d.country ?? ""} onChange={(e) => update("country", e.target.value)} className="h-8 text-xs" />
+        <Input placeholder="E-Mail" value={d.email ?? ""} onChange={(e) => update("email", e.target.value)} className="h-8 text-xs col-span-2" />
+      </div>
+      {isCompany && (
+        <>
+          <Input placeholder="Firmenname" value={d.companyName ?? ""} onChange={(e) => update("companyName", e.target.value)} className="h-8 text-xs" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="USt-IdNr." value={d.vatId ?? ""} onChange={(e) => update("vatId", e.target.value)} className="h-8 text-xs" />
+            <Input placeholder="Steuernr." value={d.taxNumber ?? ""} onChange={(e) => update("taxNumber", e.target.value)} className="h-8 text-xs" />
+          </div>
+          <label className="flex items-center justify-between rounded border border-border/40 px-2 py-1.5 text-xs">
+            <span>Kleinunternehmer (§19 UStG)</span>
+            <Switch checked={!!d.kleinunternehmer} onCheckedChange={(v) => update("kleinunternehmer", v)} />
+          </label>
+        </>
+      )}
+    </div>
+  )
+}
+
+type InvoiceData = {
+  type?: "privat" | "unternehmen"
+  fullName?: string
+  street?: string
+  houseNumber?: string
+  zip?: string
+  city?: string
+  country?: string
+  email?: string
+  companyName?: string
+  vatId?: string
+  taxNumber?: string
+  kleinunternehmer?: boolean
 }
 
 type ProfileData = {
@@ -34,7 +102,8 @@ type ProfileData = {
     balance: number
     pendingBalance: number
     refundPreference: string
-    invoiceData: unknown
+    invoiceData: InvoiceData | null
+    languages: string[]
     customerNumber: string | null
     createdAt: string
   }
@@ -89,10 +158,14 @@ export function AdminUserProfileSheet({
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(false)
+  const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [editUser, setEditUser] = useState<ProfileData["user"] | null>(null)
   const [editExpert, setEditExpert] = useState<ProfileData["expert"] | null>(null)
   const [editShugyo, setEditShugyo] = useState<ProfileData["shugyoProjects"]>([])
   const [editTakumi, setEditTakumi] = useState<ProfileData["takumiPortfolio"]>([])
+  const [editAvailability, setEditAvailability] = useState<ProfileData["availability"]>(null)
+  const [availabilityJson, setAvailabilityJson] = useState("")
   const categories = useCategories()
 
   const load = useCallback(async () => {
@@ -103,10 +176,18 @@ export function AdminUserProfileSheet({
       const json = await res.json()
       if (res.ok) {
         setData(json)
-        setEditUser(json.user)
+        const u = json.user || {}
+        setEditUser({
+          ...u,
+          languages: Array.isArray(u.languages) ? u.languages : [],
+          invoiceData: u.invoiceData && typeof u.invoiceData === "object" ? u.invoiceData : null,
+        })
         setEditExpert(json.expert)
         setEditShugyo(json.shugyoProjects ?? [])
         setEditTakumi(json.takumiPortfolio ?? [])
+        const av = json.availability ?? null
+        setEditAvailability(av)
+        setAvailabilityJson(av ? JSON.stringify(av, null, 2) : "{}")
       } else {
         toast.error(json.error ?? "Fehler beim Laden")
       }
@@ -131,6 +212,8 @@ export function AdminUserProfileSheet({
         isBanned: editUser.isBanned,
         skillLevel: editUser.skillLevel || null,
         refundPreference: editUser.refundPreference,
+        languages: (editUser as { languages?: string[] }).languages ?? [],
+        invoiceData: (editUser as { invoiceData?: InvoiceData | null }).invoiceData ?? null,
       }
       if (!isAnonymized) {
         userPayload.username = editUser.username ?? undefined
@@ -169,6 +252,22 @@ export function AdminUserProfileSheet({
         .map((p) => p.id)
         .filter((id) => !takumiToSave.some((p) => p.id === id))
 
+      try {
+        const avParsed = JSON.parse(availabilityJson)
+        if (avParsed && typeof avParsed === "object") {
+          payload.availability = {
+            slots: avParsed.slots ?? {},
+            yearlyRules: Array.isArray(avParsed.yearlyRules) ? avParsed.yearlyRules : [],
+            exceptions: Array.isArray(avParsed.exceptions) ? avParsed.exceptions : [],
+            instantSlots: avParsed.instantSlots ?? {},
+          }
+        }
+      } catch {
+        toast.error("Verfügbarkeit: Ungültiges JSON.")
+        setSaving(false)
+        return
+      }
+
       const res = await fetch(`/api/admin/users/${userId}/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -184,6 +283,24 @@ export function AdminUserProfileSheet({
       }
     } catch { toast.error("Fehler beim Speichern") }
     finally { setSaving(false) }
+  }
+
+  async function handleSendPasswordReset() {
+    if (!userId) return
+    setSendingPasswordReset(true)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/send-password-reset`, { method: "POST" })
+      const json = await res.json()
+      if (res.ok) {
+        toast.success(json.message ?? "E-Mail gesendet.")
+      } else {
+        toast.error(json.error ?? "Fehler beim Senden.")
+      }
+    } catch {
+      toast.error("Fehler beim Senden.")
+    } finally {
+      setSendingPasswordReset(false)
+    }
   }
 
   function addShugyoProject() {
@@ -238,11 +355,12 @@ export function AdminUserProfileSheet({
         ) : (
           <div className="mt-6 flex flex-col gap-4">
             <Tabs defaultValue="user" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="user" className="text-[10px]">User</TabsTrigger>
                 <TabsTrigger value="expert" className="text-[10px]">Takumi</TabsTrigger>
                 <TabsTrigger value="shugyo" className="text-[10px]">Shugyo</TabsTrigger>
                 <TabsTrigger value="takumi" className="text-[10px]">Portfolio</TabsTrigger>
+                <TabsTrigger value="availability" className="text-[10px]">Verfügbarkeit</TabsTrigger>
               </TabsList>
 
               <TabsContent value="user" className="mt-4">
@@ -370,6 +488,60 @@ export function AdminUserProfileSheet({
                             <option value="PROFI">Profi</option>
                           </select>
                         </div>
+                        <div>
+                          <Label className="text-xs">Sprachen</Label>
+                          <div className="flex flex-wrap gap-2 mt-1.5">
+                            {(["de", "en", "es", "fr", "it"] as const).map((lang) => {
+                              const langs = (editUser as { languages?: string[] }).languages ?? []
+                              const isSelected = langs.includes(lang)
+                              return (
+                                <button
+                                  key={lang}
+                                  type="button"
+                                  onClick={() => {
+                                    const next = isSelected ? langs.filter((l) => l !== lang) : [...langs, lang]
+                                    setEditUser({ ...editUser, languages: next } as typeof editUser)
+                                  }}
+                                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                  }`}
+                                >
+                                  {lang.toUpperCase()}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <Collapsible open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+                          <CollapsibleTrigger className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                            {invoiceOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                            <FileText className="size-3.5" />
+                            Rechnungsdaten
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <InvoiceDataEditor
+                              data={(editUser as { invoiceData?: InvoiceData | null }).invoiceData}
+                              onChange={(d) => setEditUser({ ...editUser, invoiceData: d } as typeof editUser)}
+                            />
+                          </CollapsibleContent>
+                        </Collapsible>
+                        {!editUser.email?.endsWith("@anonymized.local") && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => handleSendPasswordReset()}
+                            disabled={sendingPasswordReset}
+                          >
+                            {sendingPasswordReset ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Mail className="size-4" />
+                            )}
+                            Passwort zurücksetzen (E-Mail senden)
+                          </Button>
+                        )}
                         <p className="text-[10px] text-muted-foreground">
                           Guthaben: {eur(editUser.balance)} · Pending: {eur(editUser.pendingBalance)}
                         </p>
@@ -517,6 +689,41 @@ export function AdminUserProfileSheet({
                           <span className="text-xs">verified</span>
                         </label>
                       </div>
+                      <div>
+                        <Label className="text-xs">Response-Zeit</Label>
+                        <select
+                          value={editExpert.responseTime ?? "< 5 Min"}
+                          onChange={(e) => setEditExpert({ ...editExpert, responseTime: e.target.value })}
+                          className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="< 5 Min">&lt; 5 Min</option>
+                          <option value="< 15 Min">&lt; 15 Min</option>
+                          <option value="< 1 Std">&lt; 1 Std</option>
+                          <option value="< 24 Std">&lt; 24 Std</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Social Links</Label>
+                        <div className="grid grid-cols-1 gap-1.5 mt-1">
+                          {(["instagram", "tiktok", "facebook", "youtube", "linkedin", "x", "website"] as const).map((key) => {
+                            const sl = (editExpert.socialLinks || {}) as Record<string, string>
+                            return (
+                              <Input
+                                key={key}
+                                placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
+                                value={sl[key] ?? ""}
+                                onChange={(e) =>
+                                  setEditExpert({
+                                    ...editExpert,
+                                    socialLinks: { ...sl, [key]: e.target.value },
+                                  })
+                                }
+                                className="h-8 text-xs"
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (
@@ -636,6 +843,26 @@ export function AdminUserProfileSheet({
                     {editTakumi.length === 0 && (
                       <p className="text-xs text-muted-foreground py-2">Keine Portfolio-Einträge.</p>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="availability" className="mt-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Verfügbarkeit (JSON)</CardTitle>
+                    <p className="text-[11px] text-muted-foreground">
+                      slots, yearlyRules, exceptions, instantSlots. Bei Speichern wird das JSON validiert.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <textarea
+                      value={availabilityJson}
+                      onChange={(e) => setAvailabilityJson(e.target.value)}
+                      rows={12}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
+                      spellCheck={false}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
