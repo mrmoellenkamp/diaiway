@@ -193,7 +193,7 @@ export const POST = apiHandler(async (req) => {
           expertName: expert.name,
           expertEmail,
           userId: session.user.id,
-          userName: (session.user as { username?: string | null }).username ?? session.user.name || "Nutzer",
+          userName: ((session.user as { username?: string | null }).username ?? session.user.name) || "Nutzer",
           userEmail: session.user.email || "",
           date,
           startTime,
@@ -222,7 +222,7 @@ export const POST = apiHandler(async (req) => {
       await sendBookingRequestEmail({
         to: expertEmail,
         takumiName: expert.name,
-        userName: (session.user as { username?: string | null }).username ?? session.user.name || "Nutzer",
+        userName: ((session.user as { username?: string | null }).username ?? session.user.name) || "Nutzer",
         userEmail: session.user.email || "",
         date,
         startTime,
