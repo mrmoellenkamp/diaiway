@@ -9,13 +9,16 @@ export const runtime = "nodejs"
 export async function GET() {
   try {
     const experts = await prisma.expert.findMany({
-      include: { user: { select: { appRole: true, isVerified: true } } },
+      include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
       orderBy: { rating: "desc" },
     })
-    // Nur aktive Takumis: Experten ohne User (Seed) ODER verknüpfter User hat appRole=takumi
-    const active = experts.filter(
-      (e) => !e.userId || (e.user?.appRole === "takumi")
-    )
+    // Nur aktive Takumis: Experten ohne User (Seed) ODER verknüpfter User hat appRole=takumi UND verifizierte E-Mail
+    const active = experts.filter((e) => {
+      if (!e.userId) return true
+      const u = e.user
+      if (!u || u.appRole !== "takumi") return false
+      return !!u.emailConfirmedAt
+    })
 
     const now = Date.now()
     const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt

@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { sendVerificationEmail } from "@/lib/email"
 import { sendWelcomeWaymail } from "@/lib/onboarding"
 import { generateFallbackUsername } from "@/app/actions/username"
+
+const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
 
 export const runtime = "nodejs"
 
@@ -99,6 +103,9 @@ export async function POST(req: Request) {
         username = await generateFallbackUsername(name)
       }
     }
+    const token = crypto.randomBytes(32).toString("hex")
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
+
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
@@ -108,9 +115,15 @@ export async function POST(req: Request) {
         role: "user",
         appRole: "shugyo",
         favorites: [],
+        emailVerificationToken: token,
+        emailVerificationExpiry: expiry,
       },
     })
 
+    const verifyUrl = `${baseUrl}/api/auth/verify-email/${token}`
+    sendVerificationEmail({ to: normalizedEmail, name: name.trim(), verifyUrl }).catch((err) =>
+      console.error("[register] Verification email failed:", err)
+    )
     sendWelcomeWaymail(user.id).catch(() => {})
 
     return NextResponse.json(
