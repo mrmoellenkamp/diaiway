@@ -520,7 +520,7 @@ export default function ProfilePage() {
                     className="flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <Edit3 className="size-3" />
-                    {t("profile.editProfile")}
+                    {t("profile.editUsername")}
                   </button>
                 )}
               </div>

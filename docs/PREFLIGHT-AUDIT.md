@@ -33,7 +33,7 @@
 
 ## 2. Cron Security
 
-All 4 cron routes enforce `Authorization: Bearer <CRON_SECRET>`:
+All 5 cron routes enforce `Authorization: Bearer <CRON_SECRET>`:
 
 | Route | Auth Check | Status |
 |-------|------------|--------|
@@ -41,6 +41,7 @@ All 4 cron routes enforce `Authorization: Bearer <CRON_SECRET>`:
 | `/api/cron/experts-offline` | `CRON_SECRET` + `Bearer` (GET & POST) | ✅ |
 | `/api/cron/instant-request-cleanup` | `CRON_SECRET` + `Bearer` | ✅ |
 | `/api/cron/daily-ghost-sessions` | `CRON_SECRET` or `DAILY_GHOST_SECRET` + `Bearer` | ✅ |
+| `/api/cron/cleanup-safety-data` | `CRON_SECRET` + `Bearer` | ✅ |
 
 - Missing `CRON_SECRET` → 503
 - Wrong or missing header → 401
