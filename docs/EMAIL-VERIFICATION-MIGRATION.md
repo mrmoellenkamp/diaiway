@@ -25,5 +25,5 @@ npx tsx scripts/grandfather-email-verification.ts
 
 Nach der Migration in **`app/api/takumis/route.ts`** und **`lib/takumis-server.ts`**:
 
-- `include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } }`
-- Filter: `return u && u.appRole === "takumi" && !!u.emailConfirmedAt`
+1. In `include.user.select` ergänzen: `emailConfirmedAt: true`
+2. Filter anpassen: `return u && u.appRole === "takumi" && !!u.emailConfirmedAt`
