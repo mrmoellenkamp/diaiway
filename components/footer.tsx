@@ -3,16 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useI18n } from "@/lib/i18n"
-import {
-  Compass,
-  HelpCircle,
-  Shield,
-  Mail,
-  FileText,
-  BookOpen,
-  Sparkles,
-  Heart,
-} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const HIDDEN_ON = ["/", "/login", "/register", "/signup", "/onboarding", "/session", "/booking"]
@@ -36,7 +26,8 @@ export function Footer() {
     pathname.startsWith("/dashboard")
 
   const colClass = "flex flex-col gap-3"
-  const linkClass = "text-xs text-muted-foreground/80 transition-colors hover:text-foreground flex items-center gap-2"
+  const headerClass = "text-sm font-semibold text-foreground"
+  const linkClass = "text-xs text-muted-foreground/80 transition-colors hover:text-foreground block"
 
   return (
     <footer
@@ -49,16 +40,10 @@ export function Footer() {
       <div className="mx-auto max-w-lg px-4 py-8">
         {/* 4-column grid: Entdecken | Support | Legal | Mission */}
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {/* 1. Entdecken (Brand) */}
+          {/* 1. Entdecken */}
           <div className={colClass}>
-            <div className="flex items-center gap-2">
-              <Compass className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
-                {t("footer.discover")}
-              </span>
-            </div>
+            <span className={headerClass}>{t("footer.discover")}</span>
             <Link href="/how-it-works" className={linkClass}>
-              <Sparkles className="size-3.5" />
               {t("footer.howItWorks")}
             </Link>
             <Link href="/categories" className={linkClass}>
@@ -69,37 +54,24 @@ export function Footer() {
             </Link>
           </div>
 
-          {/* 2. Support (User-Hilfe) */}
+          {/* 2. Support */}
           <div className={colClass}>
-            <div className="flex items-center gap-2">
-              <HelpCircle className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
-                {t("footer.support")}
-              </span>
-            </div>
+            <span className={headerClass}>{t("footer.support")}</span>
             <Link href="/help" className={linkClass}>
-              <BookOpen className="size-3.5" />
               {t("footer.helpSupport")}
             </Link>
             <Link href="/help#faq" className={linkClass}>
               {t("footer.faq")}
             </Link>
             <Link href="/help#ticket" className={linkClass}>
-              <Mail className="size-3.5" />
               {t("footer.supportTicket")}
             </Link>
           </div>
 
-          {/* 3. Legal (Sicherheit) */}
+          {/* 3. Legal */}
           <div className={colClass}>
-            <div className="flex items-center gap-2">
-              <Shield className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
-                {t("footer.legal")}
-              </span>
-            </div>
+            <span className={headerClass}>{t("footer.legal")}</span>
             <Link href="/legal/impressum" className={linkClass}>
-              <FileText className="size-3.5" />
               {t("footer.imprint")}
             </Link>
             <Link href="/legal/datenschutz" className={linkClass}>
@@ -110,22 +82,13 @@ export function Footer() {
             </Link>
           </div>
 
-          {/* 4. Mission (Social / Newsletter) */}
+          {/* 4. Mission */}
           <div className={colClass}>
-            <div className="flex items-center gap-2">
-              <Heart className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
-                {t("footer.mission")}
-              </span>
-            </div>
+            <span className={headerClass}>{t("footer.mission")}</span>
             <p className="text-xs text-muted-foreground/80 leading-relaxed">
               {t("footer.missionText")}
             </p>
-            <a
-              href="mailto:kontakt@diaiway.com"
-              className={linkClass}
-            >
-              <Mail className="size-3.5" />
+            <a href="mailto:kontakt@diaiway.com" className={linkClass}>
               {t("footer.newsletterContact")}
             </a>
           </div>
