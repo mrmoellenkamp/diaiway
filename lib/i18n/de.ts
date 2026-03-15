@@ -149,6 +149,13 @@ const de = {
   "register.errorSignIn": "Konto erstellt, aber Anmeldung fehlgeschlagen. Bitte manuell anmelden.",
   "register.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "register.success": "Konto erstellt! Willkommen bei diAiway.",
+  "register.username": "Benutzername (optional)",
+  "register.usernamePlaceholder": "z. B. max_mustermann",
+  "register.usernameHint": "3–30 Zeichen, nur Buchstaben, Ziffern und _",
+  "register.usernameChecking": "Wird geprüft…",
+  "register.usernameAvailable": "Verfügbar",
+  "register.usernameTaken": "Bereits vergeben",
+  "register.usernameInvalid": "Ungültiger Benutzername",
 
   // Forgot Password
   "forgot.title": "Passwort vergessen?",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -12,7 +12,7 @@ import { useApp } from "@/lib/app-context"
 import { toast } from "sonner"
 import type { UserRole } from "@/lib/types"
 import { Suspense } from "react"
-import { ArrowLeft, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, UserPlus, XCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
@@ -86,6 +86,7 @@ function RegisterForm() {
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(presetRole)
@@ -93,6 +94,40 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+
+  // Username availability check
+  type CheckState = "idle" | "checking" | "available" | "taken" | "invalid"
+  const [usernameCheck, setUsernameCheck] = useState<CheckState>("idle")
+  const [usernameReason, setUsernameReason] = useState("")
+  const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current)
+    if (!username.trim()) {
+      setUsernameCheck("idle")
+      setUsernameReason("")
+      return
+    }
+    setUsernameCheck("checking")
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/user/check-username?username=${encodeURIComponent(username.trim())}`)
+        const data = await res.json()
+        if (data.available) {
+          setUsernameCheck("available")
+          setUsernameReason("")
+        } else {
+          // Distinguish format error from taken
+          const isFormat = data.reason && !data.reason.includes("vergeben") && !data.reason.includes("taken")
+          setUsernameCheck(isFormat ? "invalid" : "taken")
+          setUsernameReason(data.reason ?? "")
+        }
+      } catch {
+        setUsernameCheck("idle")
+      }
+    }, 500)
+    return () => { if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current) }
+  }, [username])
 
   // Honeypot ref — bots fill this, humans don't
   const honeypotRef = useRef<HTMLInputElement>(null)
@@ -107,6 +142,14 @@ function RegisterForm() {
     }
     if (!name || !email || !password || !confirmPassword) {
       setError(t("register.errorEmpty"))
+      return
+    }
+    if (username.trim() && (usernameCheck === "taken" || usernameCheck === "invalid")) {
+      setError(usernameReason || t("register.usernameInvalid"))
+      return
+    }
+    if (username.trim() && usernameCheck === "checking") {
+      setError(t("register.usernameChecking"))
       return
     }
     if (password.length < 8) {
@@ -131,6 +174,7 @@ function RegisterForm() {
           name: name.trim(),
           email: email.toLowerCase().trim(),
           password,
+          username: username.trim() || undefined,
           // Honeypot value — empty for real users
           _hp: honeypotRef.current?.value ?? "",
         }),
@@ -204,6 +248,43 @@ function RegisterForm() {
             autoComplete="name"
             required
           />
+        </div>
+
+        {/* Username (optional) */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="reg-username">{t("register.username")}</Label>
+          <div className="relative">
+            <Input
+              id="reg-username"
+              placeholder={t("register.usernamePlaceholder")}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className={`h-12 rounded-xl pr-10 ${
+                usernameCheck === "taken" || usernameCheck === "invalid"
+                  ? "border-destructive focus-visible:ring-destructive/30"
+                  : usernameCheck === "available"
+                  ? "border-green-500 focus-visible:ring-green-500/30"
+                  : ""
+              }`}
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {usernameCheck === "checking" && <Loader2 className="size-4 animate-spin" />}
+              {usernameCheck === "available" && <CheckCircle2 className="size-4 text-green-500" />}
+              {(usernameCheck === "taken" || usernameCheck === "invalid") && <XCircle className="size-4 text-destructive" />}
+            </span>
+          </div>
+          {usernameCheck === "available" && (
+            <p className="text-[11px] text-green-600">{t("register.usernameAvailable")}</p>
+          )}
+          {(usernameCheck === "taken" || usernameCheck === "invalid") && usernameReason && (
+            <p className="text-[11px] text-destructive">{usernameReason}</p>
+          )}
+          {usernameCheck === "idle" && (
+            <p className="text-[11px] text-muted-foreground">{t("register.usernameHint")}</p>
+          )}
         </div>
 
         {/* E-Mail */}
