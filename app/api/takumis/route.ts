@@ -8,26 +8,15 @@ export const runtime = "nodejs"
 
 export async function GET() {
   try {
-    let experts: Awaited<ReturnType<typeof prisma.expert.findMany>>
-    try {
-      experts = await prisma.expert.findMany({
-        include: { user: { select: { appRole: true, isVerified: true, emailConfirmedAt: true } } },
-        orderBy: { rating: "desc" },
-      })
-    } catch (colErr: unknown) {
-      if ((colErr as { code?: string })?.code === "P2022") {
-        experts = await prisma.expert.findMany({
-          include: { user: { select: { appRole: true, isVerified: true } } },
-          orderBy: { rating: "desc" },
-        })
-      } else throw colErr
-    }
-    const hasEmailCheck = experts[0]?.user && "emailConfirmedAt" in experts[0].user
+    const experts = await prisma.expert.findMany({
+      include: { user: { select: { appRole: true, isVerified: true } } },
+      orderBy: { rating: "desc" },
+    })
+    // Ohne emailConfirmedAt (Spalte fehlt vor Migration) – nach Migration hinzufügen
     const active = experts.filter((e) => {
       if (!e.userId) return true
       const u = e.user
-      if (!u || u.appRole !== "takumi") return false
-      return hasEmailCheck ? !!(u as { emailConfirmedAt?: Date }).emailConfirmedAt : true
+      return u && u.appRole === "takumi"
     })
 
     const now = Date.now()
