@@ -161,6 +161,7 @@ const de = {
 
   // Forgot Password
   "forgot.title": "Passwort vergessen?",
+  "verify.title": "E-Mail bestätigen",
   "forgot.desc": "Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen.",
   "forgot.descSent": "Prüfe dein E-Mail-Postfach und klicke auf den Link.",
   "forgot.emailLabel": "E-Mail-Adresse",

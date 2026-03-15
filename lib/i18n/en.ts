@@ -161,6 +161,7 @@ const en = {
 
   // Forgot Password
   "forgot.title": "Forgot password?",
+  "verify.title": "Verify email",
   "forgot.desc": "Enter your email address and we'll send you a reset link.",
   "forgot.descSent": "Check your email inbox and click the link.",
   "forgot.emailLabel": "Email address",
