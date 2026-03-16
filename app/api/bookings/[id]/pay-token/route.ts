@@ -89,8 +89,8 @@ export async function GET(
       valid: true,
       bookingId,
       userId,
-      takumiId: booking.takumiId,
-      priceInCents: booking.totalPrice ? Math.round(booking.totalPrice * 100) : 0,
+      expertId: booking.expertId,
+      priceInCents: booking.totalPrice ? Math.round(Number(booking.totalPrice) * 100) : 0,
     })
   } catch {
     return NextResponse.json({ error: "Ungültiger Token." }, { status: 400 })

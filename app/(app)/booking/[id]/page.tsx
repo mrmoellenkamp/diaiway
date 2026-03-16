@@ -29,7 +29,6 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params)
   const { t } = useI18n()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const { takumis, isLoading: isTakumisLoading, error: takumisError, mutate: mutateTakumis } = useTakumis()
   const takumi = takumis.find((tk) => tk.id === id)

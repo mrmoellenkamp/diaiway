@@ -67,15 +67,15 @@ export async function POST(
     }
   }
 
-  const { takumiId, totalPrice } = booking
-  const priceInCents = totalPrice ? Math.round(totalPrice * 100) : 0
+  const { expertId, totalPrice } = booking
+  const priceInCents = totalPrice ? Math.round(Number(totalPrice) * 100) : 0
 
-  // Takumi-Name holen
-  const takumi = await prisma.takumi.findUnique({
-    where: { id: takumiId },
+  // Experten-Name holen
+  const expert = await prisma.expert.findUnique({
+    where: { id: expertId },
     select: { name: true },
   })
-  const takumiName = takumi?.name ?? "Experte"
+  const takumiName = expert?.name ?? "Experte"
 
   const durationMin = (() => {
     if (booking.startTime && booking.endTime) {
