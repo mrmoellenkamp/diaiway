@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params)
   const { t } = useI18n()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isAppSource = searchParams.get("source") === "app"
   const { data: session } = useSession()
   const { takumis, isLoading: isTakumisLoading, error: takumisError, mutate: mutateTakumis } = useTakumis()
   const takumi = takumis.find((tk) => tk.id === id)
@@ -222,7 +224,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               >
                 <ArrowLeft className="size-5" />
               </Button>
-            ) : (
+            ) : !isAppSource ? (
               <Button
                 variant="ghost"
                 size="icon"
@@ -232,7 +234,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               >
                 <ArrowLeft className="size-5" />
               </Button>
-            )}
+            ) : null}
           <h1 className="text-lg font-bold text-foreground">
             {step === "checkout" ? t("handshake.paymentTitle") : t("booking.title")}
           </h1>
@@ -257,7 +259,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               onSuccess={() => {
                 import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
                 toast.success(t("booking.successTitle"))
-                window.location.href = "/sessions?tab=upcoming"
+                if (isAppSource) {
+                  // Deep Link zurück zur App — DeepLinkHandler schließt den Browser
+                  window.location.href = `diaiway://booking-confirmed/${bookingIdForPayment}`
+                } else {
+                  window.location.href = "/sessions?tab=upcoming"
+                }
               }}
               onError={(err) => {
                 toast.error(err)

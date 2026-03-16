@@ -13,6 +13,7 @@ const config: CapacitorConfig = {
     url: "https://www.diaiway.com",
     allowNavigation: ["diaiway.com", "www.diaiway.com", "*.diaiway.com", "*.vercel.app", "*.blob.vercel-storage.com"],
     errorPath: "error.html",
+    iosScheme: "diaiway",
   },
   plugins: {
     SplashScreen: {

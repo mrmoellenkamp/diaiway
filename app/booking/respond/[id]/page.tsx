@@ -29,6 +29,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   const searchParams = useSearchParams()
   const token  = searchParams.get("token")  || ""
   const action = searchParams.get("action") as Action
+  const isAppSource = searchParams.get("source") === "app"
 
   const [phase,   setPhase]   = useState<Phase>("loading")
   const [booking, setBooking] = useState<BookingInfo | null>(null)
@@ -139,12 +140,23 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
                   {error || "Der Nutzer wurde per E-Mail benachrichtigt."}
                 </p>
               </div>
-              <Link
-                href="/sessions"
-                className="flex items-center gap-2 rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition-colors"
-              >
-                Zum Dashboard <ArrowRight className="size-4" />
-              </Link>
+              {isAppSource ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition-colors"
+                  onClick={() => {
+                    window.location.href = `diaiway://booking-confirmed/${id}`
+                  }}
+                >
+                  Zurück zur App <ArrowRight className="size-4" />
+                </button>
+              ) : (
+                <Link
+                  href="/sessions"
+                  className="flex items-center gap-2 rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition-colors"
+                >
+                  Zum Dashboard <ArrowRight className="size-4" />
+                </Link>
+              )}
             </div>
           )}
 
