@@ -204,7 +204,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             if (tokenData.token) {
               const payUrl = `https://www.diaiway.com/pay/${newBookingId}?token=${encodeURIComponent(tokenData.token)}`
               const { Browser } = await import("@capacitor/browser")
-              await Browser.open({ url: payUrl, presentationStyle: "popover" })
+              await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
               // App wartet auf Deep Link diaiway://booking-confirmed — DeepLinkHandler übernimmt
             } else {
               // Fallback: normaler Checkout in der App

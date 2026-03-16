@@ -134,7 +134,7 @@ export function WalletTopupModal({
           onOpenChange(false)
           const payUrl = `https://www.diaiway.com/pay/wallet?token=${encodeURIComponent(tokenData.token)}`
           const { Browser } = await import("@capacitor/browser")
-          await Browser.open({ url: payUrl, presentationStyle: "popover" })
+          await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
           // DeepLinkHandler fängt diaiway://wallet-topup-confirmed ab
         } else {
           setError(tokenData.error || "Checkout konnte nicht gestartet werden.")
