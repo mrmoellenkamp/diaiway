@@ -702,7 +702,7 @@ const es = {
   "booking.feeRetained": "{fee} retenido",
   "booking.start": "Iniciar",
   "booking.join": "Unirse",
-  "booking.bookButton": "Reservar · {price}€",
+  "booking.bookButton": "Reservar y pagar · {price}€",
   "booking.bookingInProgress": "Reservando...",
   "booking.selectAppointmentError": "Por favor selecciona una cita.",
   "booking.pastSlotError": "Este horario está en el pasado y no puede reservarse.",

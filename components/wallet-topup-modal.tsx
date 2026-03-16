@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { Capacitor } from "@capacitor/core"
 import {
   Dialog,
   DialogContent,
@@ -120,6 +121,27 @@ export function WalletTopupModal({
     setLoading(true)
     setError(null)
     try {
+      if (Capacitor.isNativePlatform()) {
+        // Auf iOS: Token holen und Stripe im In-App-Browser öffnen
+        const tokenRes = await fetch("/api/wallet/topup/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amountCents: Math.round(amount * 100) }),
+          credentials: "include",
+        })
+        const tokenData = await tokenRes.json()
+        if (tokenData.token) {
+          onOpenChange(false)
+          const payUrl = `https://www.diaiway.com/pay/wallet?token=${encodeURIComponent(tokenData.token)}`
+          const { Browser } = await import("@capacitor/browser")
+          await Browser.open({ url: payUrl, presentationStyle: "popover" })
+          // DeepLinkHandler fängt diaiway://wallet-topup-confirmed ab
+        } else {
+          setError(tokenData.error || "Checkout konnte nicht gestartet werden.")
+        }
+        return
+      }
+
       const res = await fetch("/api/wallet/topup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

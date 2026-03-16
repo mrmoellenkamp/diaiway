@@ -702,7 +702,7 @@ const en = {
   "booking.feeRetained": "{fee} retained",
   "booking.start": "Start",
   "booking.join": "Join",
-  "booking.bookButton": "Book now · {price}€",
+  "booking.bookButton": "Book & pay securely · {price}€",
   "booking.bookingInProgress": "Booking...",
   "booking.selectAppointmentError": "Please select an appointment.",
   "booking.pastSlotError": "This time slot is in the past and cannot be booked.",

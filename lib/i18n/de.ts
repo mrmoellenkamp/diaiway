@@ -707,7 +707,7 @@ const de = {
   "booking.feeRetained": "{fee} einbehalten",
   "booking.start": "Starten",
   "booking.join": "Beitreten",
-  "booking.bookButton": "Verbindlich buchen · {price}€",
+  "booking.bookButton": "Buchen & sicher bezahlen · {price}€",
   "booking.bookingInProgress": "Wird gebucht...",
   "booking.selectAppointmentError": "Bitte wähle einen Termin aus.",
   "booking.pastSlotError": "Dieser Termin liegt in der Vergangenheit und kann nicht gebucht werden.",

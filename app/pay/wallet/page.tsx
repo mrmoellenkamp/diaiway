@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   EmbeddedCheckout,
@@ -11,45 +11,49 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-function PayPageInner({ bookingId }: { bookingId: string }) {
+function WalletPayInner() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token") ?? ""
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading")
   const [errorMsg, setErrorMsg] = useState("")
-  const [polling, setPolling] = useState(false)
 
-  // Ref-Wrapper für stabile onComplete-Referenz
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
   const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
 
-  const checkPayment = async (): Promise<boolean> => {
-    try {
-      const res = await fetch(`/api/pay/${bookingId}?token=${encodeURIComponent(token)}`)
-      const data = await res.json()
-      if (data.status === "paid") {
-        setPolling(false)
-        setStatus("success")
-        // Deep Link zurück zur App
-        setTimeout(() => {
-          window.location.href = `diaiway://booking-confirmed/${bookingId}`
-        }, 1500)
-        return true
+  const confirmAndRedirect = async () => {
+    if (!sessionId) return
+    for (let i = 0; i < 8; i++) {
+      try {
+        const res = await fetch("/api/wallet/topup/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        })
+        const data = await res.json()
+        if (data.ok) {
+          setStatus("success")
+          setTimeout(() => {
+            window.location.href = "diaiway://wallet-topup-confirmed"
+          }, 1500)
+          return
+        }
+        if (data.status !== "pending") break
+      } catch {
+        // retry
       }
-    } catch {
-      // weiter pollen
+      await new Promise((r) => setTimeout(r, 1000))
     }
-    return false
+    setStatus("success")
+    setTimeout(() => {
+      window.location.href = "diaiway://wallet-topup-confirmed"
+    }, 1500)
   }
 
   onCompleteRef.current = async () => {
-    for (let i = 0; i < 5; i++) {
-      const done = await checkPayment()
-      if (done) return
-      if (i < 4) await new Promise((r) => setTimeout(r, 500))
-    }
-    // Polling übernimmt
+    await confirmAndRedirect()
   }
 
   const options = useMemo(
@@ -58,19 +62,19 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
   )
 
   useEffect(() => {
-    if (!token || !bookingId) {
+    if (!token) {
       setStatus("error")
       setErrorMsg("Ungültiger Aufruf.")
       return
     }
 
-    fetch(`/api/pay/${bookingId}?token=${encodeURIComponent(token)}`, { method: "POST" })
+    fetch(`/api/wallet/topup?token=${encodeURIComponent(token)}`, { method: "POST" })
       .then((r) => r.json())
       .then((data) => {
         if (data.clientSecret) {
           setClientSecret(data.clientSecret)
+          setSessionId(data.sessionId ?? null)
           setStatus("ready")
-          setPolling(true)
         } else {
           setStatus("error")
           setErrorMsg(data.error ?? "Checkout konnte nicht gestartet werden.")
@@ -80,16 +84,7 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
         setStatus("error")
         setErrorMsg("Netzwerkfehler. Bitte versuche es erneut.")
       })
-  }, [bookingId, token])
-
-  useEffect(() => {
-    if (!polling) return
-    const interval = setInterval(async () => {
-      const done = await checkPayment()
-      if (done) clearInterval(interval)
-    }, 1500)
-    return () => clearInterval(interval)
-  }, [polling])
+  }, [token])
 
   return (
     <div className="min-h-screen bg-white">
@@ -118,9 +113,9 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
             <CheckCircle2 className="size-8 text-emerald-600" />
           </div>
           <div>
-            <p className="text-lg font-bold text-stone-900">Zahlung erfolgreich!</p>
+            <p className="text-lg font-bold text-stone-900">Wallet aufgeladen!</p>
             <p className="mt-1 text-sm text-stone-500">
-              Ihre Zahlung wurde sicher durchgeführt und Sie werden in Ihre Buchungsübersicht weitergeleitet.
+              Dein Guthaben wurde erfolgreich aufgeladen. Du wirst zurück zur App weitergeleitet.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -143,15 +138,14 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
   )
 }
 
-export default function PayPage({ params }: { params: Promise<{ bookingId: string }> }) {
-  const { bookingId } = use(params)
+export default function WalletPayPage() {
   return (
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="size-8 animate-spin text-emerald-700" />
       </div>
     }>
-      <PayPageInner bookingId={bookingId} />
+      <WalletPayInner />
     </Suspense>
   )
 }

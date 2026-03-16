@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Capacitor } from "@capacitor/core"
+import { toast } from "sonner"
 
 /**
  * Deep-Link-Handler: Leitet Links zu diaiway.com/* direkt in die App weiter.
@@ -25,7 +26,19 @@ export function DeepLinkHandler() {
         if (url.startsWith("diaiway://booking-confirmed")) {
           const { Browser } = await import("@capacitor/browser")
           await Browser.close()
+          import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
+          toast.success("Ihre Zahlung wurde sicher durchgeführt. Sie werden in Ihre Buchungsübersicht weitergeleitet.")
           router.push("/sessions?tab=upcoming")
+          return
+        }
+
+        // wallet-topup-confirmed Deep Link vom In-App-Browser
+        if (url.startsWith("diaiway://wallet-topup-confirmed")) {
+          const { Browser } = await import("@capacitor/browser")
+          await Browser.close()
+          import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
+          toast.success("Ihr Wallet wurde erfolgreich aufgeladen!")
+          router.push("/profile/finances")
           return
         }
 
