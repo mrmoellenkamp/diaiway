@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
@@ -32,6 +32,10 @@ export function SessionCheckout({
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
 
+  // Ref-Wrapper: stabile Funktionsidentität für onComplete
+  const onCompleteRef = useRef<() => Promise<void>>(async () => {})
+  const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
+
   const checkPayment = async () => {
     try {
       const result = await verifySessionPayment(bookingId)
@@ -51,8 +55,8 @@ export function SessionCheckout({
     return false
   }
 
-  // Stripe onComplete: Sofort prüfen, wenn Zahlung abgeschlossen (wie BookingCheckout)
-  const handleComplete = async () => {
+  // Ref immer aktuell halten
+  onCompleteRef.current = async () => {
     for (let i = 0; i < 5; i++) {
       try {
         const result = await verifySessionPayment(bookingId)
@@ -69,7 +73,11 @@ export function SessionCheckout({
     /* Polling übernimmt falls noch nicht paid */
   }
 
-  // Start checkout session on mount
+  const options = useMemo(
+    () => (clientSecret ? { clientSecret, onComplete: stableOnComplete } : null),
+    [clientSecret, stableOnComplete]
+  )
+
   useEffect(() => {
     const params: SessionCheckoutParams = {
       bookingId,
@@ -90,7 +98,6 @@ export function SessionCheckout({
       })
   }, [bookingId, takumiName, duration, priceInCents, onError])
 
-  // Poll for payment status (Fallback falls onComplete nicht feuert)
   useEffect(() => {
     if (!polling) return
 
@@ -111,7 +118,7 @@ export function SessionCheckout({
     )
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !options) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <p className="text-sm text-destructive">Checkout konnte nicht initialisiert werden.</p>
@@ -121,13 +128,7 @@ export function SessionCheckout({
 
   return (
     <div id="checkout" className="w-full">
-      <EmbeddedCheckoutProvider
-        stripe={stripePromise}
-        options={{
-          clientSecret: clientSecret!,
-          onComplete: () => handleComplete(),
-        }}
-      >
+      <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>

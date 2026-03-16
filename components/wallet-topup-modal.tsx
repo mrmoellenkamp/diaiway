@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -21,7 +21,7 @@ import { useI18n } from "@/lib/i18n"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const MIN_EUR = 20
-const MAX_EUR = 100 // Psychologische Grenze
+const MAX_EUR = 100
 
 interface WalletTopupModalProps {
   open: boolean
@@ -44,6 +44,10 @@ export function WalletTopupModal({
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Ref-Wrapper: stabile Funktionsidentität für onComplete
+  const onCompleteRef = useRef<() => Promise<void>>(async () => {})
+  const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
+
   useEffect(() => {
     if (!open) {
       setStep("amount")
@@ -51,9 +55,57 @@ export function WalletTopupModal({
       setClientSecret(null)
       setSessionId(null)
       setError(null)
-      return
     }
   }, [open])
+
+  const confirmTopup = useCallback(async (): Promise<boolean> => {
+    if (!sessionId) return false
+    try {
+      const res = await fetch("/api/wallet/topup/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+        credentials: "include",
+      })
+      const data = await res.json()
+      if (data.ok) return true
+      if (data.status === "pending") return false
+      toast.error(data.error || "Gutschrift fehlgeschlagen.")
+      return false
+    } catch {
+      return false
+    }
+  }, [sessionId])
+
+  // Ref immer aktuell halten — confirmTopup kann sich durch sessionId ändern,
+  // aber stableOnComplete bleibt stabil
+  onCompleteRef.current = async () => {
+    setConfirming(true)
+    let ok = false
+    for (let i = 0; i < 8; i++) {
+      ok = await confirmTopup()
+      if (ok) break
+      await new Promise((r) => setTimeout(r, 1000))
+    }
+    setConfirming(false)
+    if (ok) {
+      import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
+      toast.success(t("finances.topupSuccess"))
+      onOpenChange(false)
+      onSuccess?.()
+      router.push("/profile/finances")
+    } else {
+      toast.error("Zahlung konnte nicht bestätigt werden. Bitte prüfe dein Guthaben in Kürze.")
+      onOpenChange(false)
+      onSuccess?.()
+      router.push("/profile/finances")
+    }
+  }
+
+  const options = useMemo(
+    () => (clientSecret ? { clientSecret, onComplete: stableOnComplete } : null),
+    [clientSecret, stableOnComplete]
+  )
 
   async function startCheckout() {
     const amount = Number(amountEur)
@@ -86,48 +138,6 @@ export function WalletTopupModal({
       setError("Netzwerkfehler")
     } finally {
       setLoading(false)
-    }
-  }
-
-  const confirmTopup = useCallback(async (): Promise<boolean> => {
-    if (!sessionId) return false
-    try {
-      const res = await fetch("/api/wallet/topup/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (data.ok) return true
-      if (data.status === "pending") return false
-      toast.error(data.error || "Gutschrift fehlgeschlagen.")
-      return false
-    } catch {
-      return false
-    }
-  }, [sessionId])
-
-  const handleComplete = async () => {
-    setConfirming(true)
-    let ok = false
-    for (let i = 0; i < 8; i++) {
-      ok = await confirmTopup()
-      if (ok) break
-      await new Promise((r) => setTimeout(r, 1000))
-    }
-    setConfirming(false)
-    if (ok) {
-      import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
-      toast.success(t("finances.topupSuccess"))
-      onOpenChange(false)
-      onSuccess?.()
-      router.push("/profile/finances")
-    } else {
-      toast.error("Zahlung konnte nicht bestätigt werden. Bitte prüfe dein Guthaben in Kürze.")
-      onOpenChange(false)
-      onSuccess?.()
-      router.push("/profile/finances")
     }
   }
 
@@ -216,14 +226,8 @@ export function WalletTopupModal({
                   {error}
                 </div>
               )}
-              {clientSecret && !loading && (
-                <EmbeddedCheckoutProvider
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    onComplete: () => handleComplete(),
-                  }}
-                >
+              {clientSecret && !loading && options && (
+                <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
                   <EmbeddedCheckout />
                 </EmbeddedCheckoutProvider>
               )}

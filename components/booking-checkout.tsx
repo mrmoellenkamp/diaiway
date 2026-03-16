@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
@@ -39,25 +39,11 @@ export function BookingCheckout({
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
 
-  const startStripe = () => {
-    setLoading(true)
-    startBookingCheckout({ bookingId, takumiName, priceInCents })
-      .then((result) => {
-        setClientSecret(result.clientSecret)
-        setLoading(false)
-        setPolling(true)
-      })
-      .catch((err) => {
-        onError(err.message || "Checkout konnte nicht gestartet werden")
-        setLoading(false)
-      })
-  }
-
-  useEffect(() => {
-    if (paymentMethod === "card" && !clientSecret && !loading) {
-      startStripe()
-    }
-  }, [paymentMethod])
+  // Ref-Wrapper: stabile Funktionsidentität für onComplete
+  // onCompleteRef hält immer die aktuelle Implementierung,
+  // aber stableOnComplete ändert seine Identität NIE → Stripe feuert keine Warnings
+  const onCompleteRef = useRef<() => Promise<void>>(async () => {})
+  const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
 
   const ensureTakumiNotified = () => {
     fetch(`/api/bookings/${bookingId}/notify-takumi`, { method: "POST" }).catch(() => {})
@@ -83,10 +69,50 @@ export function BookingCheckout({
     return false
   }
 
-  // onComplete: Sofort prüfen, wenn Stripe Zahlung meldet (kein Warten auf Poll)
-  const handleComplete = () => {
-    checkPayment()
+  // Ref immer aktuell halten — wird bei jedem Render neu gesetzt,
+  // aber stableOnComplete bleibt stabil
+  onCompleteRef.current = async () => {
+    for (let i = 0; i < 5; i++) {
+      try {
+        const result = await verifySessionPayment(bookingId)
+        if (result.status === "paid") {
+          setPolling(false)
+          ensureTakumiNotified()
+          onSuccess()
+          return
+        }
+      } catch {
+        /* weiter versuchen */
+      }
+      if (i < 4) await new Promise((r) => setTimeout(r, 500))
+    }
+    /* Polling übernimmt falls noch nicht paid */
   }
+
+  const options = useMemo(
+    () => (clientSecret ? { clientSecret, onComplete: stableOnComplete } : null),
+    [clientSecret, stableOnComplete]
+  )
+
+  const startStripe = () => {
+    setLoading(true)
+    startBookingCheckout({ bookingId, takumiName, priceInCents })
+      .then((result) => {
+        setClientSecret(result.clientSecret)
+        setLoading(false)
+        setPolling(true)
+      })
+      .catch((err) => {
+        onError(err.message || "Checkout konnte nicht gestartet werden")
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    if (paymentMethod === "card" && !clientSecret && !loading) {
+      startStripe()
+    }
+  }, [paymentMethod])
 
   useEffect(() => {
     if (!polling) return
@@ -117,7 +143,6 @@ export function BookingCheckout({
     }
   }
 
-  // Auswahl: Wallet oder Karte
   if (paymentMethod === "choice") {
     return (
       <div className="flex flex-col gap-3">
@@ -161,7 +186,7 @@ export function BookingCheckout({
     )
   }
 
-  if (paymentMethod === "card" && !clientSecret) {
+  if (!clientSecret || !options) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <p className="text-sm text-destructive">{t("handshake.checkoutError")}</p>
@@ -169,34 +194,9 @@ export function BookingCheckout({
     )
   }
 
-  async function handlePaymentComplete() {
-    // Stripe onComplete: Sofort prüfen, ggf. mit Retries (API kann kurz verzögert sein)
-    for (let i = 0; i < 5; i++) {
-      try {
-        const result = await verifySessionPayment(bookingId)
-        if (result.status === "paid") {
-          setPolling(false)
-          ensureTakumiNotified()
-          onSuccess()
-          return
-        }
-      } catch {
-        /* weiter versuchen */
-      }
-      if (i < 4) await new Promise((r) => setTimeout(r, 500))
-    }
-    /* Polling übernimmt falls noch nicht paid */
-  }
-
   return (
     <div id="checkout" className="w-full">
-      <EmbeddedCheckoutProvider
-        stripe={stripePromise}
-        options={{
-          clientSecret: clientSecret!,
-          onComplete: () => handlePaymentComplete(),
-        }}
-      >
+      <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>
