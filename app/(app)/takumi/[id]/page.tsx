@@ -2,7 +2,6 @@
 
 import { use, useState, useEffect } from "react"
 import Link from "next/link"
-import { Capacitor } from "@capacitor/core"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -398,24 +397,18 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               />
             )}
             <Button
+              asChild
               className={cn(
                 "order-1 sm:order-2 h-12 rounded-xl text-sm font-bold w-full sm:w-auto",
                 takumi.liveStatus === "available"
                   ? "bg-accent text-accent-foreground hover:bg-accent/90 px-6"
                   : "bg-accent px-6 text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
               )}
-              onClick={async () => {
-                const bookingUrl = `https://www.diaiway.com/booking/${takumi.id}?source=app`
-                if (Capacitor.isNativePlatform()) {
-                  const { Browser } = await import("@capacitor/browser")
-                  await Browser.open({ url: bookingUrl, presentationStyle: "popover" })
-                } else {
-                  window.location.href = `/booking/${takumi.id}`
-                }
-              }}
             >
-              <Calendar className="size-4" />
-              {t("takumiPage.bookAppointment")}
+              <Link href={`/booking/${takumi.id}`} className="flex items-center justify-center gap-2">
+                <Calendar className="size-4" />
+                {t("takumiPage.bookAppointment")}
+              </Link>
             </Button>
           </div>
         </div>

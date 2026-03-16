@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Capacitor } from "@capacitor/core"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -215,22 +214,15 @@ export function BookingCard({
           <div className="mt-2 flex flex-wrap gap-2">
             {/* Takumi: pending → Annehmen / Ablehnen / Nachfrage (nur über Link, da keine E-Mail/Notification ankam) */}
             {isExpertView && booking.status === "pending" && (
-              <Button
-                size="sm"
-                className="h-9 flex-1 min-w-[140px] bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={async () => {
-                  const url = `https://www.diaiway.com/booking/respond/${bookingId}?source=app`
-                  if (Capacitor.isNativePlatform()) {
-                    const { Browser } = await import("@capacitor/browser")
-                    await Browser.open({ url, presentationStyle: "popover" })
-                  } else {
-                    window.location.href = `/booking/respond/${bookingId}`
-                  }
-                }}
-              >
-                <MessageSquare className="mr-1.5 size-3.5" />
-                {t("booking.respondToRequest")}
-              </Button>
+              <Link href={`/booking/respond/${bookingId}`} className="flex-1 min-w-[140px]">
+                <Button
+                  size="sm"
+                  className="h-9 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <MessageSquare className="mr-1.5 size-3.5" />
+                  {t("booking.respondToRequest")}
+                </Button>
+              </Link>
             )}
             {canJoin && (
               <Link href={`/session/${bookingId}`} className="flex-1">
