@@ -170,6 +170,8 @@ export async function verifySessionPayment(bookingId: string) {
   if (!booking) return { status: "error", message: "Booking not found" }
 
   if (booking.paymentStatus === "paid") {
+    // Notification als Fallback sicherstellen (idempotent – erstellt keine Duplikate)
+    notifyTakumiAfterPayment(bookingId).catch(() => {})
     return {
       status: "paid" as const,
       paidAt: booking.paidAt,

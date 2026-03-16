@@ -33,7 +33,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
     const baseUrl =
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-    const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${booking.statusToken}&action=confirmed`
+    const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${booking.statusToken}`
 
     // E-Mail (immer senden)
     let emailSent = false
@@ -48,9 +48,9 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
         endTime: booking.endTime,
         price: booking.price ?? 0,
         note: booking.note || "",
-        acceptUrl: `${respondBase.replace("action=confirmed", "")}&action=confirmed`,
-        declineUrl: `${respondBase.replace("action=confirmed", "")}&action=declined`,
-        askUrl: `${respondBase.replace("action=confirmed", "")}&action=ask`,
+        acceptUrl: `${respondBase}&action=confirmed`,
+        declineUrl: `${respondBase}&action=declined`,
+        askUrl: `${respondBase}&action=ask`,
         dashboardUrl: `${baseUrl}/sessions`,
       })
       emailSent = true
