@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { use, useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   EmbeddedCheckout,
@@ -11,8 +11,7 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-export default function PayPage({ params }: { params: Promise<{ bookingId: string }> }) {
-  const { bookingId } = use(params)
+function PayPageInner({ bookingId }: { bookingId: string }) {
   const searchParams = useSearchParams()
   const token = searchParams.get("token") ?? ""
 
@@ -147,5 +146,18 @@ export default function PayPage({ params }: { params: Promise<{ bookingId: strin
         )}
       </div>
     </div>
+  )
+}
+
+export default function PayPage({ params }: { params: Promise<{ bookingId: string }> }) {
+  const { bookingId } = use(params)
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-emerald-700" />
+      </div>
+    }>
+      <PayPageInner bookingId={bookingId} />
+    </Suspense>
   )
 }
