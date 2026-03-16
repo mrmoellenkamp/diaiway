@@ -1,0 +1,29 @@
+---
+description: Datenbankinfrastruktur dieses Projekts
+alwaysApply: true
+---
+
+# Datenbank: Prisma Postgres — KEIN Neon
+
+Dieses Projekt verwendet **Prisma Postgres** (`db.prisma.io`), NICHT Neon.
+
+```
+DATABASE_URL="postgres://...@db.prisma.io:5432/postgres"
+```
+
+## Regeln
+
+- **Niemals** den `user-Neon` MCP-Server für Datenbankoperationen verwenden
+- **Niemals** annehmen, dass die DB auf Neon läuft, nur weil der Neon-MCP installiert ist
+- Für DB-Operationen: `node` mit `@prisma/client` oder `prisma db execute --schema=prisma/schema.prisma`
+- Der Neon-MCP ist global installiert für andere Projekte — nicht für dieses
+
+## Korrekte DB-Abfrage
+
+```bash
+# ✅ RICHTIG
+source .env && node -e "const { PrismaClient } = require('@prisma/client'); ..."
+
+# ❌ FALSCH
+# CallMcpTool user-Neon run_sql ...
+```

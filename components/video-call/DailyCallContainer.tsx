@@ -261,6 +261,12 @@ export function DailyCallContainer({
   const haptic4MinFiredRef = useRef(false)
   const haptic5MinFiredRef = useRef(false)
   const appStateRemoveRef = useRef<(() => void) | null>(null)
+  const joinRetryCountRef = useRef(0)
+  const joinRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleJoinRef = useRef<((isRetry?: boolean) => Promise<void>) | null>(null)
+
+  const MAX_JOIN_RETRIES = 3
+  const RETRY_DELAYS_MS = [2000, 2500, 3000]
 
   const [isFrozen, setIsFrozen] = useState(false)
   const [reconnectState, setReconnectState] = useState<ReconnectState>(null)
@@ -314,6 +320,8 @@ export function DailyCallContainer({
       remoteAudioRef.current.pause()
     }
     initGuardRef.current = false
+    joinRetryTimeoutRef.current && clearTimeout(joinRetryTimeoutRef.current)
+    joinRetryTimeoutRef.current = null
   }, [])
 
   // --- Redirect: NUR bei expliziter User-Aktion, mit Sicherheitsabfrage ---
@@ -494,9 +502,10 @@ export function DailyCallContainer({
   )
 
   // --- JOIN ---
-  const handleJoin = useCallback(async () => {
-    if (phase !== "LOBBY" || initGuardRef.current) return
-    setPhase("JOINING")
+  const handleJoin = useCallback(async (isRetry = false) => {
+    if ((phase !== "LOBBY" && !isRetry) || initGuardRef.current) return
+    if (phase !== "JOINING") setPhase("JOINING")
+    if (!isRetry) joinRetryCountRef.current = 0
     setError(null)
     try {
       const { checkConnectivity } = await import("@/lib/native-utils")
@@ -582,10 +591,25 @@ export function DailyCallContainer({
         console.warn("[DailyCall] start-session error:", startErr)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-      setPhase("LOBBY")
+      const retryIndex = joinRetryCountRef.current
+      if (retryIndex < MAX_JOIN_RETRIES) {
+        joinRetryCountRef.current = retryIndex + 1
+        const delay = RETRY_DELAYS_MS[retryIndex] ?? 2500
+        joinRetryTimeoutRef.current = setTimeout(() => {
+          joinRetryTimeoutRef.current = null
+          handleJoinRef.current?.(true)
+        }, delay)
+      } else {
+        joinRetryCountRef.current = 0
+        setError(e instanceof Error ? e.message : String(e))
+        setPhase("LOBBY")
+      }
     }
   }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId, onSessionStarted])
+
+  useEffect(() => {
+    handleJoinRef.current = handleJoin
+  }, [handleJoin])
 
   // --- IN_CALL: Events ---
   useEffect(() => {
