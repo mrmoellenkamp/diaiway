@@ -50,6 +50,11 @@ export function GlobalNavigation() {
     return <LandingHeader />
   }
 
+  // Pay-Seiten: kein Header, kein Footer — nur Stripe
+  if (pathname?.startsWith("/pay")) {
+    return null
+  }
+
   // Auth-Seiten: Header im gleichen Layout wie Profilseite
   if (AUTH_PATHS.some((p) => pathname?.startsWith(p))) {
     return <AuthHeader title={authTitleForPath(pathname ?? "", t)} />

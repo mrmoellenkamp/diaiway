@@ -113,16 +113,17 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-safe">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 pb-safe pt-safe">
       <Link
         href="/"
-        className="absolute left-4 top-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="absolute left-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        style={{ top: "max(1rem, env(safe-area-inset-top, 0px))" }}
       >
         <ArrowLeft className="size-5" />
         <span className="hidden sm:inline">{t("common.startPage")}</span>
       </Link>
 
-      <div className="absolute right-4 top-4">
+      <div className="absolute right-4" style={{ top: "max(1rem, env(safe-area-inset-top, 0px))" }}>
         <LanguageSwitcher variant="compact" />
       </div>
 

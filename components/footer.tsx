@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-const HIDDEN_ON = ["/", "/login", "/register", "/signup", "/onboarding", "/session", "/booking"]
+const HIDDEN_ON = ["/", "/login", "/register", "/signup", "/onboarding", "/session", "/booking", "/pay"]
 
 export function Footer() {
   const pathname = usePathname()
