@@ -1448,7 +1448,7 @@ export function DailyCallContainer({
               <p className="text-sm text-destructive">{preCheckError}</p>
             )}
             <Button
-              onClick={handleJoin}
+              onClick={() => handleJoin()}
               disabled={!canJoin || preCheckLoading}
               className="h-12 gap-2"
             >
