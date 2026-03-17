@@ -133,6 +133,12 @@ const de = {
   "login.biometricError": "Biometrie fehlgeschlagen. Bitte manuell anmelden.",
   "login.biometricSetupHint": "Passwort eingeben um Face ID für die Zukunft einzurichten.",
   "login.biometricSetupHintFingerprint": "Passwort eingeben um Fingerabdruck für die Zukunft einzurichten.",
+  "login.stayTitle": "Wie möchtest Du Dich anmelden?",
+  "login.stayDesc": "Wähle Deine bevorzugte Anmeldeoption. Du kannst dies jederzeit ändern.",
+  "login.stayYes": "Direkt einloggen",
+  "login.stayYesDesc": "App öffnet direkt auf Dein Profil – kein Tippen nötig",
+  "login.stayNo": "Immer Anmeldeseite zeigen",
+  "login.stayNoDesc": "Schnell per Face ID auf der Anmeldeseite anmelden",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Sitzung läuft bald ab",

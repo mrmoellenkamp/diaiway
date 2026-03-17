@@ -22,18 +22,19 @@ import {
   saveBiometricCredentials,
   getLastUser,
   saveLastUser,
+  saveStayLoggedIn,
 } from "@/hooks/use-native-bridge"
 
 // ─── Biometric icon helper ────────────────────────────────────────────────────
 
-/** biometryType: 2 = Face ID / 4 = FaceAuthentication → ScanFace icon, rest → Fingerprint */
+/** biometryType: 1/3/5 = Touch/Fingerprint → Fingerprint icon, everything else (incl. 0=unknown) → ScanFace */
 function BiometricIcon({ biometryType, className }: { biometryType: number; className?: string }) {
-  if (biometryType === 2 || biometryType === 4) return <ScanFace className={className} />
-  return <Fingerprint className={className} />
+  if (biometryType === 1 || biometryType === 3 || biometryType === 5) return <Fingerprint className={className} />
+  return <ScanFace className={className} />
 }
 
 function isFaceId(biometryType: number) {
-  return biometryType === 2 || biometryType === 4
+  return biometryType !== 1 && biometryType !== 3 && biometryType !== 5
 }
 
 // ─── Helper: determine avatar initials ───────────────────────────────────────
@@ -186,23 +187,22 @@ function LoginContent() {
         setIsLoading(false)
         return
       }
-      setIsLoggedIn(true)
-
       // Save last user for quick login next time
       if (isNative && name) await saveLastUser({ email: email.toLowerCase().trim(), name })
 
-      // On native: check if biometric can be offered for next time
-      if (isNative && !hasBioCreds) {
+      // On native: offer "stay logged in?" choice before navigating away
+      if (isNative) {
         const bio = await checkBiometricAvailable()
         if (bio.available) {
           setPendingCreds({ email: email.toLowerCase().trim(), password: password.trim() })
           setPendingNavUrl(navUrl ?? null)
           setBiometryType(Number(bio.type) || 0)
           setSaveBioState("asking")
-          return // wait for user response in prompt
+          return // navigate only after user responds
         }
       }
 
+      setIsLoggedIn(true)
       navigateAfterLogin(navUrl)
     } catch {
       setError(t("login.errorNetwork"))
@@ -244,18 +244,38 @@ function LoginContent() {
     }
   }
 
-  // ── Handle biometric save prompt responses
-  async function handleBiometricSaveYes() {
-    if (!pendingCreds) { navigateAfterLogin(pendingNavUrl ?? undefined); return }
+  // ── Handle stay-logged-in prompt: "Direkt einloggen" (app opens on profile)
+  async function handleStayYes() {
     setSaveBioState("saving")
     try {
-      await saveBiometricCredentials(pendingCreds.email, pendingCreds.password)
-      setHasBioCreds(true)
-    } catch { /* ignore – not critical */ }
+      await saveStayLoggedIn(true)
+      if (pendingCreds) {
+        await saveBiometricCredentials(pendingCreds.email, pendingCreds.password)
+        setHasBioCreds(true)
+      }
+      // Cookie for middleware: skip inactivity timeout when stay-logged-in
+      if (typeof document !== "undefined") {
+        document.cookie = "diaiway_stay=1; path=/; max-age=31536000; SameSite=Lax" + (window.location.protocol === "https:" ? "; Secure" : "")
+      }
+    } catch { /* ignore */ }
+    setIsLoggedIn(true)
     navigateAfterLogin(pendingNavUrl ?? undefined)
   }
 
-  function handleBiometricSaveNo() {
+  // ── Handle stay-logged-in prompt: "Immer Anmeldeseite zeigen" (login page + Face ID)
+  async function handleStayNo() {
+    setSaveBioState("saving")
+    try {
+      await saveStayLoggedIn(false)
+      if (pendingCreds) {
+        await saveBiometricCredentials(pendingCreds.email, pendingCreds.password)
+        setHasBioCreds(true)
+      }
+      if (typeof document !== "undefined") {
+        document.cookie = "diaiway_stay=0; path=/; max-age=31536000; SameSite=Lax" + (window.location.protocol === "https:" ? "; Secure" : "")
+      }
+    } catch { /* ignore */ }
+    setIsLoggedIn(true)
     navigateAfterLogin(pendingNavUrl ?? undefined)
   }
 
@@ -268,8 +288,10 @@ function LoginContent() {
   }
 
   // ── Derived flags
-  const showBiometricCard = isNative && !!quickUser && hasBioCreds && biometryType > 0 && showQuickLogin
-  const showPrefilledHint = isNative && !!quickUser && (!hasBioCreds || !showQuickLogin) && showQuickLogin
+  // Show Face ID card if credentials are saved – don't require biometryType > 0 to avoid
+  // false negatives when isAvailable() returns 0 transiently (e.g. after app restart)
+  const showBiometricCard = isNative && !!quickUser && hasBioCreds && showQuickLogin
+  const showPrefilledHint = isNative && !!quickUser && !hasBioCreds && showQuickLogin
 
   // ── Error message translator (for form errors from manual login)
   function getErrorMessage(rawErr: string) {
@@ -530,35 +552,40 @@ function LoginContent() {
       {saveBioState !== "hidden" && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-safe">
           <div className="w-full max-w-sm rounded-t-3xl bg-background px-6 py-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-            <div className="flex flex-col items-center gap-5 text-center">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-                <BiometricIcon biometryType={biometryType} className="size-8 text-primary" />
+            <div className="flex flex-col gap-5">
+              <div className="text-center">
+                <h2 className="text-lg font-bold text-foreground">{t("login.stayTitle")}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("login.stayDesc")}</p>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-foreground">{t("login.biometricSaveTitle")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t("login.biometricSaveDesc")}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2">
-                <Button
-                  className="h-12 w-full gap-2 rounded-xl bg-primary text-primary-foreground"
-                  onClick={handleBiometricSaveYes}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleStayYes}
                   disabled={saveBioState === "saving"}
+                  className="flex items-start gap-3 rounded-xl border-2 border-primary bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 disabled:opacity-60"
                 >
-                  {saveBioState === "saving" ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Check className="size-4" />
-                  )}
-                  {t("login.biometricSaveYes")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="h-11 w-full rounded-xl text-muted-foreground"
-                  onClick={handleBiometricSaveNo}
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    {saveBioState === "saving" ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{t("login.stayYes")}</p>
+                    <p className="text-xs text-muted-foreground">{t("login.stayYesDesc")}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStayNo}
                   disabled={saveBioState === "saving"}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-60"
                 >
-                  {t("login.biometricSaveNo")}
-                </Button>
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <BiometricIcon biometryType={biometryType} className="size-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{t("login.stayNo")}</p>
+                    <p className="text-xs text-muted-foreground">{t("login.stayNoDesc")}</p>
+                  </div>
+                </button>
               </div>
             </div>
           </div>

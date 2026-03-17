@@ -133,6 +133,12 @@ const en = {
   "login.biometricError": "Biometric authentication failed. Please sign in manually.",
   "login.biometricSetupHint": "Enter your password to set up Face ID for next time.",
   "login.biometricSetupHintFingerprint": "Enter your password to set up fingerprint login for next time.",
+  "login.stayTitle": "How do you want to sign in?",
+  "login.stayDesc": "Choose your preferred sign-in option. You can change this at any time.",
+  "login.stayYes": "Stay logged in",
+  "login.stayYesDesc": "App opens directly on your profile – no tapping needed",
+  "login.stayNo": "Always show login screen",
+  "login.stayNoDesc": "Sign in quickly with Face ID on the login screen",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Session expiring soon",

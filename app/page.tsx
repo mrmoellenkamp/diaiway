@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import Image from "next/image"
+import { Capacitor } from "@capacitor/core"
+import { getStayLoggedIn } from "@/hooks/use-native-bridge"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { useCategories } from "@/lib/categories-i18n"
@@ -61,11 +63,30 @@ function LiveTakumisSection() {
 }
 
 export default function LandingPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const isLoggedIn = !!session?.user
   const [showTakumis, setShowTakumis] = useState(false)
   const categories = useCategories()
   const { t } = useI18n()
+
+  // Native: "stay yes" → redirect to profile; "stay no" → sign out and show login; null → normal landing
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user || !Capacitor.isNativePlatform()) return
+    ;(async () => {
+      const stay = await getStayLoggedIn()
+      if (stay === true) {
+        const role = (session.user as { role?: string })?.role ?? "user"
+        const appRole = (session.user as { appRole?: string })?.appRole ?? "shugyo"
+        const target = role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
+        window.location.replace(target)
+      } else if (stay === false) {
+        // User chose "always show login" → sign out so they see login page with Face ID
+        await signOut({ redirect: false })
+        window.location.replace("/login")
+      }
+      // stay === null: never chosen, show landing page normally
+    })()
+  }, [status, session?.user])
 
   useEffect(() => {
     const id = setTimeout(() => setShowTakumis(true), 400)

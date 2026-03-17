@@ -133,6 +133,12 @@ const es = {
   "login.biometricError": "Autenticación biométrica fallida. Inicia sesión manualmente.",
   "login.biometricSetupHint": "Ingresa tu contraseña para configurar Face ID la próxima vez.",
   "login.biometricSetupHintFingerprint": "Ingresa tu contraseña para configurar el acceso por huella digital.",
+  "login.stayTitle": "¿Cómo quieres iniciar sesión?",
+  "login.stayDesc": "Elige tu opción preferida. Puedes cambiarla en cualquier momento.",
+  "login.stayYes": "Mantener sesión iniciada",
+  "login.stayYesDesc": "La app abre directamente en tu perfil – sin tocar nada",
+  "login.stayNo": "Mostrar siempre la pantalla de inicio",
+  "login.stayNoDesc": "Inicia sesión rápidamente con Face ID en la pantalla de inicio",
 
   // Session Timeout Warning
   "sessionTimeout.title": "La sesión expira pronto",

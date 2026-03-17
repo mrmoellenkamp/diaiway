@@ -136,8 +136,9 @@ export async function getPreference(key: string): Promise<string | null> {
 
 // ─── Biometric Credential Storage (iOS Keychain / Android Keystore) ───────────
 
-const BIOMETRIC_SERVER = "diaiway.com"
-const LAST_USER_KEY    = "diaiway_last_user"
+const BIOMETRIC_SERVER   = "diaiway.com"
+const LAST_USER_KEY      = "diaiway_last_user"
+const STAY_LOGGED_IN_KEY = "diaiway_stay_logged_in"
 
 /**
  * Speichert Anmeldedaten sicher im System-Keychain (per Biometrie geschützt).
@@ -193,6 +194,28 @@ export async function getLastUser(): Promise<{ email: string; name: string } | n
     const { Preferences } = await import("@capacitor/preferences")
     const { value } = await Preferences.get({ key: LAST_USER_KEY })
     return value ? (JSON.parse(value) as { email: string; name: string }) : null
+  } catch {
+    return null
+  }
+}
+
+// ─── Stay-Logged-In Preference ────────────────────────────────────────────────
+
+/** Speichert ob der Nutzer direkt beim App-Start eingeloggt bleiben möchte. */
+export async function saveStayLoggedIn(stay: boolean): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  const { Preferences } = await import("@capacitor/preferences")
+  await Preferences.set({ key: STAY_LOGGED_IN_KEY, value: stay ? "1" : "0" })
+}
+
+/** Gibt zurück ob der Nutzer "eingeloggt bleiben" gewählt hat. null = noch nie gewählt. */
+export async function getStayLoggedIn(): Promise<boolean | null> {
+  if (!Capacitor.isNativePlatform()) return null
+  try {
+    const { Preferences } = await import("@capacitor/preferences")
+    const { value } = await Preferences.get({ key: STAY_LOGGED_IN_KEY })
+    if (value === undefined || value === null) return null
+    return value === "1"
   } catch {
     return null
   }

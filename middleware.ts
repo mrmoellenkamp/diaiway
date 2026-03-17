@@ -47,8 +47,10 @@ export default authMiddleware((req) => {
 
   // ── Inactivity Lockout (15 min) ───────────────────────────────────────────
   // Heartbeat bypasses expiry so user can extend session from warning modal
+  // "Stay logged in" (diaiway_stay=1) bypasses timeout – user chose to stay logged in on mobile
   const isHeartbeat = pathname === "/api/auth/heartbeat"
-  if (isLoggedIn && !isHeartbeat) {
+  const stayLoggedIn = req.cookies.get("diaiway_stay")?.value === "1"
+  if (isLoggedIn && !isHeartbeat && !stayLoggedIn) {
     const lastActivity = req.cookies.get(LAST_ACTIVITY_COOKIE)?.value
     const lastTs = lastActivity ? parseInt(lastActivity, 10) : 0
     const now = Math.floor(Date.now() / 1000)

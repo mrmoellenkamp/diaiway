@@ -66,6 +66,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     updateAge: 24 * 60 * 60,   // refresh token once per day
   },
 
+  // Persistent cookie so WKWebView (iOS) keeps the session across app restarts.
+  // Without explicit maxAge the cookie is a session cookie cleared when the app closes.
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60, // 30 days – must match session.maxAge
+      },
+    },
+  },
+
   pages: { signIn: "/login" },
 
   callbacks: {
