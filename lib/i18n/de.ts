@@ -131,6 +131,8 @@ const de = {
   "login.biometricSaveYes": "Ja, speichern",
   "login.biometricSaveNo": "Nicht jetzt",
   "login.biometricError": "Biometrie fehlgeschlagen. Bitte manuell anmelden.",
+  "login.biometricSetupHint": "Passwort eingeben um Face ID für die Zukunft einzurichten.",
+  "login.biometricSetupHintFingerprint": "Passwort eingeben um Fingerabdruck für die Zukunft einzurichten.",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Sitzung läuft bald ab",

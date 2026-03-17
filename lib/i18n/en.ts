@@ -131,6 +131,8 @@ const en = {
   "login.biometricSaveYes": "Yes, save",
   "login.biometricSaveNo": "Not now",
   "login.biometricError": "Biometric authentication failed. Please sign in manually.",
+  "login.biometricSetupHint": "Enter your password to set up Face ID for next time.",
+  "login.biometricSetupHintFingerprint": "Enter your password to set up fingerprint login for next time.",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Session expiring soon",

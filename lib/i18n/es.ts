@@ -131,6 +131,8 @@ const es = {
   "login.biometricSaveYes": "Sí, guardar",
   "login.biometricSaveNo": "Ahora no",
   "login.biometricError": "Autenticación biométrica fallida. Inicia sesión manualmente.",
+  "login.biometricSetupHint": "Ingresa tu contraseña para configurar Face ID la próxima vez.",
+  "login.biometricSetupHintFingerprint": "Ingresa tu contraseña para configurar el acceso por huella digital.",
 
   // Session Timeout Warning
   "sessionTimeout.title": "La sesión expira pronto",

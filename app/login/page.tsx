@@ -105,15 +105,15 @@ function LoginContent() {
       const lastUser = await getLastUser()
       if (!lastUser) return
       setQuickUser(lastUser)
-
-      const creds = await getBiometricCredentials()
-      if (!creds) return
-      setHasBioCreds(true)
+      setEmail(lastUser.email) // pre-fill email so only password is needed
 
       const bio = await checkBiometricAvailable()
       if (bio.available) {
         setBiometryType(Number(bio.type) || 0)
       }
+
+      const creds = await getBiometricCredentials()
+      if (creds) setHasBioCreds(true)
     })()
   }, [isNative])
 
@@ -386,23 +386,33 @@ function LoginContent() {
             PREFILLED HINT (native, has lastUser but no biometric)
         ══════════════════════════════════════════════════════════════ */}
         {showPrefilledHint && quickUser && !showBiometricCard && (
-          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                {initials(quickUser.name)}
+          <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                  {initials(quickUser.name)}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{quickUser.name}</p>
+                  <p className="text-xs text-muted-foreground">{quickUser.email}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{quickUser.name}</p>
-                <p className="text-xs text-muted-foreground">{quickUser.email}</p>
-              </div>
+              <button
+                type="button"
+                onClick={dismissQuickLogin}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t("login.biometricSwitch")}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={dismissQuickLogin}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("login.biometricSwitch")}
-            </button>
+            {biometryType > 0 && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <BiometricIcon biometryType={biometryType} className="size-3.5 shrink-0 text-primary" />
+                {isFaceId(biometryType)
+                  ? t("login.biometricSetupHint")
+                  : t("login.biometricSetupHintFingerprint")}
+              </p>
+            )}
           </div>
         )}
 
