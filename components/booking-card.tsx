@@ -212,7 +212,7 @@ export function BookingCard({
 
           {/* Action buttons */}
           <div className="mt-2 flex flex-wrap gap-2">
-            {/* Takumi: pending → Annehmen / Ablehnen / Nachfrage (nur über Link, da keine E-Mail/Notification ankam) */}
+            {/* Takumi: pending → Annehmen / Ablehnen / Nachfrage */}
             {isExpertView && booking.status === "pending" && (
               <Link href={`/booking/respond/${bookingId}`} className="flex-1 min-w-[140px]">
                 <Button
@@ -223,6 +223,20 @@ export function BookingCard({
                   {t("booking.respondToRequest")}
                 </Button>
               </Link>
+            )}
+            {/* Takumi: confirmed → Hinweis "Termin bestätigt" (deaktiviert, read-only) */}
+            {isExpertView && booking.status === "confirmed" && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-xs font-medium text-primary">
+                <CheckCircle2 className="size-3.5 shrink-0" />
+                Sie haben diesen Termin bestätigt
+              </div>
+            )}
+            {/* Takumi: declined → Hinweis "Termin abgesagt" */}
+            {isExpertView && booking.status === "declined" && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-destructive/8 px-2.5 py-1.5 text-xs font-medium text-destructive">
+                <XCircle className="size-3.5 shrink-0" />
+                Sie haben diesen Termin abgesagt
+              </div>
             )}
             {canJoin && (
               <Link href={`/session/${bookingId}`} className="flex-1">

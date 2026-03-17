@@ -58,7 +58,8 @@ diAIway ist eine **Hybrid-App**:
 - **Expiry (60s)**: Cron `/api/cron/instant-request-cleanup` markiert unbeantwortete Anfragen (`createdAt < 60s`) als `instant_expired`, released Payment (falls paid), sendet Push/Waymail an Shugyo
 
 ### Session (Daily.co)
-- **Implementiert**: Daily.co Video/Voice; keine Neuimplementierung geplant
+- **Implementiert**: Daily.co Video/Voice; **E2EE** (P2P-Modus für 2-Personen-Calls)
+- **E2EE-Konfiguration**: `app/api/daily/meeting/route.ts` – Room-Properties `sfu_switchover: 2`, `max_participants: 2`; Medien fließen direkt zwischen Geräten, Daily.co sieht keine Klartext-Streams
 - `POST /api/daily/meeting` erstellt Raum; `DailyCallContainer` für UI
 - Start: max. 5 Min vor Termin (Scheduled); Instant: sofort nach Accept
 - **5-Minuten-Handshake – Scheduled Sessions** (`lib/session-terminate.ts`, `POST /api/sessions/[id]/terminate`):
@@ -87,7 +88,7 @@ diAIway ist eine **Hybrid-App**:
 - **EU-Region-Locking**: Vision API nutzt `eu-vision.googleapis.com` – Bilddaten verlassen die EU nicht (DSGVO Art. 44)
 - **PRE_CHECK Gate** (0s): Vor dem Daily-Beitritt wird ein Snapshot der Lokal-Kamera an `POST /api/safety/pre-check` gesendet; bei `safe: false` → Beitritt blockiert. Kein `SafetyIncident` wird angelegt; nur Vision-Check. Der „Beitreten"-Button ist während der Prüfung deaktiviert.
 - **Blitzlicht-Protokoll (feste Intervalle)**: Nach Session-Start werden Snapshots zu exakt **5 s, 30 s, 60 s, 90 s, 120 s** gesendet. Hard-Stop nach 120 Sekunden – kein weiteres Monitoring. Nur bei Video + Safety-Einwilligung.
-- **Bei Verstoß (Live)**: Blob speichern (`safety-incidents/`), `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`
+- **Bei Verstoß (Live)**: Blob speichern (`safety-incidents/`), `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`; **sofortige Verbindungstrennung** – `performCleanup()`, `onCallEnded()`, Toast „Verstoß gegen Community-Richtlinien“
 - **DSGVO-Datenminimierung**: Snapshots ohne zugehörigen `SafetyIncident`-Eintrag werden nach 48 h durch den Cron `cleanup-safety-data` gelöscht
 - **Manueller Report**: Notfall-Button im Call unterbricht und meldet; Admin prüft unter `/admin/safety/incidents`
 
@@ -152,9 +153,10 @@ diAIway ist eine **Hybrid-App**:
 ### Session
 | Route | Methode | Beschreibung |
 |-------|---------|--------------|
-| `/api/daily/meeting` | POST | Daily.co Meeting-Raum erstellen |
+| `/api/daily/meeting` | POST | Daily.co Meeting-Raum erstellen (E2EE: sfu_switchover, max_participants) |
 | `/api/sessions/[id]/terminate` | POST | Session beenden (Case A/B) |
-| `/api/safety/snapshot` | POST | Live-Monitoring Snapshot (Vision API) |
+| `/api/safety/pre-check` | POST | Pre-Join Gate: Snapshot vor Daily-Beitritt (Vision SafeSearch) |
+| `/api/safety/snapshot` | POST | Live-Monitoring Snapshot (5s, 30s, 60s, 90s, 120s); bei Verstoß → Incident + sofortige Trennung |
 
 ### Expert
 | Route | Methode | Beschreibung |
@@ -257,8 +259,9 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 
 ### Admin-Layout
 
-- `app/(app)/admin/layout.tsx`: Server Component mit Auth- und Prisma-Role-Check
+- `app/(app)/admin/layout.tsx`: Server Component mit Auth- und Prisma-Role-Check; **kein Sidebar**
 - Alle `/admin/*` Routen durch Layout geschützt; entkoppelt vom Profil-Kontext
+- **Dashboard**: 8 Tabs (Übersicht, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System); mobile-optimiert
 
 ### Health-Check (`/admin/health-check`)
 

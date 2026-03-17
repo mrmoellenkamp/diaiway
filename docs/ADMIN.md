@@ -10,18 +10,20 @@
 
 ```
 app/(app)/admin/
-├── layout.tsx          # Dediziertes Admin-Layout (Server Component)
-├── page.tsx            # Haupt-Dashboard
+├── layout.tsx          # Auth-Guard (kein Sidebar)
+├── page.tsx            # Haupt-Dashboard mit 8 Tabs
 ├── health-check/       # Live-Checks (Cron, Stripe, Wallet, Push)
 ├── finance/
 ├── safety/
 ├── safety/incidents/
-└── templates/
+├── templates/
+└── scanner/            # Redirect → /admin (Scanner-Tab)
 ```
 
 ### Layout-Guard (`app/(app)/admin/layout.tsx`)
 
 - **Server Component** – prüft vor dem Rendern aller Admin-Seiten
+- **Kein Sidebar** – Navigation erfolgt über Tab-Leiste im Dashboard
 - **Auth-Check**: `auth()` (NextAuth v5), Session muss vorhanden sein
 - **Role-Check**: `session.user.role === "admin"`
 - **Defense-in-Depth**: Zusätzlicher Prisma-Check `User.role` (JWT könnte veraltet sein)
@@ -33,6 +35,30 @@ app/(app)/admin/
 
 - `middleware.ts`: Prüft `/admin/*` vor dem Layout
 - Gleicher Check: nicht eingeloggt → Login; `role !== "admin"` → `/home`
+
+### Dashboard-Tabs (8 Tabs, mobile-optimiert)
+
+| Tab | Inhalt |
+|-----|--------|
+| **Übersicht** | KPI-Stats, Buchungsübersicht, Revenue, Top-Takumis, Aktivität |
+| **Nutzer** | Paginierte Nutzerliste, Search, Filter, Rollen, Anonymisierung |
+| **Buchungen** | Paginierte Buchungsliste, Status-Filter |
+| **Takumis** | Expertenliste, Live/Offline-Toggle |
+| **Finanzen** | FinanceTab + Link zu Finance Monitoring |
+| **Sicherheit** | Safety Reports, KI-Incidents; Links zu `/admin/safety`, `/admin/safety/incidents` |
+| **Scanner** | Vision-Scanner (Google Cloud Vision); Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web |
+| **System** | Health-Check, Waymail-Templates, DB-Tools |
+
+- **Tab-Leiste**: `flex-wrap` – umbricht auf Mobile in 2 Zeilen; keine horizontale Scrollbar
+- **Quick-KPI-Bar**: Nutzer, Takumis, Buchungen, Umsatz – klickbar für Tab-Wechsel
+
+### Vision-Scanner (Tab)
+
+- **Komponente**: `components/admin/vision-scanner-tab.tsx`
+- **Workflow**: Bild auswählen (Upload oder Kamera) → Features wählen (7 Optionen) → „Jetzt analysieren“
+- **Ergebnisse**: Direkt unter dem Analyse-Button; aufklappbare Sektionen (Labels, Objekte, Text/OCR, Safe Search, Farben, Gesichter, Web)
+- **Server Action**: `app/actions/vision.ts` – `analyzeImage()` mit `@google-cloud/vision`
+- **Client-Kompression**: Bilder vor Upload auf max. 1600×1600px, JPEG 82% reduziert
 
 ### GlobalNav
 

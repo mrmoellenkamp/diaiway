@@ -32,12 +32,15 @@
 - Buchungsanfragen (E-Mail, In-App, Push), Instant Connect
 
 ### Admin
-- Dashboard, Health-Check (Cron, Stripe-Escrow, Wallet, Push)
+- Dashboard mit 8 Tabs (Übersicht, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System)
+- Vision-Scanner (Google Cloud Vision): Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web
+- Health-Check (Cron, Stripe-Escrow, Wallet, Push)
 - Finance (Force Capture, Manual Release, Audit-Log, CSV/DATEV)
 - Safety Incidents, Templates, Nutzerverwaltung
 
 ### Technisch
 - Next.js 16, Prisma, NextAuth, Stripe, Daily.co, Capacitor 8
+- **E2EE** (Video-Calls: P2P-Modus, sfu_switchover)
 - i18n (DE, EN, ES), Secure File Upload, Safety (Vision API, Cloudmersive)
 - Idempotenz, Session Revocation, LogoutBackGuard, Cache-Control, DB-Resilienz
 
@@ -50,7 +53,7 @@
 | [README.md](../README.md) | Setup, Features, Tech-Stack, Deployment |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Datenflüsse, API-Übersicht, Geschäftsregeln |
 | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) | Idempotenz, Revocation, Optimistic UI, Instant-Abrechnung, Session Activity, LogoutBackGuard |
-| [ADMIN.md](ADMIN.md) | Admin-Layout, Health-Check, DSGVO, Pause |
+| [ADMIN.md](ADMIN.md) | Admin-Tabs, Vision-Scanner, Health-Check, DSGVO, Pause |
 | [ENV.md](ENV.md) | Umgebungsvariablen |
 | [MOBILE-READINESS.md](MOBILE-READINESS.md) | Mobile-Richtlinien |
 | [MOBILE-BUILD.md](MOBILE-BUILD.md) | Capacitor Build |
@@ -60,6 +63,8 @@
 | [IOS-APP-STORE-COMPLIANCE.md](IOS-APP-STORE-COMPLIANCE.md) | iOS-spezifisch |
 | [CALL-KEEP-SETUP.md](CALL-KEEP-SETUP.md) | Call-Keep (native Calls) |
 | [PREFLIGHT-AUDIT.md](PREFLIGHT-AUDIT.md) | Preflight-Audit |
+| [EMAIL-VERIFICATION-MIGRATION.md](EMAIL-VERIFICATION-MIGRATION.md) | E-Mail-Verifizierung, Migration |
+| [UPDATE.md](UPDATE.md) | Dokumentation aktuell halten |
 
 ---
 

@@ -69,14 +69,11 @@ function SessionsContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
   const initialTab: TabId =
-    tabParam === "upcoming" || tabParam === "completed" ? tabParam : "active"
+    tabParam === "upcoming" || tabParam === "completed" || tabParam === "active"
+      ? tabParam
+      : "active"
   const [activeTab, setActiveTab] = useState<TabId>(initialTab)
-
-  useEffect(() => {
-    if (tabParam === "upcoming" || tabParam === "completed") {
-      setActiveTab(tabParam)
-    }
-  }, [tabParam])
+  const [autoSwitched, setAutoSwitched] = useState(false)
   const [cachedBookings, setCachedBookingsState] = useState<BookingRecord[] | null>(null)
   useEffect(() => {
     getCachedBookings().then((b) => b && setCachedBookingsState(b))
@@ -93,6 +90,17 @@ function SessionsContent() {
   useEffect(() => {
     if (data?.bookings?.length) setCachedBookings(data.bookings)
   }, [data?.bookings])
+
+  // Auto-switch from "active" to "upcoming" if no active sessions exist (only once, when data first loads)
+  useEffect(() => {
+    if (!data?.bookings || autoSwitched || tabParam) return
+    const hasActive = data.bookings.some((b) => tabForStatus(b.status) === "active")
+    if (!hasActive && activeTab === "active") {
+      const hasUpcoming = data.bookings.some((b) => tabForStatus(b.status) === "upcoming")
+      setActiveTab(hasUpcoming ? "upcoming" : "completed")
+    }
+    setAutoSwitched(true)
+  }, [data?.bookings, autoSwitched, tabParam, activeTab])
 
   const displayBookings = data?.bookings ?? cachedBookings ?? []
 

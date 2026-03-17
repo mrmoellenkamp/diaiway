@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
+import { VisionScannerTab } from "@/components/admin/vision-scanner-tab"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -1568,26 +1569,26 @@ export default function AdminPage() {
       <PageContainer>
         <div className="flex flex-col gap-4">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-foreground">Admin-Dashboard</h1>
-                <Badge className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]" variant="outline">
+                <Badge className="border-destructive/30 bg-destructive/10 text-destructive text-[10px] shrink-0" variant="outline">
                   Admin
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="truncate text-xs text-muted-foreground mt-0.5">
                 <Shield className="inline size-3 mr-1" />
                 {adminName}
               </p>
             </div>
-            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={loadStats} disabled={statsLoading}>
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs shrink-0" onClick={loadStats} disabled={statsLoading}>
               <RefreshCw className={`size-3.5 ${statsLoading ? "animate-spin" : ""}`} />
-              Aktualisieren
+              <span className="hidden sm:inline">Aktualisieren</span>
             </Button>
           </div>
 
-          {/* Quick-KPI bar (always visible, klickbar → Tab-Wechsel) */}
+          {/* Quick-KPI bar */}
           {stats && (
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -1603,55 +1604,25 @@ export default function AdminPage() {
                   className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center transition-colors hover:bg-muted/50 active:scale-[0.98]"
                 >
                   <Icon className={`size-4 ${color} mb-1`} />
-                  <span className="text-sm font-bold text-foreground leading-tight">{value}</span>
+                  <span className="text-sm font-bold text-foreground leading-tight truncate max-w-full">{value}</span>
                   <span className="text-[10px] text-muted-foreground">{label}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Tabs */}
+          {/* Tabs — horizontal scrollbar auf Mobile */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6 h-9">
-              <TabsTrigger value="overview" className="text-xs"><BarChart3 className="size-3.5 mr-1" />Übersicht</TabsTrigger>
-              <TabsTrigger value="users" className="text-xs"><Users className="size-3.5 mr-1" />Nutzer</TabsTrigger>
-              <TabsTrigger value="bookings" className="text-xs"><CalendarDays className="size-3.5 mr-1" />Buchungen</TabsTrigger>
-              <TabsTrigger value="takumis" className="text-xs"><Star className="size-3.5 mr-1" />Takumis</TabsTrigger>
-              <TabsTrigger value="finance" className="text-xs"><CreditCard className="size-3.5 mr-1" />Finanzen</TabsTrigger>
-              <TabsTrigger value="database" className="text-xs"><Database className="size-3.5 mr-1" />DB</TabsTrigger>
+            <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
+              <TabsTrigger value="overview"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
+              <TabsTrigger value="users"     className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
+              <TabsTrigger value="bookings"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
+              <TabsTrigger value="takumis"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>
+              <TabsTrigger value="finance"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CreditCard className="size-3.5 mr-1" /><span className="hidden xs:inline">Finanzen</span><span className="xs:hidden">Fin.</span></TabsTrigger>
+              <TabsTrigger value="safety"    className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Shield     className="size-3.5 mr-1" /><span className="hidden xs:inline">Sicherheit</span><span className="xs:hidden">Safe</span></TabsTrigger>
+              <TabsTrigger value="scanner"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Scan       className="size-3.5 mr-1" />Scanner</TabsTrigger>
+              <TabsTrigger value="system"    className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Database   className="size-3.5 mr-1" />System</TabsTrigger>
             </TabsList>
-            <div className="mt-2 flex flex-wrap gap-1">
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
-                <Link href="/admin/finance">
-                  <CreditCard className="size-3.5" />
-                  Finance Monitoring
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
-                <Link href="/admin/safety">
-                  <Shield className="size-3.5" />
-                  diaiway Safety
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
-                <Link href="/admin/templates">
-                  <Mail className="size-3.5" />
-                  Templates
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
-                <Link href="/admin/health-check">
-                  <Activity className="size-3.5" />
-                  Health Check
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
-                <Link href="/admin/scanner">
-                  <Scan className="size-3.5" />
-                  Image Scanner
-                </Link>
-              </Button>
-            </div>
 
             <TabsContent value="overview" className="mt-4">
               {statsLoading && <div className="flex justify-center py-12"><Loader2 className="size-6 animate-spin text-primary" /></div>}
@@ -1677,11 +1648,101 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="finance" className="mt-4">
-              <FinanceTab />
+              <div className="flex flex-col gap-4">
+                <FinanceTab />
+                <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Finance Monitoring</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Escrow-Holds, Stripe-Audit, manuelle Freigaben</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
+                      <Link href="/admin/finance"><ExternalLink className="size-3.5" />Öffnen</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
-            <TabsContent value="database" className="mt-4">
-              <DatabaseTab categories={categories} />
+            <TabsContent value="safety" className="mt-4">
+              <div className="flex flex-col gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
+                        <Shield className="size-5 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Safety Reports</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Nutzermeldungen aus Video-Calls — Sperren, Freigaben, Auflösung</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/safety"><ExternalLink className="size-3" />Safety verwalten</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
+                        <AlertTriangle className="size-5 text-orange-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">KI-Incidents</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Automatisch erkannte Verstöße (Google Vision SafeSearch)</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/safety/incidents"><ExternalLink className="size-3" />Incidents öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <p className="text-xs text-amber-800">
+                    <strong>Automatischer Schutz aktiv:</strong> Alle Video-Calls werden bei 5s · 30s · 60s · 90s · 120s per Google Vision SafeSearch geprüft.
+                    Bei einem Verstoß (LIKELY/VERY_LIKELY) wird die Verbindung sofort getrennt und ein Incident erstellt.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="scanner" className="mt-4">
+              <VisionScannerTab />
+            </TabsContent>
+
+            <TabsContent value="system" className="mt-4">
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
+                        <Activity className="size-5 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Health Check</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">CRON-Monitor, Stripe Escrow, Wallet-Integrität, Push-Erreichbarkeit</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/health-check"><ExternalLink className="size-3" />Öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
+                        <Mail className="size-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Waymail Templates</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Nachrichtenvorlagen verwalten, Testmails senden (DE/EN/ES)</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/templates"><ExternalLink className="size-3" />Öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DatabaseTab categories={categories} />
+              </div>
             </TabsContent>
           </Tabs>
         </div>

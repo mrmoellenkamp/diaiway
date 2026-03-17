@@ -30,11 +30,12 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   const token  = searchParams.get("token")  || ""
   const action = searchParams.get("action") as Action
 
-  const [phase,   setPhase]   = useState<Phase>("loading")
-  const [booking, setBooking] = useState<BookingInfo | null>(null)
-  const [message, setMessage] = useState("")
-  const [sending, setSending] = useState(false)
-  const [error,   setError]   = useState("")
+  const [phase,      setPhase]      = useState<Phase>("loading")
+  const [booking,    setBooking]    = useState<BookingInfo | null>(null)
+  const [message,    setMessage]    = useState("")
+  const [sending,    setSending]    = useState(false)
+  const [error,      setError]      = useState("")
+  const [lastAction, setLastAction] = useState<"confirmed" | "declined" | "ask" | null>(null)
 
   // Load booking info for display (token from email link, or session for logged-in expert)
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ token, action: act }),
       })
       const data = await res.json()
-      if (res.ok) { setPhase("done") }
+      if (res.ok) { setLastAction(act); setPhase("done") }
       else { setError(data.error || "Fehler"); setPhase("error") }
     } finally { setSending(false) }
   }
@@ -78,7 +79,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ token, action: "ask", message }),
       })
       const data = await res.json()
-      if (res.ok) { setPhase("done") }
+      if (res.ok) { setLastAction("ask"); setPhase("done") }
       else { setError(data.error || "Fehler"); setPhase("error") }
     } finally { setSending(false) }
   }
@@ -128,15 +129,34 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
           {/* Done */}
           {phase === "done" && (
             <div className="flex flex-col items-center gap-4 p-10 text-center">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50">
-                <CheckCircle2 className="size-7 text-emerald-600" />
+              <div className={`flex size-14 items-center justify-center rounded-2xl ${
+                lastAction === "declined" ? "bg-red-50" :
+                lastAction === "ask" ? "bg-stone-100" : "bg-emerald-50"
+              }`}>
+                {lastAction === "declined" ? (
+                  <XCircle className="size-7 text-red-500" />
+                ) : lastAction === "ask" ? (
+                  <MessageSquare className="size-7 text-stone-600" />
+                ) : (
+                  <CheckCircle2 className="size-7 text-emerald-600" />
+                )}
               </div>
               <div>
                 <h2 className="text-lg font-bold text-stone-900 mb-1">
-                  {error ? "Bereits verarbeitet" : "Erledigt!"}
+                  {error ? "Bereits verarbeitet" : (
+                    lastAction === "confirmed" ? "Termin bestätigt" :
+                    lastAction === "declined"  ? "Termin abgesagt"  :
+                    lastAction === "ask"       ? "Rückfrage gesendet" :
+                    "Erledigt!"
+                  )}
                 </h2>
                 <p className="text-sm text-stone-500">
-                  {error || "Der Nutzer wurde per E-Mail benachrichtigt."}
+                  {error ? error :
+                    lastAction === "confirmed" ? "Sie haben den Termin bestätigt. Der Nutzer wurde per E-Mail benachrichtigt." :
+                    lastAction === "declined"  ? "Sie haben den Termin abgesagt. Der Nutzer wurde per E-Mail benachrichtigt." :
+                    lastAction === "ask"       ? "Eine Rückfrage wurde gestellt. Der Nutzer wird sich in Kürze bei Ihnen melden." :
+                    "Der Nutzer wurde per E-Mail benachrichtigt."
+                  }
                 </p>
               </div>
               <Link
@@ -181,30 +201,30 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
                   <Button
-                    className="h-12 gap-2 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-semibold"
+                    className="h-12 gap-2 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-semibold disabled:opacity-60"
                     onClick={() => handleAction("confirmed")}
-                    disabled={sending}
+                    disabled={sending || !!lastAction}
                   >
-                    {sending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                    Buchung annehmen
+                    {sending && lastAction === null ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                    {lastAction === "confirmed" ? "Sie haben den Termin bestätigt" : "Buchung annehmen"}
                   </Button>
                   <Button
-                    className="h-12 gap-2 rounded-xl"
+                    className="h-12 gap-2 rounded-xl disabled:opacity-60"
                     variant="destructive"
                     onClick={() => handleAction("declined")}
-                    disabled={sending}
+                    disabled={sending || !!lastAction}
                   >
-                    {sending ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
-                    Buchung ablehnen
+                    {sending && lastAction === null ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
+                    {lastAction === "declined" ? "Sie haben den Termin abgesagt" : "Buchung ablehnen"}
                   </Button>
                   <Button
-                    className="h-11 gap-2 rounded-xl"
+                    className="h-11 gap-2 rounded-xl disabled:opacity-60"
                     variant="outline"
                     onClick={() => setPhase("form")}
-                    disabled={sending}
+                    disabled={sending || !!lastAction}
                   >
                     <MessageSquare className="size-4" />
-                    Rückfrage stellen
+                    {lastAction === "ask" ? "Rückfrage wurde gestellt" : "Rückfrage stellen"}
                   </Button>
                 </div>
               </div>

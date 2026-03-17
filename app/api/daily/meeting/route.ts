@@ -92,6 +92,14 @@ export async function POST(req: Request) {
     privacy: "public",
     properties: {
       exp: expValue,
+      // Keep calls in P2P mode for up to 2 participants (Shugyo + Takumi).
+      // P2P = media flows directly between devices, never decrypted on Daily's
+      // servers → true end-to-end encryption. Switches to SFU only if a 3rd
+      // participant somehow joins (prevents accidental downgrade).
+      sfu_switchover: 2,
+      // Hard-cap at 2 participants so the room can never become a group call
+      // without explicit product decision.
+      max_participants: 2,
     },
   }
   console.log("[Daily Meeting] Request to Daily (rooms):", JSON.stringify(roomPayload))

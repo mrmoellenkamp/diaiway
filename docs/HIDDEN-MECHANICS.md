@@ -386,7 +386,41 @@ if (existing?.paymentStatus === "paid") return { ok: true }  // Idempotenz-Guard
 
 ---
 
-## 9. DB-Resilienz im Auth-Flow
+## 9. Safety-Incident-Terminierung (Live-Monitoring)
+
+### Problem
+
+Wenn Google Vision während eines laufenden Video-Calls einen Verstoß erkennt (LIKELY/VERY_LIKELY bei adult, violence, racy), muss die Verbindung **sofort** getrennt werden – nicht erst nach dem Call.
+
+### Implementierung
+
+`POST /api/safety/snapshot` wird bei jedem Snapshot (5s, 30s, 60s, 90s, 120s) aufgerufen. Bei Verstoß:
+
+1. Blob speichern, `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`
+2. Response: `{ ok: true, safe: false, incidentCreated: true }`
+
+**Client** (`DailyCallContainer.tsx`):
+
+```typescript
+if (data?.incidentCreated) {
+  toast.error("Verbindung getrennt: Verstoß gegen die Community-Richtlinien erkannt.")
+  performCleanup()
+  if (onCallEnded) onCallEnded()
+  else redirectToSessions("safety-violation")
+}
+```
+
+- **performCleanup()**: Daily-Call verlassen, Ressourcen freigeben
+- **onCallEnded()**: Parent-Callback für Post-Call-UI
+- **redirectToSessions()**: Fallback-Redirect zu Sessions-Liste
+
+### Effekt
+
+Der Nutzer sieht sofort einen Toast und wird aus dem Call geworfen. Der Incident ist in der DB und unter `/admin/safety/incidents` sichtbar.
+
+---
+
+## 10. DB-Resilienz im Auth-Flow
 
 ### Problem
 
@@ -400,7 +434,7 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 
 ---
 
-## 10. Übersicht: Wo was lebt
+## 11. Übersicht: Wo was lebt
 
 | Mechanismus | Datei(en) |
 |-------------|-----------|
@@ -421,12 +455,13 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | Instant-Abrechnung Idempotenz | `lib/wallet-service.ts` (paymentStatus-Guard in `$transaction`) |
 | Video-Safety PRE_CHECK Gate | `app/api/safety/pre-check/route.ts`, `components/video-call/DailyCallContainer.tsx` |
 | Video-Safety Blitzlicht-Protokoll | `components/video-call/DailyCallContainer.tsx` (SNAPSHOT_DELAYS_MS, Hard-Stop 120s) |
+| Video-Safety Incident-Terminierung | `DailyCallContainer.tsx` – bei `incidentCreated` → `performCleanup()`, `onCallEnded()`, Toast, Redirect |
 | DSGVO Cleanup (Safety-Blobs) | `app/api/cron/cleanup-safety-data/route.ts` |
 | WalletTransaction-Anonymisierung | `lib/anonymize-user.ts` (referenceId → null, metadata → null) |
 
 ---
 
-## 11. Umgebungsvariablen (Platzhalter)
+## 12. Umgebungsvariablen (Platzhalter)
 
 Keine echten Keys in dieser Dokumentation. Relevante Platzhalter:
 

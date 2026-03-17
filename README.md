@@ -49,8 +49,11 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Instant Connect**: Anklopfen durch Shugyo; Takumi antwortet live
 
 ### Für Admins
-- **Admin-Layout** (`app/(app)/admin/layout.tsx`): Dedizierter Guard – NextAuth + Prisma-Rolle; entkoppelt vom Profil
-- **Admin-Dashboard** (`/admin`): Nutzer, Buchungen, Experten, Finanzen, DB-Tools
+- **Admin-Layout** (`app/(app)/admin/layout.tsx`): Dedizierter Guard – NextAuth + Prisma-Rolle; **kein Sidebar**, Tab-Navigation
+- **Admin-Dashboard** (`/admin`): **8 Tabs** – Übersicht, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System; mobile-optimiert (Tabs umbrechen)
+- **Vision-Scanner** (Tab): Google Cloud Vision – Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web; Bild-Upload oder Kamera; Ergebnisse direkt unter dem Analyse-Button
+- **Sicherheit-Tab**: Safety Reports, KI-Incidents; Links zu `/admin/safety` und `/admin/safety/incidents`
+- **System-Tab**: Health-Check, Waymail-Templates, DB-Tools
 - **Health-Check** (`/admin/health-check`): Live-Monitoring – Cron-Laufzeiten, Stripe-Escrow-Risiken (6+ Tage), Wallet-Integrität, Push-Reachability; Force-Capture pro Buchung
 - **Finance Monitoring** (`/admin/finance`): Escrow-Holds, Stripe-Expiry (7 Tage), Shugyo-Wallet-Liability; Force Capture, Manual Release mit Doppelbestätigung
 - **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen; alle Finanz-Ops in `prisma.$transaction`
@@ -62,7 +65,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **i18n**: Deutsch (Master), Englisch, Spanisch; Sprachenauswahl im Header (Länderkürzel: DE, EN, ES)
 - **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard; 7-Tage-Stripe-Hold-Fenster
 - **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
-- **Safety**: Google Vision API (Live-Monitoring), Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
+- **Safety**: Google Vision API (Pre-Check + Live-Monitoring); bei Verstoß **sofortige Verbindungstrennung**; Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
+- **E2EE**: Video-Calls end-to-end verschlüsselt (P2P-Modus via `sfu_switchover: 2`); Medien fließen direkt zwischen Geräten, Daily.co sieht keine Klartext-Streams
 - **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers; **Cache-Control: no-store** für geschützte Seiten (kein BFCache); **LogoutBackGuard** verhindert Zurück-Button-Cache nach Logout
 - **Auth-Resilienz**: DB-Verbindungsfehler (P1001) → `DB_ERROR` statt „falsches Passwort“; JWT-DB-Sync alle 5 Min (throttled)
 - **Secure File Upload**: `/api/files/secure-upload` mit Cloudmersive-Virenscan, Busboy-Streaming (max 2,5 MB)
@@ -79,7 +83,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 | Datenbank | PostgreSQL (Prisma ORM) |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
 | Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks) |
-| Video/Voice | Daily.co (`@daily-co/daily-js`) |
+| Video/Voice | Daily.co (`@daily-co/daily-js`), E2EE (P2P) |
 | Mobile | Capacitor 8 (iOS, Android) |
 | AI | Vercel AI SDK (Gemini) |
 | Storage | Vercel Blob |
@@ -98,7 +102,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 ```
 ├── app/
 │   ├── (app)/              # Geschützte App-Routen
-│   │   ├── admin/          # Admin (layout.tsx Guard), Dashboard, Health-Check, Finance, Safety, Templates
+│   │   ├── admin/          # Admin (layout.tsx Guard), Dashboard mit 8 Tabs, Health-Check, Finance, Safety, Templates, Scanner (redirect)
 │   │   ├── ai-guide/
 │   │   ├── booking/[id]/
 │   │   ├── session/[id]/   # Session-Seite (Daily.co)
@@ -114,7 +118,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 │   │   ├── push/subscribe/
 │   │   └── ...
 │   └── ...
-├── components/             # Deep-Link-Handler, Push-Provider, Native-Test-Center
+├── components/             # Deep-Link-Handler, Push-Provider, Native-Test-Center, admin/vision-scanner-tab
 ├── hooks/                  # use-native-bridge (Camera, Push, Preferences)
 ├── lib/                    # Auth, DB, push, wallet-service, booking-date-validation
 ├── ios/                    # Capacitor iOS-Projekt
