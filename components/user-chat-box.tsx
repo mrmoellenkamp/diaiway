@@ -558,7 +558,7 @@ export function UserChatBox({
             spellCheck={true}
             autoComplete="off"
             rows={1}
-            className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
+            className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={handleSend}

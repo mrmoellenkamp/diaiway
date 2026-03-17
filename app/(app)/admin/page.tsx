@@ -20,6 +20,7 @@ import {
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
   Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, FolderOpen, Send,
+  Scan,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
@@ -1642,6 +1643,12 @@ export default function AdminPage() {
                 <Link href="/admin/health-check">
                   <Activity className="size-3.5" />
                   Health Check
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+                <Link href="/admin/scanner">
+                  <Scan className="size-3.5" />
+                  Image Scanner
                 </Link>
               </Button>
             </div>

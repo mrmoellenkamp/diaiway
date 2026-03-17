@@ -22,12 +22,13 @@ import { LogoutBackGuard } from '@/components/logout-back-guard'
 import { Footer } from '@/components/footer'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"], display: "swap" })
+const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
 const _notoJP = Noto_Sans_JP({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-jp",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -64,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de" className={_notoJP.variable}>
+    <html lang="de" className={`${(_geist as { variable?: string }).variable ?? ""} ${(_geistMono as { variable?: string }).variable ?? ""} ${(_notoJP as { variable?: string }).variable ?? ""}`.trim()}>
       <body className="font-sans antialiased app-bottom-space">
         <ErrorBoundary>
           <SessionProvider>

@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const experts = await prisma.expert.findMany({
       include: { user: { select: { appRole: true, isVerified: true } } },
-      orderBy: { rating: "desc" },
+      orderBy: [{ isLive: "desc" }, { lastSeenAt: "desc" }, { rating: "desc" }],
     })
     // Ohne emailConfirmedAt (Spalte fehlt vor Migration) – nach Migration hinzufügen
     const active = experts.filter((e) => {
@@ -22,8 +22,7 @@ export async function GET() {
     const now = Date.now()
     const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt
 
-    return NextResponse.json(
-      active.map((e) => {
+    const payload = active.map((e) => {
         const lastSeen = e.lastSeenAt?.getTime()
         const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
         const isLive = e.isLive && isActuallyOnline
@@ -55,8 +54,14 @@ export async function GET() {
         socialLinks: e.socialLinks ?? {},
         cancelPolicy: e.cancelPolicy ?? { freeHours: 24, feePercent: 0 },
       }
-      })
-    )
+    })
+
+    return new NextResponse(JSON.stringify(payload), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "DB-Fehler"
     console.error("[diAiway] GET /api/takumis error:", message)

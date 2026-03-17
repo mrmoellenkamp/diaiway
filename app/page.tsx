@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -12,13 +12,65 @@ import Link from "next/link"
 import { ArrowRight, Video, Shield, CheckCircle, Star } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 
+/** Verzögert Takumis-Fetch: Erst nach Hero-Render, damit LCP nicht blockiert */
+function LiveTakumisSection() {
+  const { takumis } = useTakumis()
+  const liveTakumis = takumis.filter((t) => t.isLive)
+  const { t } = useI18n()
+  return (
+    <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
+      <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
+        {liveTakumis.length > 0 && (
+          <span className="flex items-center gap-1 text-xs text-accent font-medium">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-accent" />
+            </span>
+            {liveTakumis.length} {t("landing.live")}
+          </span>
+        )}
+      </div>
+      {liveTakumis.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {liveTakumis.slice(0, 3).map((tk) => (
+            <div key={tk.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
+              <Avatar className="size-10 border-2 border-accent/20">
+                <AvatarFallback className="bg-accent/10 text-accent font-semibold text-xs">
+                  {tk.avatar}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-1 flex-col gap-0.5">
+                <span className="text-sm font-semibold text-foreground">{tk.name}</span>
+                <span className="text-xs text-muted-foreground">{tk.subcategory}</span>
+              </div>
+              <Button asChild size="sm" className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">
+                <Link href={`/takumi/${tk.id}`}>{t("landing.connect")}</Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
+          <p className="text-sm text-muted-foreground">{t("landing.noExpertsOnline")}</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
 export default function LandingPage() {
   const { data: session } = useSession()
   const isLoggedIn = !!session?.user
-  const { takumis } = useTakumis()
+  const [showTakumis, setShowTakumis] = useState(false)
   const categories = useCategories()
-  const liveTakumis = takumis.filter((t) => t.isLive)
   const { t } = useI18n()
+
+  useEffect(() => {
+    const id = setTimeout(() => setShowTakumis(true), 400)
+    return () => clearTimeout(id)
+  }, [])
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -29,6 +81,7 @@ export default function LandingPage() {
             src="/images/hero-landing.png"
             alt="diAiway - Expert video consultation platform"
             fill
+            sizes="(max-width: 768px) 100vw, 768px"
             className="object-cover"
             priority
           />
@@ -103,46 +156,17 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* 匠 + Live Takumis */}
-      <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
-        <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
-          {liveTakumis.length > 0 && (
-            <span className="flex items-center gap-1 text-xs text-accent font-medium">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent opacity-75" />
-                <span className="relative inline-flex size-2 rounded-full bg-accent" />
-              </span>
-              {liveTakumis.length} {t("landing.live")}
-            </span>
-          )}
-        </div>
-        {liveTakumis.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {liveTakumis.slice(0, 3).map((tk) => (
-              <div key={tk.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
-                <Avatar className="size-10 border-2 border-accent/20">
-                  <AvatarFallback className="bg-accent/10 text-accent font-semibold text-xs">
-                    {tk.avatar}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-semibold text-foreground">{tk.name}</span>
-                  <span className="text-xs text-muted-foreground">{tk.subcategory}</span>
-                </div>
-                <Button asChild size="sm" className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">
-                  <Link href={`/takumi/${tk.id}`}>{t("landing.connect")}</Link>
-                </Button>
-              </div>
-            ))}
+      {/* 匠 + Live Takumis (verzögert geladen für schnelleren LCP) */}
+      {showTakumis ? <LiveTakumisSection /> : (
+        <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
+          <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
+          <h2 className="mb-4 text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
+          <div className="rounded-xl border border-border/60 bg-card p-6 animate-pulse">
+            <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-4" />
+            <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
           </div>
-        ) : (
-          <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-            <p className="text-sm text-muted-foreground">{t("landing.noExpertsOnline")}</p>
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Categories Preview */}
       <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">

@@ -49,6 +49,10 @@
 }
 
 @theme inline {
+  /* iOS: Mindest-Schriftgröße 16px verhindert automatisches Zoom bei Fokus auf Inputs */
+  --font-size-xs: 1rem;
+  --font-size-sm: 1rem;
+
   --font-sans: 'Geist', 'Geist Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --font-jp: 'Noto Sans JP', 'Geist', sans-serif;
@@ -100,6 +104,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* iOS: Input/Textarea mind. 16px verhindert automatisches Zoom beim Fokus */
+  input, textarea, select {
+    font-size: max(1rem, 16px);
   }
 }
 

@@ -1295,7 +1295,13 @@ export function DailyCallContainer({
           .then((r) => r.json())
           .then((data) => {
             if (data?.incidentCreated) {
-              console.warn("[DailyCall] Safety-Incident erstellt – Inhalt wurde gemeldet.")
+              console.warn("[DailyCall] Safety-Incident – Verbindung wird getrennt.")
+              toast.error("Verbindung getrennt: Verstoß gegen die Community-Richtlinien erkannt.", {
+                duration: 6000,
+              })
+              performCleanup()
+              if (onCallEnded) onCallEnded()
+              else redirectToSessions("safety-violation")
             }
           })
           .catch((e) => console.warn("[DailyCall] Snapshot senden:", e))
@@ -1313,7 +1319,7 @@ export function DailyCallContainer({
       snapshotTimeoutsRef.current.forEach((id) => clearTimeout(id))
       snapshotTimeoutsRef.current = []
     }
-  }, [phase, callMode, safetyAccepted, bookingId])
+  }, [phase, callMode, safetyAccepted, bookingId, performCleanup, onCallEnded, redirectToSessions])
 
   // --- Cleanup NUR bei echtem Unmount (nicht bei Re-Render/Strict Mode Remount) ---
   useEffect(() => {

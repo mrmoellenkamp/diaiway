@@ -35,6 +35,12 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
+  },
   async redirects() {
     return [
       { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },
