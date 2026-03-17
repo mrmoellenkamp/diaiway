@@ -30,7 +30,7 @@ function WalletPayInner() {
         const res = await fetch("/api/wallet/topup/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify({ sessionId, token }),
         })
         const data = await res.json()
         if (data.ok) {
@@ -46,10 +46,8 @@ function WalletPayInner() {
       }
       await new Promise((r) => setTimeout(r, 1000))
     }
-    setStatus("success")
-    setTimeout(() => {
-      window.location.href = "diaiway://wallet-topup-confirmed"
-    }, 1500)
+    setStatus("error")
+    setErrorMsg("Gutschrift konnte nicht bestätigt werden. Bitte prüfe dein Guthaben in Kürze oder kontaktiere den Support.")
   }
 
   onCompleteRef.current = async () => {
