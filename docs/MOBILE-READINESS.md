@@ -29,7 +29,7 @@
 | Apple Icon | ✅ Referenz in metadata |
 | Deep-Linking | ✅ `deep-link-handler.tsx`, `App.getLaunchUrl()` |
 | Push (Web + Native) | ✅ Web Push (VAPID) + Capacitor Push (FCM/APNs); Quick Actions (ACCEPT/DECLINE) |
-| Biometric Auth | ✅ capacitor-native-biometric (optional) |
+| Biometric Auth | ✅ @capgo/capacitor-native-biometric (optional) |
 | Haptics | ✅ @capacitor/haptics (Quick Action: hapticHeavy) |
 
 ---
@@ -83,7 +83,7 @@ Die App nutzt **Capacitor 8**. Alle Plugins sind in Produktion:
 | `@capacitor/push-notifications` | ^8.0.2 | FCM/APNs-Token; Quick Action Listener |
 | `@capacitor/share` | ^8.0.1 | System-Share |
 | `@capacitor/splash-screen` | ^8.0.1 | Splash-Screen |
-| `capacitor-native-biometric` | ^4.2.2 | Biometrische Authentifizierung (optional) |
+| `@capgo/capacitor-native-biometric` | ^8.4.2 | Biometrische Authentifizierung (optional) |
 
 ### Quick Action Push (Instant Connect)
 - **Native**: `lib/quick-action-push-handler.ts` – `pushNotificationActionPerformed`; ACCEPT/DECLINE navigieren zu Session bzw. Decline-API

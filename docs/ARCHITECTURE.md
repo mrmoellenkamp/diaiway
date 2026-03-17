@@ -300,7 +300,7 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 | `@capacitor/push-notifications` | FCM/APNs-Token, Quick Action Listener |
 | `@capacitor/share` | System-Share |
 | `@capacitor/splash-screen` | Splash-Screen |
-| `capacitor-native-biometric` | Biometrische Authentifizierung (optional) |
+| `@capgo/capacitor-native-biometric` | Biometrische Authentifizierung (optional) |
 
 ### Quick Action Push (Instant Connect)
 - **Web**: `public/sw.js` – `notificationclick` mit actions ACCEPT/DECLINE; Redirect zu `/api/bookings/[id]/instant-accept|instant-decline?token=`

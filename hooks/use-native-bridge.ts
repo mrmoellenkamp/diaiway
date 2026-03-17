@@ -17,7 +17,7 @@ function requireNative(): void {
 export async function verifyBiometric(reason = "Zur sicheren Authentifizierung"): Promise<boolean> {
   requireNative()
   try {
-    const { NativeBiometric } = await import("capacitor-native-biometric")
+    const { NativeBiometric } = await import("@capgo/capacitor-native-biometric")
     const available = await NativeBiometric.isAvailable()
     if (!available.isAvailable) {
       throw new Error("Biometrie ist auf diesem Gerät nicht verfügbar.")
@@ -43,7 +43,7 @@ export async function verifyBiometric(reason = "Zur sicheren Authentifizierung")
 export async function checkBiometricAvailable(): Promise<{ available: boolean; type?: string }> {
   if (!Capacitor.isNativePlatform()) return { available: false }
   try {
-    const { NativeBiometric } = await import("capacitor-native-biometric")
+    const { NativeBiometric } = await import("@capgo/capacitor-native-biometric")
     const r = await NativeBiometric.isAvailable({ useFallback: true })
     return { available: r.isAvailable, type: String(r.biometryType ?? "") }
   } catch {
@@ -147,7 +147,7 @@ const STAY_LOGGED_IN_KEY = "diaiway_stay_logged_in"
  */
 export async function saveBiometricCredentials(email: string, password: string): Promise<void> {
   requireNative()
-  const { NativeBiometric } = await import("capacitor-native-biometric")
+  const { NativeBiometric } = await import("@capgo/capacitor-native-biometric")
   await NativeBiometric.setCredentials({ username: email, password, server: BIOMETRIC_SERVER })
 }
 
@@ -157,7 +157,7 @@ export async function saveBiometricCredentials(email: string, password: string):
 export async function getBiometricCredentials(): Promise<{ username: string; password: string } | null> {
   if (!Capacitor.isNativePlatform()) return null
   try {
-    const { NativeBiometric } = await import("capacitor-native-biometric")
+    const { NativeBiometric } = await import("@capgo/capacitor-native-biometric")
     const creds = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER })
     return creds?.username ? creds : null
   } catch {
@@ -171,7 +171,7 @@ export async function getBiometricCredentials(): Promise<{ username: string; pas
 export async function deleteBiometricCredentials(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   try {
-    const { NativeBiometric } = await import("capacitor-native-biometric")
+    const { NativeBiometric } = await import("@capgo/capacitor-native-biometric")
     await NativeBiometric.deleteCredentials({ server: BIOMETRIC_SERVER })
   } catch { /* ignore */ }
 }
