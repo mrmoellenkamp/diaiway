@@ -26,6 +26,7 @@ export async function verifyBiometric(reason = "Zur sicheren Authentifizierung")
       reason,
       title: "Authentifizierung",
       subtitle: "Bestätige deine Identität",
+      useFallback: true,
     })
     return true
   } catch (err) {
@@ -37,12 +38,13 @@ export async function verifyBiometric(reason = "Zur sicheren Authentifizierung")
 
 /**
  * Biometrie: Verfügbarkeit prüfen
+ * useFallback: true – Passcode als Fallback erlauben (hilft auf manchen iOS-Geräten)
  */
 export async function checkBiometricAvailable(): Promise<{ available: boolean; type?: string }> {
   if (!Capacitor.isNativePlatform()) return { available: false }
   try {
     const { NativeBiometric } = await import("capacitor-native-biometric")
-    const r = await NativeBiometric.isAvailable()
+    const r = await NativeBiometric.isAvailable({ useFallback: true })
     return { available: r.isAvailable, type: String(r.biometryType ?? "") }
   } catch {
     return { available: false }

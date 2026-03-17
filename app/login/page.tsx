@@ -215,14 +215,18 @@ function LoginContent() {
   }
 
   // ── Handle biometric quick login
+  // On iOS, getCredentials triggers Face ID when credentials are stored with biometric protection.
+  // Call getCredentials first; verifyIdentity as fallback only when no creds (shouldn't happen if card is shown).
   async function handleBiometricLogin() {
     setBiometricLoading(true)
     setError("")
     try {
-      const verified = await verifyBiometric(t("login.biometricButton"))
-      if (!verified) { setBiometricLoading(false); return }
-
-      const creds = await getBiometricCredentials()
+      let creds = await getBiometricCredentials()
+      if (!creds) {
+        const verified = await verifyBiometric(t("login.biometricButton"))
+        if (!verified) { setBiometricLoading(false); return }
+        creds = await getBiometricCredentials()
+      }
       if (!creds) {
         setError(t("login.biometricError"))
         setHasBioCreds(false)
