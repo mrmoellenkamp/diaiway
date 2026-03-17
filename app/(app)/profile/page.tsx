@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input"
 import { ImageUpload } from "@/components/image-upload"
 import { Switch } from "@/components/ui/switch"
 import { useApp } from "@/lib/app-context"
-import { useTakumis } from "@/hooks/use-takumis"
+import { useSWRConfig } from "swr"
+import { ProfileFavoritesSection } from "@/components/profile-favorites-section"
 
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
@@ -30,7 +31,6 @@ import {
   Radio,
   Wallet,
   BarChart3,
-  Heart,
   Loader2,
   Check,
   X,
@@ -95,9 +95,9 @@ function MenuItem({
 
 export default function ProfilePage() {
   const { data: session, status, update: updateSession } = useSession()
-  const { role, setRole, setIsLoggedIn } = useApp()
+  const { role, setRole, setIsLoggedIn, profileData, profileLoading: appProfileLoading, refreshProfile } = useApp()
   const { t } = useI18n()
-  const { takumis, mutate: mutateTakumis } = useTakumis()
+  const { mutate } = useSWRConfig()
   const router = useRouter()
   const [isLive, setIsLive] = useState(false)
   const isTakumi = role === "takumi"
@@ -163,33 +163,46 @@ export default function ProfilePage() {
     return () => { if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current) }
   }, [editUsername, isEditingUsername, dbUsername])
 
-  // Load full profile + booking stats + takumi isLive
-  // Shugyo: use view=shugyo for spent/sessions. Takumi: use view=takumi for earnings/sessions.
+  // Sync profile data from AppProvider (kein doppelter Fetch)
   useEffect(() => {
-    async function loadProfile() {
+    if (profileData) {
+      setDbName(profileData.name)
+      setDbUsername(profileData.username)
+      setDbEmail(profileData.email)
+      setDbImage(profileData.image)
+      setDbIsVerified(profileData.isVerified)
+      setFavorites(profileData.favorites)
+      setLanguages(profileData.languages)
+      setSkillLevel(profileData.skillLevel)
+      const currentVerified = (session?.user as { isVerified?: boolean })?.isVerified ?? false
+      if (profileData.isVerified !== currentVerified) {
+        updateSession({ isVerified: profileData.isVerified })
+      }
+    } else if (!appProfileLoading && session?.user) {
+      // Fallback bei fehlgeschlagenem Fetch: Session-Daten nutzen
+      const u = session.user as { name?: string; email?: string; image?: string; username?: string }
+      setDbName(u.name || "")
+      setDbUsername(u.username ?? null)
+      setDbEmail(u.email || "")
+      setDbImage(u.image || "")
+      setFavorites([])
+      setLanguages([])
+    }
+  }, [profileData, appProfileLoading, session?.user, updateSession])
+
+  // Nur Buchungen + Takumi-Profile/Projekte laden (Profil kommt von AppProvider)
+  useEffect(() => {
+    async function loadBookingsAndExtras() {
+      if (!session?.user) return
+      if (profileData === null && appProfileLoading) return
+      setProfileLoading(true)
       try {
         const fetches: Promise<Response>[] = [
-          fetch("/api/user/profile"),
           fetch(`/api/bookings?view=${isTakumi ? "takumi" : "shugyo"}`),
         ]
         if (isTakumi) fetches.push(fetch("/api/user/takumi-profile"))
         else fetches.push(fetch("/api/shugyo/projects"))
-        const [profileRes, bookingsRes, takumiOrProjectsRes] = await Promise.all(fetches)
-        if (profileRes.ok) {
-          const data = await profileRes.json()
-          setDbName(data.name || "")
-          setDbUsername(data.username ?? null)
-          setDbEmail(data.email || "")
-          setDbImage(data.image || "")
-          setDbIsVerified(data.isVerified ?? false)
-          setFavorites(data.favorites || [])
-          const currentVerified = (session?.user as { isVerified?: boolean })?.isVerified ?? false
-          if (typeof data.isVerified === "boolean" && data.isVerified !== currentVerified) {
-            updateSession({ isVerified: data.isVerified })
-          }
-          setLanguages(Array.isArray(data.languages) ? data.languages : [])
-          setSkillLevel(data.skillLevel ?? null)
-        }
+        const [bookingsRes, takumiOrProjectsRes] = await Promise.all(fetches)
         if (!isTakumi && takumiOrProjectsRes?.ok) {
           const { projects } = await takumiOrProjectsRes.json()
           setProjectCount(Array.isArray(projects) ? projects.length : 0)
@@ -208,17 +221,17 @@ export default function ProfilePage() {
           if (tp.exists && typeof tp.isLive === "boolean") setIsLive(tp.isLive)
         }
       } catch {
-        // fall back to defaults (0)
+        /* fallback */
       } finally {
         setProfileLoading(false)
       }
     }
-    if (session?.user) {
-      loadProfile()
-    } else if (status !== "loading") {
+    if (session?.user && profileData) {
+      loadBookingsAndExtras()
+    } else if (status !== "loading" && !appProfileLoading) {
       setProfileLoading(false)
     }
-  }, [session, status, isTakumi])
+  }, [session?.user, status, profileData, appProfileLoading, isTakumi])
 
   // Prefer username as profile name, then name
   const userName = (dbUsername ?? dbName) || ((session?.user as { username?: string | null })?.username ?? session?.user?.name) || t("profile.userFallback")
@@ -233,7 +246,6 @@ export default function ProfilePage() {
     .slice(0, 2)
     .toUpperCase()
 
-  const favoriteTakumis = takumis.filter((t) => favorites.includes(t.id))
 
 
   async function handleSkillLevelChange(level: "NEULING" | "FORTGESCHRITTEN" | "PROFI") {
@@ -303,6 +315,7 @@ export default function ProfilePage() {
         setIsEditingName(false)
         setIsEditingImage(false)
         setHasUnsavedChanges(false)
+        refreshProfile()
       } else {
         toast.error(data.error)
       }
@@ -341,6 +354,7 @@ export default function ProfilePage() {
         setIsEditingUsername(false)
         setUsernameCheck("idle")
         toast.success(data.message)
+        refreshProfile()
       } else {
         toast.error(data.message || data.error)
       }
@@ -358,11 +372,13 @@ export default function ProfilePage() {
     window.location.replace("/")
   }
 
+  const showLoading = (session && !profileData && appProfileLoading) || (profileData && profileLoading)
+
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
         {/* Loading state */}
-        {profileLoading ? (
+        {showLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="size-6 animate-spin text-primary" />
           </div>
@@ -640,37 +656,8 @@ export default function ProfilePage() {
             </Card>
           )}
 
-          {/* Favorites */}
-          {favorites.length > 0 && (
-            <Card className="border-border/60 gap-0 py-0">
-              <CardContent className="flex flex-col gap-3 p-4">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Heart className="size-4 text-destructive" />
-                  {t("profile.favoriteTakumis")}
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {favoriteTakumis.map((t) => (
-                    <Link
-                      key={t.id}
-                      href={`/takumi/${t.id}`}
-                      className="flex items-center gap-3 rounded-lg border border-border/40 p-3 transition-colors hover:bg-muted/50"
-                    >
-                      <Avatar className="size-10 border-2 border-primary/10">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                          {t.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-1 flex-col">
-                        <span className="text-sm font-semibold text-foreground">{t.name}</span>
-                        <span className="text-[11px] text-muted-foreground">{t.subcategory}</span>
-                      </div>
-                      <Badge variant="outline" className="text-[10px]">{t.rating} / 5</Badge>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Favorites – Takumis werden nur bei Favoriten geladen */}
+          <ProfileFavoritesSection favoriteIds={favorites} />
 
           {/* Role switcher */}
           <Card className="border-border/60 gap-0 py-0">
@@ -718,7 +705,7 @@ export default function ProfilePage() {
                       })
                       if (res.ok) {
                         setIsLive(v)
-                        mutateTakumis()
+                        mutate("/api/takumis")
                         toast.success(v ? t("profile.nowLive") : t("profile.nowOffline"))
                       } else {
                         const data = await res.json()

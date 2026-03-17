@@ -1,0 +1,14 @@
+---
+description: Kein Deploy ohne explizite Zustimmung des Nutzers
+alwaysApply: true
+---
+
+# Kein Deploy ohne Freigabe
+
+**Es wird niemals automatisch deployed.** Der Nutzer führt Deployments in der Regel selbst durch.
+
+## Verhalten
+
+- **Kein** `vercel --prod`, `vercel deploy`, `git push` zu Production o.Ä. ohne ausdrückliche Aufforderung
+- Nach Commits: Hinweis geben, dass der Nutzer selbst deployen kann – aber nicht selbst deployen
+- Nur bei expliziter Anweisung (z.B. "deploy jetzt", "bitte deployen") ein Deployment ausführen

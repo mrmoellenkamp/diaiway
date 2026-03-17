@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState } from "react"
-import { signIn, signOut } from "next-auth/react"
+import { signOut, getCsrfToken } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -64,48 +64,55 @@ function LoginContent() {
 
     setIsLoading(true)
     try {
-      const result = await signIn("credentials", {
+      // CSRF-Token explizit holen und im Body mitsenden – behebt MissingCSRF
+      const csrfToken = await getCsrfToken()
+      const body = new URLSearchParams({
+        csrfToken: csrfToken ?? "",
         email: email.toLowerCase().trim(),
-        password,
-        redirect: false,
+        password: password.trim(),
+        callbackUrl: explicitCallback || "/categories",
+        json: "true",
       })
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: body.toString(),
+      })
+      const data = await res.json().catch(() => ({}))
+      const err = data?.error ?? data?.cause ?? (res.ok ? null : "CredentialsSignin")
 
-      if (result?.error) {
-        if (result.error.includes("TOO_MANY_ATTEMPTS")) {
-          const sec = result.error.split(":")[1]
+      if (err) {
+        if (typeof window !== "undefined") console.debug("[login] auth error:", err)
+        if (String(err).includes("TOO_MANY_ATTEMPTS")) {
+          const sec = String(err).split(":")[1]
           const min = Math.ceil(Number(sec) / 60)
           setError(t("login.tooManyAttempts").replace("{min}", String(min)))
-        } else if (result.error.includes("DB_ERROR")) {
-          // Datenbankverbindungsfehler – Passwort ist korrekt, Server hat Probleme
+        } else if (String(err).includes("DB_ERROR") || String(err).includes("MissingCSRF") || String(err).includes("CSRF")) {
           setError(t("login.errorNetwork"))
         } else {
           setError(t("login.errorInvalid"))
         }
         setIsLoading(false)
-      } else {
-        setIsLoggedIn(true)
-
-        // If user was sent here from a protected page, honour that redirect
-        if (explicitCallback) {
-          window.location.href = explicitCallback
-          return
-        }
-
-        // Otherwise route by role — fetch fresh session to read appRole & role
-        const sessionRes = await fetch("/api/auth/session")
-        const sessionData = await sessionRes.json()
-        const role    = sessionData?.user?.role    ?? "user"
-        const appRole = sessionData?.user?.appRole ?? "shugyo"
-
-        if (role === "admin") {
-          window.location.href = "/admin"
-        } else if (appRole === "takumi") {
-          window.location.href = "/profile"
-        } else {
-          // Shugyo → categories
-          window.location.href = "/categories"
-        }
+        return
       }
+
+      setIsLoggedIn(true)
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+      if (explicitCallback) {
+        window.location.href = explicitCallback
+        return
+      }
+      const sessionRes = await fetch("/api/auth/session", { credentials: "include" })
+      const sessionData = await sessionRes.json()
+      const role = sessionData?.user?.role ?? "user"
+      const appRole = sessionData?.user?.appRole ?? "shugyo"
+      if (role === "admin") window.location.href = "/admin"
+      else if (appRole === "takumi") window.location.href = "/profile"
+      else window.location.href = "/categories"
     } catch {
       setError(t("login.errorNetwork"))
       setIsLoading(false)

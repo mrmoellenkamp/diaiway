@@ -9,7 +9,7 @@ import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
-import { ArrowRight, Video, Shield, Zap, CheckCircle, Star } from "lucide-react"
+import { ArrowRight, Video, Shield, CheckCircle, Star } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 
 export default function LandingPage() {
@@ -35,36 +35,53 @@ export default function LandingPage() {
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary to-transparent" />
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
+        <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
           <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-primary-foreground">
             {t("landing.heroTitle")}
           </h1>
           <p className="font-jp text-4xl text-accent/80">匠</p>
           <p className="text-pretty text-sm leading-relaxed text-primary-foreground/70">
-            {t("landing.heroDesc")}
+            {t("landing.heroIntro")}
           </p>
-
-          <div className="flex w-full flex-col gap-3 pt-1">
+          <h2 className="text-base font-semibold text-primary-foreground">
+            {t("landing.heroWaysTitle")}
+          </h2>
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex flex-col gap-2 rounded-xl bg-primary-foreground/5 p-4 text-left">
+              <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
+                <span className="font-medium">1.</span> {t("landing.heroWay1")}
+              </p>
+              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
+                <Link href="/ai-guide">
+                  {t("landing.heroWay1Button")}
+                  <ArrowRight className="ml-1 size-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 rounded-xl bg-primary-foreground/5 p-4 text-left">
+              <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
+                <span className="font-medium">2.</span> {t("landing.heroWay2")}
+              </p>
+              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
+                <Link href="/categories">
+                  {t("landing.heroWay2Button")}
+                  <ArrowRight className="ml-1 size-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <p className="text-pretty text-sm font-medium leading-relaxed text-accent/90">
+              {t("landing.heroTakumiCta")}
+            </p>
             <Button
               asChild
+              variant="outline"
               size="lg"
-              className="h-14 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
+              className="h-12 w-full rounded-xl border-primary-foreground/30 bg-transparent text-base font-semibold text-primary-foreground hover:bg-primary-foreground/10"
             >
-              <Link href={isLoggedIn ? "/categories" : "/register"}>
-                {isLoggedIn ? t("landing.discoverCategories") : t("landing.findExpert")}
-                <ArrowRight className="ml-1 size-4" />
-              </Link>
+              <Link href="/register?role=takumi">{t("landing.heroTakumiButton")}</Link>
             </Button>
-            {!isLoggedIn && (
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-14 w-full rounded-xl border-primary-foreground/20 bg-transparent text-base font-semibold text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              >
-                <Link href="/register?role=takumi">{t("landing.becomeTakumi")}</Link>
-              </Button>
-            )}
           </div>
 
           <div className="flex items-center gap-4 pt-2 text-xs text-primary-foreground/50">
@@ -86,35 +103,9 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* How It Works */}
-      <section className="mx-auto w-full max-w-lg px-4 py-12 sm:px-6 sm:py-16">
-        <h2 className="mb-8 text-center text-2xl font-bold text-foreground">
-          {t("landing.howItWorks")}
-        </h2>
-        <div className="flex flex-col gap-6">
-          {[
-            { icon: Zap, step: "1", title: t("landing.step1Title"), desc: t("landing.step1Desc") },
-            { icon: Video, step: "2", title: t("landing.step2Title"), desc: t("landing.step2Desc") },
-            { icon: Shield, step: "3", title: t("landing.step3Title"), desc: t("landing.step3Desc") },
-          ].map((item) => (
-            <div key={item.step} className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <item.icon className="size-5 text-primary" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-accent">
-                  {t("landing.step")} {item.step}
-                </span>
-                <h3 className="font-semibold text-foreground">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Live Takumis */}
+      {/* 匠 + Live Takumis */}
       <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
+        <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
           {liveTakumis.length > 0 && (
@@ -148,7 +139,6 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-            <p className="font-jp text-2xl text-muted-foreground/30 mb-2">匠</p>
             <p className="text-sm text-muted-foreground">{t("landing.noExpertsOnline")}</p>
           </div>
         )}

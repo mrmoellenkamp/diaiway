@@ -1,0 +1,19 @@
+---
+description: Keine Code-Änderungen ohne explizite Freigabe des Nutzers
+alwaysApply: true
+---
+
+# Freigabe vor Code-Änderungen
+
+**Ohne explizites OK des Nutzers werden keine Code-Änderungen vorgenommen.**
+
+## Ablauf
+
+1. **Vorschlag zuerst**: Änderungen, Refactorings oder Fixes werden beschrieben und ggf. als konkrete Schritte skizziert.
+2. **Warten auf Freigabe**: Der Nutzer muss die vorgeschlagenen Änderungen ausdrücklich genehmigen (z.B. mit "ja", "ok", "mach das", "einverstanden").
+3. **Erst dann umsetzen**: Code wird erst geändert, wenn der Nutzer sein OK gegeben hat.
+
+## Ausnahmen
+
+- Reine Informationsfragen (z.B. "Was macht diese Funktion?") – keine Änderung nötig
+- Nutzer fordert explizit eine Änderung an und beschreibt sie – das gilt als Freigabe

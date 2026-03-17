@@ -1,9 +1,21 @@
 "use client"
 
-import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { useSession } from "next-auth/react"
 import type { UIMessage } from "ai"
 import type { UserRole } from "./types"
+
+export interface ProfileData {
+  name: string
+  username: string | null
+  email: string
+  image: string
+  isVerified: boolean
+  favorites: string[]
+  languages: string[]
+  skillLevel: string | null
+  appRole: UserRole
+}
 
 interface AppContextType {
   role: UserRole
@@ -12,6 +24,9 @@ interface AppContextType {
   userAvatar: string
   isLoggedIn: boolean
   setIsLoggedIn: (v: boolean) => void
+  profileData: ProfileData | null
+  profileLoading: boolean
+  refreshProfile: () => Promise<void>
   storedMessages: UIMessage[]
   setStoredMessages: (msgs: UIMessage[]) => void
   storedMessagesRef: React.RefObject<UIMessage[]>
@@ -40,23 +55,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { data: session, status: sessionStatus, update: updateSession } = useSession()
   const [role, setRoleState] = useState<UserRole>("shugyo")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
 
-  // Sync auth state + appRole from session / DB
+  const loadProfile = useCallback(async () => {
+    if (sessionStatus !== "authenticated" || !session?.user) return
+    setProfileLoading(true)
+    try {
+      const r = await fetch("/api/user/profile")
+      const data = r.ok ? await r.json() : null
+      if (data) {
+        setRoleState((data.appRole as UserRole) || "shugyo")
+        setProfileData({
+          name: data.name || "",
+          username: data.username ?? null,
+          email: data.email || "",
+          image: data.image || "",
+          isVerified: data.isVerified ?? false,
+          favorites: Array.isArray(data.favorites) ? data.favorites : [],
+          languages: Array.isArray(data.languages) ? data.languages : [],
+          skillLevel: data.skillLevel ?? null,
+          appRole: (data.appRole as UserRole) || "shugyo",
+        })
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [sessionStatus, session?.user])
+
+  const refreshProfile = useCallback(async () => {
+    await loadProfile()
+  }, [loadProfile])
+
+  // Sync auth state + load profile from DB
   useEffect(() => {
     if (sessionStatus === "authenticated" && session?.user) {
       setIsLoggedIn(true)
-      // Load persisted appRole from DB
-      fetch("/api/user/profile")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data?.appRole) setRoleState(data.appRole)
-        })
-        .catch(() => {})
+      loadProfile()
     } else if (sessionStatus === "unauthenticated") {
       setIsLoggedIn(false)
       setRoleState("shugyo")
+      setProfileData(null)
+      setProfileLoading(false)
     }
-  }, [session, sessionStatus])
+  }, [session, sessionStatus, loadProfile])
 
   // Persist role to DB when changed + update session for middleware
   function setRole(newRole: UserRole) {
@@ -127,9 +171,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         setRole,
-        userName: session?.user?.name || "Nutzer",
-        userAvatar: session?.user?.image || "",
+        userName: profileData?.name || profileData?.username || session?.user?.name || "Nutzer",
+        userAvatar: profileData?.image || session?.user?.image || "",
         isLoggedIn,
+        profileData,
+        profileLoading,
+        refreshProfile,
         setIsLoggedIn,
         storedMessages,
         setStoredMessages: handleSetStoredMessages,

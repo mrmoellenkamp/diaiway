@@ -57,6 +57,14 @@ const de = {
 
   // Landing
   "landing.heroTitle": "DIY-Hilfe auf Knopfdruck. Sicher. Schnell. Überall.",
+  "landing.heroIntro": "Live Support für dein Projekt. Egal, ob grüner Daumen oder ölverschmierte Hände – diAiway bringt dich weiter.",
+  "landing.heroWaysTitle": "2 Wege, deine Lösung! So gehts...",
+  "landing.heroWay1": "AI - Check. Sekundenschnelle Antworten auf deine DIY-Fragen. Mit unserer speziellen diAiway -Intelligence.",
+  "landing.heroWay1Button": "AI-Intelligence",
+  "landing.heroWay2": "Individuelle Hilfe von echten Menschen mit echter Erfahrung und der nötigen Intuition. Live-Video oder Sprachanruf.",
+  "landing.heroWay2Button": "Deinen Takumi (Experten) finden",
+  "landing.heroTakumiCta": "Du bist Experte und willst dein Wissen teilen? Dann werde jetzt ein Takumi – Meister seines Fachs.",
+  "landing.heroTakumiButton": "Takumi werden",
   "landing.heroDesc": "Individueller Support von Menschen mit Erfahrung. Live per Video oder Sprachanruf. Vom Gemüsegarten bis zum Oldtimer",
   "landing.findExpert": "AI fragen und Experten (Takumi) finden",
   "landing.discoverCategories": "AI fragen & Kategorien entdecken",
