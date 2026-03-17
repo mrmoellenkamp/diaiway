@@ -134,6 +134,79 @@ export async function getPreference(key: string): Promise<string | null> {
   return value ?? null
 }
 
+// ─── Biometric Credential Storage (iOS Keychain / Android Keystore) ───────────
+
+const BIOMETRIC_SERVER = "diaiway.com"
+const LAST_USER_KEY    = "diaiway_last_user"
+
+/**
+ * Speichert Anmeldedaten sicher im System-Keychain (per Biometrie geschützt).
+ */
+export async function saveBiometricCredentials(email: string, password: string): Promise<void> {
+  requireNative()
+  const { NativeBiometric } = await import("capacitor-native-biometric")
+  await NativeBiometric.setCredentials({ username: email, password, server: BIOMETRIC_SERVER })
+}
+
+/**
+ * Gibt gespeicherte Anmeldedaten zurück, oder null falls keine vorhanden.
+ */
+export async function getBiometricCredentials(): Promise<{ username: string; password: string } | null> {
+  if (!Capacitor.isNativePlatform()) return null
+  try {
+    const { NativeBiometric } = await import("capacitor-native-biometric")
+    const creds = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER })
+    return creds?.username ? creds : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Löscht gespeicherte Anmeldedaten aus dem Keychain.
+ */
+export async function deleteBiometricCredentials(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const { NativeBiometric } = await import("capacitor-native-biometric")
+    await NativeBiometric.deleteCredentials({ server: BIOMETRIC_SERVER })
+  } catch { /* ignore */ }
+}
+
+// ─── Last User (Preferences, unverschlüsselt – nur Name+E-Mail für UI) ────────
+
+/**
+ * Speichert den zuletzt angemeldeten Nutzer für die Quick-Login-Anzeige.
+ */
+export async function saveLastUser(info: { email: string; name: string }): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  const { Preferences } = await import("@capacitor/preferences")
+  await Preferences.set({ key: LAST_USER_KEY, value: JSON.stringify(info) })
+}
+
+/**
+ * Gibt den zuletzt angemeldeten Nutzer zurück, oder null.
+ */
+export async function getLastUser(): Promise<{ email: string; name: string } | null> {
+  if (!Capacitor.isNativePlatform()) return null
+  try {
+    const { Preferences } = await import("@capacitor/preferences")
+    const { value } = await Preferences.get({ key: LAST_USER_KEY })
+    return value ? (JSON.parse(value) as { email: string; name: string }) : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Löscht den gespeicherten Last-User (z.B. beim Ausloggen).
+ */
+export async function clearLastUser(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  const { Preferences } = await import("@capacitor/preferences")
+  await Preferences.remove({ key: LAST_USER_KEY })
+}
+
 /** Re-Export für einfachen Zugriff */
 export { checkConnectivity, shareNative, scheduleSessionReminder, hapticSuccess, hapticLight } from "@/lib/native-utils"
 

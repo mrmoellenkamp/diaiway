@@ -46,6 +46,7 @@ export async function POST(req: Request) {
           email: true,
           liveStatus: true,
           priceVideo15Min: true,
+          user: { select: { username: true } },
           priceVoice15Min: true,
           pricePerSession: true,
         },

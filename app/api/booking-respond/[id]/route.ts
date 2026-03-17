@@ -45,6 +45,7 @@ export async function GET(
     id: booking.id,
     userId: booking.userId,
     expertId: booking.expertId,
+    expertUserId: booking.expert?.userId ?? null,
     userName: booking.userName,
     userEmail: booking.userEmail,
     expertName: booking.expertName,

@@ -29,7 +29,7 @@ export async function POST(
   try {
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, username: true },
     })
 
     if (!user) {
@@ -54,7 +54,7 @@ export async function POST(
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
-    await sendPasswordResetEmail(user.email, user.name, `${baseUrl}/reset-password/${rawToken}`)
+    await sendPasswordResetEmail(user.email, user.username ?? user.name, `${baseUrl}/reset-password/${rawToken}`)
 
     return NextResponse.json({
       success: true,

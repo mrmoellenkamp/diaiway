@@ -253,22 +253,32 @@ function MessagesPageContent() {
       fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`)
         .then(async (r) => {
           const d = await r.json()
+          const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
+
           if (r.status === 401 || r.status === 403 || r.status === 404) {
-            // Waymail gehört nicht dem eingeloggten Nutzer (oder existiert nicht)
-            // → direkt zur Login-Seite, damit der richtige Empfänger sich anmelden kann
+            // Waymail gehört nicht dem eingeloggten Nutzer → Login als richtiger Empfänger
             redirectingRef.current = true
-            const callbackUrl = `/messages?waymail=${encodeURIComponent(waymailParam)}`
             window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
             return
           }
           if (!r.ok) {
-            // Server-Fehler (z.B. DB nicht erreichbar) → nicht ausloggen, nur silent fail
+            // Server-Fehler → nicht ausloggen, nur silent fail
             return
           }
-          setWaymailFolder(d.isFromMe ? "sent" : "inbox")
+
+          // Der E-Mail-Benachrichtigungslink ist ausschließlich für den EMPFÄNGER gedacht.
+          // Falls der eingeloggte Nutzer der Absender ist (isFromMe === true), bedeutet das,
+          // dass ein anderer User eingeloggt ist → ausloggen und als Empfänger neu anmelden.
+          if (d.isFromMe) {
+            redirectingRef.current = true
+            window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+            return
+          }
+
+          setWaymailFolder("inbox")
           setWaymailDetail(d)
           const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
-          if (!alreadyRead && !d.isFromMe) {
+          if (!alreadyRead) {
             fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
             setWaymails((prev) => prev.map((x) => (x.id === waymailParam ? { ...x, read: true } : x)))
           }

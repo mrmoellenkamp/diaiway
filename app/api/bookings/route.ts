@@ -143,7 +143,10 @@ export const POST = apiHandler(async (req) => {
     )
   }
 
-  const expert = await prisma.expert.findUnique({ where: { id: takumiId } })
+  const expert = await prisma.expert.findUnique({
+    where: { id: takumiId },
+    include: { user: { select: { username: true } } },
+  })
   if (!expert) {
     return NextResponse.json({ error: "Experte nicht gefunden." }, { status: 404 })
   }
@@ -221,7 +224,7 @@ export const POST = apiHandler(async (req) => {
       const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
       await sendBookingRequestEmail({
         to: expertEmail,
-        takumiName: expert.name,
+        takumiName: expert.user?.username ?? expert.name,  // Kommunikation: Username bevorzugt
         userName: ((session.user as { username?: string | null }).username ?? session.user.name) || "Nutzer",
         userEmail: session.user.email || "",
         date,

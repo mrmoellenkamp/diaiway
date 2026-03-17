@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Loader2, CheckCircle2, XCircle, MessageSquare, ArrowRight, AlertTriangle } from "lucide-react"
 import Link from "next/link"
@@ -13,6 +14,7 @@ interface BookingInfo {
   id: string
   userId?: string
   expertId?: string
+  expertUserId?: string | null
   userName: string
   userEmail: string
   expertName: string
@@ -29,6 +31,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   const searchParams = useSearchParams()
   const token  = searchParams.get("token")  || ""
   const action = searchParams.get("action") as Action
+  const { data: session, status: sessionStatus } = useSession()
 
   const [phase,      setPhase]      = useState<Phase>("loading")
   const [booking,    setBooking]    = useState<BookingInfo | null>(null)
@@ -37,13 +40,25 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
   const [error,      setError]      = useState("")
   const [lastAction, setLastAction] = useState<"confirmed" | "declined" | "ask" | null>(null)
 
-  // Load booking info for display (token from email link, or session for logged-in expert)
+  // Load booking info (token from email link, or session for logged-in expert)
   useEffect(() => {
+    // Wait until session status is known before deciding on redirect
+    if (sessionStatus === "loading") return
+
     const url = token ? `/api/booking-respond/${id}?token=${token}` : `/api/booking-respond/${id}`
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) { setPhase("error"); setError(data.error); return }
+
+        // If a token is present and a different user is logged in, redirect to login
+        // so the correct expert (Takumi) can authenticate and respond.
+        if (token && session?.user?.id && data.expertUserId && data.expertUserId !== session.user.id) {
+          const callbackUrl = `/booking/respond/${id}?token=${encodeURIComponent(token)}`
+          window.location.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+          return
+        }
+
         setBooking(data)
         if (data.status !== "pending") {
           setPhase("done")
@@ -53,7 +68,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
         setPhase(action === "ask" ? "form" : "confirm")
       })
       .catch(() => { setPhase("error"); setError("Fehler beim Laden der Buchung.") })
-  }, [id, token, action])
+  }, [id, token, action, session?.user?.id, sessionStatus])
 
   async function handleAction(act: "confirmed" | "declined") {
     setSending(true)

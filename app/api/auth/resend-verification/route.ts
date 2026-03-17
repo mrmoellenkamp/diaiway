@@ -39,7 +39,7 @@ export async function POST() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true, emailConfirmedAt: true },
+      select: { email: true, name: true, username: true, emailConfirmedAt: true },
     })
 
     if (!user) {
@@ -69,7 +69,7 @@ export async function POST() {
 
     const result = await sendVerificationEmail({
       to: user.email,
-      name: user.name,
+      name: user.username ?? user.name,
       verifyUrl,
     })
 

@@ -121,6 +121,16 @@ const en = {
   "login.errorNetwork": "Connection error. Please try again.",
   "login.tooManyAttempts": "Too many failed attempts. Please wait {min} minutes.",
   "login.timeoutMessage": "Your session has ended due to inactivity. Please sign in again.",
+  "login.biometricButton": "Sign in with Face ID",
+  "login.biometricButtonFingerprint": "Sign in with fingerprint",
+  "login.biometricNotYou": "Not {name}?",
+  "login.biometricSwitch": "Use a different account",
+  "login.biometricOr": "Or sign in manually",
+  "login.biometricSaveTitle": "Sign in faster",
+  "login.biometricSaveDesc": "Use Face ID / biometrics next time?",
+  "login.biometricSaveYes": "Yes, save",
+  "login.biometricSaveNo": "Not now",
+  "login.biometricError": "Biometric authentication failed. Please sign in manually.",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Session expiring soon",

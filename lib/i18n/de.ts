@@ -121,6 +121,16 @@ const de = {
   "login.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "login.tooManyAttempts": "Zu viele fehlgeschlagene Versuche. Bitte warte {min} Minuten.",
   "login.timeoutMessage": "Deine Sitzung wurde wegen Inaktivität beendet. Bitte melde dich erneut an.",
+  "login.biometricButton": "Mit Face ID anmelden",
+  "login.biometricButtonFingerprint": "Mit Fingerabdruck anmelden",
+  "login.biometricNotYou": "Du bist nicht {name}?",
+  "login.biometricSwitch": "Anderen Account verwenden",
+  "login.biometricOr": "Oder manuell anmelden",
+  "login.biometricSaveTitle": "Schneller anmelden",
+  "login.biometricSaveDesc": "Beim nächsten Mal mit Face ID / Biometrie einloggen?",
+  "login.biometricSaveYes": "Ja, speichern",
+  "login.biometricSaveNo": "Nicht jetzt",
+  "login.biometricError": "Biometrie fehlgeschlagen. Bitte manuell anmelden.",
 
   // Session Timeout Warning
   "sessionTimeout.title": "Sitzung läuft bald ab",

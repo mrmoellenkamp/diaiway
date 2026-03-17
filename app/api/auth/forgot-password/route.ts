@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
       try {
-        await sendPasswordResetEmail(user.email, user.name, `${baseUrl}/reset-password/${rawToken}`)
+        await sendPasswordResetEmail(user.email, user.username ?? user.name, `${baseUrl}/reset-password/${rawToken}`)
       } catch (emailErr) {
         console.error("[diAiway] forgot-password email error:", emailErr)
       }
