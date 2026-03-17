@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Video, Clock, Calendar, Phone, PhoneCall, X, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
+import { Video, Clock, Calendar, Phone, PhoneCall, X, XCircle, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
