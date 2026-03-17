@@ -67,13 +67,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   // Persistent cookie so WKWebView (iOS) keeps the session across app restarts.
-  // Without explicit maxAge the cookie is a session cookie cleared when the app closes.
+  // Must use authjs.session-token (Auth.js v5 default) so middleware recognizes the session.
   cookies: {
     sessionToken: {
       name:
         process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax" as const,

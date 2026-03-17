@@ -119,10 +119,14 @@ function LoginContent() {
   }, [isNative])
 
   // ── Navigate after login (role-based)
+  // Never go to "/" on native – root page signs out when stayLoggedIn=false, causing a loop
   const navigateAfterLogin = useCallback(
     async (navUrl?: string) => {
-      if (navUrl) { window.location.href = navUrl; return }
-      if (explicitCallback) { window.location.href = explicitCallback; return }
+      const target = navUrl || explicitCallback
+      if (target && target !== "/") {
+        window.location.href = target
+        return
+      }
       const r = await fetch("/api/auth/session", { credentials: "include" })
       const d = await r.json()
       const role    = d?.user?.role    ?? "user"
@@ -259,7 +263,8 @@ function LoginContent() {
       }
     } catch { /* ignore */ }
     setIsLoggedIn(true)
-    navigateAfterLogin(pendingNavUrl ?? undefined)
+    const target = (pendingNavUrl && pendingNavUrl !== "/") ? pendingNavUrl : undefined
+    navigateAfterLogin(target)
   }
 
   // ── Handle stay-logged-in prompt: "Immer Anmeldeseite zeigen" (login page + Face ID)
@@ -276,7 +281,8 @@ function LoginContent() {
       }
     } catch { /* ignore */ }
     setIsLoggedIn(true)
-    navigateAfterLogin(pendingNavUrl ?? undefined)
+    const target = (pendingNavUrl && pendingNavUrl !== "/") ? pendingNavUrl : undefined
+    navigateAfterLogin(target)
   }
 
   // ── Dismiss quick login (user wants different account)
