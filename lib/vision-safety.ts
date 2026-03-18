@@ -36,13 +36,27 @@ function checkAnnotation(annotation: SafeSearchAnnotation): SafetyCheckResult {
   return { safe: true }
 }
 
-function hasVisionConfig(): boolean {
+export function hasVisionConfig(): boolean {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY?.trim()
   if (apiKey) return true
   const projectId = process.env.GOOGLE_VISION_PROJECT_ID?.trim()
   const clientEmail = process.env.GOOGLE_VISION_CLIENT_EMAIL?.trim()
   const privateKey = process.env.GOOGLE_VISION_PRIVATE_KEY?.trim()
   return !!(projectId && clientEmail && privateKey)
+}
+
+/** Für Health-Check: Welche Vision-Konfiguration ist aktiv (ohne Werte). */
+export function getVisionConfigStatus(): { configured: boolean; method: "api_key" | "service_account" | null } {
+  if (process.env.GOOGLE_CLOUD_VISION_API_KEY?.trim()) {
+    return { configured: true, method: "api_key" }
+  }
+  const projectId = process.env.GOOGLE_VISION_PROJECT_ID?.trim()
+  const clientEmail = process.env.GOOGLE_VISION_CLIENT_EMAIL?.trim()
+  const privateKey = process.env.GOOGLE_VISION_PRIVATE_KEY?.trim()
+  if (projectId && clientEmail && privateKey) {
+    return { configured: true, method: "service_account" }
+  }
+  return { configured: false, method: null }
 }
 
 async function runSafeSearchWithClient(content: string): Promise<SafetyCheckResult> {

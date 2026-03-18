@@ -90,6 +90,7 @@ export async function POST(
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
+    wallet_options: { link: { display: "never" } },
     line_items: [
       {
         price_data: {

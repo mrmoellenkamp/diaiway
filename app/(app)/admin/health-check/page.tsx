@@ -33,9 +33,11 @@ import {
   Bell,
   AlertTriangle,
   CheckCircle2,
+  Eye,
 } from "lucide-react"
 
 type HealthData = {
+  visionConfig?: { configured: boolean; method: "api_key" | "service_account" | null }
   cronMonitor: { "release-wallet": string | null; "experts-offline": string | null }
   stripeEscrow: Array<{
     bookingId: string
@@ -162,6 +164,31 @@ export default function AdminHealthCheckPage() {
 
           {data && (
             <>
+              {/* Vision API (Bildprüfung) */}
+              {data.visionConfig !== undefined && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Eye className="size-4 text-muted-foreground" />
+                      BILDPRÜFUNG (VISION API)
+                      {data.visionConfig.configured ? (
+                        <span className="ml-2 rounded bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-500">
+                          {data.visionConfig.method === "api_key" ? "API-Key" : "Service Account"}
+                        </span>
+                      ) : (
+                        <span className="ml-2 rounded bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
+                          Nicht konfiguriert
+                        </span>
+                      )}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Pre-Check & Live-Monitoring für Video-Calls. GOOGLE_CLOUD_VISION_API_KEY oder
+                      GOOGLE_VISION_* (Service Account) erforderlich.
+                    </p>
+                  </CardHeader>
+                </Card>
+              )}
+
               {/* Cron Monitor */}
               <Card>
                 <CardHeader className="pb-2">

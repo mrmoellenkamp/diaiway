@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { getVisionConfigStatus } from "@/lib/vision-safety"
 
 export const dynamic = "force-dynamic"
 
@@ -94,7 +95,10 @@ export async function GET() {
         ? Math.round((availableWithoutPush / availableTakumis) * 100)
         : 0
 
+    const visionConfig = getVisionConfigStatus()
+
     return NextResponse.json({
+      visionConfig,
       cronMonitor: {
         "release-wallet": cronMap["release-wallet"] ?? null,
         "experts-offline": cronMap["experts-offline"] ?? null,
