@@ -55,6 +55,11 @@ export function GlobalNavigation() {
     return null
   }
 
+  // Video-Call: Vollbild ohne Header/Footer (Bedienelemente sonst verdeckt)
+  if (pathname?.startsWith("/session/")) {
+    return null
+  }
+
   // Auth-Seiten: Header im gleichen Layout wie Profilseite
   if (AUTH_PATHS.some((p) => pathname?.startsWith(p))) {
     return <AuthHeader title={authTitleForPath(pathname ?? "", t)} />

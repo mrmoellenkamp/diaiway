@@ -1331,7 +1331,8 @@ export function DailyCallContainer({
   }, [performCleanup])
 
   // --- App Shell (unzerstörbare Struktur) ---
-  const shellClass = "fixed inset-0 h-[100dvh] w-full flex flex-col bg-background overflow-hidden"
+  const shellClass =
+    "fixed inset-0 h-[100dvh] w-full flex flex-col bg-background overflow-hidden pt-[env(safe-area-inset-top,0px)]"
 
   if (error) {
     return (
