@@ -16,6 +16,7 @@ import { TakumiPresenceUpdater } from '@/components/takumi-presence-updater'
 import { InstantRequestOverlay } from '@/components/instant-request-overlay'
 import { WalletTopupProvider } from '@/lib/wallet-topup-context'
 import { ScrollToTop } from '@/components/scroll-to-top'
+import { PullToRefresh } from '@/components/pull-to-refresh'
 import { SplashScreenHider } from '@/components/splash-screen-hider'
 import { DeepLinkHandler } from '@/components/deep-link-handler'
 import { LogoutBackGuard } from '@/components/logout-back-guard'
@@ -79,6 +80,7 @@ export default function RootLayout({
                     <LogoutBackGuard />
                     <SplashScreenHider />
                     <ScrollToTop />
+                    <PullToRefresh />
                     <GlobalNavigation />
                     {children}
                     <Footer />
