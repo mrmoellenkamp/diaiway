@@ -52,6 +52,13 @@ export async function POST(req: Request) {
         break
       }
 
+      case "checkout.session.async_payment_succeeded": {
+        // Asynchrone Zahlungsmethoden (SEPA, iDEAL etc.): Wallet erst hier gutschreiben
+        const session = event.data.object as Stripe.Checkout.Session
+        await handleCheckoutCompleted(session)
+        break
+      }
+
       case "payment_intent.amount_capturable_updated": {
         // Fallback bei manual capture: checkout.session.completed kann payment_status=unpaid haben;
         // dieses Event feuert, wenn die Zahlung autorisiert ist
@@ -86,6 +93,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Wallet-Aufladung (Instant-Connect)
   if (paymentType === "wallet_topup") {
+    // Bei async-Zahlungsmethoden (SEPA etc.) ist payment_status hier "unpaid" –
+    // Gutschrift erfolgt über checkout.session.async_payment_succeeded
+    if (session.payment_status !== "paid") return
+
     const userId = session.metadata?.userId
     if (!userId) {
       console.error("[Stripe Webhook] wallet_topup: missing userId")
