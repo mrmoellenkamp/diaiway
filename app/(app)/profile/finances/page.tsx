@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,10 +55,11 @@ export default function FinancesPage() {
 
   useEffect(() => {
     let cancelled = false
+    const opts = { cache: "no-store" as RequestCache, credentials: "include" as RequestCredentials }
     Promise.all([
-      fetch("/api/wallet/history").then((r) => r.json()),
-      fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/user/takumi-profile").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/wallet/history", opts).then((r) => r.json()),
+      fetch("/api/user/profile", opts).then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/user/takumi-profile", opts).then((r) => (r.ok ? r.json() : null)),
     ])
       .then(([walletData, profileData, takumiData]) => {
         if (cancelled) return
@@ -81,11 +82,12 @@ export default function FinancesPage() {
     return () => { cancelled = true }
   }, [])
 
-  const refetchWallet = async () => {
+  const refetchWallet = useCallback(async () => {
     try {
+      const opts = { cache: "no-store" as RequestCache, credentials: "include" as RequestCredentials }
       const [walletData, profileData] = await Promise.all([
-        fetch("/api/wallet/history").then((r) => r.json()),
-        fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/wallet/history", opts).then((r) => r.json()),
+        fetch("/api/user/profile", opts).then((r) => (r.ok ? r.json() : null)),
       ])
       if (walletData?.history) setHistory(walletData.history)
       if (walletData?.wallet) setWallet(walletData.wallet)
@@ -94,7 +96,21 @@ export default function FinancesPage() {
       }
       if (profileData?.appRole) setAppRole(profileData.appRole)
     } catch { /* ignore */ }
-  }
+  }, [])
+
+  // Bei Rückkehr zur App/Tab: Wallet neu laden (z.B. nach Webhook-Gutschrift)
+  useEffect(() => {
+    const onVisible = () => void refetchWallet()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") onVisible()
+    }
+    window.addEventListener("focus", onVisible)
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () => {
+      window.removeEventListener("focus", onVisible)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+    }
+  }, [refetchWallet])
 
   return (
     <PageContainer>

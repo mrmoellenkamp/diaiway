@@ -21,10 +21,18 @@ export async function GET(req: NextRequest) {
       getWalletHistory(session.user.id, limit),
       getTakumiWallet(session.user.id),
     ])
-    return NextResponse.json({
-      history,
-      wallet: wallet ?? { balance: 0, pendingBalance: 0, canWithdraw: false },
-    })
+    return NextResponse.json(
+      {
+        history,
+        wallet: wallet ?? { balance: 0, pendingBalance: 0, canWithdraw: false },
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+        },
+      }
+    )
   } catch (err) {
     console.error("[Wallet] history error:", err)
     return NextResponse.json({ error: "Fehler beim Laden der Historie." }, { status: 500 })
