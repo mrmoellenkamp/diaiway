@@ -45,11 +45,9 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für **Safety** (Pre-Check, Live-Monitoring, Incident-Speicherung) via `lib/vision-safety.ts`. Endpoint: `eu-vision.googleapis.com` (DSGVO). Ohne Key wird die Prüfung übersprungen. |
+| `GOOGLE_CLOUD_VISION_API_KEY` | Google Cloud Vision API Key. Wird verwendet für **Safety** (Bild-Upload, Pre-Check, Live-Monitoring) via `lib/vision-safety.ts`. Endpoint: `eu-vision.googleapis.com` (DSGVO). **Fallback:** Wenn nicht gesetzt, werden die Service-Account-Credentials (`GOOGLE_VISION_*`) verwendet. |
 
-## Vision-Scanner (Admin)
-
-Der Admin-Vision-Scanner (`/admin` → Tab Scanner) nutzt `@google-cloud/vision` mit Service-Account-Credentials:
+## Vision-Scanner & Safety (Service Account)
 
 | Variable | Beschreibung |
 |----------|--------------|
@@ -57,7 +55,7 @@ Der Admin-Vision-Scanner (`/admin` → Tab Scanner) nutzt `@google-cloud/vision`
 | `GOOGLE_VISION_CLIENT_EMAIL` | Service-Account-E-Mail |
 | `GOOGLE_VISION_PRIVATE_KEY` | Private Key (PEM, mit `\\n` für Zeilenumbrüche) |
 
-Ohne diese Variablen schlägt der Scanner fehl. Safety (Pre-Check, Snapshot) nutzt weiterhin `GOOGLE_CLOUD_VISION_API_KEY`.
+Werden für Admin-Scanner und als **Fallback für Safety** genutzt, wenn `GOOGLE_CLOUD_VISION_API_KEY` nicht gesetzt ist. Mindestens API-Key ODER Service-Account erforderlich.
 
 ## Vercel Blob
 

@@ -39,25 +39,23 @@ export function LandingHeader() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-2 sm:flex">
+        <div className="flex items-center gap-2">
           <LanguageSwitcher variant="landing" />
-          <UserNav variant="landing" />
+          <div className="hidden sm:block">
+            <UserNav variant="landing" />
+          </div>
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 sm:hidden"
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
         </div>
-
-        <button
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          className="flex size-9 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 sm:hidden"
-          aria-label="Menu"
-        >
-          {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
       </div>
 
       {mobileMenuOpen && (
         <div className="border-t border-primary-foreground/10 bg-card px-4 py-3 sm:hidden">
-          <div className="flex items-center gap-2 px-3 py-2">
-            <LanguageSwitcher variant="compact" />
-          </div>
           {isLoggedIn ? (
             <nav className="flex flex-col gap-0.5">
               <div className="flex items-center gap-3 px-3 py-2.5">

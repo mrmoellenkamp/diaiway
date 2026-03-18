@@ -1,7 +1,6 @@
 import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { checkImageSafety } from "@/lib/vision-safety"
 
 export const runtime = "nodejs"
 
@@ -46,10 +45,6 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const { safe, reason } = await checkImageSafety(buffer)
-    if (!safe) {
-      return NextResponse.json({ error: reason ?? "Bild enthält ungeeignete Inhalte." }, { status: 400 })
-    }
 
     const contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
 
