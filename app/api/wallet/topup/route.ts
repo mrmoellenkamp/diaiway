@@ -97,7 +97,7 @@ export async function POST(req: Request) {
         userId,
         type: "wallet_topup",
       },
-    })
+    } as any)
 
     return NextResponse.json({
       clientSecret: checkoutSession.client_secret,

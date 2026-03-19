@@ -114,7 +114,7 @@ export async function POST(
       },
     },
     metadata: { bookingId, shugyoId: auth.userId, type: "booking_payment" },
-  })
+  } as any)
 
   const paymentIntentId =
     typeof sessionData.payment_intent === "string"

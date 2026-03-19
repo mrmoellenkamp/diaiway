@@ -75,7 +75,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
       },
     },
     metadata: { bookingId, shugyoId, type: "booking_payment" },
-  })
+  } as any)
 
   const paymentIntentId =
     typeof sessionData.payment_intent === "string"
@@ -137,7 +137,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
       metadata: { bookingId, shugyoId, type: "session_payment" },
     },
     metadata: { bookingId, shugyoId, type: "session_payment" },
-  })
+  } as any)
 
   const paymentIntentId =
     typeof sessionData.payment_intent === "string"
