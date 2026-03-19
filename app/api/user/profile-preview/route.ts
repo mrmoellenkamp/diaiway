@@ -65,10 +65,11 @@ export async function GET() {
       projects: shugyoProjects,
     }
 
+    const userDisplayName = (user as { username?: string | null }).username ?? user.name
     const takumi = expert
       ? {
           id: expert.id,
-          name: expert.name,
+          name: userDisplayName,
           avatar: expert.avatar,
           categoryName: expert.categoryName,
           subcategory: expert.subcategory,
@@ -85,7 +86,7 @@ export async function GET() {
 
     return NextResponse.json({
       appRole: user.appRole ?? "shugyo",
-      name: (user as { username?: string | null }).username ?? user.name,
+      name: userDisplayName,
       username: (user as { username?: string | null }).username ?? null,
       image: user.image || "",
       createdAt: user.createdAt,

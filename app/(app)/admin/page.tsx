@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import { useCategories } from "@/lib/categories-i18n"
 import {
   Users, Euro, AlertTriangle, Database, Loader2, UserPlus,
@@ -19,7 +20,7 @@ import {
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
-  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, FolderOpen, Send,
+  Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, XCircle, FolderOpen, Send,
   Scan,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
@@ -84,7 +85,7 @@ interface TopExpert {
 }
 
 interface AdminUser {
-  id: string; name: string; email: string; role: string; appRole: string
+  id: string; name: string; username: string | null; email: string; role: string; appRole: string
   image: string; createdAt: string; _count: { bookings: number }
 }
 
@@ -337,6 +338,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
 }
 
 function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
+  const { t } = useI18n()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -376,12 +378,12 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
         body: JSON.stringify(editForm),
       })
       if (res.ok) {
-        toast.success("Gespeichert")
+        toast.success(t("toast.saved"))
         setEditingId(null)
         onDataChanged?.()
         void load()
       } else {
-        toast.error("Fehler beim Speichern")
+        toast.error(t("toast.saveError"))
       }
     } finally {
       setSaving(false)
@@ -392,11 +394,11 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
     if (!confirm(`Nutzer „${name}" wirklich löschen? Persönliche Daten werden anonymisiert, Buchungs- und Wallet-Historie bleibt erhalten.`)) return
     const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" })
     if (res.ok) {
-      toast.success("Nutzer anonymisiert")
+      toast.success(t("toast.userAnonymized"))
       void load()
     } else {
       const data = await res.json().catch(() => ({}))
-      toast.error(data.error ?? "Fehler beim Löschen")
+      toast.error(data.error ?? t("toast.saveError"))
     }
   }
 
@@ -407,7 +409,7 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input placeholder="Name oder E-Mail suchen…" value={q}
+          <Input placeholder="Name, Username oder E-Mail suchen…" value={q}
             onChange={(e) => { setQ(e.target.value); setPage(1) }}
             className="pl-9 h-9 text-sm" />
         </div>
@@ -432,17 +434,19 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
       )}
 
       <div className="flex flex-col gap-2">
-        {users.map((u) => (
+        {users.map((u) => {
+          const displayName = u.username ?? u.name
+          return (
           <Card key={u.id} className="border-border/50">
             <CardContent className="p-3">
               {editingId === u.id ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {u.name.charAt(0).toUpperCase()}
+                      {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{u.name}</p>
+                      <p className="text-sm font-semibold">{displayName}</p>
                       <p className="text-xs text-muted-foreground">{u.email}</p>
                     </div>
                   </div>
@@ -477,12 +481,12 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                 <div className="flex items-center gap-3">
                   <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
                     {u.image ? (
-                      <img src={u.image} alt={u.name} className="size-full rounded-full object-cover" />
-                    ) : u.name.charAt(0).toUpperCase()}
+                      <img src={u.image} alt={displayName} className="size-full rounded-full object-cover" />
+                    ) : displayName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold truncate">{u.name}</span>
+                      <span className="text-sm font-semibold truncate">{displayName}</span>
                       <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${u.appRole === "takumi" ? "bg-primary/15 text-primary" : "bg-blue-500/15 text-blue-600"}`}>
                         {u.appRole}
                       </span>
@@ -506,7 +510,7 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                       variant="ghost"
                       className="size-7"
                       title="Vollständiges Profil anzeigen & bearbeiten"
-                      onClick={() => { setProfileUserId(u.id); setProfileUserName(u.name) }}
+                      onClick={() => { setProfileUserId(u.id); setProfileUserName(displayName) }}
                     >
                       <FolderOpen className="size-3.5" />
                     </Button>
@@ -516,7 +520,7 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                     </Button>
                     {!u.email?.endsWith("@anonymized.local") && u.role !== "admin" && (
                       <Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(u.id, u.name) }}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(u.id, displayName) }}
                         title="Nutzer anonymisieren (DSGVO)">
                         <Trash2 className="size-3.5" />
                       </Button>
@@ -526,7 +530,7 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
               )}
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
 
       {totalPages > 1 && (
@@ -666,6 +670,7 @@ function BookingsTab() {
 }
 
 function TakumisTab({ refreshKey }: { refreshKey?: number }) {
+  const { t } = useI18n()
   const [takumis, setTakumis] = useState<TopExpert[]>([])
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState<string | null>(null)
@@ -692,7 +697,7 @@ function TakumisTab({ refreshKey }: { refreshKey?: number }) {
         body: JSON.stringify({ id, isLive: !current }),
       })
       if (res.ok) { void load() }
-      else toast.error("Fehler beim Aktualisieren")
+      else toast.error(t("toast.updateFailed"))
     } finally {
       setToggling(null)
     }
@@ -738,6 +743,7 @@ function DatabaseTab({
 }: {
   categories: ReturnType<typeof useCategories>
 }) {
+  const { t } = useI18n()
   const [isSeeding, setIsSeeding] = useState(false)
   const [seedResult, setSeedResult] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
@@ -749,7 +755,7 @@ function DatabaseTab({
 
   async function handleAddExpert(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name || !form.subcategory || !form.bio) { toast.error("Bitte alle Pflichtfelder ausfüllen."); return }
+    if (!form.name || !form.subcategory || !form.bio) { toast.error(t("toast.pleaseFillRequired")); return }
     setIsAdding(true)
     const cat = categories.find((c) => c.slug === form.categorySlug)
     try {
@@ -761,7 +767,7 @@ function DatabaseTab({
       const data = await res.json()
       if (res.ok) { toast.success(data.message); setForm({ name: "", email: "", categorySlug: "elektronik", subcategory: "", bio: "", pricePerSession: "49", imageUrl: "", isLive: false }) }
       else toast.error(data.error)
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Netzwerkfehler") }
+    } catch (err) { toast.error(err instanceof Error ? err.message : t("common.networkError")) }
     finally { setIsAdding(false) }
   }
 
@@ -1016,7 +1022,29 @@ type PendingRelease = {
   stripePaymentIntentId: string | null
 }
 
+type HoldItem = {
+  bookingId: string
+  transactionId: string
+  shugyoName: string
+  shugyoUserId: string
+  takumiName: string
+  takumiExpertId: string
+  amountCents: number
+  authDate: string | null
+  daysUntilExpiry: number | null
+  expiryStatus: "ok" | "warning" | "critical"
+  paymentType: "stripe" | "wallet"
+  bookingStatus: string
+  sessionEndedAt: string | null
+  date: string | null
+  startTime: string | null
+  endTime: string | null
+}
+
+const HOLD_CONFIRM_PHRASE = "BESTÄTIGEN"
+
 function FinanceTab() {
+  const { t } = useI18n()
   const [data, setData] = useState<{
     kpis: {
       totalPlatformFeeCents: number
@@ -1041,6 +1069,12 @@ function FinanceTab() {
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [pendingReleases, setPendingReleases] = useState<PendingRelease[]>([])
   const [releasingId, setReleasingId] = useState<string | null>(null)
+  const [holds, setHolds] = useState<HoldItem[]>([])
+  const [holdsLoading, setHoldsLoading] = useState(false)
+  const [holdAction, setHoldAction] = useState<"force_capture" | "manual_release" | null>(null)
+  const [holdTarget, setHoldTarget] = useState<HoldItem | null>(null)
+  const [holdConfirmPhrase, setHoldConfirmPhrase] = useState("")
+  const [holdActioning, setHoldActioning] = useState(false)
 
   const loadPendingReleases = useCallback(async () => {
     try {
@@ -1060,14 +1094,65 @@ function FinanceTab() {
       const res = await fetch(`/api/admin/finance?${params}`)
       const json = await res.json()
       if (res.ok) setData(json)
-      else toast.error(json.error ?? "Fehler beim Laden")
+      else toast.error(json.error ?? t("toast.loadError"))
     } finally {
       setLoading(false)
     }
-  }, [taxFilter, statusFilter])
+  }, [taxFilter, statusFilter, t])
+
+  const loadHolds = useCallback(async () => {
+    setHoldsLoading(true)
+    try {
+      const res = await fetch("/api/admin/finance/summary")
+      const json = await res.json()
+      if (res.ok && Array.isArray(json.holds)) setHolds(json.holds)
+      else setHolds([])
+    } catch { setHolds([]) }
+    finally { setHoldsLoading(false) }
+  }, [])
 
   useEffect(() => { void load() }, [load])
   useEffect(() => { void loadPendingReleases() }, [loadPendingReleases])
+  useEffect(() => { void loadHolds() }, [loadHolds])
+
+  function openHoldAction(type: "force_capture" | "manual_release", target: HoldItem) {
+    setHoldAction(type)
+    setHoldTarget(target)
+    setHoldConfirmPhrase("")
+  }
+
+  function closeHoldAction() {
+    setHoldAction(null)
+    setHoldTarget(null)
+    setHoldConfirmPhrase("")
+  }
+
+  async function executeHoldAction() {
+    if (!holdTarget || !holdAction || holdConfirmPhrase !== HOLD_CONFIRM_PHRASE) return
+    setHoldActioning(true)
+    try {
+      const path = holdAction === "force_capture" ? "/api/admin/finance/force-capture" : "/api/admin/finance/manual-release"
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: holdTarget.bookingId }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message ?? "Aktion durchgeführt.")
+        closeHoldAction()
+        void load()
+        void loadPendingReleases()
+        void loadHolds()
+      } else {
+        toast.error(data.error ?? "Aktion fehlgeschlagen.")
+      }
+    } catch {
+      toast.error(t("common.networkError"))
+    } finally {
+      setHoldActioning(false)
+    }
+  }
 
   async function handleProcessRelease(item: PendingRelease) {
     if (!item.bookingId) return
@@ -1080,13 +1165,14 @@ function FinanceTab() {
       })
       const json = await res.json()
       if (res.ok && json.success) {
-        toast.success(json.message ?? "Freigabe durchgeführt.")
+        toast.success(json.message ?? t("admin.captureDone"))
         void load()
         void loadPendingReleases()
+        void loadHolds()
       } else {
-        toast.error(json.error ?? "Freigabe fehlgeschlagen.")
+        toast.error(json.error ?? t("toast.releaseFailed"))
       }
-    } catch { toast.error("Freigabe fehlgeschlagen.") }
+    } catch { toast.error(t("toast.releaseFailed")) }
     finally { setReleasingId(null) }
   }
 
@@ -1098,7 +1184,7 @@ function FinanceTab() {
   }
 
   async function handleExport(type: "zip" | "datev" | "csv") {
-    if (!exportFrom || !exportTo) { toast.error("Bitte Zeitraum eingeben."); return }
+    if (!exportFrom || !exportTo) { toast.error(t("toast.enterTimeRange")); return }
     const days = exportDays()
     if (days > MAX_EXPORT_DAYS) {
       toast.error(`Maximal ${MAX_EXPORT_DAYS} Tage (ca. 3 Monate) pro Export.`)
@@ -1111,7 +1197,7 @@ function FinanceTab() {
       const res = await fetch(url)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        toast.error(err.error ?? "Export fehlgeschlagen.")
+        toast.error(err.error ?? t("toast.exportFailed"))
         return
       }
       const blob = await res.blob()
@@ -1127,7 +1213,7 @@ function FinanceTab() {
       URL.revokeObjectURL(blobUrl)
       setExportDialogOpen(false)
       toast.success(type === "zip" ? "ZIP heruntergeladen." : type === "csv" ? "Financial CSV heruntergeladen." : "DATEV-CSV heruntergeladen.")
-    } catch { toast.error("Export fehlgeschlagen.") }
+    } catch { toast.error(t("toast.exportFailed")) }
     finally { setExporting(false) }
   }
 
@@ -1149,9 +1235,9 @@ function FinanceTab() {
         toast.success(json.message)
         void load()
       } else {
-        toast.error(json.results?.invoice?.error ?? json.results?.credit?.error ?? json.error ?? "Fehler")
+        toast.error(json.results?.invoice?.error ?? json.results?.credit?.error ?? json.error ?? t("common.error"))
       }
-    } catch { toast.error("E-Mail-Versand fehlgeschlagen.") }
+    } catch { toast.error(t("toast.emailFailed")) }
     finally { setResendingId(null) }
   }
 
@@ -1171,7 +1257,7 @@ function FinanceTab() {
         setRefundConfirmOpen(false)
         setRefundTarget(null)
         void load()
-      } else toast.error(json.error ?? "Stornierung fehlgeschlagen")
+      } else toast.error(json.error ?? t("toast.releaseFailed"))
     } finally {
       setRefunding(false)
     }
@@ -1180,8 +1266,89 @@ function FinanceTab() {
   const kpis = data?.kpis
   const items = data?.transactions ?? []
 
+  const canForceCapture = (h: HoldItem) => h.bookingStatus === "completed" && h.sessionEndedAt
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Alle Pending-Umsätze (Escrow) */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Lock className="size-4 text-amber-600" />
+            Pending-Umsätze ({holds.length})
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Alle noch nicht freigegebenen Beträge. Takumi freigeben (Force Capture) oder Shugyo zurückerstatten / Stripe-Hold auflösen (Manual Release).
+          </p>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {holdsLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : holds.length === 0 ? (
+            <p className="py-4 text-sm text-muted-foreground text-center">Keine pending Umsätze.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
+              {holds.map((h) => (
+                <div
+                  key={h.bookingId}
+                  className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+                    h.expiryStatus === "critical" ? "border-red-500/40 bg-red-500/5" :
+                    h.expiryStatus === "warning" ? "border-amber-500/30 bg-amber-500/5" :
+                    "border-amber-500/20 bg-card"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      <Link href={`/user/${h.shugyoUserId}`} className="text-primary hover:underline">{h.shugyoName}</Link>
+                      {" → "}
+                      <Link href={`/takumi/${h.takumiExpertId}`} className="text-primary hover:underline">{h.takumiName}</Link>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {h.date ?? "—"} · {h.startTime ?? "—"}–{h.endTime ?? "—"}
+                      {h.sessionEndedAt && <> · Ende: {new Date(h.sessionEndedAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</>}
+                      {" · "}
+                      <Badge variant="outline" className="text-[10px]">{h.paymentType}</Badge>
+                      {h.bookingStatus && <span className="ml-1">· {h.bookingStatus}</span>}
+                      {h.paymentType === "stripe" && h.daysUntilExpiry != null && (
+                        <span className={h.expiryStatus === "critical" ? " text-red-600 font-medium ml-1" : h.expiryStatus === "warning" ? " text-amber-600 ml-1" : " text-muted-foreground ml-1"}>
+                          · {h.daysUntilExpiry}d
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-bold">{eur(h.amountCents)}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => openHoldAction("force_capture", h)}
+                      disabled={!canForceCapture(h)}
+                      title={canForceCapture(h) ? "An Takumi freigeben (Rechnung + Gutschrift)" : "Nur bei abgeschlossener Session"}
+                    >
+                      <CheckCircle2 className="size-3" />
+                      An Takumi
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1 text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+                      onClick={() => openHoldAction("manual_release", h)}
+                      title="Shugyo zurückerstatten / Stripe-Hold auflösen"
+                    >
+                      <XCircle className="size-3" />
+                      An Shugyo
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Offene Freigaben (Admin-Override) */}
       {pendingReleases.length > 0 && (
         <Card className="border-amber-500/40 bg-amber-500/5">
@@ -1532,6 +1699,62 @@ function FinanceTab() {
             <Button variant="destructive" onClick={handleRefundConfirm} disabled={refunding} className="gap-2">
               {refunding ? <Loader2 className="size-4 animate-spin" /> : <AlertTriangle className="size-4" />}
               Ja, stornieren
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Hold Action Confirmation (Force Capture / Manual Release) */}
+      <AlertDialog open={!!holdAction} onOpenChange={(o) => !o && closeHoldAction()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {holdAction === "force_capture" ? "An Takumi freigeben" : "An Shugyo zurückerstatten"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {holdAction === "force_capture" ? (
+                <>
+                  Betrag an Takumi freigeben? Rechnung und Gutschrift werden erstellt.
+                  {holdTarget && (
+                    <span className="block mt-2 font-medium text-foreground">
+                      {holdTarget.shugyoName} → {holdTarget.takumiName} · {eur(holdTarget.amountCents)}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  Shugyo-Kreditlimit freigeben. Der Hold wird storniert, das Geld wird zurückerstattet (Stripe: PaymentIntent cancel, Wallet: Guthaben zurück).
+                  {holdTarget && (
+                    <span className="block mt-2 font-medium text-foreground">
+                      {holdTarget.shugyoName} → {holdTarget.takumiName} · {eur(holdTarget.amountCents)}
+                    </span>
+                  )}
+                </>
+              )}
+              <span className="block mt-3 font-semibold text-foreground">
+                Zur Bestätigung eingeben: <code className="bg-muted px-1.5 py-0.5 rounded">{HOLD_CONFIRM_PHRASE}</code>
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label className="text-xs text-muted-foreground">Bestätigung</Label>
+            <Input
+              value={holdConfirmPhrase}
+              onChange={(e) => setHoldConfirmPhrase(e.target.value)}
+              placeholder={HOLD_CONFIRM_PHRASE}
+              className="mt-1 font-mono"
+              onPaste={(e) => e.preventDefault()}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeHoldAction}>Abbrechen</AlertDialogCancel>
+            <Button
+              onClick={(e) => { e.preventDefault(); void executeHoldAction() }}
+              disabled={holdConfirmPhrase !== HOLD_CONFIRM_PHRASE || holdActioning}
+              className="gap-2"
+            >
+              {holdActioning ? <Loader2 className="size-4 animate-spin" /> : null}
+              {holdAction === "force_capture" ? "An Takumi freigeben" : "An Shugyo zurückerstatten"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

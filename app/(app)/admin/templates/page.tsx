@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Loader2, Mail, Send, FileText } from "lucide-react"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 interface TemplateTranslation {
   id: string
@@ -32,6 +33,7 @@ const STANDARD_VARS = ["{{sender_name}}", "{{recipient_name}}", "{{sender_role}}
 const BOOKING_VARS = ["{{booking_date}}", "{{service_name}}", "{{booking_time}}", "{{booking_note}}"]
 
 export default function AdminTemplatesPage() {
+  const { t } = useI18n()
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -47,7 +49,7 @@ export default function AdminTemplatesPage() {
       const data = await res.json()
       setTemplates(data.templates ?? [])
     } catch {
-      toast.error("Fehler beim Laden")
+      toast.error(t("toast.loadError"))
     } finally {
       setLoading(false)
     }
@@ -93,7 +95,7 @@ export default function AdminTemplatesPage() {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
-        toast.success("Gespeichert")
+        toast.success(t("toast.saved"))
         setEdits((prev) => {
           const next = { ...prev }
           if (next[templateId]?.[language]) {
@@ -104,7 +106,7 @@ export default function AdminTemplatesPage() {
         })
         void load()
       } else {
-        toast.error("Fehler beim Speichern")
+        toast.error(t("toast.saveError"))
       }
     } finally {
       setSavingId(null)
@@ -133,7 +135,7 @@ export default function AdminTemplatesPage() {
 
   async function handleTest(slug: string, language: string) {
     if (!testUserId.trim()) {
-      toast.error("Bitte User-ID des Empfängers eingeben")
+      toast.error(t("toast.enterUserId"))
       return
     }
     setTestLoading(true)

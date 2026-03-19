@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ReviewStars } from "@/components/review-stars"
 import { useTakumis } from "@/hooks/use-takumis"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import {
   Mic,
   MicOff,
@@ -28,6 +29,7 @@ type Phase = "pre-call" | "trial" | "paid" | "rating"
 export default function SessionDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useI18n()
   const { takumis } = useTakumis()
   // Find the takumi by ID from URL param -- sessions are started from takumi profiles
   const takumiFromParams = takumis.find((t) => t.id === params.id)
@@ -74,11 +76,11 @@ export default function SessionDetailPage() {
 
   const handleEndCall = () => {
     setPhase("rating")
-    toast.info("Sitzung beendet.")
+    toast.info(t("toast.sessionEnded"))
   }
 
   const handleSubmitRating = () => {
-    toast.success("Bewertung gespeichert! Danke.")
+    toast.success(t("toast.ratingSaved"))
     router.push("/sessions")
   }
 
@@ -176,17 +178,17 @@ export default function SessionDetailPage() {
             disabled={rating === 0}
             className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
           >
-            Bewertung abgeben
+            {t("session.submitReview")}
           </Button>
           <Button
             onClick={() => {
-              toast.success("Geld freigegeben!")
+              toast.success(t("toast.releaseSuccess"))
               router.push("/sessions")
             }}
             variant="outline"
             className="h-12 w-full rounded-xl border-accent text-accent hover:bg-accent/10"
           >
-            Geld freigeben & uberspringen
+            {t("session.releaseAndSkip")}
           </Button>
         </div>
       </div>
@@ -266,7 +268,7 @@ export default function SessionDetailPage() {
             </button>
 
             <button
-              onClick={() => toast.info("Meldung gesendet")}
+              onClick={() => toast.info(t("toast.messageSent"))}
               className="flex size-12 items-center justify-center rounded-full bg-white/20"
               aria-label="Problem melden"
             >

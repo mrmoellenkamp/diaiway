@@ -1,11 +1,13 @@
 import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { compressImageToMaxSize } from "@/lib/image-compress"
 
 export const runtime = "nodejs"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
-const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB – Zielgröße nach Kompression
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024 // 25 MB – max. Roh-Upload (danach wird komprimiert)
 const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects", "takumi-portfolio"]
 
 export async function POST(request: NextRequest) {
@@ -33,20 +35,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (file.size > MAX_SIZE_BYTES) {
+    if (file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json(
-        { error: "Maximale Dateigröße: 5 MB." },
+        { error: `Maximale Upload-Größe: ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.` },
         { status: 400 }
       )
     }
 
-    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")
-    const filename = `${folder}/${session.user.id}-${Date.now()}.${ext}`
-
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    let buffer = Buffer.from(arrayBuffer)
+    let contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
 
-    const contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
+    // Zu große Bilder automatisch komprimieren
+    if (buffer.length > MAX_SIZE_BYTES) {
+      try {
+        const compressed = await compressImageToMaxSize(buffer, MAX_SIZE_BYTES, contentType)
+        buffer = Buffer.from(compressed.buffer)
+        contentType = compressed.contentType
+      } catch (err) {
+        console.error("[diAiway] Kompression fehlgeschlagen:", err)
+        return NextResponse.json(
+          { error: "Bild konnte nicht komprimiert werden. Bitte kleinere Datei wählen." },
+          { status: 400 }
+        )
+      }
+    }
+
+    const ext = contentType === "image/jpeg" ? "jpg" : (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")
+    const filename = `${folder}/${session.user.id}-${Date.now()}.${ext}`
 
     const blobPromise = put(filename, buffer, { access: "public", contentType })
     const timeoutPromise = new Promise<never>((_, reject) =>

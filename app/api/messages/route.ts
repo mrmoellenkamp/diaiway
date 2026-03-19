@@ -214,7 +214,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
     }),
     prisma.expert.findMany({
       where: { userId: { in: partnerIds } },
-      select: { userId: true, id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, lastSeenAt: true, verified: true },
+      select: { userId: true, id: true, avatar: true, imageUrl: true, subcategory: true, isLive: true, hideOnlineStatus: true, lastSeenAt: true, verified: true },
     }),
     prisma.directMessage.findMany({
       where: {
@@ -266,7 +266,8 @@ export const GET = apiHandler(async (req: NextRequest) => {
     const subcategory = expert?.subcategory ?? ""
     const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
     const lastSeen = expert?.lastSeenAt?.getTime()
-    const isOnline = expert?.isLive === true && lastSeen != null && now - lastSeen < ONLINE_MS
+    const actuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
+    const isOnline = actuallyOnline && !(expert?.hideOnlineStatus ?? false)
     const partnerIsVerified = expert?.verified ?? user?.isVerified ?? false
     return {
       partnerId,

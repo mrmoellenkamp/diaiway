@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
       ? {
           OR: [
             { name: { contains: q, mode: "insensitive" as const } },
+            { username: { contains: q, mode: "insensitive" as const } },
             { email: { contains: q, mode: "insensitive" as const } },
           ],
         }
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        username: true,
         email: true,
         role: true,
         appRole: true,

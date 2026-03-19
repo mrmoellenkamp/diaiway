@@ -5,12 +5,14 @@ import sharp from "sharp"
 import Busboy from "busboy"
 import { Readable } from "stream"
 import { randomUUID } from "crypto"
+import { compressImageToMaxSize } from "@/lib/image-compress"
 
 export const runtime = "nodejs"
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const MAX_SIZE_BYTES = 2.5 * 1024 * 1024 // 2.5 MB
+const MAX_SIZE_BYTES = 2.5 * 1024 * 1024 // 2.5 MB – Zielgröße (Bilder werden ggf. komprimiert)
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024 // 10 MB – max. Roh-Upload
 const THUMBNAIL_MAX_PX = 200
 const CLOUDMERSIVE_TIMEOUT_MS = 30_000
 
@@ -119,7 +121,7 @@ function parseMultipartStream(request: NextRequest): Promise<ParsedFile | null> 
 
     const busboy = Busboy({
       headers: { "content-type": contentType },
-      limits: { fileSize: MAX_SIZE_BYTES },
+      limits: { fileSize: MAX_UPLOAD_BYTES },
     })
 
     let parsedFile: ParsedFile | null = null
@@ -167,7 +169,7 @@ function parseMultipartStream(request: NextRequest): Promise<ParsedFile | null> 
       file.on("data", (chunk: Buffer) => {
         if (fileLimitReached || settled) return
         byteCount += chunk.length
-        if (byteCount > MAX_SIZE_BYTES) {
+        if (byteCount > MAX_UPLOAD_BYTES) {
           fileLimitReached = true
           settle(() => reject(new Error("FILE_TOO_LARGE")), null)
           return
@@ -249,16 +251,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { buffer, mime, originalFilename } = parsed
+    let { buffer, mime, originalFilename } = parsed
 
-    if (buffer.length > MAX_SIZE_BYTES) {
-      return jsonError(
-        {
-          error: "Tipp: Verkleinere das Bild oder PDF, um die maximale Größe von 2,5 MB einzuhalten.",
-          code: "FILE_TOO_LARGE",
-        },
-        400
-      )
+    // PDFs: Größenlimit strikt; Bilder: automatisch komprimieren
+    if (mime === "application/pdf") {
+      if (buffer.length > MAX_SIZE_BYTES) {
+        return jsonError(
+          {
+            error: "Tipp: Verkleinere das PDF, um die maximale Größe von 2,5 MB einzuhalten.",
+            code: "FILE_TOO_LARGE",
+          },
+          400
+        )
+      }
+    } else if (mime.startsWith("image/") && buffer.length > MAX_SIZE_BYTES) {
+      try {
+        const compressed = await compressImageToMaxSize(buffer, MAX_SIZE_BYTES, mime)
+        buffer = compressed.buffer
+        mime = compressed.contentType
+      } catch {
+        return jsonError(
+          {
+            error: "Bild konnte nicht komprimiert werden. Bitte kleinere Datei wählen.",
+            code: "FILE_TOO_LARGE",
+          },
+          400
+        )
+      }
     }
 
     const ext = (originalFilename.split(".").pop() ?? "").toLowerCase()
@@ -359,7 +378,7 @@ export async function POST(request: NextRequest) {
     if (msg === "FILE_TOO_LARGE") {
       return jsonError(
         {
-          error: "Tipp: Verkleinere das Bild oder PDF, um die maximale Größe von 2,5 MB einzuhalten.",
+          error: `Maximale Upload-Größe: ${MAX_UPLOAD_BYTES / 1024 / 1024} MB. Bilder werden bei Bedarf automatisch komprimiert.`,
           code: "FILE_TOO_LARGE",
         },
         400

@@ -128,6 +128,7 @@ function MessagesPageContent() {
       .then((r) => {
         if (r.ok) {
           setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)))
+          refreshNotificationCount?.()
         }
       })
       .catch(() => {})
@@ -159,6 +160,7 @@ function MessagesPageContent() {
           setSelectedWaymailId(null)
           setWaymailDetail(null)
         }
+        refreshNotificationCount?.()
         toast.success(t("messages.waymailDeleted"))
       } else {
         const data = await r.json().catch(() => ({}))
@@ -175,6 +177,7 @@ function MessagesPageContent() {
       if (r.ok) {
         setThreads((prev) => prev.filter((th) => th.partnerId !== partnerId))
         if (activeThread === partnerId) setActiveThread(null)
+        refreshNotificationCount?.()
         toast.success(t("messages.chatDeleted"))
       } else {
         const data = await r.json().catch(() => ({}))
@@ -210,10 +213,10 @@ function MessagesPageContent() {
         setNotifications((prev) => prev.map((no) => (no.id === notificationId ? { ...no, read: true } : no)))
         fetchThreads()
       } else {
-        toast.error(data.error || "Fehler")
+        toast.error(data.error || t("common.error"))
       }
     } catch {
-      toast.error("Fehler")
+      toast.error(t("common.error"))
     } finally {
       setActingId(null)
     }
@@ -279,7 +282,9 @@ function MessagesPageContent() {
           setWaymailDetail(d)
           const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
           if (!alreadyRead) {
-            fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" }).catch(() => {})
+            fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" })
+              .then((r) => r.ok && refreshNotificationCount?.())
+              .catch(() => {})
             setWaymails((prev) => prev.map((x) => (x.id === waymailParam ? { ...x, read: true } : x)))
           }
         })
@@ -541,7 +546,9 @@ function MessagesPageContent() {
                         if (d.error) return
                         setWaymailDetail(d)
                         if (!wm.read && waymailFolder === "inbox") {
-                          fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" }).catch(() => {})
+                          fetch(`/api/messages?waymail=${encodeURIComponent(wm.id)}`, { method: "PATCH" })
+                            .then((r) => r.ok && refreshNotificationCount?.())
+                            .catch(() => {})
                           setWaymails((prev) => prev.map((w) => (w.id === wm.id ? { ...w, read: true } : w)))
                         }
                       })
@@ -702,6 +709,7 @@ function MessagesPageContent() {
                   subcategory={thread.subcategory}
                   onClose={() => setActiveThread(null)}
                   inline
+                  onMessagesLoaded={refreshNotificationCount}
                 />
               )}
             </>

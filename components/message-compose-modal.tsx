@@ -14,12 +14,14 @@ function PendingAttachmentPreview({
   onConfirm,
   onRemove,
   sending,
+  tapToConfirm,
 }: {
   filename: string
   thumbnailUrl: string | null
   onConfirm: () => void
   onRemove: () => void
   sending: boolean
+  tapToConfirm: string
 }) {
   const [thumbError, setThumbError] = useState(false)
   const showThumb = thumbnailUrl && !thumbError
@@ -41,7 +43,7 @@ function PendingAttachmentPreview({
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{filename}</p>
-        <p className="text-xs text-muted-foreground">Zum Senden auf ✓ tippen</p>
+        <p className="text-xs text-muted-foreground">{tapToConfirm}</p>
       </div>
       <Button size="icon" className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
         <Check className="size-5" />
@@ -104,11 +106,11 @@ export function MessageComposeModal({
         onOpenChange(false)
         onSent?.()
       } else {
-        toast.error(data?.error ?? "Fehler beim Senden.")
+        toast.error(data?.error ?? t("toast.sendError"))
       }
     } catch (e) {
       console.error(e)
-      toast.error("Fehler beim Senden.")
+      toast.error(t("toast.sendError"))
     } finally {
       setSending(false)
     }
@@ -130,7 +132,7 @@ export function MessageComposeModal({
       <DialogContent showCloseButton={false} className="gap-0 p-0 overflow-hidden w-[min(420px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] sm:max-h-[90vh] pb-safe rounded-xl border-0 shadow-xl">
         {/* Grüner Header: Waymail + X rechts */}
         <div className="flex items-center justify-between gap-3 bg-primary px-4 py-3 rounded-t-xl shrink-0">
-          <span className="text-base font-semibold text-primary-foreground">Waymail</span>
+          <span className="text-base font-semibold text-primary-foreground">{t("waymail.title")}</span>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
@@ -150,12 +152,12 @@ export function MessageComposeModal({
           </div>
           <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
             <span className="w-12 shrink-0 text-xs font-medium text-muted-foreground">
-              Betreff:
+              {t("waymail.subject")}
             </span>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Betreff eingeben"
+              placeholder={t("waymail.subjectPlaceholder")}
               className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
@@ -175,6 +177,7 @@ export function MessageComposeModal({
                 onConfirm={handleSend}
                 onRemove={() => setPendingAttachment(null)}
                 sending={sending}
+                tapToConfirm={t("admin.tapToConfirm")}
               />
             )}
             {uploadScanning && (
@@ -193,7 +196,7 @@ export function MessageComposeModal({
                 onClick={handleAttach}
                 disabled={sending || uploadScanning}
                 className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary transition-colors"
-                aria-label="Datei anhängen"
+                aria-label={t("waymail.attachAria")}
               >
                 {uploadScanning ? (
                   <Loader2 className="size-4 animate-spin" />

@@ -169,10 +169,10 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         })
         setChatOpen(true)
       } else {
-        toast.error(data.error || "Empfänger konnte nicht geladen werden.")
+        toast.error(data.error || t("toast.chatOpenError"))
       }
     } catch {
-      toast.error("Fehler beim Öffnen des Chats.")
+      toast.error(t("toast.chatOpenError"))
     } finally {
       setChatLoading(false)
     }
@@ -195,7 +195,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             onClick={async () => {
               const url = `https://diaiway.com/takumi/${takumi.id}`
               const ok = await shareNative({ title: takumi.name, text: takumi.bio?.slice(0, 120), url })
-              if (!ok) toast.info("Teilen ist nur in der App verfügbar.")
+              if (!ok) toast.info(t("toast.shareAppOnly"))
             }}
             className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
             aria-label="Profil teilen"

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import { Shield, ArrowLeft, Loader2, UserX, CheckCircle2, Ban } from "lucide-react"
 
 interface SafetyIncidentEnriched {
@@ -43,6 +44,7 @@ function relDate(iso: string) {
 }
 
 export default function AdminSafetyIncidentsPage() {
+  const { t } = useI18n()
   const { data: session } = useSession()
   const user = session?.user as { role?: string } | null
   const [incidents, setIncidents] = useState<SafetyIncidentEnriched[]>([])
@@ -54,9 +56,9 @@ export default function AdminSafetyIncidentsPage() {
     fetch("/api/admin/safety/incidents")
       .then((r) => r.json())
       .then((data) => setIncidents(data.incidents ?? []))
-      .catch(() => toast.error("Fehler beim Laden"))
+      .catch(() => toast.error(t("toast.loadError")))
       .finally(() => setLoading(false))
-  }, [user?.role])
+  }, [user?.role, t])
 
   async function handleStatus(id: string, status: string) {
     setUpdating(id)
@@ -68,9 +70,9 @@ export default function AdminSafetyIncidentsPage() {
       })
       if (!res.ok) throw new Error("Fehler")
       setIncidents((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
-      toast.success("Status aktualisiert")
+      toast.success(t("toast.statusUpdated"))
     } catch {
-      toast.error("Aktualisierung fehlgeschlagen")
+      toast.error(t("toast.updateFailed"))
     } finally {
       setUpdating(null)
     }

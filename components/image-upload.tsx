@@ -23,7 +23,7 @@ interface ImageUploadProps {
 }
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
-const MAX_SIZE_MB = 5
+const MAX_SIZE_MB = 25 // Server komprimiert automatisch auf 5 MB
 
 export function ImageUpload({
   value,

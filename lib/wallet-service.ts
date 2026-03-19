@@ -88,6 +88,88 @@ export async function creditWalletTopup(
 }
 
 /**
+ * Admin-Gutschrift: Wallet eines Nutzers aufladen (ohne Stripe).
+ * Erzeugt echten Zahlungsvorgang: WalletTransaction, PDF-Rechnung, Balance-Update.
+ */
+export async function creditWalletAdmin(
+  userId: string,
+  amountCents: number,
+  adminId: string,
+  reason?: string
+): Promise<{ ok: boolean; error?: string; walletTransactionId?: string }> {
+  if (amountCents <= 0) return { ok: false, error: "Betrag muss positiv sein" }
+
+  try {
+    const referenceId = `admin-${adminId}-${Date.now()}`
+    const wtId = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { balance: { increment: amountCents } },
+      })
+      const wt = await tx.walletTransaction.create({
+        data: {
+          userId,
+          amountCents,
+          type: "topup",
+          referenceId,
+          metadata: { adminId, reason: reason ?? null, source: "admin" },
+        },
+      })
+      return wt.id
+    })
+
+    // Rechnung für Wallet-Aufladung (wie bei Stripe-Topup)
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true, invoiceData: true },
+      })
+      if (user) {
+        const invData = user.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
+        const recipientName =
+          (invData?.type === "unternehmen"
+            ? invData?.companyName?.trim()
+            : invData?.fullName?.trim()) || user.name
+
+        const invoiceNumber = await getNextDocumentNumber("RE")
+        const now = new Date()
+        const buf = await generateWalletTopupInvoicePdf({
+          invoiceNumber,
+          recipientName,
+          recipientEmail: user.email ?? "",
+          amountCents,
+          date: now,
+        })
+        const blob = await put(`invoices/wallet-${wtId}-${invoiceNumber}.pdf`, Buffer.from(buf), {
+          access: "public",
+        })
+        await prisma.walletTransaction.update({
+          where: { id: wtId },
+          data: {
+            metadata: {
+              adminId,
+              reason: reason ?? null,
+              source: "admin",
+              invoiceNumber,
+              invoicePdfUrl: blob.url,
+            },
+          },
+        })
+      }
+    } catch (err) {
+      console.error("[creditWalletAdmin] Invoice generation failed:", err)
+      // Gutschrift war erfolgreich, Rechnung fehlgeschlagen — loggen, aber nicht fehlschlagen
+    }
+
+    return { ok: true, walletTransactionId: wtId }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error"
+    console.error("[creditWalletAdmin] Error:", msg)
+    return { ok: false, error: msg }
+  }
+}
+
+/**
  * Atomar Betrag vom Wallet abziehen.
  * Für Instant-Connect und andere Belastungen.
  */
@@ -323,10 +405,18 @@ export async function chargeInstantCallToWallet(
  * Rückerstattung als Wallet-Guthaben (statt Auszahlung).
  * Betrag wird dem Shugyo gutgeschrieben, Takumi's pendingBalance wird freigegeben.
  */
+function getRealNameForInvoice(
+  invoiceData: { type?: string; fullName?: string; companyName?: string } | null,
+  userName: string
+): string {
+  const inv = invoiceData
+  return (inv?.type === "unternehmen" ? inv?.companyName?.trim() : inv?.fullName?.trim()) || userName
+}
+
 export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const t = await prisma.transaction.findUnique({
     where: { bookingId },
-    include: { expert: { include: { user: true } }, booking: true },
+    include: { user: true, expert: { include: { user: true } }, booking: true },
   })
   if (!t) return { ok: true }
   const reversable = ["AUTHORIZED", "PENDING", "CAPTURED", "COMPLETED"]
@@ -345,6 +435,13 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
   let stornoCreditNotePdfUrl: string | null = null
 
   if (wasCaptured && t.invoiceNumber && t.creditNoteNumber && t.booking) {
+    const shugyoInv = t.user?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
+    const takumiInv = t.expert?.user
+      ? ((t.expert.user as { invoiceData?: { type?: string; fullName?: string; companyName?: string } }).invoiceData as { type?: string; fullName?: string; companyName?: string } | null)
+      : null
+    const shugyoRealName = getRealNameForInvoice(shugyoInv, t.user?.name ?? t.booking.userName)
+    const takumiRealName = getRealNameForInvoice(takumiInv, t.expert?.name ?? "")
+
     const [srNum, sgNum] = await Promise.all([
       getNextDocumentNumber("SR"),
       getNextDocumentNumber("SG"),
@@ -353,7 +450,7 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
     const srBuf = generateStornoInvoicePdf({
       stornoNumber: srNum,
       originalInvoiceNumber: t.invoiceNumber,
-      recipientName: t.booking.userName,
+      recipientName: shugyoRealName,
       recipientEmail: t.booking.userEmail,
       bookingId: t.bookingId,
       expertName: t.booking.expertName,
@@ -363,7 +460,7 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
     const sgBuf = generateStornoCreditNotePdf({
       stornoNumber: sgNum,
       originalCreditNoteNumber: t.creditNoteNumber,
-      recipientName: t.expert?.name ?? "",
+      recipientName: takumiRealName,
       recipientEmail: t.expert?.email ?? "",
       bookingId: t.bookingId,
       netPayoutCents: t.netPayout,
@@ -381,24 +478,24 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
     stornoCreditNotePdfUrl = sgBlob.url
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (txPrisma) => {
     const isPreCapture = t.status === "AUTHORIZED" || t.status === "PENDING"
     if (isPreCapture && isWallet) {
-      await tx.user.update({
+      await txPrisma.user.update({
         where: { id: expertUserId },
         data: { pendingBalance: { decrement: t.totalAmount } },
       })
     } else if (wasCaptured) {
-      await tx.user.update({
+      await txPrisma.user.update({
         where: { id: expertUserId },
         data: { balance: { decrement: t.netPayout } },
       })
     }
-    await tx.user.update({
+    await txPrisma.user.update({
       where: { id: t.userId },
       data: { balance: { increment: t.totalAmount } },
     })
-    await tx.transaction.update({
+    await txPrisma.transaction.update({
       where: { id: t.id },
       data: {
         status: newStatus,
@@ -430,7 +527,7 @@ export async function releaseReservation(bookingId: string): Promise<{ ok: boole
 export async function refundTransactionForBooking(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const t = await prisma.transaction.findUnique({
     where: { bookingId },
-    include: { expert: { include: { user: true } }, booking: true },
+    include: { user: true, expert: { include: { user: true } }, booking: true },
   })
   if (!t) return { ok: true }
   const reversable = ["AUTHORIZED", "PENDING", "CAPTURED", "COMPLETED"]
@@ -449,6 +546,13 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
   let stornoCreditNotePdfUrl: string | null = null
 
   if (wasCaptured && t.invoiceNumber && t.creditNoteNumber && t.booking) {
+    const shugyoInv = t.user?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
+    const takumiInv = t.expert?.user
+      ? ((t.expert.user as { invoiceData?: { type?: string; fullName?: string; companyName?: string } }).invoiceData as { type?: string; fullName?: string; companyName?: string } | null)
+      : null
+    const shugyoRealName = getRealNameForInvoice(shugyoInv, t.user?.name ?? t.booking.userName)
+    const takumiRealName = getRealNameForInvoice(takumiInv, t.expert?.name ?? "")
+
     const [srNum, sgNum] = await Promise.all([
       getNextDocumentNumber("SR"),
       getNextDocumentNumber("SG"),
@@ -457,7 +561,7 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
     const srBuf = generateStornoInvoicePdf({
       stornoNumber: srNum,
       originalInvoiceNumber: t.invoiceNumber,
-      recipientName: t.booking.userName,
+      recipientName: shugyoRealName,
       recipientEmail: t.booking.userEmail,
       bookingId: t.bookingId,
       expertName: t.booking.expertName,
@@ -467,7 +571,7 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
     const sgBuf = generateStornoCreditNotePdf({
       stornoNumber: sgNum,
       originalCreditNoteNumber: t.creditNoteNumber,
-      recipientName: t.expert?.name ?? "",
+      recipientName: takumiRealName,
       recipientEmail: t.expert?.email ?? "",
       bookingId: t.bookingId,
       netPayoutCents: t.netPayout,
@@ -600,7 +704,7 @@ export async function getWalletHistory(userId: string, limit = 50) {
   ])
   const walletItems = walletTx.map((wt) => {
     const txType = wt.type === "topup" ? "topup" : wt.type === "refund" ? "refund" : "deduction"
-    const meta = (wt.metadata as { invoiceNumber?: string; invoicePdfUrl?: string } | null) ?? {}
+    const meta = (wt.metadata as { invoiceNumber?: string; invoicePdfUrl?: string; source?: string } | null) ?? {}
     return {
       id: wt.id,
       type: txType as "topup" | "deduction" | "refund",
@@ -609,7 +713,9 @@ export async function getWalletHistory(userId: string, limit = 50) {
       bookingId: null as string | null,
       label:
         wt.type === "topup"
-          ? "Wallet-Aufladung"
+          ? meta.source === "admin"
+            ? "Admin-Gutschrift"
+            : "Wallet-Aufladung"
           : wt.type === "refund"
             ? "Rückerstattung"
             : "Belastung",

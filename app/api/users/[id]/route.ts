@@ -22,6 +22,7 @@ export async function GET(
       where: { id },
       select: {
         name: true,
+        username: true,
         image: true,
         createdAt: true,
         skillLevel: true,
@@ -29,8 +30,9 @@ export async function GET(
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
+    const displayName = (user as { username?: string | null }).username ?? user.name
     const base = {
-      name: user.name,
+      name: displayName,
       image: user.image || "",
       createdAt: user.createdAt,
     }

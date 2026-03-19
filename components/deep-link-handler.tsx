@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Capacitor } from "@capacitor/core"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 /**
  * Deep-Link-Handler: Leitet Links zu diaiway.com/* direkt in die App weiter.
@@ -16,6 +17,7 @@ import { toast } from "sonner"
  */
 export function DeepLinkHandler() {
   const router = useRouter()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -27,7 +29,7 @@ export function DeepLinkHandler() {
           const { Browser } = await import("@capacitor/browser")
           await Browser.close()
           import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
-          toast.success("Ihre Zahlung wurde sicher durchgeführt. Sie werden in Ihre Buchungsübersicht weitergeleitet.")
+          toast.success(t("toast.paymentSuccessSecure"))
           router.push("/sessions?tab=upcoming")
           return
         }
@@ -37,7 +39,7 @@ export function DeepLinkHandler() {
           const { Browser } = await import("@capacitor/browser")
           await Browser.close()
           import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
-          toast.success("Ihr Wallet wurde erfolgreich aufgeladen!")
+          toast.success(t("toast.walletLoaded"))
           router.push("/profile/finances")
           return
         }
@@ -68,7 +70,7 @@ export function DeepLinkHandler() {
     let cleanup: (() => void) | undefined
     setup().then((c) => { cleanup = c })
     return () => { cleanup?.() }
-  }, [router])
+  }, [router, t])
 
   return null
 }

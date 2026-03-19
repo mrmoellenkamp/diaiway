@@ -71,7 +71,7 @@ export function WalletTopupModal({
       const data = await res.json()
       if (data.ok) return true
       if (data.status === "pending") return false
-      toast.error(data.error || "Gutschrift fehlgeschlagen.")
+      toast.error(data.error || t("toast.creditFailed"))
       return false
     } catch {
       return false
@@ -96,7 +96,7 @@ export function WalletTopupModal({
       onSuccess?.()
       router.push("/profile/finances")
     } else {
-      toast.error("Zahlung konnte nicht bestätigt werden. Bitte prüfe dein Guthaben in Kürze.")
+      toast.error(t("toast.paymentConfirmFailed"))
       onOpenChange(false)
       onSuccess?.()
       router.push("/profile/finances")
@@ -111,11 +111,11 @@ export function WalletTopupModal({
   async function startCheckout() {
     const amount = Number(amountEur)
     if (isNaN(amount) || amount < MIN_EUR) {
-      setError(`Mindestens ${MIN_EUR} € erforderlich.`)
+      setError(t("wallet.minRequired", { min: MIN_EUR }))
       return
     }
     if (amount > MAX_EUR) {
-      setError(`Maximal ${MAX_EUR} € pro Aufladung.`)
+      setError(t("wallet.maxPerTopup", { max: MAX_EUR }))
       return
     }
     setLoading(true)
@@ -137,7 +137,7 @@ export function WalletTopupModal({
           await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
           // DeepLinkHandler fängt diaiway://wallet-topup-confirmed ab
         } else {
-          setError(tokenData.error || "Checkout konnte nicht gestartet werden.")
+          setError(tokenData.error || t("wallet.checkoutError"))
         }
         return
       }
@@ -154,10 +154,10 @@ export function WalletTopupModal({
         setSessionId(data.sessionId ?? null)
         setStep("checkout")
       } else {
-        setError(data.error || "Checkout konnte nicht gestartet werden.")
+        setError(data.error || t("wallet.checkoutError"))
       }
     } catch {
-      setError("Netzwerkfehler")
+      setError(t("common.networkError"))
     } finally {
       setLoading(false)
     }
@@ -167,13 +167,13 @@ export function WalletTopupModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Wallet aufladen</DialogTitle>
+          <DialogTitle>{t("wallet.title")}</DialogTitle>
         </DialogHeader>
         <div className="relative min-h-[300px]">
           {step === "amount" && (
             <div className="flex flex-col gap-4 py-2">
               <p className="text-sm text-muted-foreground">
-                Wähle den Betrag ({MIN_EUR}–{MAX_EUR} €):
+                {t("wallet.chooseAmount", { min: MIN_EUR, max: MAX_EUR })}
               </p>
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap gap-2">
@@ -189,7 +189,7 @@ export function WalletTopupModal({
                   ))}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Oder:</span>
+                  <span className="text-sm text-muted-foreground">{t("wallet.or")}</span>
                   <Input
                     type="number"
                     inputMode="decimal"
@@ -220,7 +220,7 @@ export function WalletTopupModal({
                 ) : (
                   <Wallet className="size-4" />
                 )}
-                {loading ? "Wird geladen…" : `${amountEur} € aufladen`}
+                {loading ? t("wallet.loading") : t("wallet.topupAmount", { amount: amountEur })}
               </Button>
             </div>
           )}
@@ -231,7 +231,7 @@ export function WalletTopupModal({
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <Loader2 className="size-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">
-                    Zahlungsformular wird geladen...
+                    {t("wallet.loadingForm")}
                   </p>
                 </div>
               )}
@@ -239,7 +239,7 @@ export function WalletTopupModal({
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/95">
                   <Loader2 className="size-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">
-                    Zahlung wird bestätigt...
+                    {t("wallet.confirming")}
                   </p>
                 </div>
               )}

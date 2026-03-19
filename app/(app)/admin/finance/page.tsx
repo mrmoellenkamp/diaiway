@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import {
   Euro,
   CreditCard,
@@ -102,6 +103,7 @@ const CONFIRM_PHRASE = "BESTÄTIGEN"
 // ─── Page ─────────────────────────────────────────────────────────────────
 
 export default function AdminFinancePage() {
+  const { t } = useI18n()
   const [summary, setSummary] = useState<{
     holds: HoldItem[]
     totalShugyoWalletCents: number
@@ -176,7 +178,7 @@ export default function AdminFinancePage() {
         toast.error(data.error ?? "Aktion fehlgeschlagen.")
       }
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setActioning(false)
     }

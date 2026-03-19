@@ -15,11 +15,18 @@ const config: CapacitorConfig = {
     errorPath: "error.html",
     iosScheme: "diaiway",
   },
+  android: {
+    allowMixedContent: true,
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
       showSpinner: false,
+    },
+    Camera: {
+      // Für Snapshot-Moderation: Kamera-Zugriff
+      permissions: ["camera"],
     },
   },
 }

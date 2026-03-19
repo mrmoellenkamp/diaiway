@@ -1,8 +1,8 @@
 import { getTakumisForServer } from "@/lib/takumis-server"
 import { CategoriesPageClient } from "@/components/categories-page-client"
 
-/** ISR: 1 Stunde Cache – Experten-Liste statisch serviert, On-Demand-Revalidation bei Profil-Updates */
-export const revalidate = 3600
+/** Dynamisch: Kein DB-Zugriff beim Build – Build läuft auch ohne erreichbare DB (z.B. CI). */
+export const dynamic = "force-dynamic"
 
 export default async function CategoriesPage() {
   const takumis = await getTakumisForServer()

@@ -7,10 +7,12 @@ import { Mail, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 
 const RESEND_COOLDOWN_SEC = 120
 
 function VerifyEmailContent() {
+  const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session, status, update: updateSession } = useSession()
@@ -44,11 +46,11 @@ function VerifyEmailContent() {
         setCooldown(data.retryAfterSec ?? RESEND_COOLDOWN_SEC)
         toast.success(data.message ?? "Verifizierungs-Mail wurde erneut gesendet.")
       } else {
-        toast.error(data.error ?? "Fehler beim Senden.")
+        toast.error(data.error ?? t("toast.sendError"))
         if (data.retryAfterSec) setCooldown(data.retryAfterSec)
       }
     } catch {
-      toast.error("Netzwerkfehler. Bitte versuche es später erneut.")
+      toast.error(t("toast.verifyNetworkError"))
     } finally {
       setResending(false)
     }

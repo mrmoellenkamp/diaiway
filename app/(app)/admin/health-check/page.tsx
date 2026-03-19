@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import {
   ArrowLeft,
   RefreshCw,
@@ -79,6 +80,7 @@ function eur(cents: number) {
 }
 
 export default function AdminHealthCheckPage() {
+  const { t } = useI18n()
   const [data, setData] = useState<HealthData | null>(null)
   const [loading, setLoading] = useState(true)
   const [forceCaptureBookingId, setForceCaptureBookingId] = useState<string | null>(null)
@@ -90,11 +92,11 @@ export default function AdminHealthCheckPage() {
       const res = await fetch("/api/admin/health-check")
       const json = await res.json()
       if (res.ok) setData(json)
-      else toast.error(json.error ?? "Laden fehlgeschlagen")
+      else toast.error(json.error ?? t("toast.loadError"))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void load()
@@ -110,14 +112,14 @@ export default function AdminHealthCheckPage() {
       })
       const json = await res.json()
       if (res.ok) {
-        toast.success(json.message ?? "Capture durchgeführt.")
+        toast.success(json.message ?? t("admin.captureDone"))
         setForceCaptureBookingId(null)
         void load()
       } else {
-        toast.error(json.error ?? "Capture fehlgeschlagen.")
+        toast.error(json.error ?? t("admin.captureFailed"))
       }
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("common.networkError"))
     } finally {
       setActioning(false)
     }
@@ -127,7 +129,7 @@ export default function AdminHealthCheckPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
         <Loader2 className="size-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Lade Health-Check…</p>
+        <p className="text-sm text-muted-foreground">{t("admin.healthCheckLoading")}</p>
       </div>
     )
   }
@@ -376,10 +378,9 @@ export default function AdminHealthCheckPage() {
       <AlertDialog open={!!forceCaptureBookingId} onOpenChange={() => setForceCaptureBookingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Force Capture ausführen?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.forceCaptureTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Der Stripe Hold wird eingezogen und die Transaktion abgeschlossen. Diese Aktion wird im
-              AdminActionLog protokolliert.
+              {t("admin.forceCaptureDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import { Shield, Flag, ArrowLeft, Loader2, UserX, Check } from "lucide-react"
 
 interface SafetyReportEnriched {
@@ -47,6 +48,7 @@ function relDate(iso: string) {
 }
 
 export default function AdminSafetyPage() {
+  const { t } = useI18n()
   const { data: session } = useSession()
   const user = session?.user as { role?: string } | null
   const [reports, setReports] = useState<SafetyReportEnriched[]>([])
@@ -58,9 +60,9 @@ export default function AdminSafetyPage() {
     fetch("/api/admin/safety")
       .then((r) => r.json())
       .then((data) => setReports(data.reports ?? []))
-      .catch(() => toast.error("Fehler beim Laden"))
+      .catch(() => toast.error(t("toast.loadError")))
       .finally(() => setLoading(false))
-  }, [user?.role])
+  }, [user?.role, t])
 
   async function handleResolve(id: string) {
     try {
@@ -71,9 +73,9 @@ export default function AdminSafetyPage() {
       })
       if (!res.ok) throw new Error("Fehler")
       setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: "resolved" } : r)))
-      toast.success("Report als erledigt markiert")
+      toast.success(t("toast.reportResolved"))
     } catch {
-      toast.error("Aktualisierung fehlgeschlagen")
+      toast.error(t("toast.updateFailed"))
     }
   }
 
@@ -94,9 +96,9 @@ export default function AdminSafetyPage() {
           return r
         })
       )
-      toast.success("Nutzer dauerhaft gesperrt")
+      toast.success(t("toast.userBanned"))
     } catch {
-      toast.error("Sperrung fehlgeschlagen")
+      toast.error(t("toast.banFailed"))
     } finally {
       setBanning(null)
     }

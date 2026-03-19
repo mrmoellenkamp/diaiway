@@ -63,9 +63,14 @@ export async function POST(req: Request) {
       ""
     ).toLowerCase()
 
-    const shugyoInvoiceData = tx.user?.invoiceData as { type?: string } | null
+    const shugyoInvoiceData = tx.user?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
     const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
     const takumiIsGeschaeftskunde = (takumiUser?.invoiceData as { type?: string } | null)?.type === "unternehmen"
+
+    const shugyoRealName =
+      (shugyoInvoiceData?.type === "unternehmen"
+        ? shugyoInvoiceData?.companyName?.trim()
+        : shugyoInvoiceData?.fullName?.trim()) || (tx.user as { name?: string })?.name || booking.userName
 
     const invoiceUrl = getBillingDownloadUrl(tx.id, "invoice")
     const creditUrl = getBillingDownloadUrl(tx.id, "credit")
@@ -76,7 +81,7 @@ export async function POST(req: Request) {
       if (shugyoEmail && shugyoEmail.includes("@")) {
         const res = await sendInvoiceReadyEmail({
           to: shugyoEmail,
-          userName: booking.userName,
+          userName: shugyoRealName,
           downloadUrl: invoiceUrl,
           isBusiness: shugyoIsGeschaeftskunde ?? false,
           invoiceNumber: tx.invoiceNumber,
@@ -96,7 +101,7 @@ export async function POST(req: Request) {
         downloadUrl: creditUrl,
         isBusiness: takumiIsGeschaeftskunde ?? false,
         creditNoteNumber: tx.creditNoteNumber,
-        userName: booking.userName,
+        userName: shugyoRealName,
         date: booking.date,
       })
       results.credit = res

@@ -28,7 +28,6 @@ import {
   LogOut,
   ChevronRight,
   Edit3,
-  Radio,
   Wallet,
   BarChart3,
   Loader2,
@@ -99,7 +98,7 @@ export default function ProfilePage() {
   const { t } = useI18n()
   const { mutate } = useSWRConfig()
   const router = useRouter()
-  const [isLive, setIsLive] = useState(false)
+  const [hideOnlineStatus, setHideOnlineStatus] = useState(false)
   const isTakumi = role === "takumi"
 
   // Profile data from DB
@@ -218,7 +217,7 @@ export default function ProfilePage() {
         }
         if (isTakumi && takumiOrProjectsRes?.ok) {
           const tp = await takumiOrProjectsRes.json()
-          if (tp.exists && typeof tp.isLive === "boolean") setIsLive(tp.isLive)
+          if (tp.exists && typeof tp.hideOnlineStatus === "boolean") setHideOnlineStatus(tp.hideOnlineStatus)
         }
       } catch {
         /* fallback */
@@ -678,35 +677,33 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Go Live toggle (Takumi only) */}
+          {/* Online-Status verbergen (Takumi only) */}
           {isTakumi && (
             <>
-            <Card className="border-accent/30 bg-accent/5 gap-0 py-0">
+            <Card className="border-border/60 gap-0 py-0">
               <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <Radio className={`size-5 ${isLive ? "text-accent animate-live-pulse" : "text-muted-foreground"}`} />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-semibold text-foreground">
-                      {isLive ? t("profile.youAreLive") : t("profile.offline")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {isLive ? t("profile.shugyoCanBook") : t("profile.activateToReceive")}
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-foreground">
+                    {hideOnlineStatus ? t("profile.statusHidden") : t("profile.activateToBeInvisible")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("profile.hideOnlineStatusDesc")}
+                  </span>
                 </div>
                 <Switch
-                  checked={isLive}
+                  checked={hideOnlineStatus}
                   onCheckedChange={async (v) => {
                     try {
                       const res = await fetch("/api/user/takumi-profile", {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ isLive: v }),
+                        body: JSON.stringify({ hideOnlineStatus: v }),
                       })
                       if (res.ok) {
-                        setIsLive(v)
+                        setHideOnlineStatus(v)
                         mutate("/api/takumis")
-                        toast.success(v ? t("profile.nowLive") : t("profile.nowOffline"))
+                        mutate("/api/messages")
+                        toast.success(v ? t("profile.nowHidden") : t("profile.nowVisible"))
                       } else {
                         const data = await res.json()
                         toast.error(data.error || t("profile.error"))

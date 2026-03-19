@@ -105,9 +105,12 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* iOS: Input/Textarea mind. 16px verhindert automatisches Zoom beim Fokus */
-  input, textarea, select {
-    font-size: max(1rem, 16px);
+  /* iOS: Input/Textarea/Select mind. 16px verhindert automatisches Zoom beim Fokus.
+   * !important überschreibt auch text-[11px] etc. in className. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  textarea,
+  select {
+    font-size: max(1rem, 16px) !important;
   }
 }
 

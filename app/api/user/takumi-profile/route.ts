@@ -32,6 +32,7 @@ export async function GET() {
       pricePerSession: expert.pricePerSession,
       responseTime: expert.responseTime,
       isLive: expert.isLive,
+      hideOnlineStatus: expert.hideOnlineStatus ?? false,
       isPro: expert.isPro,
       verified: expert.verified,
       portfolio: expert.portfolio,
@@ -134,7 +135,7 @@ export async function PUT(req: Request) {
   }
 }
 
-/** PATCH — update isLive (Takumi only) */
+/** PATCH — update isLive oder hideOnlineStatus (Takumi only) */
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -143,26 +144,34 @@ export async function PATCH(req: Request) {
 
   try {
     const body = await req.json()
-    if (typeof body.isLive !== "boolean") {
-      return NextResponse.json({ error: "isLive muss true oder false sein." }, { status: 400 })
+    const data: { isLive?: boolean; hideOnlineStatus?: boolean } = {}
+
+    if (typeof body.isLive === "boolean") {
+      if (body.isLive) {
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { emailConfirmedAt: true },
+        })
+        if (!user?.emailConfirmedAt) {
+          return NextResponse.json(
+            { error: "Bitte bestätige zuerst deine E-Mail-Adresse, um sichtbar zu werden." },
+            { status: 403 }
+          )
+        }
+      }
+      data.isLive = body.isLive
+    }
+    if (typeof body.hideOnlineStatus === "boolean") {
+      data.hideOnlineStatus = body.hideOnlineStatus
     }
 
-    if (body.isLive) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { emailConfirmedAt: true },
-      })
-      if (!user?.emailConfirmedAt) {
-        return NextResponse.json(
-          { error: "Bitte bestätige zuerst deine E-Mail-Adresse, um sichtbar zu werden." },
-          { status: 403 }
-        )
-      }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: "isLive oder hideOnlineStatus erforderlich." }, { status: 400 })
     }
 
     const expert = await prisma.expert.updateMany({
       where: { userId: session.user.id },
-      data: { isLive: body.isLive },
+      data,
     })
 
     if (expert.count === 0) {
@@ -174,8 +183,11 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({
       success: true,
-      isLive: body.isLive,
-      message: body.isLive ? "Du bist jetzt sichtbar." : "Du verbergst dich jetzt.",
+      isLive: data.isLive ?? undefined,
+      hideOnlineStatus: data.hideOnlineStatus ?? undefined,
+      message: data.isLive !== undefined
+        ? (data.isLive ? "Du bist jetzt sichtbar." : "Du verbergst dich jetzt.")
+        : (data.hideOnlineStatus ? "Status verborgen." : "Status wird angezeigt."),
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })

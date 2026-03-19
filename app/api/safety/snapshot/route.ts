@@ -86,6 +86,15 @@ export async function POST(req: NextRequest) {
 
     await setTransactionOnHoldForBooking(bookingId)
 
+    // User-Flag für Moderation-Verstoß setzen
+    const userIds = [booking.userId, booking.expert?.userId].filter((id): id is string => !!id)
+    if (userIds.length > 0) {
+      await prisma.user.updateMany({
+        where: { id: { in: userIds } },
+        data: { moderationViolationAt: new Date() },
+      })
+    }
+
     console.warn("[Safety] Incident erstellt:", { bookingId, reason, imageUrl: blob.url })
 
     return NextResponse.json({

@@ -64,17 +64,17 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const [shugyo, takumiUser] = await Promise.all([
       prisma.user.findUnique({
         where: { id: booking.userId },
-        select: { customerNumber: true, invoiceData: true, email: true },
+        select: { customerNumber: true, invoiceData: true, email: true, name: true },
       }),
       prisma.user.findUnique({
         where: { id: expertUserId },
-        select: { invoiceData: true },
+        select: { invoiceData: true, name: true },
       }),
     ])
 
     const now = new Date()
 
-    // 4. PDF-Generierung
+    // 4. PDF-Generierung (Rechnungen/Gutschriften: echter Name aus invoiceData oder user.name)
     const durationMin = booking.sessionDuration ?? (() => {
       if (booking.startTime && booking.endTime) {
         const [sh, sm] = booking.startTime.split(":").map(Number)
@@ -84,14 +84,23 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       return 30
     })()
 
-    const shugyoInvoiceData = shugyo?.invoiceData as { type?: string } | null
-    const takumiInvoiceData = takumiUser?.invoiceData as { type?: string } | null
+    const shugyoInvoiceData = shugyo?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
+    const takumiInvoiceData = takumiUser?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
     const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
     const takumiIsGeschaeftskunde = takumiInvoiceData?.type === "unternehmen"
 
+    const shugyoRealName =
+      (shugyoInvoiceData?.type === "unternehmen"
+        ? shugyoInvoiceData?.companyName?.trim()
+        : shugyoInvoiceData?.fullName?.trim()) || shugyo?.name || booking.userName
+    const takumiRealName =
+      (takumiInvoiceData?.type === "unternehmen"
+        ? takumiInvoiceData?.companyName?.trim()
+        : takumiInvoiceData?.fullName?.trim()) || takumiUser?.name || booking.expert!.name
+
     const invoiceBuf = await generateInvoicePdf({
       invoiceNumber,
-      recipientName: booking.userName,
+      recipientName: shugyoRealName,
       recipientEmail: booking.userEmail,
       bookingId,
       expertName: booking.expertName,
@@ -102,7 +111,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     })
     const creditBuf = await generateCreditNotePdf({
       creditNumber: creditNoteNumber,
-      recipientName: booking.expert!.name,
+      recipientName: takumiRealName,
       recipientEmail: booking.expert!.email || "",
       bookingId,
       netPayoutCents: tx.netPayout,
@@ -164,7 +173,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const invoiceEmailPromise = shugyoEmail && shugyoEmail.includes("@")
       ? sendInvoiceReadyEmail({
           to: shugyoEmail,
-          userName: booking.userName,
+          userName: shugyoRealName,
       downloadUrl: invoiceDownloadUrl,
       isBusiness: shugyoIsGeschaeftskunde,
       invoiceNumber,
@@ -181,7 +190,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
           downloadUrl: creditDownloadUrl,
           isBusiness: takumiIsGeschaeftskunde,
           creditNoteNumber,
-          userName: booking.userName,
+          userName: shugyoRealName,
           date: booking.date,
         })
       : Promise.resolve({ sent: false, error: "Keine E-Mail-Adresse" })

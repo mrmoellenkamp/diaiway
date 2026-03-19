@@ -128,7 +128,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (sessionStatus !== "authenticated" || !session?.user) return
     fetch("/api/notifications")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => data && setNotificationCount(data.unreadCount ?? 0))
+      .then((data) => {
+        if (data) {
+          const total = data.totalInboxUnread ?? data.unreadCount ?? 0
+          setNotificationCount(total)
+        }
+      })
       .catch(() => {})
   }
 
@@ -171,7 +176,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         setRole,
-        userName: profileData?.name || profileData?.username || session?.user?.name || "Nutzer",
+        userName: profileData?.username || profileData?.name || (session?.user as { username?: string | null })?.username || session?.user?.name || "Nutzer",
         userAvatar: profileData?.image || session?.user?.image || "",
         isLoggedIn,
         profileData,

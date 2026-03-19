@@ -5,8 +5,8 @@ import { getTakumisForServer } from "@/lib/takumis-server"
 import { CategoryDetailPageClient } from "@/components/category-detail-page-client"
 import { CategoryDetailSkeleton } from "@/components/category-detail-skeleton"
 
-/** ISR: 1 Stunde Cache – Kategorie-Detail statisch serviert */
-export const revalidate = 3600
+/** Dynamisch: Kein DB-Zugriff beim Build – Build läuft auch ohne erreichbare DB (z.B. CI). */
+export const dynamic = "force-dynamic"
 
 export default async function CategoryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

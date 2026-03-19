@@ -36,6 +36,8 @@ export async function GET() {
             date: true,
             startTime: true,
             endTime: true,
+            status: true,
+            sessionEndedAt: true,
           },
         },
       },
@@ -53,6 +55,11 @@ export async function GET() {
       daysUntilExpiry: number | null
       expiryStatus: "ok" | "warning" | "critical"
       paymentType: "stripe" | "wallet"
+      bookingStatus: string
+      sessionEndedAt: string | null
+      date: string | null
+      startTime: string | null
+      endTime: string | null
     }[] = []
 
     const now = Date.now()
@@ -90,6 +97,11 @@ export async function GET() {
         daysUntilExpiry,
         expiryStatus,
         paymentType: isWallet ? "wallet" : "stripe",
+        bookingStatus: b.status ?? "",
+        sessionEndedAt: b.sessionEndedAt?.toISOString() ?? null,
+        date: b.date ?? null,
+        startTime: b.startTime ?? null,
+        endTime: b.endTime ?? null,
       })
     }
 

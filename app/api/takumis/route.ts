@@ -25,7 +25,7 @@ export async function GET() {
     const payload = active.map((e) => {
         const lastSeen = e.lastSeenAt?.getTime()
         const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
-        const isLive = e.isLive && isActuallyOnline
+        const isLive = isActuallyOnline && !(e.hideOnlineStatus ?? false)
         return {
         id: e.id,
         name: e.name,

@@ -63,6 +63,7 @@ function PostCallScreen({
   bookingMode?: "scheduled" | "instant"
   onDone: () => void
 }) {
+  const { t } = useI18n()
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -84,15 +85,15 @@ function PostCallScreen({
         }),
       })
       const data = (await res.json()) as { error?: string }
-      if (!res.ok) throw new Error(data.error ?? "Speichern fehlgeschlagen")
-      toast.success("Bewertung gespeichert! Danke.")
+      if (!res.ok) throw new Error(data.error ?? t("toast.saveError"))
+      toast.success(t("toast.ratingSaved"))
       onDone()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, isExpert, rating, reviewText, onDone])
+  }, [bookingId, isExpert, rating, reviewText, onDone, t])
 
   const handleSubmitReview = useCallback(() => {
     if (rating < 1) return
@@ -123,16 +124,16 @@ function PostCallScreen({
           }),
         }),
       ])
-      if (!releaseRes.ok) throw new Error((await releaseRes.json())?.error ?? "Freigabe fehlgeschlagen")
-      if (!reviewRes.ok) throw new Error((await reviewRes.json())?.error ?? "Bewertung fehlgeschlagen")
-      toast.success("Betrag freigegeben und Bewertung gespeichert! Danke.")
+      if (!releaseRes.ok) throw new Error((await releaseRes.json())?.error ?? t("toast.releaseFailed"))
+      if (!reviewRes.ok) throw new Error((await reviewRes.json())?.error ?? t("toast.saveError"))
+      toast.success(t("toast.releaseAndRating"))
       onDone()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, rating, reviewText, onDone])
+  }, [bookingId, rating, reviewText, onDone, t])
 
   const handleReportAndSubmit = useCallback(async () => {
     setShowReleaseDialog(false)
@@ -144,13 +145,13 @@ function PostCallScreen({
         body: JSON.stringify({ action: "report-problem" }),
       })
       await submitReviewOnly()
-      toast.info("Call wurde gemeldet. Deine Bewertung wurde gespeichert.")
+      toast.info(t("toast.callReportedReview"))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, submitReviewOnly])
+  }, [bookingId, submitReviewOnly, t])
 
   const handleReportOnly = useCallback(async () => {
     setSubmitting(true)
@@ -160,14 +161,14 @@ function PostCallScreen({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "report-problem" }),
       })
-      toast.info("Call wurde gemeldet. Wir prüfen den Vorgang.")
+      toast.info(t("toast.callReported"))
       onDone()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, onDone])
+  }, [bookingId, onDone, t])
 
   const handleReleasePayment = useCallback(async () => {
     setSubmitting(true)
@@ -178,15 +179,15 @@ function PostCallScreen({
         body: JSON.stringify({ action: "release-payment" }),
       })
       const data = (await res.json()) as { error?: string }
-      if (!res.ok) throw new Error(data.error ?? "Freigabe fehlgeschlagen")
-      toast.success("Geld freigegeben!")
+      if (!res.ok) throw new Error(data.error ?? t("toast.releaseFailed"))
+      toast.success(t("toast.releaseSuccess"))
       onDone()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, onDone])
+  }, [bookingId, onDone, t])
 
   const handleInstantConfirmAndRelease = useCallback(async () => {
     setShowReleaseDialog(false)
@@ -197,15 +198,15 @@ function PostCallScreen({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "release-payment" }),
       })
-      if (!res.ok) throw new Error((await res.json())?.error ?? "Freigabe fehlgeschlagen")
-      toast.success("Abrechnung bestätigt und freigegeben!")
+      if (!res.ok) throw new Error((await res.json())?.error ?? t("toast.releaseFailed"))
+      toast.success(t("toast.releaseConfirmed"))
       onDone()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
       setSubmitting(false)
     }
-  }, [bookingId, onDone])
+  }, [bookingId, onDone, t])
 
   const canReleasePayment = !isExpert && paymentStatus === "paid"
   const isInstantShugyo = !isExpert && bookingMode === "instant"
@@ -214,23 +215,23 @@ function PostCallScreen({
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4 py-8">
       <div className="text-center">
-        <h2 className="text-xl font-bold text-foreground">Session beendet</h2>
+        <h2 className="text-xl font-bold text-foreground">{t("session.ended")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bewerte {partnerName} – ihr habt euch gegenseitig unterstützt.
+          {t("session.ratePartner", { name: partnerName })}
         </p>
       </div>
 
       {/* Instant: Entstandene Gebühren anzeigen (auch bei 0 €) */}
       {isInstantShugyo && (
         <div className="w-full max-w-sm rounded-xl border-2 border-primary/30 bg-primary/5 p-5 text-center">
-          <p className="text-sm font-medium text-muted-foreground">Entstandene Gebühren</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("session.incurredFees")}</p>
           <p className="mt-1 text-2xl font-bold text-foreground">
             {(incurredAmount / 100).toFixed(2).replace(".", ",")} €
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
             {incurredAmount > 0
-              ? "Bitte bestätige die Abrechnung oder melde den Call."
-              : "Session unter 30 Sek. – keine Gebühren. Du kannst den Call melden oder weitergehen."}
+              ? t("session.confirmOrReport")
+              : t("session.noFeesUnder30s")}
           </p>
         </div>
       )}
@@ -240,7 +241,7 @@ function PostCallScreen({
       <textarea
         value={reviewText}
         onChange={(e) => setReviewText(e.target.value)}
-        placeholder="Optional: Schreibe eine Bewertung..."
+        placeholder={t("session.reviewPlaceholder")}
         className="w-full max-w-sm resize-none rounded-xl border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         rows={3}
       />
@@ -248,10 +249,9 @@ function PostCallScreen({
       <Dialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
         <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
-            <DialogTitle>Betrag freigeben oder Call melden?</DialogTitle>
+            <DialogTitle>{t("session.releaseDialogTitle")}</DialogTitle>
             <DialogDescription>
-              Soll der Betrag von {formatAmount(paidAmountCents ?? 0)} sofort freigegeben werden,
-              oder möchtest du den Call melden?
+              {t("session.releaseDialogDescAmount", { amount: formatAmount(paidAmountCents ?? 0) })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
@@ -260,7 +260,7 @@ function PostCallScreen({
               disabled={submitting}
               className="w-full"
             >
-              Betrag freigeben
+              {t("session.releaseAmount")}
             </Button>
             <Button
               onClick={handleReportAndSubmit}
@@ -268,7 +268,7 @@ function PostCallScreen({
               variant="destructive"
               className="w-full"
             >
-              Call melden
+              {t("session.reportCall")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -284,7 +284,7 @@ function PostCallScreen({
                 disabled={submitting}
                 className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                Abrechnung bestätigen & freigeben
+                {t("session.confirmAndRelease")}
               </Button>
             )}
             <Button
@@ -293,7 +293,7 @@ function PostCallScreen({
               variant={incurredAmount > 0 ? "destructive" : "outline"}
               className="h-12 w-full rounded-xl"
             >
-              Call melden
+              {t("session.reportCall")}
             </Button>
           </>
         )}
@@ -302,7 +302,7 @@ function PostCallScreen({
           disabled={rating === 0 || submitting}
           className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          Bewertung abgeben
+          {t("session.submitReview")}
         </Button>
         {canReleasePayment && !isInstantShugyo && (
           <Button
@@ -311,12 +311,12 @@ function PostCallScreen({
             variant="outline"
             className="h-12 w-full rounded-xl border-accent text-accent hover:bg-accent/10"
           >
-            Geld freigeben & überspringen
+            {t("session.releaseAndSkip")}
           </Button>
         )}
         {!canReleasePayment && (
           <Button asChild variant="outline" className="h-12 w-full rounded-xl">
-            <Link href={`/takumi/${expertId}`}>Zurück zum Profil</Link>
+            <Link href={`/takumi/${expertId}`}>{t("session.backToProfile")}</Link>
           </Button>
         )}
         <Button
@@ -325,7 +325,7 @@ function PostCallScreen({
           disabled={submitting}
           className="h-12 w-full rounded-xl"
         >
-          Zur Übersicht
+          {t("session.toOverview")}
         </Button>
       </div>
     </div>

@@ -77,6 +77,7 @@ function PendingAttachmentPreview({
   onConfirm,
   onRemove,
   sending,
+  tapToConfirm,
 }: {
   url: string
   thumbnailUrl: string | null
@@ -84,6 +85,7 @@ function PendingAttachmentPreview({
   onConfirm: () => void
   onRemove: () => void
   sending: boolean
+  tapToConfirm: string
 }) {
   const [thumbError, setThumbError] = useState(false)
   const showThumb = thumbnailUrl && !thumbError
@@ -105,7 +107,7 @@ function PendingAttachmentPreview({
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{filename}</p>
-        <p className="text-xs text-muted-foreground">Zum Senden auf ✓ tippen</p>
+        <p className="text-xs text-muted-foreground">{tapToConfirm}</p>
       </div>
       <Button size="icon" className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
         <Check className="size-5" />
@@ -130,6 +132,8 @@ export interface UserChatBoxProps {
   inline?: boolean
   /** Wenn in Drawer/Bottom-Sheet: volle Höhe, keine äußere Umrandung */
   inDrawer?: boolean
+  /** Nachrichten geladen (API markiert ungelesene als gelesen) → z.B. Glocken-Badge aktualisieren */
+  onMessagesLoaded?: () => void
 }
 
 export function UserChatBox({
@@ -143,6 +147,7 @@ export function UserChatBox({
   onClose,
   inline = true,
   inDrawer = false,
+  onMessagesLoaded,
 }: UserChatBoxProps) {
   const { t } = useI18n()
   const [messages, setMessages] = useState<MsgItem[]>([])
@@ -202,10 +207,11 @@ export function UserChatBox({
       .then((data) => {
         const msgs = (data.messages ?? []) as MsgItem[]
         setMessages(msgs.map((m) => ({ ...m, status: (m.status ?? "sent") as MessageStatus })))
+        onMessagesLoaded?.()
       })
       .catch(() => setMessages([]))
       .finally(() => setLoading(false))
-  }, [partnerId])
+  }, [partnerId, onMessagesLoaded])
 
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -267,7 +273,7 @@ export function UserChatBox({
           setMessages((prev) =>
             prev.map((m) => (m.id === tempId ? { ...m, status: "failed" as MessageStatus } : m))
           )
-          toast.error("Nachricht konnte nicht gesendet werden.")
+          toast.error(t("toast.messageSendFailed"))
         }
       }
     },
@@ -518,6 +524,7 @@ export function UserChatBox({
             onConfirm={handleSend}
             onRemove={() => setPendingAttachment(null)}
             sending={sending}
+            tapToConfirm={t("admin.tapToConfirm")}
           />
         )}
         {uploadScanning ? (

@@ -31,7 +31,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { FlipHorizontal, Loader2, Maximize2, Mic, MicOff, PhoneOff, PictureInPicture, Square, Video, VideoOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
+import { useSafeSnapshot } from "@/hooks/use-safe-snapshot"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -107,6 +109,7 @@ export function DailyCallContainer({
   pricePerMinuteCents = 0,
   hasPaidBefore = false,
 }: DailyCallContainerProps) {
+  const { t } = useI18n()
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
   const [isPiPActive, setIsPiPActive] = useState(false)
@@ -512,7 +515,7 @@ export function DailyCallContainer({
       const { connected } = await checkConnectivity()
       if (!connected) {
         setPhase("LOBBY")
-        toast.error("Keine Internetverbindung. Bitte prüfe deine Verbindung und versuche es erneut.")
+        toast.error(t("toast.noConnection"))
         return
       }
       const existingCall = callObjectRef.current
@@ -667,7 +670,7 @@ export function DailyCallContainer({
           setTimerSecondsLeft(remaining)
           if (remaining <= 60 && remaining > 0 && !lowBalanceWarningShownRef.current) {
             lowBalanceWarningShownRef.current = true
-            toast.warning("Achtung: Dein Guthaben neigt sich dem Ende zu!")
+            toast.warning(t("toast.balanceLow"))
           }
           if (remaining <= 0) {
             timerIntervalRef.current && clearInterval(timerIntervalRef.current)
@@ -1258,68 +1261,45 @@ export function DailyCallContainer({
     return () => videoEl.removeEventListener("leavepictureinpicture", onLeave)
   }, [phase])
 
-  // --- Live-Monitoring: Feste Intervalle 5s, 30s, 60s, 90s, 120s; Hard-Stop nach 120s ---
-  const SNAPSHOT_DELAYS_MS = [5, 30, 60, 90, 120].map((s) => s * 1000)
-  const snapshotTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  useEffect(() => {
-    if (phase !== "IN_CALL" || callMode !== "video" || !safetyAccepted) return
-
-    const captureAndSend = () => {
-      const remoteEl = remoteVideoRef.current
-      const localEl = localPiPVideoRef.current
-
-      const videoEl = remoteEl?.srcObject && remoteEl.readyState >= 2
-        ? remoteEl
-        : localEl?.srcObject && localEl.readyState >= 2
-          ? localEl
-          : null
-
-      if (!videoEl || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) return
-
-      try {
-        const canvas = document.createElement("canvas")
-        const w = Math.min(videoEl.videoWidth, 640)
-        const h = Math.round((w / videoEl.videoWidth) * videoEl.videoHeight)
-        canvas.width = w
-        canvas.height = h
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-        ctx.drawImage(videoEl, 0, 0, w, h)
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7)
-
-        fetch("/api/safety/snapshot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookingId, imageBase64: dataUrl }),
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data?.incidentCreated) {
-              console.warn("[DailyCall] Safety-Incident – Verbindung wird getrennt.")
-              toast.error("Verbindung getrennt: Verstoß gegen die Community-Richtlinien erkannt.", {
-                duration: 6000,
-              })
-              performCleanup()
-              if (onCallEnded) onCallEnded()
-              else redirectToSessions("safety-violation")
-            }
-          })
-          .catch((e) => console.warn("[DailyCall] Snapshot senden:", e))
-      } catch (e) {
-        console.warn("[DailyCall] Snapshot capture:", e)
-      }
+  // --- Background-Moderation: Alle 30s Snapshot → Vision API SafeSearch ---
+  const getImageBase64 = useCallback(async (): Promise<string | null> => {
+    const remoteEl = remoteVideoRef.current
+    const localEl = localPiPVideoRef.current
+    const videoEl = remoteEl?.srcObject && remoteEl.readyState >= 2
+      ? remoteEl
+      : localEl?.srcObject && localEl.readyState >= 2
+        ? localEl
+        : null
+    if (!videoEl || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) return null
+    try {
+      const canvas = document.createElement("canvas")
+      const w = Math.min(videoEl.videoWidth, 640)
+      const h = Math.round((w / videoEl.videoWidth) * videoEl.videoHeight)
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return null
+      ctx.drawImage(videoEl, 0, 0, w, h)
+      return canvas.toDataURL("image/jpeg", 0.7)
+    } catch {
+      return null
     }
+  }, [])
 
-    SNAPSHOT_DELAYS_MS.forEach((delayMs) => {
-      const id = setTimeout(captureAndSend, delayMs)
-      snapshotTimeoutsRef.current.push(id)
-    })
+  const handleModerationViolation = useCallback(() => {
+    toast.error("Verbindung getrennt: Verstoß gegen die Community-Richtlinien erkannt.", { duration: 6000 })
+    performCleanup()
+    if (onCallEnded) onCallEnded()
+    else redirectToSessions("safety-violation")
+  }, [performCleanup, onCallEnded, redirectToSessions])
 
-    return () => {
-      snapshotTimeoutsRef.current.forEach((id) => clearTimeout(id))
-      snapshotTimeoutsRef.current = []
-    }
-  }, [phase, callMode, safetyAccepted, bookingId, performCleanup, onCallEnded, redirectToSessions])
+  useSafeSnapshot({
+    bookingId,
+    getImageBase64,
+    onViolation: handleModerationViolation,
+    intervalMs: 30_000,
+    enabled: phase === "IN_CALL" && callMode === "video" && !!safetyAccepted,
+  })
 
   // --- Cleanup NUR bei echtem Unmount (nicht bei Re-Render/Strict Mode Remount) ---
   useEffect(() => {

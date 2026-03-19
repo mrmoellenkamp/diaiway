@@ -14,9 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner"
 import {
   Loader2, User as UserIcon, Star, FolderOpen, Images, Trash2, Plus, Save,
-  Mail, ChevronDown, ChevronRight, FileText, Clock,
+  Mail, ChevronDown, ChevronRight, FileText, Clock, Wallet, Euro, ExternalLink,
 } from "lucide-react"
 import { useCategories } from "@/lib/categories-i18n"
+import { useI18n } from "@/lib/i18n"
 import { EMPTY_WEEKLY_SLOTS } from "@/lib/availability-utils"
 import type { ITimeSlot, WeeklySlots, IWeeklyRule, IDateException } from "@/lib/availability-utils"
 
@@ -139,7 +140,7 @@ function AdminWeeklySlotsEditor({
                     step="900"
                     value={slot.start}
                     onChange={(e) => changeSlot(day, idx, "start", e.target.value)}
-                    className="h-7 w-24 rounded border border-input bg-background px-2 text-[11px]"
+                    className="h-7 w-24 rounded border border-input bg-background px-2 text-base"
                   />
                   <span className="text-[10px] text-muted-foreground">–</span>
                   <input
@@ -147,7 +148,7 @@ function AdminWeeklySlotsEditor({
                     step="900"
                     value={slot.end}
                     onChange={(e) => changeSlot(day, idx, "end", e.target.value)}
-                    className="h-7 w-24 rounded border border-input bg-background px-2 text-[11px]"
+                    className="h-7 w-24 rounded border border-input bg-background px-2 text-base"
                   />
                   {daySlots.length > 1 && (
                     <Button size="icon" variant="ghost" className="size-6 text-destructive/70 hover:text-destructive" onClick={() => removeSlot(day, idx)}>
@@ -263,7 +264,24 @@ export function AdminUserProfileSheet({
   const [editExceptions, setEditExceptions] = useState<IDateException[]>([])
   const [advancedAvailJson, setAdvancedAvailJson] = useState("")
   const [advancedAvailOpen, setAdvancedAvailOpen] = useState(false)
+  const [financeHistory, setFinanceHistory] = useState<{ history: unknown[]; wallet: { balance: number; pendingBalance: number } } | null>(null)
+  const [financeLoading, setFinanceLoading] = useState(false)
+  const [documents, setDocuments] = useState<Array<{
+    id: string
+    type: string
+    label: string
+    number: string | null
+    date: string
+    amountCents: number | null
+    url: string
+    role: string
+  }> | null>(null)
+  const [documentsLoading, setDocumentsLoading] = useState(false)
+  const [creditAmount, setCreditAmount] = useState("")
+  const [creditReason, setCreditReason] = useState("")
+  const [creditLoading, setCreditLoading] = useState(false)
   const categories = useCategories()
+  const { t } = useI18n()
 
   const load = useCallback(async () => {
     if (!userId) return
@@ -291,13 +309,65 @@ export function AdminUserProfileSheet({
           av ? JSON.stringify({ yearlyRules: av.yearlyRules ?? [], exceptions: av.exceptions ?? [] }, null, 2) : '{"yearlyRules":[],"exceptions":[]}'
         )
       } else {
-        toast.error(json.error ?? "Fehler beim Laden")
+        toast.error(json.error ?? t("toast.loadError"))
       }
-    } catch { toast.error("Fehler beim Laden") }
+    } catch { toast.error(t("toast.loadError")) }
     finally { setLoading(false) }
-  }, [userId])
+  }, [userId, t])
 
   useEffect(() => { void load() }, [load])
+
+  const loadFinance = useCallback(async () => {
+    if (!userId) return
+    setFinanceLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/wallet-history?limit=100`)
+      const json = await res.json()
+      if (res.ok) setFinanceHistory(json)
+      else toast.error(json.error ?? "Kontoauszug konnte nicht geladen werden.")
+    } catch { toast.error("Fehler beim Laden.") }
+    finally { setFinanceLoading(false) }
+  }, [userId])
+
+  const loadDocuments = useCallback(async () => {
+    if (!userId) return
+    setDocumentsLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/documents`)
+      const json = await res.json()
+      if (res.ok) setDocuments(json.documents ?? [])
+      else toast.error(json.detail ?? json.error ?? "Belege konnten nicht geladen werden.")
+    } catch { toast.error("Fehler beim Laden.") }
+    finally { setDocumentsLoading(false) }
+  }, [userId])
+
+  async function handleCredit() {
+    if (!userId || !creditAmount.trim()) return
+    const cents = Math.round(parseFloat(creditAmount.replace(",", ".")) * 100)
+    if (cents <= 0) {
+      toast.error("Betrag muss positiv sein.")
+      return
+    }
+    setCreditLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/wallet-credit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amountCents: cents, reason: creditReason.trim() || undefined }),
+      })
+      const json = await res.json()
+      if (res.ok) {
+        toast.success(json.message ?? "Gutschrift erfolgreich.")
+        setCreditAmount("")
+        setCreditReason("")
+        void loadFinance()
+        void load()
+      } else {
+        toast.error(json.error ?? "Gutschrift fehlgeschlagen.")
+      }
+    } catch { toast.error("Fehler bei der Gutschrift.") }
+    finally { setCreditLoading(false) }
+  }
 
   async function handleSave() {
     if (!userId || !editUser) return
@@ -379,13 +449,13 @@ export function AdminUserProfileSheet({
       })
       const json = await res.json()
       if (res.ok) {
-        toast.success(json.message ?? "Gespeichert")
+        toast.success(json.message ?? t("toast.saved"))
         void load()
         onSaved?.()
       } else {
-        toast.error(json.error ?? "Fehler beim Speichern")
+        toast.error(json.error ?? t("toast.saveError"))
       }
-    } catch { toast.error("Fehler beim Speichern") }
+    } catch { toast.error(t("toast.saveError")) }
     finally { setSaving(false) }
   }
 
@@ -396,12 +466,12 @@ export function AdminUserProfileSheet({
       const res = await fetch(`/api/admin/users/${userId}/send-password-reset`, { method: "POST" })
       const json = await res.json()
       if (res.ok) {
-        toast.success(json.message ?? "E-Mail gesendet.")
+        toast.success(json.message ?? t("toast.emailSent"))
       } else {
-        toast.error(json.error ?? "Fehler beim Senden.")
+        toast.error(json.error ?? t("toast.sendError"))
       }
     } catch {
-      toast.error("Fehler beim Senden.")
+      toast.error(t("toast.sendError"))
     } finally {
       setSendingPasswordReset(false)
     }
@@ -459,12 +529,13 @@ export function AdminUserProfileSheet({
         ) : (
           <div className="mt-6 flex flex-col gap-4">
             <Tabs defaultValue="user" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="user" className="text-[10px]">User</TabsTrigger>
                 <TabsTrigger value="expert" className="text-[10px]">Takumi</TabsTrigger>
                 <TabsTrigger value="shugyo" className="text-[10px]">Shugyo</TabsTrigger>
                 <TabsTrigger value="takumi" className="text-[10px]">Portfolio</TabsTrigger>
                 <TabsTrigger value="availability" className="text-[10px]">Verfügbarkeit</TabsTrigger>
+                <TabsTrigger value="finance" className="text-[10px]" onClick={() => { void loadFinance(); void loadDocuments() }}>Finanzen</TabsTrigger>
               </TabsList>
 
               <TabsContent value="user" className="mt-4">
@@ -1001,6 +1072,165 @@ export function AdminUserProfileSheet({
                     </CollapsibleContent>
                   </Collapsible>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="finance" className="mt-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Wallet className="size-4" />
+                      Finanzen & Kontoauszug
+                    </CardTitle>
+                    <p className="text-[11px] text-muted-foreground">
+                      Guthaben, Transaktionsverlauf und Admin-Gutschrift.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    {/* Guthaben gutschreiben */}
+                    <div className="rounded-lg border border-border/60 p-3 space-y-2">
+                      <p className="text-xs font-medium">Guthaben gutschreiben</p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="Betrag (€)"
+                          value={creditAmount}
+                          onChange={(e) => setCreditAmount(e.target.value)}
+                          className="h-9 w-24"
+                        />
+                        <Input
+                          type="text"
+                          placeholder="Grund (optional)"
+                          value={creditReason}
+                          onChange={(e) => setCreditReason(e.target.value)}
+                          className="h-9 flex-1 min-w-[120px]"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => void handleCredit()}
+                          disabled={creditLoading || !creditAmount.trim()}
+                          className="gap-1"
+                        >
+                          {creditLoading ? <Loader2 className="size-4 animate-spin" /> : <Euro className="size-4" />}
+                          Gutschreiben
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        Erzeugt echten Zahlungsvorgang: WalletTransaction, PDF-Rechnung.
+                      </p>
+                    </div>
+
+                    {/* Salden */}
+                    {financeLoading ? (
+                      <div className="flex justify-center py-6">
+                        <Loader2 className="size-6 animate-spin text-primary" />
+                      </div>
+                    ) : financeHistory ? (
+                      <>
+                        <div className="flex gap-4 text-sm">
+                          <span><strong>Guthaben:</strong> {eur(financeHistory.wallet.balance)}</span>
+                          <span><strong>Pending:</strong> {eur(financeHistory.wallet.pendingBalance)}</span>
+                        </div>
+
+                        {/* Kontoauszug */}
+                        <div>
+                          <p className="text-xs font-medium mb-2">Transaktionsverlauf</p>
+                          <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border/40">
+                            {financeHistory.history.length === 0 ? (
+                              <p className="p-4 text-xs text-muted-foreground">Keine Transaktionen.</p>
+                            ) : (
+                              <div className="divide-y divide-border/40">
+                                {(financeHistory.history as Array<{
+                                  id: string
+                                  type: string
+                                  amount: number
+                                  label?: string
+                                  date?: string
+                                  status?: string
+                                  invoicePdfUrl?: string | null
+                                  creditNotePdfUrl?: string | null
+                                }>).map((item) => (
+                                  <div key={item.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                                    <div className="min-w-0 flex-1">
+                                      <span className="font-medium">
+                                        {item.type === "paid" ? `Zahlung → ${item.label ?? "-"}` :
+                                          item.type === "earned" ? `Einnahme von ${item.label ?? "-"}` :
+                                            item.label ?? "Transaktion"}
+                                      </span>
+                                      {item.date && <span className="text-muted-foreground ml-1">· {item.date}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={item.amount >= 0 ? "text-emerald-600 dark:text-emerald-500" : "text-destructive"}>
+                                        {item.amount >= 0 ? "+" : ""}{eur(item.amount)}
+                                      </span>
+                                      {(item.invoicePdfUrl || item.creditNotePdfUrl) && (
+                                        <a
+                                          href={item.invoicePdfUrl ?? item.creditNotePdfUrl ?? "#"}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-muted-foreground hover:text-foreground"
+                                          title="Beleg öffnen"
+                                        >
+                                          <ExternalLink className="size-3.5" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Systemseitige Korrespondenz (offizielle Rechnungsanschrift) */}
+                        <div className="mt-4 pt-4 border-t border-border/60">
+                          <p className="text-xs font-medium mb-2">Systemseitige Korrespondenz (Rechnungen, Gutschriften)</p>
+                          <p className="text-[10px] text-muted-foreground mb-2">
+                            Alle Belege mit offizieller Rechnungsanschrift an diesen Nutzer.
+                          </p>
+                          {documentsLoading ? (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="size-5 animate-spin text-primary" />
+                            </div>
+                          ) : documents && documents.length > 0 ? (
+                            <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border/40">
+                              <div className="divide-y divide-border/40">
+                                {documents.map((doc) => (
+                                  <div key={doc.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                                    <div className="min-w-0 flex-1">
+                                      <span className="font-medium">{doc.label}</span>
+                                      {doc.number && <span className="text-muted-foreground ml-1">· {doc.number}</span>}
+                                      <span className="text-muted-foreground ml-1">· {doc.date}</span>
+                                      {doc.amountCents != null && (
+                                        <span className="ml-1">· {eur(doc.amountCents)}</span>
+                                      )}
+                                      <span className="ml-1 text-[10px] text-muted-foreground">
+                                        ({doc.role === "shugyo" ? "als Shugyo" : "als Takumi"})
+                                      </span>
+                                    </div>
+                                    <a
+                                      href={doc.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="shrink-0 rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                      title="PDF öffnen"
+                                    >
+                                      <ExternalLink className="size-4" />
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : documents && documents.length === 0 ? (
+                            <p className="py-3 text-xs text-muted-foreground">Keine Belege vorhanden.</p>
+                          ) : null}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground py-2">Tab öffnen, um Kontoauszug zu laden.</p>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
 

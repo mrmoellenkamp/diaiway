@@ -12,14 +12,32 @@ export async function GET() {
   }
 
   try {
-    const notifications = await prisma.notification.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    })
-    const unreadCount = await prisma.notification.count({
-      where: { userId: session.user.id, read: false },
-    })
+    const [notifications, unreadCount, unreadChats, unreadWaymails] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.notification.count({
+        where: { userId: session.user.id, read: false },
+      }),
+      prisma.directMessage.count({
+        where: {
+          recipientId: session.user.id,
+          read: false,
+          communicationType: "CHAT",
+          senderId: { not: null },
+        },
+      }),
+      prisma.directMessage.count({
+        where: {
+          recipientId: session.user.id,
+          read: false,
+          communicationType: "MAIL",
+        },
+      }),
+    ])
+    const totalInboxUnread = unreadCount + unreadChats + unreadWaymails
     return NextResponse.json({
       notifications: notifications.map((n) => ({
         id: n.id,
@@ -31,6 +49,7 @@ export async function GET() {
         createdAt: n.createdAt,
       })),
       unreadCount,
+      totalInboxUnread,
     })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
