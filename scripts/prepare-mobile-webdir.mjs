@@ -23,6 +23,7 @@ const indexHtml = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="./" />
   <meta http-equiv="refresh" content="0;url=${baseUrl}" />
   <title>diaiway</title>
   <script>window.location.replace("${baseUrl}");</script>
@@ -34,6 +35,9 @@ const indexHtml = `<!DOCTYPE html>
 `
 
 writeFileSync(join(outDir, "index.html"), indexHtml)
-writeFileSync(join(outDir, "error.html"), "<!DOCTYPE html><html><body><p>Netzwerkfehler. Bitte prüfe deine Verbindung.</p></body></html>")
+writeFileSync(
+  join(outDir, "error.html"),
+  "<!DOCTYPE html><html><head><base href=\"./\" /></head><body><p>Netzwerkfehler. Bitte prüfe deine Verbindung.</p></body></html>",
+)
 
 console.log("[prepare-mobile-webdir] Created minimal out/ for cap sync")

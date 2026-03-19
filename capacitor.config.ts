@@ -11,9 +11,20 @@ const config: CapacitorConfig = {
   webDir: "out",
   server: {
     url: "https://www.diaiway.com",
-    allowNavigation: ["diaiway.com", "www.diaiway.com", "*.diaiway.com", "*.vercel.app", "*.blob.vercel-storage.com"],
+    allowNavigation: [
+      "diaiway.com",
+      "www.diaiway.com",
+      "*.diaiway.com",
+      "*.vercel.app",
+      "*.blob.vercel-storage.com",
+      "*.public.blob.vercel-storage.com",
+      "localhost",
+      "127.0.0.1",
+      "10.0.2.2",
+    ],
     errorPath: "error.html",
     iosScheme: "diaiway",
+    androidScheme: "https",
   },
   android: {},
   plugins: {

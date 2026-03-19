@@ -35,6 +35,13 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Android WebView can mis-resolve root-relative /_next paths.
+  // Force absolute asset URLs to the live host for remote server.url mode.
+  assetPrefix:
+    process.env.NEXT_PUBLIC_ASSET_PREFIX ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    "https://www.diaiway.com",
+  ...(process.env.NEXT_PUBLIC_BASE_PATH && { basePath: process.env.NEXT_PUBLIC_BASE_PATH }),
   experimental: {
     optimizePackageImports: ["lucide-react"],
     serverActions: {
