@@ -170,7 +170,7 @@ const es = {
   "register.errorSignIn": "Cuenta creada pero inicio de sesión falló. Inicia sesión manualmente.",
   "register.errorNetwork": "Error de conexión. Inténtalo de nuevo.",
   "register.success": "¡Cuenta creada! Bienvenido a diAiway.",
-  "register.username": "Nombre de usuario (opcional)",
+  "register.username": "Nombre de usuario",
   "register.usernamePlaceholder": "p. ej. Max Mustermann",
   "register.usernameHint": "3–30 caracteres. Permitido: letras, dígitos, espacios y . _ - '",
   "register.usernameChecking": "Verificando…",
@@ -338,7 +338,7 @@ const es = {
   "profile.favorites": "Favoritos",
   "profile.favoriteTakumis": "Takumis favoritos",
   "profile.username": "Nombre de usuario",
-  "profile.usernameHint": "Opcional. 3–30 caracteres. Permitido: letras, dígitos, espacios y . _ - '",
+  "profile.usernameHint": "3–30 caracteres. Permitido: letras, dígitos, espacios y . _ - '",
   "profile.languages": "Idiomas",
   "profile.languagesDesc": "¿Qué idiomas hablas?",
   "profile.languagesSaved": "Idiomas guardados.",
@@ -446,6 +446,8 @@ const es = {
   "invoice.taxNumber": "Número de identificación fiscal",
   "invoice.kleinunternehmer": "Pequeño empresario (§ 19 UStG)",
   "invoice.kleinunternehmerDesc": "Sin IVA en facturas",
+  "invoice.requiredPrivateHint": "Para particulares, todos los campos son obligatorios.",
+  "invoice.requiredCompanyHint": "Para empresas, todos los campos son obligatorios excepto NIF/CIF y número fiscal.",
   "invoice.saved": "Datos guardados.",
 
   // Favorites

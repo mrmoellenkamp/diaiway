@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { stripe } from "@/lib/stripe"
 import { createHmac } from "crypto"
+import { prisma } from "@/lib/db"
+import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 
 const MIN_AMOUNT_CENTS = 2000
 const MAX_AMOUNT_CENTS = 10000
@@ -70,6 +72,22 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: `Maximal ${MAX_AMOUNT_CENTS / 100} € pro Aufladung.` },
       { status: 400 }
+    )
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { invoiceData: true },
+  })
+  const invoiceValidation = validateInvoiceDataForPayment(user?.invoiceData)
+  if (!invoiceValidation.ok) {
+    return NextResponse.json(
+      {
+        error: invoiceValidation.message,
+        code: "INVOICE_DATA_INCOMPLETE",
+        redirectTo: "/profile/invoice-data?required=1",
+      },
+      { status: 409 }
     )
   }
 

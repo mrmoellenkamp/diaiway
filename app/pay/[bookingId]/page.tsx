@@ -71,6 +71,8 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
           setClientSecret(data.clientSecret)
           setStatus("ready")
           setPolling(true)
+        } else if (data.code === "INVOICE_DATA_INCOMPLETE" && data.redirectTo) {
+          window.location.href = data.redirectTo
         } else {
           setStatus("error")
           setErrorMsg(data.error ?? "Checkout konnte nicht gestartet werden.")

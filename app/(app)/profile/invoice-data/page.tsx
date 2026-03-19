@@ -154,6 +154,9 @@ export default function InvoiceDataPage() {
                     <span className="text-sm">{t("invoice.typeCompany")}</span>
                   </label>
                 </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  {isCompany ? t("invoice.requiredCompanyHint") : t("invoice.requiredPrivateHint")}
+                </p>
               </div>
 
               {/* Basis-Felder */}

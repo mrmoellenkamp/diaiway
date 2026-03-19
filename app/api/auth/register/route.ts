@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { sendVerificationEmail } from "@/lib/email"
 import { sendWelcomeWaymail } from "@/lib/onboarding"
-import { generateFallbackUsername } from "@/app/actions/username"
 
 const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
 
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { name, email, password, username: rawUsername } = body
+    const { email, password, username: rawUsername } = body
 
     // ── Rate limiting ─────────────────────────────────────────────────────────
     // 5 registrations per IP per 15 min
@@ -54,9 +53,9 @@ export async function POST(req: Request) {
     }
 
     // ── Input validation ──────────────────────────────────────────────────────
-    if (!name || !email || !password) {
+    if (!email || !password || !rawUsername) {
       return NextResponse.json(
-        { error: "Name, E-Mail und Passwort sind erforderlich." },
+        { error: "Benutzername, E-Mail und Passwort sind erforderlich." },
         { status: 400 }
       )
     }
@@ -82,33 +81,23 @@ export async function POST(req: Request) {
     // ── Create user ───────────────────────────────────────────────────────────
     const hashed = await bcrypt.hash(password, 12)
 
-    let username: string
     const { validateUsername, normalizeUsername } = await import("@/app/actions/username")
     const desiredUsername = typeof rawUsername === "string" ? normalizeUsername(rawUsername) : ""
-    if (desiredUsername) {
-      const validation = await validateUsername(desiredUsername)
-      if (!validation.ok) {
-        return NextResponse.json({ error: validation.error }, { status: 400 })
-      }
-      const taken = await prisma.user.findUnique({ where: { username: desiredUsername } })
-      if (taken) {
-        return NextResponse.json({ error: "Dieser Benutzername ist bereits vergeben." }, { status: 409 })
-      }
-      username = desiredUsername
-    } else {
-      username = await generateFallbackUsername(name)
-      for (let i = 0; i < 5; i++) {
-        const exists = await prisma.user.findUnique({ where: { username } })
-        if (!exists) break
-        username = await generateFallbackUsername(name)
-      }
+    const validation = await validateUsername(desiredUsername)
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
     }
+    const taken = await prisma.user.findUnique({ where: { username: desiredUsername } })
+    if (taken) {
+      return NextResponse.json({ error: "Dieser Benutzername ist bereits vergeben." }, { status: 409 })
+    }
+    const username = desiredUsername
     const token = crypto.randomBytes(32).toString("hex")
     const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
 
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
+        name: username,
         username,
         email: normalizedEmail,
         password: hashed,
@@ -121,7 +110,7 @@ export async function POST(req: Request) {
     })
 
     const verifyUrl = `${baseUrl}/api/auth/verify-email/${token}`
-    sendVerificationEmail({ to: normalizedEmail, name: name.trim(), verifyUrl }).catch((err) =>
+    sendVerificationEmail({ to: normalizedEmail, name: username, verifyUrl }).catch((err) =>
       console.error("[register] Verification email failed:", err)
     )
     sendWelcomeWaymail(user.id).catch(() => {})

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { createHmac } from "crypto"
+import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 
 export const runtime = "nodejs"
 
@@ -31,6 +32,22 @@ export async function POST(
   }
   if (booking.paymentStatus === "paid") {
     return NextResponse.json({ error: "Buchung bereits bezahlt." }, { status: 409 })
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { invoiceData: true },
+  })
+  const invoiceValidation = validateInvoiceDataForPayment(user?.invoiceData)
+  if (!invoiceValidation.ok) {
+    return NextResponse.json(
+      {
+        error: invoiceValidation.message,
+        code: "INVOICE_DATA_INCOMPLETE",
+        redirectTo: "/profile/invoice-data?required=1",
+      },
+      { status: 409 }
+    )
   }
 
   const expiresAt = Date.now() + 15 * 60 * 1000 // 15 Minuten

@@ -136,6 +136,10 @@ export function WalletTopupModal({
           const { Browser } = await import("@capacitor/browser")
           await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
           // DeepLinkHandler fängt diaiway://wallet-topup-confirmed ab
+        } else if (tokenData.code === "INVOICE_DATA_INCOMPLETE" && tokenData.redirectTo) {
+          onOpenChange(false)
+          toast.error(tokenData.error || t("wallet.checkoutError"))
+          router.push(tokenData.redirectTo)
         } else {
           setError(tokenData.error || t("wallet.checkoutError"))
         }
@@ -153,6 +157,10 @@ export function WalletTopupModal({
         setClientSecret(data.clientSecret)
         setSessionId(data.sessionId ?? null)
         setStep("checkout")
+      } else if (data.code === "INVOICE_DATA_INCOMPLETE" && data.redirectTo) {
+        onOpenChange(false)
+        toast.error(data.error || t("wallet.checkoutError"))
+        router.push(data.redirectTo)
       } else {
         setError(data.error || t("wallet.checkoutError"))
       }

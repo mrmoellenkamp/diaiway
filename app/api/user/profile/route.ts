@@ -60,28 +60,31 @@ async function patchProfile(req: Request, _context: RouteContext) {
     const { normalizeUsername, validateUsername } = await import("@/app/actions/username")
     const val = typeof body.username === "string" ? normalizeUsername(body.username) : ""
     if (val === "") {
-      data.username = null
-    } else {
-      const res = await validateUsername(val)
-      if (!res.ok) {
-        return NextResponse.json({
-          error: "Validierungsfehler",
-          field: "username",
-          message: res.error,
-        }, { status: 400 })
-      }
-      const existing = await prisma.user.findFirst({
-        where: { username: val, NOT: { id: session.user.id } },
-      })
-      if (existing) {
-        return NextResponse.json({
-          error: "Bereits vergeben",
-          field: "username",
-          message: "Dieser Benutzername ist bereits vergeben.",
-        }, { status: 409 })
-      }
-      data.username = val
+      return NextResponse.json({
+        error: "Validierungsfehler",
+        field: "username",
+        message: "Benutzername ist erforderlich.",
+      }, { status: 400 })
     }
+    const res = await validateUsername(val)
+    if (!res.ok) {
+      return NextResponse.json({
+        error: "Validierungsfehler",
+        field: "username",
+        message: res.error,
+      }, { status: 400 })
+    }
+    const existing = await prisma.user.findFirst({
+      where: { username: val, NOT: { id: session.user.id } },
+    })
+    if (existing) {
+      return NextResponse.json({
+        error: "Bereits vergeben",
+        field: "username",
+        message: "Dieser Benutzername ist bereits vergeben.",
+      }, { status: 409 })
+    }
+    data.username = val
   }
   if (body.image !== undefined) data.image = body.image
   if (body.appRole !== undefined) {

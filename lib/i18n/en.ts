@@ -170,7 +170,7 @@ const en = {
   "register.errorSignIn": "Account created but sign-in failed. Please sign in manually.",
   "register.errorNetwork": "Connection error. Please try again.",
   "register.success": "Account created! Welcome to diAiway.",
-  "register.username": "Username (optional)",
+  "register.username": "Username",
   "register.usernamePlaceholder": "e.g. Max Mustermann",
   "register.usernameHint": "3–30 characters. Allowed: letters, digits, spaces, and . _ - '",
   "register.usernameChecking": "Checking…",
@@ -338,7 +338,7 @@ const en = {
   "profile.favorites": "Favorites",
   "profile.favoriteTakumis": "Favorite Takumis",
   "profile.username": "Username",
-  "profile.usernameHint": "Optional. 3–30 characters. Allowed: letters, digits, spaces, and . _ - '",
+  "profile.usernameHint": "3–30 characters. Allowed: letters, digits, spaces, and . _ - '",
   "profile.languages": "Languages",
   "profile.languagesDesc": "Which languages do you speak?",
   "profile.languagesSaved": "Languages saved.",
@@ -446,6 +446,8 @@ const en = {
   "invoice.taxNumber": "Tax number",
   "invoice.kleinunternehmer": "Small business (§ 19 German VAT Act)",
   "invoice.kleinunternehmerDesc": "No VAT on invoices",
+  "invoice.requiredPrivateHint": "For private persons, all fields are required.",
+  "invoice.requiredCompanyHint": "For companies, all fields are required except VAT ID and tax number.",
   "invoice.saved": "Invoice data saved.",
 
   // Favorites

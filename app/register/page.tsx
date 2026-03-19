@@ -84,7 +84,6 @@ function RegisterForm() {
   const presetRole = searchParams.get("role") as UserRole | null
   const { t } = useI18n()
 
-  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -140,15 +139,15 @@ function RegisterForm() {
       toast.error(t("register.selectRole"))
       return
     }
-    if (!name || !email || !password || !confirmPassword) {
+    if (!username.trim() || !email || !password || !confirmPassword) {
       setError(t("register.errorEmpty"))
       return
     }
-    if (username.trim() && (usernameCheck === "taken" || usernameCheck === "invalid")) {
+    if (usernameCheck === "taken" || usernameCheck === "invalid") {
       setError(usernameReason || t("register.usernameInvalid"))
       return
     }
-    if (username.trim() && usernameCheck === "checking") {
+    if (usernameCheck === "checking") {
       setError(t("register.usernameChecking"))
       return
     }
@@ -171,10 +170,9 @@ function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
           email: email.toLowerCase().trim(),
           password,
-          username: username.trim() || undefined,
+          username: username.trim(),
           // Honeypot value — empty for real users
           _hp: honeypotRef.current?.value ?? "",
         }),
@@ -236,21 +234,7 @@ function RegisterForm() {
           style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
         />
 
-        {/* Name */}
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="name">{t("register.name")}</Label>
-          <Input
-            id="name"
-            placeholder={t("register.namePlaceholder")}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="h-12 rounded-xl"
-            autoComplete="name"
-            required
-          />
-        </div>
-
-        {/* Username (optional) */}
+        {/* Username */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="reg-username">{t("register.username")}</Label>
           <div className="relative">

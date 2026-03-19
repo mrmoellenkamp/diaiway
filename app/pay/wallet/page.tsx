@@ -73,6 +73,8 @@ function WalletPayInner() {
           setClientSecret(data.clientSecret)
           setSessionId(data.sessionId ?? null)
           setStatus("ready")
+        } else if (data.code === "INVOICE_DATA_INCOMPLETE" && data.redirectTo) {
+          window.location.href = data.redirectTo
         } else {
           setStatus("error")
           setErrorMsg(data.error ?? "Checkout konnte nicht gestartet werden.")

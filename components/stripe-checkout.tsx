@@ -9,6 +9,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Loader2 } from "lucide-react"
 import { startSessionCheckout, verifySessionPayment, type SessionCheckoutParams } from "@/app/actions/stripe"
 import { useI18n } from "@/lib/i18n"
+import { useRouter } from "next/navigation"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -30,6 +31,7 @@ export function SessionCheckout({
   onError,
 }: SessionCheckoutProps) {
   const { t } = useI18n()
+  const router = useRouter()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
@@ -95,10 +97,17 @@ export function SessionCheckout({
         setPolling(true)
       })
       .catch((err) => {
-        onError(err.message || t("booking.checkoutStartFailed"))
+        const msg = err?.message || ""
+        if (msg.startsWith("INVOICE_DATA_REQUIRED|")) {
+          const [, redirectTo, detail] = msg.split("|")
+          onError(detail || t("booking.checkoutStartFailed"))
+          if (redirectTo) router.push(redirectTo)
+          return
+        }
+        onError(msg || t("booking.checkoutStartFailed"))
         setLoading(false)
       })
-  }, [bookingId, takumiName, duration, priceInCents, onError, t])
+  }, [bookingId, takumiName, duration, priceInCents, onError, t, router])
 
   useEffect(() => {
     if (!polling) return

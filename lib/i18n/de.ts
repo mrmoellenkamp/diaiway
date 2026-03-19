@@ -176,7 +176,7 @@ const de = {
   "register.errorSignIn": "Konto erstellt, aber Anmeldung fehlgeschlagen. Bitte manuell anmelden.",
   "register.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "register.success": "Konto erstellt! Willkommen bei diAiway.",
-  "register.username": "Benutzername (optional)",
+  "register.username": "Benutzername",
   "register.usernamePlaceholder": "z. B. Max Mustermann",
   "register.usernameHint": "3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
   "register.usernameChecking": "Wird geprüft…",
@@ -338,7 +338,7 @@ const de = {
   "profile.favorites": "Favoriten",
   "profile.favoriteTakumis": "Favoriten-Takumis",
   "profile.username": "Benutzername",
-  "profile.usernameHint": "Optional. 3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
+  "profile.usernameHint": "3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
   "profile.languages": "Sprachen",
   "profile.languagesDesc": "Welche Sprachen sprichst du?",
   "profile.languagesSaved": "Sprachen gespeichert.",
@@ -448,6 +448,8 @@ const de = {
   "invoice.taxNumber": "Steuernummer",
   "invoice.kleinunternehmer": "Kleinunternehmer (§ 19 UStG)",
   "invoice.kleinunternehmerDesc": "Keine Umsatzsteuer auf Rechnungen",
+  "invoice.requiredPrivateHint": "Bei Privatperson sind alle Felder Pflichtfelder.",
+  "invoice.requiredCompanyHint": "Bei Unternehmen sind alle Felder Pflichtfelder, außer USt-IdNr. und Steuernummer.",
   "invoice.saved": "Rechnungsdaten gespeichert.",
 
   // Favorites
