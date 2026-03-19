@@ -202,13 +202,13 @@ export default function AdminFinancePage() {
               <div>
                 <h1 className="text-xl font-bold text-foreground">Financial Monitoring</h1>
                 <p className="text-xs text-muted-foreground">
-                  Escrow-Übersicht · Stripe Holds · Wallet-Liability · Manuelle Intervention
+                  {t("admin.financeSubtitle")}
                 </p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => { void loadSummary(); void loadAudit() }} disabled={loading} className="gap-1.5">
               <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-              Aktualisieren
+              {t("admin.refresh")}
             </Button>
           </div>
 
@@ -222,7 +222,7 @@ export default function AdminFinancePage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{holds.length}</p>
-                    <p className="text-xs text-muted-foreground">Offene Holds</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.openHolds")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -235,7 +235,7 @@ export default function AdminFinancePage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{eur(totalWallet)}</p>
-                    <p className="text-xs text-muted-foreground">Shugyo Wallet-Liability</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.walletLiability")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -248,7 +248,7 @@ export default function AdminFinancePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Stripe Hold: {summary?.stripeHoldDays ?? 7} Tage</p>
-                    <p className="text-xs text-muted-foreground">Holds verfallen nach 7 Tagen</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.holdsExpire7Days")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -270,7 +270,7 @@ export default function AdminFinancePage() {
                 </div>
               )}
               {!loading && holds.length === 0 && (
-                <div className="py-12 text-center text-sm text-muted-foreground">Keine offenen Holds</div>
+                <div className="py-12 text-center text-sm text-muted-foreground">{t("admin.noOpenHolds")}</div>
               )}
               {!loading && holds.length > 0 && (
                 <Table>
@@ -447,7 +447,7 @@ export default function AdminFinancePage() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeAction}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel onClick={closeAction}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()

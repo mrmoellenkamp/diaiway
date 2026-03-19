@@ -108,9 +108,9 @@ export default function AdminSafetyPage() {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center gap-4 py-12">
-          <p className="text-sm text-muted-foreground">Keine Berechtigung.</p>
+          <p className="text-sm text-muted-foreground">{t("admin.noPermission")}</p>
           <Button asChild variant="outline">
-            <Link href="/admin">Zurück zum Admin</Link>
+            <Link href="/admin">{t("admin.backToAdmin")}</Link>
           </Button>
         </div>
       </PageContainer>
@@ -134,12 +134,12 @@ export default function AdminSafetyPage() {
 
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/admin/safety/incidents">KI-Alert Incidents</Link>
+            <Link href="/admin/safety/incidents">{t("admin.aiIncidents")}</Link>
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Verwalte Safety Reports aus dem Video-Call. Bei schweren Verstößen kannst du Nutzer dauerhaft sperren (isBanned).
+          {t("admin.safetyDesc")}
         </p>
 
         {loading ? (
@@ -150,7 +150,7 @@ export default function AdminSafetyPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <Flag className="mx-auto mb-3 size-12 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">Keine Safety Reports vorhanden.</p>
+              <p className="text-sm text-muted-foreground">{t("admin.noSafetyReports")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -160,7 +160,7 @@ export default function AdminSafetyPage() {
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle className="text-sm font-semibold">
-                      Buchung {r.booking?.date} · {r.booking?.startTime}
+                      {t("admin.bookingLabel")} {r.booking?.date} · {r.booking?.startTime}
                     </CardTitle>
                     <Badge
                       className={
@@ -179,26 +179,26 @@ export default function AdminSafetyPage() {
                 <CardContent className="pt-0">
                   <div className="grid gap-2 text-xs">
                     <div>
-                      <span className="text-muted-foreground">Gemeldet von:</span>{" "}
+                      <span className="text-muted-foreground">{t("admin.reportedBy")} </span>
                       {r.reporter?.name ?? r.reporterId} ({r.reporterRole})
                       {r.reporter?.isBanned && (
-                        <Badge variant="destructive" className="ml-2 text-[10px]">Gesperrt</Badge>
+                        <Badge variant="destructive" className="ml-2 text-[10px]">{t("admin.banned")}</Badge>
                       )}
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Gemeldeter Nutzer:</span>{" "}
+                      <span className="text-muted-foreground">{t("admin.reportedUser")} </span>
                       {r.reported?.name ?? r.reportedId} ({r.reported?.email})
                       {r.reported?.isBanned && (
-                        <Badge variant="destructive" className="ml-2 text-[10px]">Gesperrt</Badge>
+                        <Badge variant="destructive" className="ml-2 text-[10px]">{t("admin.banned")}</Badge>
                       )}
                     </div>
-                    {r.reason && <div><span className="text-muted-foreground">Grund:</span> {r.reason}</div>}
+                    {r.reason && <div><span className="text-muted-foreground">{t("admin.reason")} </span> {r.reason}</div>}
                   </div>
                   <div className="mt-3 flex gap-2">
                     {r.status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => handleResolve(r.id)}>
                         <Check className="mr-1 size-3.5" />
-                        Erledigt
+                        {t("admin.resolved")}
                       </Button>
                     )}
                     {r.reported && !r.reported.isBanned && (
@@ -213,7 +213,7 @@ export default function AdminSafetyPage() {
                         ) : (
                           <UserX className="mr-1 size-3.5" />
                         )}
-                        Sperren
+                        {t("admin.ban")}
                       </Button>
                     )}
                   </div>

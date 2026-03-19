@@ -148,7 +148,7 @@ export default function AdminHealthCheckPage() {
               <div>
                 <h1 className="text-xl font-bold text-foreground">Health-Check</h1>
                 <p className="text-xs text-muted-foreground">
-                  Cron · Stripe-Escrow · Wallet-Integrität · Push-Reachability
+                  {t("admin.healthSubtitle")}
                 </p>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function AdminHealthCheckPage() {
               className="gap-1.5"
             >
               <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-              Aktualisieren
+              {t("admin.refresh")}
             </Button>
           </div>
 
@@ -179,14 +179,11 @@ export default function AdminHealthCheckPage() {
                         </span>
                       ) : (
                         <span className="ml-2 rounded bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
-                          Nicht konfiguriert
+                          {t("admin.notConfigured")}
                         </span>
                       )}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Pre-Check & Live-Monitoring für Video-Calls. GOOGLE_CLOUD_VISION_API_KEY oder
-                      GOOGLE_VISION_* (Service Account) erforderlich.
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("admin.visionApiHint")}</p>
                   </CardHeader>
                 </Card>
               )}
@@ -247,7 +244,7 @@ export default function AdminHealthCheckPage() {
                 </CardHeader>
                 <CardContent>
                   {data.stripeEscrow.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Keine gefährdeten Buchungen.</p>
+                    <p className="text-sm text-muted-foreground">{t("admin.noRiskBookings")}</p>
                   ) : (
                     <Table>
                       <TableHeader>
@@ -303,7 +300,7 @@ export default function AdminHealthCheckPage() {
                   {data.walletIntegrity.length === 0 ? (
                     <p className="flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
                       <CheckCircle2 className="size-4" />
-                      Keine Diskrepanzen.
+                      {t("admin.noDiscrepancies")}
                     </p>
                   ) : (
                     <Table>
@@ -363,7 +360,7 @@ export default function AdminHealthCheckPage() {
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
                         <AlertTriangle className="size-4" />
                         <span className="text-sm">
-                          Ein Teil der verfügbaren Takumis erhält keine Instant-Push-Benachrichtigungen.
+                          {t("admin.pushWarning")}
                         </span>
                       </div>
                     )}
@@ -384,7 +381,7 @@ export default function AdminHealthCheckPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actioning}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={actioning}>{t("common.cancel")}</AlertDialogCancel>
             <Button
               onClick={() =>
                 forceCaptureBookingId && handleForceCapture(forceCaptureBookingId)
