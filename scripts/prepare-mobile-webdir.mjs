@@ -14,7 +14,7 @@ const outDir = join(root, "out")
 const baseUrl =
   process.env.NEXTAUTH_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-  "https://www.diaiway.com"
+  "https://diaiway.com"
 
 mkdirSync(outDir, { recursive: true })
 

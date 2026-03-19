@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   appName: "diaiway",
   webDir: "out",
   server: {
-    url: "https://www.diaiway.com",
+    url: "https://diaiway.com",
     allowNavigation: [
       "diaiway.com",
       "www.diaiway.com",
