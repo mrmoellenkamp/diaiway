@@ -90,7 +90,6 @@ export async function POST(
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
-    excluded_payment_method_types: ["link"],
     line_items: [
       {
         price_data: {
@@ -114,7 +113,7 @@ export async function POST(
       },
     },
     metadata: { bookingId, shugyoId: auth.userId, type: "booking_payment" },
-  } as any)
+  })
 
   const paymentIntentId =
     typeof sessionData.payment_intent === "string"

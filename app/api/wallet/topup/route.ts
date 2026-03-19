@@ -78,7 +78,6 @@ export async function POST(req: Request) {
       ui_mode: "embedded",
       redirect_on_completion: "never",
       payment_method_types: ["card"],
-      excluded_payment_method_types: ["link"],
       line_items: [
         {
           price_data: {
@@ -97,7 +96,7 @@ export async function POST(req: Request) {
         userId,
         type: "wallet_topup",
       },
-    } as any)
+    })
 
     return NextResponse.json({
       clientSecret: checkoutSession.client_secret,
