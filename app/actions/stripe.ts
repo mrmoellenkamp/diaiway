@@ -51,6 +51,7 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
+    excluded_payment_method_types: ["link"],
     line_items: [
       {
         price_data: {
@@ -116,6 +117,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
     ui_mode: "embedded",
     redirect_on_completion: "never",
     payment_method_types: ["card"],
+    excluded_payment_method_types: ["link"],
     line_items: [
       {
         price_data: {

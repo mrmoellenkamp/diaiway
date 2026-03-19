@@ -78,6 +78,7 @@ export async function POST(req: Request) {
       ui_mode: "embedded",
       redirect_on_completion: "never",
       payment_method_types: ["card"],
+      excluded_payment_method_types: ["link"],
       line_items: [
         {
           price_data: {
