@@ -1,5 +1,3 @@
-"use server"
-
 const USERNAME_ALLOWED_REGEX = /^[\p{L}\p{N} ._'-]+$/u
 const USERNAME_HAS_ALNUM_REGEX = /[\p{L}\p{N}]/u
 
