@@ -15,6 +15,7 @@ export function AiMentorFab() {
   // Hide on landing page (embedded chat), auth pages, and onboarding
   if (
     pathname === "/" ||
+    pathname === "/home" ||
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/onboarding"

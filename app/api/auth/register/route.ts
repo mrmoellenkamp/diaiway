@@ -83,9 +83,9 @@ export async function POST(req: Request) {
     const hashed = await bcrypt.hash(password, 12)
 
     let username: string
-    const desiredUsername = typeof rawUsername === "string" ? rawUsername.trim() : ""
+    const { validateUsername, normalizeUsername } = await import("@/app/actions/username")
+    const desiredUsername = typeof rawUsername === "string" ? normalizeUsername(rawUsername) : ""
     if (desiredUsername) {
-      const { validateUsername } = await import("@/app/actions/username")
       const validation = await validateUsername(desiredUsername)
       if (!validation.ok) {
         return NextResponse.json({ error: validation.error }, { status: 400 })

@@ -288,7 +288,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             ) : (
               <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                 <p>
-                  {takumi.name} ist gerade offline. Du kannst ihm aber eine{" "}
+                  {t("takumiPage.offlineWaymailPrefix").replace("{name}", takumi.name)}{" "}
                   <button
                     type="button"
                     onClick={() => setComposeOpen(true)}
@@ -296,7 +296,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                   >
                     Waymail
                   </button>{" "}
-                  senden.
+                  {t("takumiPage.offlineWaymailSuffix")}
                 </p>
               </div>
             )}

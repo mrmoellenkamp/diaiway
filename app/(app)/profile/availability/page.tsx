@@ -58,6 +58,14 @@ function formatDisplay(dateStr: string): string {
   return `${d}.${m}.${y}`
 }
 
+function bookingDateTimeKey(b: Pick<Booking, "date" | "startTime">): string {
+  return `${b.date}T${b.startTime || "00:00"}`
+}
+
+function compareBookingDateTimeAsc(a: Pick<Booking, "date" | "startTime">, b: Pick<Booking, "date" | "startTime">): number {
+  return bookingDateTimeKey(a).localeCompare(bookingDateTimeKey(b))
+}
+
 // ─── WeeklySlotsEditor — 15-min interval time inputs ──────────────────────
 
 function WeeklySlotsEditor({
@@ -312,7 +320,9 @@ export default function AvailabilityPage() {
     const isToday   = dateStr === todayStr
     const exception = exceptions.find((e) => e.date === dateStr)
     const resolved  = resolveSlots(availData, dateStr)
-    const dayBookings = bookings.filter((b) => b.date === dateStr)
+    const dayBookings = bookings
+      .filter((b) => b.date === dateStr)
+      .sort(compareBookingDateTimeAsc)
     return { dateStr, isPast, isToday, exception, resolved, dayBookings }
   }
 
@@ -330,7 +340,9 @@ export default function AvailabilityPage() {
     if (!selectedDate) return null
     const exception   = exceptions.find((e) => e.date === selectedDate)
     const resolved    = resolveSlots(availData, selectedDate)
-    const dayBookings = bookings.filter((b) => b.date === selectedDate)
+    const dayBookings = bookings
+      .filter((b) => b.date === selectedDate)
+      .sort(compareBookingDateTimeAsc)
     const d    = new Date(selectedDate + "T00:00:00")
     const week = getISOWeek(d)
     const year = d.getFullYear()
@@ -386,9 +398,10 @@ export default function AvailabilityPage() {
   }
 
   const pendingBookings  = bookings.filter((b) => b.status === "pending")
+    .sort(compareBookingDateTimeAsc)
   const upcomingConfirmed = bookings
     .filter((b) => b.status === "confirmed" && b.date >= todayStr)
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort(compareBookingDateTimeAsc)
     .slice(0, 6)
 
   // ── Render ─────────────────────────────────────────────────────────────────

@@ -177,8 +177,8 @@ const de = {
   "register.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "register.success": "Konto erstellt! Willkommen bei diAiway.",
   "register.username": "Benutzername (optional)",
-  "register.usernamePlaceholder": "z. B. max_mustermann",
-  "register.usernameHint": "3–30 Zeichen, nur Buchstaben, Ziffern und _",
+  "register.usernamePlaceholder": "z. B. Max Mustermann",
+  "register.usernameHint": "3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
   "register.usernameChecking": "Wird geprüft…",
   "register.usernameAvailable": "Verfügbar",
   "register.usernameTaken": "Bereits vergeben",
@@ -316,6 +316,7 @@ const de = {
   "profile.accountPaused": "Konto pausiert.",
 
   // Settings
+  "settings.title": "Benutzerkonto",
   "settings.subtitle": "Kontoverwaltung und Passwort",
   "settings.accountManagement": "Kontoverwaltung",
   "settings.accountManagementDesc": "Konto pausieren oder dauerhaft löschen.",
@@ -337,7 +338,7 @@ const de = {
   "profile.favorites": "Favoriten",
   "profile.favoriteTakumis": "Favoriten-Takumis",
   "profile.username": "Benutzername",
-  "profile.usernameHint": "Optional. Min. 3 Zeichen, nur Buchstaben, Ziffern und Unterstriche.",
+  "profile.usernameHint": "Optional. 3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
   "profile.languages": "Sprachen",
   "profile.languagesDesc": "Welche Sprachen sprichst du?",
   "profile.languagesSaved": "Sprachen gespeichert.",
@@ -404,7 +405,7 @@ const de = {
   "profile.previewDesc": "So sehen andere dein Profil.",
   "profile.backToProfile": "Zurück zum Profil",
   "profile.previewLoginRequired": "Bitte melde dich an.",
-  "profile.account": "Konto",
+  "profile.account": "Benutzerkonto",
 
   // Finances
   "finances.title": "Finanzen",
@@ -676,6 +677,8 @@ const de = {
   "takumiPage.contactChat": "Jetzt mit {name} schreiben",
   "takumiPage.chatNow": "Jetzt mit {name} chatten",
   "takumiPage.sendMail": "Eine Waymail senden",
+  "takumiPage.offlineWaymailPrefix": "{name} ist gerade offline. Du kannst ihm aber eine",
+  "takumiPage.offlineWaymailSuffix": "senden.",
   "takumiPage.preparingChat": "Chat wird vorbereitet...",
   "takumiPage.directMessage": "Nachricht an {name}",
   "takumiPage.writeTo": "Nachricht an {name}",
@@ -1051,6 +1054,7 @@ const de = {
   "session.reportCall": "Call melden",
   "session.balanceExhausted": "Dein Guthaben ist aufgebraucht",
   "session.bookingNotFound": "Buchung nicht gefunden",
+  "session.expiredBookingFallback": "Dieser Termin ist bereits abgelaufen und kann nicht mehr gestartet werden.",
   "session.waitingForTakumi": "Warte auf Antwort von {name}.",
   "session.noExpertAvailableTitle": "Kein Experte verfügbar",
   "session.noExpertAvailableDesc": "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",

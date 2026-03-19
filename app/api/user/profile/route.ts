@@ -57,11 +57,11 @@ async function patchProfile(req: Request, _context: RouteContext) {
     data.name = body.name.trim()
   }
   if (body.username !== undefined) {
-    const val = typeof body.username === "string" ? body.username.trim() : ""
+    const { normalizeUsername, validateUsername } = await import("@/app/actions/username")
+    const val = typeof body.username === "string" ? normalizeUsername(body.username) : ""
     if (val === "") {
       data.username = null
     } else {
-      const { validateUsername } = await import("@/app/actions/username")
       const res = await validateUsername(val)
       if (!res.ok) {
         return NextResponse.json({
