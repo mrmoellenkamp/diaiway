@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client"
  * - Development: Verhindert Hot-Reload-Verbindungslecks (nur eine Instanz pro Prozess).
  * - Production (Vercel): Jede Lambda-Instanz recycelt den Client über global.
  *
- * WICHTIG für Neon/Serverless: DATABASE_URL muss den Pooler nutzen:
+ * WICHTIG für Serverless-Betrieb: DATABASE_URL sollte den Pooler nutzen:
  *   ?pgbouncer=true&connection_limit=1
  * Siehe .env.example für Details.
  */

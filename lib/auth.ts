@@ -3,6 +3,43 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { rateLimit } from "@/lib/rate-limit"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
+
+const TRANSIENT_DB_ERROR_CODES = new Set(["P1001", "P1002", "P2024", "P2037"])
+
+function isTransientDbError(err: unknown): boolean {
+  if (err instanceof PrismaClientKnownRequestError) {
+    return TRANSIENT_DB_ERROR_CODES.has(err.code)
+  }
+  if (err instanceof Error) {
+    const m = err.message.toLowerCase()
+    return (
+      m.includes("can't reach database server") ||
+      m.includes("connection timeout") ||
+      m.includes("timed out") ||
+      m.includes("connection closed") ||
+      m.includes("too many connections")
+    )
+  }
+  return false
+}
+
+async function withDbRetry<T>(task: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await task()
+    } catch (err) {
+      lastErr = err
+      if (!isTransientDbError(err) || i === attempts - 1) {
+        throw err
+      }
+      const backoffMs = 150 * (i + 1)
+      await new Promise((resolve) => setTimeout(resolve, backoffMs))
+    }
+  }
+  throw lastErr
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -24,10 +61,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
           }
 
-          const user = await prisma.user.findUnique({
-            where: { email },
-            select: { id: true, name: true, username: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true, emailConfirmedAt: true },
-          })
+          const user = await withDbRetry(() =>
+            prisma.user.findUnique({
+              where: { email },
+              select: { id: true, name: true, username: true, email: true, password: true, role: true, appRole: true, status: true, image: true, isBanned: true, isVerified: true, emailConfirmedAt: true },
+            })
+          )
           if (!user) return null
           if ((user as { isBanned?: boolean }).isBanned) return null
 
@@ -111,10 +150,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (updateData.appRole === "takumi") {
           const userId = (token.id as string) ?? (token.sub as string)
           if (userId) {
-            const expert = await prisma.expert.findUnique({
-              where: { userId },
-              select: { id: true },
-            })
+            const expert = await withDbRetry(() =>
+              prisma.expert.findUnique({
+                where: { userId },
+                select: { id: true },
+              })
+            )
             if (expert) {
               token.appRole = "takumi"
             } else {
@@ -137,10 +178,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const userId = (token.id as string) ?? (token.sub as string)
       if (userId && now - lastSynced >= DB_SYNC_INTERVAL_SEC) {
         try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { role: true, appRole: true, status: true, tokenRevocationTime: true, emailConfirmedAt: true },
-          })
+          const dbUser = await withDbRetry(() =>
+            prisma.user.findUnique({
+              where: { id: userId },
+              select: { role: true, appRole: true, status: true, tokenRevocationTime: true, emailConfirmedAt: true },
+            })
+          )
           if (!dbUser) {
             token.id = undefined
             token.error = "SessionRevoked"

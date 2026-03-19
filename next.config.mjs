@@ -7,7 +7,7 @@
  * Verarbeitungsbereich   | Anbieter          | Standort / Region
  * -----------------------|-------------------|----------------------------------
  * Web-Hosting / CDN      | Vercel            | FRA1 (Frankfurt, DE) – primär
- * Datenbank (PostgreSQL) | Neon (Vercel)     | EU (Frankfurt, AWS eu-central-1)
+ * Datenbank (PostgreSQL) | Provider-abhaengig| EU-Region empfohlen (z. B. Frankfurt)
  * Blob-Speicher          | Vercel Blob       | FRA1 (Frankfurt, DE)
  * Zahlungsabwicklung     | Stripe            | EU-Instanz (Dublin/Frankfurt)
  * Video/Voice-Sessions   | Daily.co          | Mesh-Routing, EU-Egress bevorzugt

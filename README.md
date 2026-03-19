@@ -80,7 +80,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 | Bereich | Technologie |
 |---------|-------------|
 | Framework | Next.js 16 (App Router) |
-| Datenbank | PostgreSQL (Prisma ORM) |
+| Datenbank | PostgreSQL (Prisma ORM, provider-unabhaengig) |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
 | Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks) |
 | Video/Voice | Daily.co (`@daily-co/daily-js`), E2EE (P2P) |
@@ -133,7 +133,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 
 ### Voraussetzungen
 - Node.js 18+
-- PostgreSQL (z.B. Neon, Supabase)
+- PostgreSQL (provider-unabhaengig, z. B. Prisma Postgres, Supabase, Railway oder lokal)
 - Stripe-, Vercel-Blob-Accounts (optional für lokale Entwicklung)
 
 ### Installation

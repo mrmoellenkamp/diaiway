@@ -1,5 +1,5 @@
 // Prisma Schema — diAiway
-// Provider: PostgreSQL (Neon / Supabase / Railway etc.)
+// Provider: PostgreSQL (provider-unabhaengig, z. B. Prisma Postgres / Supabase / Railway)
 
 generator client {
   provider = "prisma-client-js"

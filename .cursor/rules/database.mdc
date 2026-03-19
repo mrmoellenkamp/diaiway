@@ -15,6 +15,7 @@ DATABASE_URL="postgres://...@db.prisma.io:5432/postgres"
 
 - **Niemals** den `user-Neon` MCP-Server für Datenbankoperationen verwenden
 - **Niemals** annehmen, dass die DB auf Neon läuft, nur weil der Neon-MCP installiert ist
+- Bei Vorschlaegen fuer ENV/DB-Setup immer provider-neutral formulieren (kein Neon-Default)
 - Für DB-Operationen: `node` mit `@prisma/client` oder `prisma db execute --schema=prisma/schema.prisma`
 - Der Neon-MCP ist global installiert für andere Projekte — nicht für dieses
 
