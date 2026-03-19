@@ -314,7 +314,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
         {/* Gesprächsmodus – über Termin-Auswahl */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">Gesprächsmodus</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("booking.conversationModeTitle")}</h2>
           <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
             <button
               type="button"
@@ -328,9 +328,9 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               )}
             >
               <Video className={cn("size-5", callType === "VIDEO" && "text-primary")} />
-              <span className="text-sm font-medium text-foreground">Video-Call</span>
+              <span className="text-sm font-medium text-foreground">{t("booking.videoCall")}</span>
               <span className="text-[11px] text-muted-foreground">
-                {priceVideo15.toFixed(2)} € / 15 Min
+                {priceVideo15.toFixed(2)} € {t("booking.per15Min")}
               </span>
             </button>
             <button
@@ -345,14 +345,14 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               )}
             >
               <Mic className={cn("size-5", callType === "VOICE" && "text-primary")} />
-              <span className="text-sm font-medium text-foreground">Voice-Call</span>
+              <span className="text-sm font-medium text-foreground">{t("booking.voiceCall")}</span>
               <span className="text-[11px] text-muted-foreground">
-                {priceVoice15.toFixed(2)} € / 15 Min
+                {priceVoice15.toFixed(2)} € {t("booking.per15Min")}
               </span>
             </button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Der Modus kann später nicht mehr geändert werden.
+            {t("booking.modeLockedHint")}
           </p>
         </div>
 
@@ -362,21 +362,21 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Video className="size-4" /> Video-Call
+                <Video className="size-4" /> {t("booking.videoCall")}
               </span>
-              <span className="text-foreground">{priceVideo15.toFixed(2)} € / 15 Min</span>
+              <span className="text-foreground">{priceVideo15.toFixed(2)} € {t("booking.per15Min")}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                <Mic className="size-4" /> Voice-Call
+                <Mic className="size-4" /> {t("booking.voiceCall")}
               </span>
-              <span className="text-foreground">{priceVoice15.toFixed(2)} € / 15 Min</span>
+              <span className="text-foreground">{priceVoice15.toFixed(2)} € {t("booking.per15Min")}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="size-4" /> {t("booking.minDuration")}
               </span>
-              <span className="text-foreground">15 Min</span>
+              <span className="text-foreground">15 {t("booking.minutesShort")}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("booking.trialMinutes")}</span>
@@ -455,7 +455,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
         {/* Termindetails – Buchungszusammenfassung unterhalb des Kalenders (aktualisiert bei jedem Klick) */}
         <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">Termindetails</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("booking.appointmentDetailsTitle")}</h2>
           {selectedDate && selectedStart && selectedEnd ? (
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
@@ -476,7 +476,12 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
                 <span className="text-sm text-muted-foreground">
-                  {durationMin} Min · {callType === "VIDEO" ? "Video" : "Voice"} ({slots15} × {pricePer15.toFixed(2)} €)
+                  {t("booking.summaryLine")
+                    .replace("{duration}", String(durationMin))
+                    .replace("{unit}", t("booking.minutesShort"))
+                    .replace("{mode}", callType === "VIDEO" ? t("booking.videoShort") : t("booking.voiceShort"))
+                    .replace("{slots}", String(slots15))
+                    .replace("{price}", pricePer15.toFixed(2))}
                 </span>
                 <span className="text-base font-bold text-foreground">
                   {totalPrice.toFixed(2)} €
@@ -489,7 +494,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             </p>
           ) : (
             <p className="text-sm text-muted-foreground py-2">
-              Wähle einen Termin im Kalender – die Zusammenfassung und der Preis werden hier angezeigt.
+              {t("booking.summaryHintNoSelection")}
             </p>
           )}
         </div>

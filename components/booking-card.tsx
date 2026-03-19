@@ -228,14 +228,14 @@ export function BookingCard({
             {isExpertView && booking.status === "confirmed" && (
               <div className="flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-xs font-medium text-primary">
                 <CheckCircle2 className="size-3.5 shrink-0" />
-                Sie haben diesen Termin bestätigt
+                {t("booking.expertConfirmedHint")}
               </div>
             )}
             {/* Takumi: declined → Hinweis "Termin abgesagt" */}
             {isExpertView && booking.status === "declined" && (
               <div className="flex items-center gap-1.5 rounded-lg bg-destructive/8 px-2.5 py-1.5 text-xs font-medium text-destructive">
                 <XCircle className="size-3.5 shrink-0" />
-                Sie haben diesen Termin abgesagt
+                {t("booking.expertDeclinedHint")}
               </div>
             )}
             {canJoin && (

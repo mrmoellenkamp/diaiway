@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Phone, Loader2, CheckCircle, XCircle } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 interface InstantRequest {
   id: string
@@ -16,6 +17,7 @@ interface InstantRequest {
 const POLL_INTERVAL_MS = 3000
 
 export function InstantRequestOverlay() {
+  const { t } = useI18n()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [requests, setRequests] = useState<InstantRequest[]>([])
@@ -76,10 +78,10 @@ export function InstantRequestOverlay() {
         }
       } else {
         const data = await res.json()
-        alert(data?.error ?? "Fehler")
+        alert(data?.error ?? t("common.error"))
       }
     } catch {
-      alert("Netzwerkfehler")
+      alert(t("common.networkError"))
     } finally {
       setActioning(null)
     }
@@ -98,7 +100,7 @@ export function InstantRequestOverlay() {
         <div className="text-center">
           <h3 className="text-lg font-bold text-foreground">Instant-Anfrage</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {req.userName} möchte mit dir verbinden.
+            {t("instant.requestWantsConnect", { name: req.userName })}
           </p>
         </div>
         <div className="flex gap-3 w-full">
@@ -113,7 +115,7 @@ export function InstantRequestOverlay() {
             ) : (
               <XCircle className="size-4" />
             )}
-            Ablehnen
+            {t("messages.bookingDecline")}
           </Button>
           <Button
             className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
@@ -125,7 +127,7 @@ export function InstantRequestOverlay() {
             ) : (
               <CheckCircle className="size-4" />
             )}
-            Annehmen
+            {t("messages.bookingConfirm")}
           </Button>
         </div>
       </div>

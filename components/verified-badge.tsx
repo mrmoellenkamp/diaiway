@@ -2,6 +2,7 @@
 
 import { BadgeCheck } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useI18n } from "@/lib/i18n"
 
 interface VerifiedBadgeProps {
   className?: string
@@ -9,6 +10,7 @@ interface VerifiedBadgeProps {
 }
 
 export function VerifiedBadge({ className = "", size = "sm" }: VerifiedBadgeProps) {
+  const { t } = useI18n()
   const iconSize = size === "sm" ? "size-3.5" : "size-4"
   return (
     <TooltipProvider>
@@ -16,13 +18,13 @@ export function VerifiedBadge({ className = "", size = "sm" }: VerifiedBadgeProp
         <TooltipTrigger asChild>
           <span
             className={`inline-flex items-center text-primary ${className}`}
-            aria-label="Verifiziert"
+            aria-label={t("takumiPage.verified")}
           >
             <BadgeCheck className={iconSize} />
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Verifiziert</p>
+          <p>{t("takumiPage.verified")}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

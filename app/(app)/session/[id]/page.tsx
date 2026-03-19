@@ -350,14 +350,14 @@ function SessionCallContent() {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`)
       if (!res.ok) {
-        const err = (await res.json()).error ?? "Buchung nicht gefunden"
+        const err = (await res.json()).error ?? t("session.bookingNotFound")
         setError(err)
         return
       }
       const json = await res.json()
       setData(json)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Fehler beim Laden")
+      setError(e instanceof Error ? e.message : t("toast.loadError"))
     }
   }, [bookingId])
 
@@ -432,12 +432,12 @@ function SessionCallContent() {
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">Anklopfen…</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Warte auf Antwort von {booking.takumiName}.
+            {t("session.waitingForTakumi", { name: booking.takumiName })}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/home")}>
-            Abbrechen
+            {t("common.cancel")}
           </Button>
         </div>
       </div>
@@ -452,12 +452,12 @@ function SessionCallContent() {
           <span className="text-4xl">⏱️</span>
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-foreground">Kein Experte verfügbar</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("session.noExpertAvailableTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.
+            {t("session.noExpertAvailableDesc")}
           </p>
         </div>
-        <Button onClick={() => router.push("/home")}>Später erneut versuchen</Button>
+        <Button onClick={() => router.push("/home")}>{t("session.tryAgainLater")}</Button>
       </div>
     )
   }
@@ -467,12 +467,12 @@ function SessionCallContent() {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-foreground">Anfrage abgelehnt</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("session.requestDeclinedTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {booking.takumiName} ist gerade nicht verfügbar.
+            {t("session.requestDeclinedDesc", { name: booking.takumiName })}
           </p>
         </div>
-        <Button onClick={() => router.push("/home")}>Zurück zur Startseite</Button>
+        <Button onClick={() => router.push("/home")}>{t("common.startPage")}</Button>
       </div>
     )
   }

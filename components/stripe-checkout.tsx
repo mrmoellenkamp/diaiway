@@ -8,6 +8,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js"
 import { Loader2 } from "lucide-react"
 import { startSessionCheckout, verifySessionPayment, type SessionCheckoutParams } from "@/app/actions/stripe"
+import { useI18n } from "@/lib/i18n"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -28,6 +29,7 @@ export function SessionCheckout({
   onSuccess,
   onError,
 }: SessionCheckoutProps) {
+  const { t } = useI18n()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
@@ -46,7 +48,7 @@ export function SessionCheckout({
       }
       if (result.status === "failed") {
         setPolling(false)
-        onError("Zahlung fehlgeschlagen")
+        onError(t("booking.paymentFailed"))
         return true
       }
     } catch {
@@ -93,10 +95,10 @@ export function SessionCheckout({
         setPolling(true)
       })
       .catch((err) => {
-        onError(err.message || "Checkout konnte nicht gestartet werden")
+        onError(err.message || t("booking.checkoutStartFailed"))
         setLoading(false)
       })
-  }, [bookingId, takumiName, duration, priceInCents, onError])
+  }, [bookingId, takumiName, duration, priceInCents, onError, t])
 
   useEffect(() => {
     if (!polling) return
@@ -113,7 +115,7 @@ export function SessionCheckout({
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <Loader2 className="size-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Zahlungsformular wird geladen...</p>
+        <p className="text-sm text-muted-foreground">{t("handshake.loadingPayment")}</p>
       </div>
     )
   }
@@ -121,7 +123,7 @@ export function SessionCheckout({
   if (!clientSecret || !options) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <p className="text-sm text-destructive">Checkout konnte nicht initialisiert werden.</p>
+        <p className="text-sm text-destructive">{t("handshake.checkoutError")}</p>
       </div>
     )
   }

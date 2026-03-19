@@ -375,7 +375,7 @@ function MessagesPageContent() {
           ) : notifications.length === 0 ? (
             <div className="rounded-xl border border-border/60 bg-card/50 px-4 py-8 text-center">
               <Bell className="mx-auto mb-2 size-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Keine Benachrichtigungen</p>
+              <p className="text-sm text-muted-foreground">{t("messages.noNotifications")}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
@@ -502,11 +502,11 @@ function MessagesPageContent() {
                   ? `${t("messages.waymailTo")}: ${waymailDetail.recipientName ?? ""}`
                   : `${t("messages.waymailFrom")}: ${waymailDetail.senderName ?? ""}`}
               </p>
-              <h2 className="mt-1 text-lg font-bold text-foreground">{waymailDetail.subject || "(ohne Betreff)"}</h2>
+              <h2 className="mt-1 text-lg font-bold text-foreground">{waymailDetail.subject || t("messages.noSubject")}</h2>
               <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">{waymailDetail.text}</p>
               {waymailDetail.attachmentUrl && (
                 <a href={waymailDetail.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
-                  📎 Anhang öffnen
+                  {t("messages.openAttachment")}
                 </a>
               )}
             </div>
@@ -573,7 +573,7 @@ function MessagesPageContent() {
                   )}
                   <div className="flex min-w-0 flex-1 items-start gap-2">
                     {!wm.read && (
-                      <span className="mt-1.5 shrink-0 flex size-2 rounded-full bg-blue-500" aria-hidden title="Ungelesen" />
+                      <span className="mt-1.5 shrink-0 flex size-2 rounded-full bg-blue-500" aria-hidden title={t("messages.unread")} />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
@@ -676,7 +676,7 @@ function MessagesPageContent() {
                         </div>
                         {lastMsg && (
                           <p className="truncate text-xs text-muted-foreground">
-                            {lastMsg.sender === "user" ? "Du: " : ""}
+                            {lastMsg.sender === "user" ? `${t("messages.youPrefix")} ` : ""}
                             {lastMsg.text}
                           </p>
                         )}

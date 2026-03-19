@@ -171,7 +171,7 @@ export async function PATCH(
       if (body.user && Object.keys(body.user).length > 0) {
         const existing = await tx.user.findUnique({
           where: { id },
-          select: { email: true },
+          select: { email: true, isVerified: true },
         })
         const isAnonymized = existing?.email?.endsWith("@anonymized.local") ?? false
 
@@ -305,6 +305,51 @@ export async function PATCH(
             instantSlots: (body.availability.instantSlots ?? {}) as object,
           },
         })
+      }
+
+      // Keep user + expert verification flags consistent across all UIs.
+      if (expertRow) {
+        const hasUserVerified = body.user?.isVerified !== undefined
+        const hasExpertVerified = body.expert?.verified !== undefined
+
+        if (hasUserVerified || hasExpertVerified) {
+          const currentUser = await tx.user.findUnique({
+            where: { id },
+            select: { isVerified: true },
+          })
+          const currentUserVerified = currentUser?.isVerified ?? false
+          const currentExpertVerified = !!expertRow.verified
+
+          const incomingUserVerified = hasUserVerified ? !!body.user?.isVerified : currentUserVerified
+          const incomingExpertVerified = hasExpertVerified ? !!body.expert?.verified : currentExpertVerified
+
+          let resolvedVerified = incomingUserVerified
+          if (!hasUserVerified && hasExpertVerified) {
+            resolvedVerified = incomingExpertVerified
+          } else if (hasUserVerified && hasExpertVerified) {
+            const userChanged = incomingUserVerified !== currentUserVerified
+            const expertChanged = incomingExpertVerified !== currentExpertVerified
+            if (!userChanged && expertChanged) resolvedVerified = incomingExpertVerified
+            else if (userChanged && !expertChanged) resolvedVerified = incomingUserVerified
+            else if (userChanged && expertChanged) resolvedVerified = incomingExpertVerified
+          }
+
+          if (currentUserVerified !== resolvedVerified) {
+            await tx.user.update({
+              where: { id },
+              data: {
+                isVerified: resolvedVerified,
+                verificationSource: resolvedVerified ? "MANUAL" : "NONE",
+              },
+            })
+          }
+          if (currentExpertVerified !== resolvedVerified) {
+            await tx.expert.update({
+              where: { id: expertRow.id },
+              data: { verified: resolvedVerified },
+            })
+          }
+        }
       }
     })
 

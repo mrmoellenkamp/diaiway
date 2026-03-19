@@ -650,6 +650,9 @@ export function AdminUserProfileSheet({
                             </div>
                           )}
                         </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Hinweis: Der Verified-Status wird beim Speichern fur User und Takumi/Expert synchronisiert.
+                        </p>
                         <div>
                           <Label className="text-xs">Kenntnisstufe (Shugyo)</Label>
                           <select

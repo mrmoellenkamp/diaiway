@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
 import { signOut, getCsrfToken } from "next-auth/react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,6 +68,7 @@ export default function LoginPage() {
 
 function LoginContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const explicitCallback = searchParams.get("callbackUrl")
   const reasonTimeout = searchParams.get("reason") === "timeout"
   const { setIsLoggedIn } = useApp()
@@ -124,18 +125,26 @@ function LoginContent() {
     async (navUrl?: string) => {
       const target = navUrl || explicitCallback
       if (target && target !== "/") {
-        window.location.href = target
+        // In Capacitor use client-side routing for in-app paths to avoid
+        // hard WebView reloads that can look like an app close on Android.
+        if (target.startsWith("/")) {
+          router.replace(target)
+        } else if (target.startsWith(window.location.origin)) {
+          router.replace(target.slice(window.location.origin.length) || "/")
+        } else {
+          window.location.href = target
+        }
         return
       }
       const r = await fetch("/api/auth/session", { credentials: "include" })
       const d = await r.json()
       const role    = d?.user?.role    ?? "user"
       const appRole = d?.user?.appRole ?? "shugyo"
-      if (role === "admin")        window.location.href = "/admin"
-      else if (appRole === "takumi") window.location.href = "/profile"
-      else                           window.location.href = "/categories"
+      if (role === "admin")           router.replace("/admin")
+      else if (appRole === "takumi")  router.replace("/profile")
+      else                            router.replace("/categories")
     },
-    [explicitCallback]
+    [explicitCallback, router]
   )
 
   // ── Core login action (shared by form + biometric replay)

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Loader2, Lock, Clock, Phone } from "lucide-react"
 import { isTimeInSlots } from "@/lib/availability-utils"
+import { useI18n } from "@/lib/i18n"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ export function BookingCalendar({
   selectedTime,
   selectedSprechzeit,
 }: BookingCalendarProps) {
+  const { t } = useI18n()
   const today = new Date()
 
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -303,7 +305,7 @@ export function BookingCalendar({
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <Clock className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-foreground">Sitzungsdauer</span>
+            <span className="text-xs font-medium text-foreground">{t("booking.sessionDuration")}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {DURATIONS.map((d) => (
@@ -328,7 +330,7 @@ export function BookingCalendar({
       {pickedDate && (
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-semibold text-foreground">
-            Verfügbare Zeiten am {pickedDate.split("-").reverse().join(".")}
+            {t("booking.availableTimesOn", { date: pickedDate.split("-").reverse().join(".") })}
           </h3>
 
           {loadingSlots ? (
@@ -337,7 +339,7 @@ export function BookingCalendar({
             </div>
           ) : startTimes.length === 0 ? (
             <p className="rounded-lg bg-muted/60 px-3 py-3 text-xs text-muted-foreground">
-              Keine freien Zeiten für {DURATION_LABELS[duration]} an diesem Tag.
+              {t("booking.noFreeTimesForDuration", { duration: DURATION_LABELS[duration] })}
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
@@ -366,9 +368,9 @@ export function BookingCalendar({
                     ].join(" ")}
                     title={
                       blocked
-                        ? "Bereits gebucht"
+                        ? t("booking.alreadyBooked")
                         : isSprechzeitOnly
-                          ? "Offene Sprechstunde – direkt kontaktieren"
+                          ? t("booking.officeHoursDirectContact")
                           : `${startTime} – ${endTime}`
                     }
                   >
@@ -384,19 +386,19 @@ export function BookingCalendar({
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <Lock className="size-2.5" /> Bereits gebucht
+              <Lock className="size-2.5" /> {t("booking.alreadyBooked")}
             </span>
             <span className="flex items-center gap-1">
-              <Phone className="size-2.5 text-emerald-600" /> Offene Sprechstunde
+              <Phone className="size-2.5 text-emerald-600" /> {t("booking.officeHours")}
             </span>
             {selectedDate === pickedDate && selectedTime && (
               <Badge variant="outline" className="text-[10px]">
-                Gewählt: {selectedTime} – {minutesToTime(timeToMinutes(selectedTime) + duration)}
+                {t("booking.selectedLabel")}: {selectedTime} – {minutesToTime(timeToMinutes(selectedTime) + duration)}
               </Badge>
             )}
             {selectedSprechzeit?.date === pickedDate && selectedSprechzeit?.startTime && (
               <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-500/50">
-                Sprechstunde: {selectedSprechzeit.startTime}
+                {t("booking.officeHours")}: {selectedSprechzeit.startTime}
               </Badge>
             )}
           </div>

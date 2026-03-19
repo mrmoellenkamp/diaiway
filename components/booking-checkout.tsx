@@ -60,7 +60,7 @@ export function BookingCheckout({
       }
       if (result.status === "failed") {
         setPolling(false)
-        onError("Zahlung fehlgeschlagen")
+        onError(t("booking.paymentFailed"))
         return true
       }
     } catch {
@@ -103,7 +103,7 @@ export function BookingCheckout({
         setPolling(true)
       })
       .catch((err) => {
-        onError(err.message || "Checkout konnte nicht gestartet werden")
+        onError(err.message || t("booking.checkoutStartFailed"))
         setLoading(false)
       })
   }
@@ -134,7 +134,7 @@ export function BookingCheckout({
         ensureTakumiNotified()
         onSuccess()
       } else {
-        onError(data.error || "Zahlung fehlgeschlagen")
+        onError(data.error || t("booking.paymentFailed"))
       }
     } catch {
       onError(t("handshake.walletPayError"))

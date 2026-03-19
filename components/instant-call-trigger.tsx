@@ -15,6 +15,7 @@ import { Phone, Loader2, Video, Mic } from "lucide-react"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 import type { Takumi } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 
 type CallTypeChoice = "VIDEO" | "VOICE"
 
@@ -31,6 +32,7 @@ export function InstantCallTrigger({
   className = "",
   onRequestCreated,
 }: InstantCallTriggerProps) {
+  const { t } = useI18n()
   const { openWalletTopup } = useWalletTopup()
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(false)
@@ -100,10 +102,10 @@ export function InstantCallTrigger({
           window.location.href = `/session/${data.booking.id}?wait=true`
         }
       } else {
-        alert(data?.error || "Fehler beim Anklopfen")
+        alert(data?.error || t("instant.knockError"))
       }
     } catch {
-      alert("Netzwerkfehler")
+      alert(t("common.networkError"))
     } finally {
       setLoading(false)
       setChecking(false)
@@ -124,18 +126,18 @@ export function InstantCallTrigger({
 
   const hasPaidBefore = instantCheck?.hasPaidBefore ?? false
   const buttonText = hasPaidBefore
-    ? "Instant Connect"
-    : "Neues Projekt starten"
+    ? t("instant.connectNow")
+    : t("instant.startNewProject")
   const subtitle = hasPaidBefore
-    ? "Abrechnung ab Sekunde 31"
-    : "5 Min. Begrüßung gratis"
+    ? t("instant.billingFromSecond31")
+    : t("instant.greeting5MinFree")
 
   return (
     <>
       <Button
         onClick={handleClick}
         disabled={loading || checking || !instantAvailableNow}
-        title={!instantAvailableNow ? "Aktuell außerhalb der Instant-Call-Sprechzeiten" : undefined}
+        title={!instantAvailableNow ? t("instant.outsideOfficeHours") : undefined}
         className={`gap-2 ${variant === "card" ? "h-9 text-sm" : "h-12 w-full"} ${className}`}
         size={variant === "card" ? "sm" : "lg"}
       >
@@ -145,7 +147,7 @@ export function InstantCallTrigger({
           <Phone className="size-4 shrink-0" />
         )}
         <span className="flex flex-col items-start">
-          <span>{checking ? "Prüfe..." : loading ? "Anklopfen..." : buttonText}</span>
+          <span>{checking ? t("instant.checking") : loading ? t("instant.knocking") : buttonText}</span>
           {variant === "profile" && (
             <span className="text-[10px] font-normal opacity-90">{subtitle}</span>
           )}
@@ -155,9 +157,9 @@ export function InstantCallTrigger({
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Instant Connect – Art &amp; Kosten</DialogTitle>
+            <DialogTitle>{t("instant.dialogTitle")}</DialogTitle>
             <DialogDescription>
-              Wähle Video oder Voice und bestätige die entstehenden Kosten.
+              {t("instant.dialogDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
@@ -173,9 +175,9 @@ export function InstantCallTrigger({
                 )}
               >
                 <Video className="size-6 text-primary" />
-                <span className="text-sm font-medium">Video-Call</span>
+                <span className="text-sm font-medium">{t("booking.videoCall")}</span>
                 <span className="text-xs text-muted-foreground">
-                  {(priceVideo * 4).toFixed(2)} € / 60 Min
+                  {(priceVideo * 4).toFixed(2)} € / 60 {t("booking.minutesShort")}
                 </span>
               </button>
               <button
@@ -189,18 +191,21 @@ export function InstantCallTrigger({
                 )}
               >
                 <Mic className="size-6 text-primary" />
-                <span className="text-sm font-medium">Voice-Call</span>
+                <span className="text-sm font-medium">{t("booking.voiceCall")}</span>
                 <span className="text-xs text-muted-foreground">
-                  {(priceVoice * 4).toFixed(2)} € / 60 Min
+                  {(priceVoice * 4).toFixed(2)} € / 60 {t("booking.minutesShort")}
                 </span>
               </button>
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
               <p className="text-sm font-medium text-foreground">
-                Abrechnung: {callType === "VIDEO" ? "Video" : "Voice"} · {pricePerMin.toFixed(2)} € / Min
+                {t("instant.billingLine")
+                  .replace("{mode}", callType === "VIDEO" ? t("booking.videoShort") : t("booking.voiceShort"))
+                  .replace("{price}", pricePerMin.toFixed(2))
+                  .replace("{unit}", t("booking.minutesShort"))}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Erste 5 Min. gratis (bzw. 30 Sek. bei Wiederholungsnutzern).
+                {t("instant.trialHint")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -210,13 +215,13 @@ export function InstantCallTrigger({
                 onCheckedChange={(v) => setCostConfirmed(v === true)}
               />
               <label htmlFor="cost-confirm" className="text-sm font-medium cursor-pointer">
-                Ich bestätige die entstehenden Kosten.
+                {t("instant.confirmCosts")}
               </label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleConfirm}
@@ -228,7 +233,7 @@ export function InstantCallTrigger({
               ) : (
                 <Phone className="size-4" />
               )}
-              Verbinden
+              {t("landing.connect")}
             </Button>
           </DialogFooter>
         </DialogContent>
