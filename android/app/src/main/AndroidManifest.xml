@@ -25,6 +25,12 @@
                 <data android:scheme="https" android:host="diaiway.com" />
                 <data android:scheme="https" android:host="www.diaiway.com" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="diaiway" />
+            </intent-filter>
         </activity>
 
         <provider
@@ -44,8 +50,10 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Android 12 (API 31–32): Nutzer muss in Einstellungen → Apps → Sonderberechtigungen → Alarme & Erinnerungen freigeben -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <!-- Android 13+ (API 33+): Wird automatisch gewährt für Timer-/Alarm-Apps, kein Nutzer-Dialog nötig -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

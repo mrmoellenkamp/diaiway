@@ -16,10 +16,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def keystoreFile = System.getenv("ANDROID_KEYSTORE_PATH") ?: file("release.keystore")
+            storeFile keystoreFile instanceof String ? file(keystoreFile) : keystoreFile
+            storePassword System.getenv("ANDROID_STORE_PASSWORD") ?: "diaiway2026"
+            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "diaiway"
+            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: "diaiway2026"
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

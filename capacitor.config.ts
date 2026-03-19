@@ -15,9 +15,7 @@ const config: CapacitorConfig = {
     errorPath: "error.html",
     iosScheme: "diaiway",
   },
-  android: {
-    allowMixedContent: true,
-  },
+  android: {},
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
