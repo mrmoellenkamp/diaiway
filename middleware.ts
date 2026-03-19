@@ -148,7 +148,7 @@ export default authMiddleware((req) => {
   response.headers.set("X-XSS-Protection", "1; mode=block")
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://vercel.live https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://*.googleapis.com https://vercel.live https://*.vercel.app wss:; frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.stripe.com https://vercel.live https://*.vercel.app; font-src 'self' https://fonts.gstatic.com https://*.vercel.app;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://diaiway.com https://www.diaiway.com https://js.stripe.com https://vercel.live https://*.vercel.app; style-src 'self' 'unsafe-inline' https://diaiway.com https://www.diaiway.com https://fonts.googleapis.com https://*.vercel.app; img-src 'self' data: blob: https:; connect-src 'self' https://diaiway.com https://www.diaiway.com https://api.stripe.com https://*.stripe.com https://*.googleapis.com https://vercel.live https://*.vercel.app wss:; frame-src 'self' https://diaiway.com https://www.diaiway.com https://js.stripe.com https://checkout.stripe.com https://*.stripe.com https://vercel.live https://*.vercel.app; font-src 'self' https://diaiway.com https://www.diaiway.com https://fonts.gstatic.com https://*.vercel.app;"
   )
   response.headers.set(
     "Permissions-Policy",
