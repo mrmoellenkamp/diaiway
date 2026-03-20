@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
+import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { ensureTaxonomySeeded, isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
+
+type ExpertWithTaxonomyAssignments = Prisma.ExpertGetPayload<{
+  include: {
+    categoryAssignments: { select: { categoryId: true } }
+    specialtyAssignments: { select: { specialtyId: true } }
+  }
+}>
 
 export const runtime = "nodejs"
 
@@ -32,8 +40,12 @@ export async function GET() {
         })
     if (!expert) return NextResponse.json({ exists: false })
 
-    const categoryAssignments = "categoryAssignments" in expert ? expert.categoryAssignments : []
-    const specialtyAssignments = "specialtyAssignments" in expert ? expert.specialtyAssignments : []
+    const categoryIds = taxonomyReady
+      ? (expert as ExpertWithTaxonomyAssignments).categoryAssignments.map((a) => a.categoryId)
+      : []
+    const specialtyIds = taxonomyReady
+      ? (expert as ExpertWithTaxonomyAssignments).specialtyAssignments.map((a) => a.specialtyId)
+      : []
 
     return NextResponse.json({
       exists: true,
@@ -44,8 +56,8 @@ export async function GET() {
       categoryName: expert.categoryName,
       subcategory: expert.subcategory,
       taxonomy: {
-        categoryIds: categoryAssignments.map((a) => a.categoryId),
-        specialtyIds: specialtyAssignments.map((a) => a.specialtyId),
+        categoryIds,
+        specialtyIds,
         primaryCategoryId: expert.primaryCategoryId,
         primarySpecialtyId: expert.primarySpecialtyId,
       },
