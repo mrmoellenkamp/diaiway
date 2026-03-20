@@ -601,7 +601,7 @@ export default function ProfilePage() {
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {dbUsername ? (
-                    <span className="font-mono text-foreground">@{dbUsername}</span>
+                    <span className="font-mono text-foreground">{dbUsername}</span>
                   ) : (
                     <span className="italic">{t("register.usernameHint")}</span>
                   )}

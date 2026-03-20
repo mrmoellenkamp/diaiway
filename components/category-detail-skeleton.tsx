@@ -33,8 +33,8 @@ export function CategoryDetailSkeleton({ slug: _slug, category }: CategoryDetail
 
         <div className="flex flex-wrap gap-2">
           {category.subcategories.map((sub) => (
-            <Badge key={sub} variant="outline" className="text-xs">
-              {sub}
+            <Badge key={sub.id} variant="outline" className="text-xs">
+              {sub.name}
             </Badge>
           ))}
         </div>

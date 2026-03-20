@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { useCategories } from "@/lib/categories-i18n"
+import { TakumiTaxonomyEditor, type TakumiTaxonomyValue } from "@/components/takumi-taxonomy-editor"
 import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
@@ -64,9 +65,16 @@ export default function EditProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  // Takumi fields
-  const [categorySlug, setCategorySlug] = useState("")
-  const [subcategory, setSubcategory] = useState("")
+  // Takumi fields — Taxonomie (mehrere Kategorien / Fachbereiche)
+  const [taxonomy, setTaxonomy] = useState<TakumiTaxonomyValue>({
+    categoryIds: [],
+    specialtyIds: [],
+    primaryCategoryId: "",
+    primarySpecialtyId: "",
+  })
+  const [initialTaxSlug, setInitialTaxSlug] = useState("")
+  const [initialTaxSub, setInitialTaxSub] = useState("")
+  const legacyTaxonomyHydrated = useRef(false)
   const [bio, setBio] = useState("")
   const [priceVideo15Min, setPriceVideo15Min] = useState("")
   const [priceVoice15Min, setPriceVoice15Min] = useState("")
@@ -88,7 +96,6 @@ export default function EditProfilePage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loadingBookings, setLoadingBookings] = useState(true)
 
-  const selectedCategory = categories.find((c) => c.slug === categorySlug)
   const initials = name
     ? name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
@@ -119,8 +126,26 @@ export default function EditProfilePage() {
           const data = await res.json()
           if (data.exists) {
             setTakumiExists(true)
-            setCategorySlug(data.categorySlug || "")
-            setSubcategory(data.subcategory || "")
+            setInitialTaxSlug(data.categorySlug || "")
+            setInitialTaxSub(data.subcategory || "")
+            const tx = data.taxonomy as TakumiTaxonomyValue | undefined
+            if (tx?.categoryIds?.length) {
+              legacyTaxonomyHydrated.current = true
+              setTaxonomy({
+                categoryIds: tx.categoryIds,
+                specialtyIds: tx.specialtyIds ?? [],
+                primaryCategoryId: tx.primaryCategoryId ?? "",
+                primarySpecialtyId: tx.primarySpecialtyId ?? "",
+              })
+            } else {
+              legacyTaxonomyHydrated.current = false
+              setTaxonomy({
+                categoryIds: [],
+                specialtyIds: [],
+                primaryCategoryId: "",
+                primarySpecialtyId: "",
+              })
+            }
             setBio(data.bio || "")
             setPriceVideo15Min(String(data.priceVideo15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
             setPriceVoice15Min(String(data.priceVoice15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
@@ -142,6 +167,33 @@ export default function EditProfilePage() {
     if (session?.user) load()
     else setLoadingTakumi(false)
   }, [session])
+
+  /** Legacy Takumi: einmalig aus slug/subcategory in Taxonomie-IDs mappen, wenn DB noch keine Zuordnungen hat */
+  useEffect(() => {
+    if (legacyTaxonomyHydrated.current) return
+    if (categories.length === 0 || taxonomy.categoryIds.length > 0) return
+    if (!initialTaxSlug) return
+    const cat = categories.find((c) => c.slug === initialTaxSlug)
+    if (!cat) return
+    const sub = cat.subcategories.find((s) => s.name === initialTaxSub)
+    const specId = sub?.id ?? cat.subcategories[0]?.id
+    legacyTaxonomyHydrated.current = true
+    if (!specId) {
+      setTaxonomy({
+        categoryIds: [cat.id],
+        specialtyIds: [],
+        primaryCategoryId: cat.id,
+        primarySpecialtyId: "",
+      })
+      return
+    }
+    setTaxonomy({
+      categoryIds: [cat.id],
+      specialtyIds: [specId],
+      primaryCategoryId: cat.id,
+      primarySpecialtyId: specId,
+    })
+  }, [categories, initialTaxSlug, initialTaxSub, taxonomy.categoryIds.length])
 
   useEffect(() => {
     if (!session?.user?.id) { setLoadingBookings(false); return }
@@ -281,14 +333,26 @@ export default function EditProfilePage() {
           setSaving(false)
           return
         }
+        if (
+          taxonomy.categoryIds.length < 1 ||
+          taxonomy.specialtyIds.length < 1 ||
+          !taxonomy.primaryCategoryId ||
+          !taxonomy.primarySpecialtyId
+        ) {
+          toast.error(t("editProfile.taxonomyIncomplete"))
+          setSaving(false)
+          return
+        }
+
         const takumiRes = await fetch("/api/user/takumi-profile", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: name.trim() || undefined,
-            categorySlug: categorySlug || undefined,
-            categoryName: selectedCategory?.name || categorySlug || undefined,
-            subcategory: subcategory || undefined,
+            categoryIds: taxonomy.categoryIds,
+            specialtyIds: taxonomy.specialtyIds,
+            primaryCategoryId: taxonomy.primaryCategoryId,
+            primarySpecialtyId: taxonomy.primarySpecialtyId,
             bio: bio.trim() || undefined,
             priceVideo15Min: priceVideo15Min ? Number(priceVideo15Min) : undefined,
             priceVoice15Min: priceVoice15Min ? Number(priceVoice15Min) : undefined,
@@ -516,50 +580,17 @@ export default function EditProfilePage() {
                       </div>
                     </div>
 
-                    {/* Category */}
+                    {/* Kategorien & Fachbereiche (mehrfach) */}
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <Tag className="size-3" /> {t("editProfile.category")}
+                        <Tag className="size-3" /> {t("editProfile.taxonomySectionTitle")}
                       </label>
-                      <div className="relative">
-                        <select
-                          value={categorySlug}
-                          onChange={(e) => {
-                            setCategorySlug(e.target.value)
-                            setSubcategory("")
-                          }}
-                          className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
-                          <option value="">{t("editProfile.categoryPlaceholder")}</option>
-                          {categories.map((c) => (
-                            <option key={c.slug} value={c.slug}>{c.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      </div>
+                      {categories.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">{t("editProfile.taxonomyLoading")}</p>
+                      ) : (
+                        <TakumiTaxonomyEditor categories={categories} value={taxonomy} onChange={setTaxonomy} />
+                      )}
                     </div>
-
-                    {/* Subcategory */}
-                    {selectedCategory && (
-                      <div className="flex flex-col gap-1.5">
-                        <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Tag className="size-3" /> {t("editProfile.subcategory")}
-                        </label>
-                        <div className="relative">
-                          <select
-                            value={subcategory}
-                            onChange={(e) => setSubcategory(e.target.value)}
-                            className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                          >
-                            <option value="">{t("editProfile.subcategoryPlaceholder")}</option>
-                            {selectedCategory.subcategories.map((sub) => (
-                              <option key={sub} value={sub}>{sub}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                        </div>
-                      </div>
-                    )}
 
                     {/* Bio */}
                     <div className="flex flex-col gap-1.5">

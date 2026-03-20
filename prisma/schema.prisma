@@ -263,10 +263,76 @@ model Expert {
   // Stripe Connect für Payout-on-Demand (Takumi muss verknüpft haben)
   stripeConnectAccountId String?
 
+  // Primäre Anzeige (Karte, Listen) — synchron zu Taxonomie bei Speichern
+  primaryCategoryId  String?
+  primarySpecialtyId String?
+  primaryCategory    TaxonomyCategory?  @relation("ExpertPrimaryCategory", fields: [primaryCategoryId], references: [id], onDelete: SetNull)
+  primarySpecialty   TaxonomySpecialty? @relation("ExpertPrimarySpecialty", fields: [primarySpecialtyId], references: [id], onDelete: SetNull)
+
+  categoryAssignments  CategoryOnExpert[]
+  specialtyAssignments SpecialtyOnExpert[]
+
   // Relations
   bookings    Booking[]
   reviews     Review[]
   transactions Transaction[] @relation("ExpertTransactions")
+}
+
+// ─── Taxonomie (Kategorien & Fachbereiche, Admin-pflegbar) ────────────────
+
+model TaxonomyCategory {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  description  String   @default("")
+  /** Lucide-React Icon-Name, z. B. "Wrench"; bei iconImageUrl nur Fallback */
+  iconKey      String   @default("Briefcase")
+  iconImageUrl String?
+  color        String   @default("#64748b")
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  specialties          TaxonomySpecialty[]
+  categoryOnExperts    CategoryOnExpert[]
+  expertsAsPrimary     Expert[]            @relation("ExpertPrimaryCategory")
+}
+
+model TaxonomySpecialty {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   TaxonomyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  specialtyOnExperts SpecialtyOnExpert[]
+  expertsAsPrimary   Expert[]            @relation("ExpertPrimarySpecialty")
+
+  @@index([categoryId])
+}
+
+model CategoryOnExpert {
+  expertId   String
+  categoryId String
+  expert     Expert           @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  category   TaxonomyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([expertId, categoryId])
+  @@index([categoryId])
+}
+
+model SpecialtyOnExpert {
+  expertId    String
+  specialtyId String
+  expert      Expert            @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  specialty   TaxonomySpecialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([expertId, specialtyId])
+  @@index([specialtyId])
 }
 
 model TakumiPortfolioProject {

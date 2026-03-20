@@ -12,10 +12,11 @@ import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
 import { Plus, Loader2 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
-import { categories } from "@/lib/categories"
+import { useCategories } from "@/lib/categories-i18n"
 
 export default function TakumiPortfolioPage() {
   const { t } = useI18n()
+  const categories = useCategories()
   const { data: session } = useSession()
   const appRole = (session?.user as { appRole?: string })?.appRole
   const canEdit = appRole === "takumi"

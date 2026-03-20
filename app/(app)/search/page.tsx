@@ -19,14 +19,14 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery)
   const { takumis } = useTakumis()
 
+  const qLower = query.toLowerCase()
   const results = query.length > 1
-    ? takumis.filter(
-        (tk) =>
-          tk.name.toLowerCase().includes(query.toLowerCase()) ||
-          tk.categoryName.toLowerCase().includes(query.toLowerCase()) ||
-          tk.subcategory.toLowerCase().includes(query.toLowerCase()) ||
-          tk.bio.toLowerCase().includes(query.toLowerCase())
-      )
+    ? takumis.filter((tk) => {
+        const hay =
+          tk.taxonomySearchText ??
+          `${tk.name} ${tk.categoryName} ${tk.subcategory} ${tk.bio} ${(tk.allSpecialties ?? []).join(" ")}`.toLowerCase()
+        return hay.includes(qLower)
+      })
     : []
 
   const q = query.toLowerCase().trim()
@@ -35,7 +35,7 @@ function SearchContent() {
         (c) =>
           c.name.toLowerCase().includes(q) ||
           c.description.toLowerCase().includes(q) ||
-          c.subcategories.some((sub) => sub.toLowerCase().includes(q))
+          c.subcategories.some((sub) => sub.name.toLowerCase().includes(q))
       )
     : []
 
@@ -66,7 +66,7 @@ function SearchContent() {
               <div className="flex flex-col gap-2">
                 {catResults.map((c) => {
                   const matchingSubs = c.subcategories.filter((sub) =>
-                    sub.toLowerCase().includes(q)
+                    sub.name.toLowerCase().includes(q)
                   )
                   return (
                     <Link
@@ -79,10 +79,10 @@ function SearchContent() {
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {matchingSubs.map((sub) => (
                             <span
-                              key={sub}
+                              key={sub.id}
                               className="rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary"
                             >
-                              {sub}
+                              {sub.name}
                             </span>
                           ))}
                         </div>

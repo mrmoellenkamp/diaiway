@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,7 @@ export function AppSubpageHeader({
   subtitle,
   className,
   backAriaLabel,
+  trailing,
 }: {
   title: string
   backHref?: string
@@ -23,6 +25,7 @@ export function AppSubpageHeader({
   className?: string
   /** Falls gesetzt, statt „Zurück“ (z. B. „Zurück zum Profil“) */
   backAriaLabel?: string
+  trailing?: ReactNode
 }) {
   const { t } = useI18n()
   const ariaBack = backAriaLabel ?? t("common.back")
@@ -35,6 +38,9 @@ export function AppSubpageHeader({
           </Link>
         </Button>
         <h1 className="min-w-0 flex-1 truncate text-lg font-bold leading-tight text-foreground">{title}</h1>
+        {trailing ? (
+          <div className="shrink-0 max-w-[45%] text-right">{trailing}</div>
+        ) : null}
       </div>
       {subtitle ? (
         <p className="-mt-0.5 pl-10 text-xs text-muted-foreground">{subtitle}</p>

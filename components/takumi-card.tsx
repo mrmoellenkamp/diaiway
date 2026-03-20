@@ -64,6 +64,9 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
             </div>
             <p className="truncate text-xs text-muted-foreground">
               {takumi.categoryName} &middot; {takumi.subcategory}
+              {(takumi.allSpecialties?.length ?? 0) > 1
+                ? ` · +${(takumi.allSpecialties!.length - 1)}`
+                : ""}
             </p>
             <div className="flex items-center gap-2">
               <ReviewStars rating={takumi.rating} />
@@ -128,6 +131,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
           </span>
           <span className="text-[10px] text-muted-foreground truncate w-full">
             {takumi.subcategory}
+            {(takumi.allSpecialties?.length ?? 0) > 1 ? ` +${takumi.allSpecialties!.length - 1}` : ""}
           </span>
           <div className="flex items-center gap-0.5">
             <ReviewStars rating={takumi.rating} />

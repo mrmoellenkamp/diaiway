@@ -2,58 +2,29 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { emailForName } from "@/lib/email-utils"
 import { requireAdmin } from "@/lib/api-auth"
+import { ensureTaxonomySeeded } from "@/lib/taxonomy-server"
+import { expertRowToTakumi, expertTaxonomyInclude } from "@/lib/expert-to-takumi"
 
 export const runtime = "nodejs"
 
 export async function GET() {
   try {
+    await ensureTaxonomySeeded()
     const experts = await prisma.expert.findMany({
-      include: { user: { select: { appRole: true, isVerified: true } } },
+      include: expertTaxonomyInclude,
       orderBy: [{ isLive: "desc" }, { lastSeenAt: "desc" }, { rating: "desc" }],
     })
-    // Ohne emailConfirmedAt (Spalte fehlt vor Migration) – nach Migration hinzufügen
     const active = experts.filter((e) => {
       if (!e.userId) return true
       const u = e.user
       return u && u.appRole === "takumi"
     })
 
-    const now = Date.now()
-    const ONLINE_MS = 30 * 1000 // 30 s: Offline-Fallback erst wenn Heartbeat länger als 30s ausbleibt
-
-    const payload = active.map((e) => {
-        const lastSeen = e.lastSeenAt?.getTime()
-        const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
-        const isLive = isActuallyOnline && !(e.hideOnlineStatus ?? false)
-        return {
-        id: e.id,
-        name: e.name,
-        email: e.email,
-        avatar: e.avatar,
-        categorySlug: e.categorySlug,
-        categoryName: e.categoryName,
-        subcategory: e.subcategory,
-        bio: e.bio,
-        rating: e.rating,
-        reviewCount: e.reviewCount,
-        sessionCount: e.sessionCount,
-        responseTime: e.responseTime,
-        priceVideo15Min: Number(e.priceVideo15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)),
-        priceVoice15Min: Number(e.priceVoice15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)),
-        pricePerSession: e.pricePerSession,
-        isLive,
-        liveStatus: e.liveStatus ?? null,
-        pricePerMinute: Math.round((Number(e.priceVideo15Min ?? (e.pricePerSession ? e.pricePerSession / 2 : 0)) * 100 / 15)),
-        isPro: e.isPro,
-        verified: e.verified || (e.user?.isVerified ?? false),
-        portfolio: e.portfolio,
-        joinedDate: e.joinedDate,
-        imageUrl: e.imageUrl,
-        matchRate: e.matchRate,
-        socialLinks: e.socialLinks ?? {},
-        cancelPolicy: e.cancelPolicy ?? { freeHours: 24, feePercent: 0 },
-      }
-    })
+    const payload = active.map((e) => ({
+      ...expertRowToTakumi(e),
+      email: e.email,
+      matchRate: e.matchRate,
+    }))
 
     return new NextResponse(JSON.stringify(payload), {
       headers: {
@@ -75,6 +46,7 @@ export async function POST(req: Request) {
   if (authResult.response) return authResult.response
 
   try {
+    await ensureTaxonomySeeded()
     const body = await req.json()
     const required = ["name", "categorySlug", "categoryName", "subcategory", "bio", "pricePerSession"]
     for (const field of required) {
@@ -108,6 +80,36 @@ export async function POST(req: Request) {
         matchRate: body.matchRate ?? 85,
       },
     })
+
+    const cat = await prisma.taxonomyCategory.findUnique({ where: { slug: body.categorySlug } })
+    if (cat) {
+      let spec = await prisma.taxonomySpecialty.findFirst({
+        where: { categoryId: cat.id, name: String(body.subcategory).trim(), isActive: true },
+      })
+      if (!spec) {
+        const maxSort = await prisma.taxonomySpecialty.aggregate({
+          where: { categoryId: cat.id },
+          _max: { sortOrder: true },
+        })
+        spec = await prisma.taxonomySpecialty.create({
+          data: {
+            categoryId: cat.id,
+            name: String(body.subcategory).trim(),
+            sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
+            isActive: true,
+          },
+        })
+      }
+      await prisma.categoryOnExpert.create({ data: { expertId: expert.id, categoryId: cat.id } })
+      await prisma.specialtyOnExpert.create({ data: { expertId: expert.id, specialtyId: spec.id } })
+      await prisma.expert.update({
+        where: { id: expert.id },
+        data: {
+          primaryCategoryId: cat.id,
+          primarySpecialtyId: spec.id,
+        },
+      })
+    }
 
     return NextResponse.json(
       { success: true, message: `Experte '${expert.name}' erfolgreich erstellt.`, id: expert.id },

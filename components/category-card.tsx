@@ -1,21 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import {
-  Smartphone, Home, Car, Shirt, Baby, PawPrint, Music,
-  Palette, Briefcase, GraduationCap, Wrench,
-} from "lucide-react"
 import type { Category } from "@/lib/types"
 import { useI18n } from "@/lib/i18n"
-
-const iconMap: Record<string, React.ElementType> = {
-  Smartphone, Home, Car, Shirt, Baby, PawPrint, Music,
-  Palette, Briefcase, GraduationCap, Wrench,
-}
+import { TaxonomyCategoryIcon } from "@/components/taxonomy-category-icon"
 
 export function CategoryCard({ category }: { category: Category }) {
   const { t } = useI18n()
-  const Icon = iconMap[category.icon] || Briefcase
 
   return (
     <Link href={`/categories/${category.slug}`}>
@@ -24,7 +15,13 @@ export function CategoryCard({ category }: { category: Category }) {
           className="flex size-11 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
           style={{ backgroundColor: `${category.color}15` }}
         >
-          <Icon className="size-5" style={{ color: category.color }} />
+          <TaxonomyCategoryIcon
+            iconKey={category.icon}
+            iconImageUrl={category.iconImageUrl}
+            color={category.color}
+            size={22}
+            className="size-[22px]"
+          />
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs font-medium text-foreground leading-tight">
@@ -41,7 +38,6 @@ export function CategoryCard({ category }: { category: Category }) {
 
 export function CategoryCardLarge({ category }: { category: Category }) {
   const { t } = useI18n()
-  const Icon = iconMap[category.icon] || Briefcase
 
   return (
     <Link href={`/categories/${category.slug}`}>
@@ -50,7 +46,13 @@ export function CategoryCardLarge({ category }: { category: Category }) {
           className="flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
           style={{ backgroundColor: `${category.color}15` }}
         >
-          <Icon className="size-6" style={{ color: category.color }} />
+          <TaxonomyCategoryIcon
+            iconKey={category.icon}
+            iconImageUrl={category.iconImageUrl}
+            color={category.color}
+            size={26}
+            className="size-[26px]"
+          />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="font-semibold text-foreground">{category.name}</span>

@@ -36,9 +36,13 @@ export function validateInvoiceDataForPayment(invoiceDataRaw: unknown): InvoiceV
   const invoiceData = toInvoiceData(invoiceDataRaw)
   const type = invoiceData.type
 
-  const baseRequired = ["fullName", "street", "houseNumber", "zip", "city", "country", "email"] as const
+  /** Anschrift + Kontakt – für Privat und Unternehmen gleich (ohne Namen). */
+  const addressAndContact = ["street", "houseNumber", "zip", "city", "country", "email"] as const
+  /** Privat: zusätzlich vollständiger Name. Unternehmen: Firmenname Pflicht, vollständiger Name optional. */
   const required =
-    type === "unternehmen" ? ([...baseRequired, "companyName"] as const) : baseRequired
+    type === "unternehmen"
+      ? ([...addressAndContact, "companyName"] as const)
+      : ([...addressAndContact, "fullName"] as const)
 
   const missing: string[] = []
   if (type !== "privat" && type !== "unternehmen") {

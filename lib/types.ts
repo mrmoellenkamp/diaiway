@@ -30,9 +30,16 @@ export interface Takumi {
   name: string
   email?: string
   avatar: string
+  /** Primäre Kategorie (Anzeige, Legacy-kompatibel) */
   categorySlug: string
+  /** Alle zugeordneten Kategorie-Slugs */
+  categorySlugs: string[]
   categoryName: string
   subcategory: string
+  /** Alle Fachbereichs-Namen (Anzeige „+n“) */
+  allSpecialties?: string[]
+  /** Für Volltextsuche (Kategorien, Fachbereiche, Bio) */
+  taxonomySearchText?: string
   bio: string
   rating: number
   reviewCount: number
@@ -53,12 +60,19 @@ export interface Takumi {
   cancelPolicy?: CancelPolicy
 }
 
+export interface CategorySpecialtyRef {
+  id: string
+  name: string
+}
+
 export interface Category {
+  id: string
   slug: string
   name: string
   icon: string
+  iconImageUrl?: string | null
   description: string
-  subcategories: string[]
+  subcategories: CategorySpecialtyRef[]
   takumiCount: number
   color: string
 }

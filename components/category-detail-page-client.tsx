@@ -5,7 +5,7 @@ import { PageContainer } from "@/components/page-container"
 import { TakumiCard } from "@/components/takumi-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useCategories } from "@/lib/categories-i18n"
+import { useLocalizedCategories } from "@/lib/categories-i18n"
 import { useI18n } from "@/lib/i18n"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -22,14 +22,15 @@ interface CategoryDetailPageClientProps {
 
 export function CategoryDetailPageClient({ slug, category, categoryTakumis }: CategoryDetailPageClientProps) {
   const { t } = useI18n()
-  const categories = useCategories()
-  const resolvedCategory = categories.find((c) => c.slug === slug) ?? category
+  const [resolvedCategory] = useLocalizedCategories([category])
 
   const { data: allTakumis } = useSWR<Takumi[]>("/api/takumis", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
   })
-  const takumis = allTakumis ? allTakumis.filter((tk) => tk.categorySlug === slug) : categoryTakumis
+  const takumis = allTakumis
+    ? allTakumis.filter((tk) => (tk.categorySlugs ?? [tk.categorySlug]).includes(slug))
+    : categoryTakumis
 
   return (
     <PageContainer>
@@ -48,8 +49,8 @@ export function CategoryDetailPageClient({ slug, category, categoryTakumis }: Ca
 
         <div className="flex flex-wrap gap-2">
           {resolvedCategory.subcategories.map((sub) => (
-            <Badge key={sub} variant="outline" className="text-xs">
-              {sub}
+            <Badge key={sub.id} variant="outline" className="text-xs">
+              {sub.name}
             </Badge>
           ))}
         </div>

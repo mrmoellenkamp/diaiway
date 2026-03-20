@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Loader2, FileText } from "lucide-react"
+import { Loader2, FileText, Info, CheckCircle2, AlertCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
+import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 type InvoiceData = {
   type?: "privat" | "unternehmen"
@@ -44,18 +46,32 @@ export default function InvoiceDataPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [data, setData] = useState<InvoiceData>(defaultPrivate)
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null)
+
+  function applyProfilePayload(res: {
+    invoiceData?: unknown
+    customerNumber?: string | null
+  }) {
+    if (res.invoiceData && typeof res.invoiceData === "object") {
+      setData({ ...defaultPrivate, ...res.invoiceData } as InvoiceData)
+    } else {
+      setData(defaultPrivate)
+    }
+    setCustomerNumber(
+      typeof res.customerNumber === "string" && res.customerNumber.trim() !== ""
+        ? res.customerNumber.trim()
+        : null,
+    )
+  }
 
   useEffect(() => {
     fetch("/api/user/profile")
       .then((r) => r.json())
-      .then((res) => {
-        if (res.invoiceData && typeof res.invoiceData === "object") {
-          setData({ ...defaultPrivate, ...res.invoiceData } as InvoiceData)
-        } else {
-          setData(defaultPrivate)
-        }
+      .then((res) => applyProfilePayload(res))
+      .catch(() => {
+        setData(defaultPrivate)
+        setCustomerNumber(null)
       })
-      .catch(() => setData(defaultPrivate))
       .finally(() => setLoading(false))
   }, [])
 
@@ -70,6 +86,8 @@ export default function InvoiceDataPage() {
       const result = await res.json()
       if (res.ok) {
         toast.success(t("invoice.saved"))
+        const refreshed = await fetch("/api/user/profile").then((r) => r.json())
+        applyProfilePayload(refreshed)
       } else {
         toast.error(result.error || t("profile.error"))
       }
@@ -82,17 +100,63 @@ export default function InvoiceDataPage() {
 
   const isCompany = data.type === "unternehmen"
 
+  const paymentCheck = validateInvoiceDataForPayment(data)
+  const missingFieldLabels =
+    paymentCheck.ok ? [] : paymentCheck.missingFieldKeys.map((k) => t(`invoice.field.${k}`))
+  const missingFieldsText = missingFieldLabels.join(", ")
+
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        <AppSubpageHeader title={t("invoice.title")} subtitle={t("invoice.subtitle")} />
+        <AppSubpageHeader
+          title={t("invoice.title")}
+          subtitle={t("invoice.subtitle")}
+          trailing={
+            customerNumber ? (
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("invoice.customerNumberLabel")}
+                </span>
+                <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                  {customerNumber}
+                </span>
+              </div>
+            ) : null
+          }
+        />
 
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="size-6 animate-spin text-primary" />
           </div>
         ) : (
-          <Card>
+          <div className="flex flex-col gap-4">
+            <Alert className="border-primary/25 bg-primary/5">
+              <Info className="text-primary" />
+              <AlertTitle>{t("invoice.contextTitle")}</AlertTitle>
+              <AlertDescription className="space-y-2 text-foreground/90">
+                <p>{t("invoice.contextProfile")}</p>
+                <p>{t("invoice.contextPayment")}</p>
+              </AlertDescription>
+            </Alert>
+
+            {paymentCheck.ok ? (
+              <Alert className="border-emerald-500/30 bg-emerald-500/5">
+                <CheckCircle2 className="text-emerald-600" />
+                <AlertTitle>{t("invoice.statusPaymentReadyTitle")}</AlertTitle>
+                <AlertDescription>{t("invoice.statusPaymentReadyBody")}</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="border-amber-500/35 bg-amber-500/5">
+                <AlertCircle className="text-amber-600" />
+                <AlertTitle>{t("invoice.statusPaymentIncompleteTitle")}</AlertTitle>
+                <AlertDescription>
+                  {t("invoice.statusPaymentIncompleteBody", { fields: missingFieldsText })}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <FileText className="size-4 text-primary" />
@@ -140,7 +204,9 @@ export default function InvoiceDataPage() {
               {/* Basis-Felder */}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <Label htmlFor="fullName">{t("invoice.fullName")}</Label>
+                  <Label htmlFor="fullName">
+                    {isCompany ? t("invoice.fullNameCompany") : t("invoice.fullName")}
+                  </Label>
                   <Input
                     id="fullName"
                     placeholder={t("invoice.fullNamePlaceholder")}
@@ -270,6 +336,7 @@ export default function InvoiceDataPage() {
               </Button>
             </CardContent>
           </Card>
+          </div>
         )}
       </div>
     </PageContainer>

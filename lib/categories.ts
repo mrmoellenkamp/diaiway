@@ -1,6 +1,15 @@
-import type { Category } from "./types"
+/** Nur für DB-Seed aus `lib/taxonomy-server` — Laufzeit-Kategorien kommen aus der API/DB. */
+export type CategorySeedRow = {
+  slug: string
+  name: string
+  icon: string
+  description: string
+  subcategories: string[]
+  takumiCount: number
+  color: string
+}
 
-export const categories: Category[] = [
+export const categories: CategorySeedRow[] = [
   {
     slug: "heimwerken",
     name: "Heimwerken & Renovieren",

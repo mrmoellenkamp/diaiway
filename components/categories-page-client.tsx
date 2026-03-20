@@ -4,17 +4,19 @@ import { PageContainer } from "@/components/page-container"
 import { CategoryCardLarge } from "@/components/category-card"
 import { TakumiCardCompact } from "@/components/takumi-card"
 import { CollapsibleAiBox } from "@/components/collapsible-ai-box"
-import { useCategories } from "@/lib/categories-i18n"
+import { useLocalizedCategories } from "@/lib/categories-i18n"
 import { useI18n } from "@/lib/i18n"
 import type { Takumi } from "@/lib/types"
+import type { Category } from "@/lib/types"
 
 interface CategoriesPageClientProps {
   takumis: Takumi[]
+  categories: Category[]
 }
 
-export function CategoriesPageClient({ takumis }: CategoriesPageClientProps) {
+export function CategoriesPageClient({ takumis, categories }: CategoriesPageClientProps) {
   const { t } = useI18n()
-  const categories = useCategories()
+  const displayCategories = useLocalizedCategories(categories)
   const liveTakumis = takumis.filter((tk) => tk.isLive)
 
   return (
@@ -58,11 +60,11 @@ export function CategoriesPageClient({ takumis }: CategoriesPageClientProps) {
           <div>
             <h1 className="text-xl font-bold text-foreground">{t("categories.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              {t("categories.count", { count: categories.length })}
+              {t("categories.count", { count: displayCategories.length })}
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            {categories.map((cat) => (
+            {displayCategories.map((cat) => (
               <CategoryCardLarge key={cat.slug} category={cat} />
             ))}
           </div>

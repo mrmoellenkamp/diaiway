@@ -23,6 +23,15 @@ diAIway ist eine **Hybrid-App**:
 | AI | Vercel AI SDK (Gemini) |
 | Safety | Google Cloud Vision API, Cloudmersive |
 
+### Taxonomie (Kategorien & Fachbereiche)
+
+- **Modelle:** `TaxonomyCategory`, `TaxonomySpecialty`, Zuordnung `CategoryOnExpert` / `SpecialtyOnExpert`; am `Expert` optional `primaryCategoryId` / `primarySpecialtyId` für Kartenzeile. Legacy-Felder `categorySlug`, `categoryName`, `subcategory` werden bei Speichern mit der Primärzuordnung synchron gehalten.
+- **Seed:** Beim ersten Zugriff füllt `ensureTaxonomySeeded()` die DB aus `lib/categories.ts` (`CategorySeedRow`), falls leer.
+- **Öffentlich:** `GET /api/taxonomy/categories` — aktive Kategorien inkl. Fachbereiche und Takumi-Zählung; Kategorieseiten laden via `getPublicCategoriesForApp()` / `getCategoryForAppBySlug()`.
+- **Admin:** `/admin/taxonomy` — CRUD, Lucide-Icon (`lib/taxonomy-icons.ts`) oder **eigenes Icon** via `POST /api/admin/taxonomy/category-icon` (Vercel Blob). `POST /api/admin/taxonomy/backfill` mappt alte Expert-Felder auf Junction-Tabellen.
+- **Takumi-Profil:** `PUT /api/user/takumi-profile` mit `categoryIds`, `specialtyIds`, `primaryCategoryId`, `primarySpecialtyId`; UI: `components/takumi-taxonomy-editor.tsx`.
+- **Listen:** `lib/expert-to-takumi.ts` — `categorySlugs[]`, `taxonomySearchText`, `allSpecialties[]` für Filter/Suche.
+
 ---
 
 ## Datenfluss
@@ -40,7 +49,7 @@ diAIway ist eine **Hybrid-App**:
 
 1. Shugyo wählt Takumi + Termin → `POST /api/bookings` (max. 7 Tage im Voraus; `deferNotification: true`)
 2. Buchung mit `paymentStatus: unpaid` erstellt
-3. **Rechnungsdaten-Pflicht (Shugyo):** Vollständiges `invoiceData` (Privat/Unternehmen + Pflichtfelder, siehe `lib/invoice-requirements.ts`) wird serverseitig geprüft vor **jedem** Zahlungsstart: `startBookingCheckout` / `startSessionCheckout`, `POST /api/bookings/[id]/pay-with-wallet`, `lib/wallet-service` (`payBookingWithWallet`, `chargeInstantCallToWallet` bei Betrag > 0), sowie `POST /api/pay/[bookingId]` (E-Mail-Link mit HMAC-Token). Antworten können `code: "INVOICE_INCOMPLETE"` und `missingFieldKeys` liefern. Locale für Texte: Cookie `diaiway-locale` oder `Accept-Language` (`lib/server-locale.ts`).
+3. **Rechnungsdaten-Pflicht (Shugyo):** Vollständiges `invoiceData` (Privat/Unternehmen + Pflichtfelder, siehe `lib/invoice-requirements.ts`; USt-IdNr./Steuernummer optional; Unternehmen: Firmenname Pflicht, vollständiger Name optional) wird serverseitig geprüft vor **jedem** Zahlungsstart: `startBookingCheckout` / `startSessionCheckout`, `POST /api/bookings/[id]/pay-with-wallet`, `lib/wallet-service` (`payBookingWithWallet`, `chargeInstantCallToWallet` bei Betrag > 0), sowie `POST /api/pay/[bookingId]` (E-Mail-Link mit HMAC-Token). Antworten können `code: "INVOICE_INCOMPLETE"` und `missingFieldKeys` liefern. Locale für Texte: Cookie `diaiway-locale` oder `Accept-Language` (`lib/server-locale.ts`).
 4. Zahlung: Stripe Embedded Checkout (Hold) oder Wallet; Pay-Link mit Rate-Limit pro IP; Wallet-Zahlung zusätzlich **pro Nutzer + IP** (`rateLimitAll`), ohne Extra-Kosten (In-Memory pro Instanz — ergänzend Vercel Firewall im Dashboard möglich)
 5. Nach Zahlung: Webhook oder `verifySessionPayment` → `paymentStatus: paid` (Webhook loggt **AUDIT**, falls bei `booking_payment` dennoch unvollständige Rechnungsdaten erkannt werden — Zahlung wird nicht automatisch storniert)
 6. `notifyAfterPayment` (idempotent) → E-Mail + Push an Takumi
@@ -77,6 +86,19 @@ diAIway ist eine **Hybrid-App**:
 - **Stripe**: Hold & Capture (manual capture); **7-Tage-Hold-Fenster** (nicht 24h); Capture nach Session oder via Cron
 - **Wallet**: Atomare Abzüge via `prisma.$transaction` mit Balance-Guard (`user.balance >= amountCents` vor `decrement`); `WalletTransaction`-Audit; Balance nie negativ
 - **Admin Finance**: Force Capture, Manual Release mit Doppelbestätigung; Audit-Log, CSV-Export, DATEV
+
+### Rechnungsdaten vs. Zahlungsvorgang (fachliche Trennung)
+
+Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnungslogik und Zahlungsmittel vermeiden.
+
+| Aspekt | Rechnungsdaten (`User.invoiceData`) | Zahlungsvorgang (Stripe, Wallet, …) |
+|--------|-------------------------------------|-------------------------------------|
+| **Zweck** | Stammdaten für **Rechnungsstellung** (PDF, Versand, steuerliche Angaben) | **Autorisierung / Einzug** des Zahlungsbetrags |
+| **Quelle der Wahrheit für die Rechnung** | Nur die im Profil gespeicherten Felder | nicht die Eingaben im PSP-Checkout als Rechnungsersatz |
+| **Pflicht vor Zahlung** | Vollständigkeit nach `lib/invoice-requirements.ts` (`validateInvoiceDataForPayment`): **Privat** — vollständiger Name, Anschrift, PLZ, Ort, Land, E-Mail; **Unternehmen** — Firmenname + dieselbe Anschrift/E-Mail, vollständiger Name **optional**. **Optional:** USt-IdNr., Steuernummer. | Server prüft Vollständigkeit der **gespeicherten** `invoiceData` **vor** jedem Zahlungsstart (`assertInvoiceCompleteForPayment` u. a. in `app/actions/stripe.ts`, Wallet- und Pay-Routen). Ohne diese Daten **keine** Zahlung. |
+| **Übernahme in den PSP** | Die Rechnungsstammdaten werden **nicht** in die Stripe Embedded Checkout Session als Billing-/Rechnungsadresse übernommen; Checkout-Metadaten betreffen Buchung/Zahlungstyp, nicht die komplette Rechnungsadresse. | Der Nutzer kann eine Zahlungsart wählen, deren angezeigte Kartendaten **nicht** 1:1 den Rechnungsdaten entsprechen müssen — für die **Ausstellung** der Rechnung bleiben dennoch die **profilgespeicherten** Rechnungsdaten maßgeblich. |
+
+**Profil-UI:** Unter „Meine Rechnungsdaten“ (`app/(app)/profile/invoice-data/page.tsx`) wird die Unterscheidung für Nutzer erklärt; Speichern ist über `sanitizeInvoiceData` (`lib/security.ts`) auch bei **noch unvollständigen** Angaben möglich — die **Zahlungsbereitschaft** wird separat anhand derselben Regeln wie oben angezeigt.
 
 ### Push-Benachrichtigungen
 - **Web**: Web Push (VAPID) via `web-push`; `POST /api/push/subscribe` speichert `PushSubscription`; `public/sw.js` zeigt Notifications mit Quick Actions

@@ -54,6 +54,10 @@ export async function POST() {
 
     await prisma.expert.createMany({ data: seedData })
 
+    const { ensureTaxonomySeeded, backfillExpertTaxonomyFromLegacy } = await import("@/lib/taxonomy-server")
+    await ensureTaxonomySeeded()
+    await backfillExpertTaxonomyFromLegacy()
+
     return NextResponse.json({
       success: true,
       message: `${seedData.length} Experten erfolgreich in die Datenbank geschrieben.`,

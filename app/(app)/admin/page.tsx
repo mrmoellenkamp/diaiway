@@ -23,6 +23,7 @@ import {
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
   Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, XCircle, FolderOpen, Send,
   Scan,
+  Tags,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
@@ -1942,7 +1943,21 @@ export default function AdminPage() {
 
             <TabsContent value="system" className="mt-4">
               <div className="flex flex-col gap-4">
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+                        <Tags className="size-5 text-violet-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Kategorien & Fachbereiche</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Taxonomie pflegen, Lucide-Icon oder eigenes Bild, Takumi-Zuordnung</p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/taxonomy"><ExternalLink className="size-3" />Öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                   <div className="rounded-xl border border-border/50 bg-card p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
