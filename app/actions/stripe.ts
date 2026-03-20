@@ -4,7 +4,6 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
-import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 
 export interface SessionCheckoutParams {
   bookingId: string
@@ -32,15 +31,6 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
-
-  const shugyo = await prisma.user.findUnique({
-    where: { id: shugyoId },
-    select: { invoiceData: true },
-  })
-  const invoiceValidation = validateInvoiceDataForPayment(shugyo?.invoiceData)
-  if (!invoiceValidation.ok) {
-    throw new Error(`INVOICE_DATA_REQUIRED|/profile/invoice-data?required=1|${invoiceValidation.message}`)
-  }
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")
@@ -114,15 +104,6 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
-
-  const shugyo = await prisma.user.findUnique({
-    where: { id: shugyoId },
-    select: { invoiceData: true },
-  })
-  const invoiceValidation = validateInvoiceDataForPayment(shugyo?.invoiceData)
-  if (!invoiceValidation.ok) {
-    throw new Error(`INVOICE_DATA_REQUIRED|/profile/invoice-data?required=1|${invoiceValidation.message}`)
-  }
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")

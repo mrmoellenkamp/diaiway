@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         username: true,
-        customerNumber: true,
         email: true,
         role: true,
         appRole: true,

@@ -10,7 +10,6 @@ import { validateBookingDateWindow } from "@/lib/booking-date-validation"
 import { emailForName } from "@/lib/email-utils"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
-import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
 
 export const runtime = "nodejs"
 
@@ -24,7 +23,6 @@ export const GET = apiHandler(async (req) => {
   const authResult = await requireAuth()
   if (authResult.response) return authResult.response
   const { session } = authResult
-  void expireStaleScheduledBookings().catch(() => {})
 
   const { searchParams } = new URL(req.url)
   const view = searchParams.get("view")
@@ -53,7 +51,7 @@ export const GET = apiHandler(async (req) => {
   const bookings = await prisma.booking.findMany({
     where: whereClause,
     include: { expert: { select: { avatar: true, subcategory: true } } },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }, { createdAt: "desc" }],
+    orderBy: { createdAt: "desc" },
   })
 
   return NextResponse.json({

@@ -86,7 +86,7 @@ interface TopExpert {
 
 interface AdminUser {
   id: string; name: string; username: string | null; email: string; role: string; appRole: string
-  image: string; customerNumber: string | null; createdAt: string; _count: { bookings: number }
+  image: string; createdAt: string; _count: { bookings: number }
 }
 
 interface AdminBooking {
@@ -502,9 +502,6 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Kundennummer: {u.customerNumber ?? ""}
-                    </p>
                     <p className="text-[10px] text-muted-foreground">{u._count.bookings} Buchungen · {relDate(u.createdAt)}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">

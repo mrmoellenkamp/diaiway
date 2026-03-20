@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { normalizeUsername, validateUsername } from "@/app/actions/username"
+import { validateUsername } from "@/app/actions/username"
 import { auth } from "@/lib/auth"
 
 export const runtime = "nodejs"
@@ -13,7 +13,7 @@ export const runtime = "nodejs"
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const username = normalizeUsername(searchParams.get("username") ?? "")
+  const username = searchParams.get("username") ?? ""
 
   const validation = await validateUsername(username)
   if (!validation.ok) {
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
   const existing = await prisma.user.findFirst({
     where: {
-      username,
+      username: username.trim(),
       ...(currentUserId ? { NOT: { id: currentUserId } } : {}),
     },
     select: { id: true },

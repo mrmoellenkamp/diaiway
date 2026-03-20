@@ -73,7 +73,7 @@ export default function SettingsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">{t("settings.title")}</h1>
+            <h1 className="text-lg font-bold text-foreground">{t("common.settings")}</h1>
             <p className="text-xs text-muted-foreground">{t("settings.subtitle")}</p>
           </div>
         </div>

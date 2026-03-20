@@ -206,9 +206,6 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               const { Browser } = await import("@capacitor/browser")
               await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
               // App wartet auf Deep Link diaiway://booking-confirmed — DeepLinkHandler übernimmt
-            } else if (tokenData.code === "INVOICE_DATA_INCOMPLETE" && tokenData.redirectTo) {
-              toast.error(tokenData.error || t("booking.checkoutStartFailed"))
-              router.push(tokenData.redirectTo)
             } else {
               // Fallback: normaler Checkout in der App
               setStep("checkout")

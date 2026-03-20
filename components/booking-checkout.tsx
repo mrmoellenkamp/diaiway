@@ -10,7 +10,6 @@ import { Loader2, Wallet, CreditCard } from "lucide-react"
 import { startBookingCheckout, verifySessionPayment } from "@/app/actions/stripe"
 import { useI18n } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -32,7 +31,6 @@ export function BookingCheckout({
   onError,
 }: BookingCheckoutProps) {
   const { t } = useI18n()
-  const router = useRouter()
   const canPayWithWallet = walletBalanceCents >= priceInCents
   const [paymentMethod, setPaymentMethod] = useState<"choice" | "wallet" | "card">(
     canPayWithWallet ? "choice" : "card"
@@ -105,14 +103,7 @@ export function BookingCheckout({
         setPolling(true)
       })
       .catch((err) => {
-        const msg = err?.message || ""
-        if (msg.startsWith("INVOICE_DATA_REQUIRED|")) {
-          const [, redirectTo, detail] = msg.split("|")
-          onError(detail || t("booking.checkoutStartFailed"))
-          if (redirectTo) router.push(redirectTo)
-          return
-        }
-        onError(msg || t("booking.checkoutStartFailed"))
+        onError(err.message || t("booking.checkoutStartFailed"))
         setLoading(false)
       })
   }

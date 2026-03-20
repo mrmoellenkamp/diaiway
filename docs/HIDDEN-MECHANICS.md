@@ -297,28 +297,6 @@ await prisma.expert.updateMany({
 
 **Zusammenspiel**: Nutzer-Inaktivity-Timeout (15 Min) und Takumi-Präsenz-Timeout (5 Min) sind bewusst verschieden: Takumis müssen aktiv ansprechbar bleiben; Shugyo-Nutzer haben mehr Spielraum.
 
-### Sessions-Tab-Triage & Expiry-Guard
-
-In `/sessions` werden Buchungen nicht nur nach DB-Status, sondern auch nach Terminzeit einsortiert:
-
-- **Aktiv**: nur `status = active`
-- **Geplant**: `pending` oder `confirmed` **und** Termin ist noch nicht abgelaufen
-- **Fertig**: `completed`, `declined`, `cancelled` sowie automatisch alle `pending/confirmed`, deren Endzeit bereits in der Vergangenheit liegt
-
-Damit bleiben alte, nie gestartete Termine nicht dauerhaft in „Geplant“ hängen.
-
-Zusätzlich blockiert der Start-Flow abgelaufene Termine serverseitig:
-
-- `POST /api/daily/meeting` prüft `booking.date + booking.endTime` (Europe/Berlin)
-- Bei abgelaufenem `pending/confirmed` Termin: **409** mit Fehlermeldung
-- Die Session-Seite zeigt in diesem Fall einen Fallback und führt zurück zur Sessions-Liste
-
-Housekeeping für Datenkonsistenz:
-
-- Beim Laden von `/api/bookings`, `/api/admin/bookings` und `/api/admin/stats` läuft ein Auto-Cleanup.
-- Abgelaufene **scheduled** Buchungen mit `status in (pending, confirmed)` und `paymentStatus in (unpaid, failed)` werden automatisch auf `cancelled` gesetzt.
-- Scope ist bewusst konservativ: Bereits bezahlte Buchungen werden nicht stillschweigend umgebucht, damit keine Finanzlogik umgangen wird.
-
 ### LogoutBackGuard (BFCache-Schutz)
 
 Nach Logout oder Timeout kann der Browser bei **Zurück**-Klick eine gecachte geschützte Seite anzeigen (Back-Forward Cache). Der **LogoutBackGuard** (`components/logout-back-guard.tsx`) fängt das ab:

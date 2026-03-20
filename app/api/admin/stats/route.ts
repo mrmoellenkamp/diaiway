@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
 
 export async function GET() {
   const session = await auth()
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-  void expireStaleScheduledBookings().catch(() => {})
 
   // Sync: Nutzer mit appRole=takumi müssen einen Expert haben (konsistente Anzeige)
   const takumiUsersToSync = await prisma.user.findMany({

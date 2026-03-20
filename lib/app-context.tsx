@@ -61,44 +61,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadProfile = useCallback(async () => {
     if (sessionStatus !== "authenticated" || !session?.user) return
     setProfileLoading(true)
-    // Retry up to 3 times with backoff — handles transient DB/network issues on first load
-    let data: Record<string, unknown> | null = null
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const r = await fetch("/api/user/profile")
-        if (r.ok) {
-          data = await r.json()
-          break
-        }
-        // 401 = not authenticated, no point retrying
-        if (r.status === 401) break
-        // 5xx = transient server error, retry after backoff
-        if (r.status >= 500 && attempt < 2) {
-          await new Promise((res) => setTimeout(res, 300 * Math.pow(2, attempt)))
-          continue
-        }
-        break
-      } catch {
-        if (attempt < 2) {
-          await new Promise((res) => setTimeout(res, 300 * Math.pow(2, attempt)))
-        }
+    try {
+      const r = await fetch("/api/user/profile")
+      const data = r.ok ? await r.json() : null
+      if (data) {
+        setRoleState((data.appRole as UserRole) || "shugyo")
+        setProfileData({
+          name: data.name || "",
+          username: data.username ?? null,
+          email: data.email || "",
+          image: data.image || "",
+          isVerified: data.isVerified ?? false,
+          favorites: Array.isArray(data.favorites) ? data.favorites : [],
+          languages: Array.isArray(data.languages) ? data.languages : [],
+          skillLevel: data.skillLevel ?? null,
+          appRole: (data.appRole as UserRole) || "shugyo",
+        })
       }
+    } catch {
+      /* ignore */
+    } finally {
+      setProfileLoading(false)
     }
-    if (data) {
-      setRoleState((data.appRole as UserRole) || "shugyo")
-      setProfileData({
-        name: (data.name as string) || "",
-        username: (data.username as string | null) ?? null,
-        email: (data.email as string) || "",
-        image: (data.image as string) || "",
-        isVerified: (data.isVerified as boolean) ?? false,
-        favorites: Array.isArray(data.favorites) ? (data.favorites as string[]) : [],
-        languages: Array.isArray(data.languages) ? (data.languages as string[]) : [],
-        skillLevel: (data.skillLevel as string | null) ?? null,
-        appRole: (data.appRole as UserRole) || "shugyo",
-      })
-    }
-    setProfileLoading(false)
   }, [sessionStatus, session?.user])
 
   const refreshProfile = useCallback(async () => {

@@ -57,11 +57,10 @@ export function CollapsibleAiBox({
         )}
       >
         <div className={cn(
-          "relative flex size-10 shrink-0 items-center justify-center rounded-full shadow-md",
-          isPrimary ? "bg-primary shadow-primary/30" : "bg-primary"
+          "flex size-10 shrink-0 items-center justify-center rounded-lg",
+          isPrimary ? "bg-accent/20" : "bg-primary/10"
         )}>
-          <Sparkles className="size-5 text-accent" />
-          <span className="absolute -top-0.5 -right-0.5 inline-flex size-2 rounded-full bg-accent/90" />
+          <Sparkles className={cn("size-5", isPrimary ? "text-accent" : "text-primary")} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <span className={cn(

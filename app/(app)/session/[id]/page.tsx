@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useI18n } from "@/lib/i18n"
-import { parseBerlinDateTime } from "@/lib/date-utils"
 import { toast } from "sonner"
 
 type CallMode = "video" | "voice"
@@ -27,9 +26,6 @@ interface BookingData {
   booking: {
     id: string
     expertId: string
-    date: string
-    startTime: string
-    endTime: string
     callType: "VIDEO" | "VOICE"
     bookingMode?: "scheduled" | "instant"
     isExpert: boolean
@@ -477,24 +473,6 @@ function SessionCallContent() {
           </p>
         </div>
         <Button onClick={() => router.push("/home")}>{t("common.startPage")}</Button>
-      </div>
-    )
-  }
-
-  const scheduledEndedAt = parseBerlinDateTime(
-    booking.date,
-    booking.endTime || booking.startTime || "00:00"
-  )
-  const isExpiredScheduled = ["pending", "confirmed"].includes(booking.status) && scheduledEndedAt <= new Date()
-  if (isExpiredScheduled) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
-        <p className="text-center text-muted-foreground">
-          {t("session.expiredBookingFallback")}
-        </p>
-        <Button variant="outline" onClick={() => router.push("/sessions")}>
-          {t("sessions.backToSessions")}
-        </Button>
       </div>
     )
   }

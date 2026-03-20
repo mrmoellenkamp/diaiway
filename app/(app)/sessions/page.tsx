@@ -12,33 +12,17 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { Video, CalendarCheck, CheckCircle2, Inbox, ArrowLeft } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
-import { parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
 
 type TabId = "active" | "upcoming" | "completed"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-function bookingStartKey(booking: Pick<BookingRecord, "date" | "startTime">): string {
-  return `${booking.date}T${booking.startTime || "00:00"}`
-}
-
-function bookingEndAt(booking: Pick<BookingRecord, "date" | "endTime" | "startTime">): Date {
-  return parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00")
-}
-
-function isExpiredUpcoming(booking: Pick<BookingRecord, "status" | "date" | "startTime" | "endTime">): boolean {
-  if (!["pending", "confirmed"].includes(booking.status)) return false
-  return bookingEndAt(booking) <= new Date()
-}
-
-/** Map booking to tab category (aktiv | geplant | fertig), incl. expiry fallback */
-function tabForBooking(booking: Pick<BookingRecord, "status" | "date" | "startTime" | "endTime">): TabId {
-  if (booking.status === "active") return "active"
-  if (booking.status === "pending" || booking.status === "confirmed") {
-    return isExpiredUpcoming(booking) ? "completed" : "upcoming"
-  }
-  return "completed"
+/** Map booking status to tab category (aktiv | geplant | fertig) */
+function tabForStatus(status: string): TabId {
+  if (status === "active") return "active"             // Aktiv: laufender Call
+  if (status === "pending" || status === "confirmed") return "upcoming"  // Geplant
+  return "completed"  // Fertig: completed, declined, cancelled
 }
 
 function EmptyState({ tab }: { tab: TabId }) {
@@ -110,9 +94,9 @@ function SessionsContent() {
   // Auto-switch from "active" to "upcoming" if no active sessions exist (only once, when data first loads)
   useEffect(() => {
     if (!data?.bookings || autoSwitched || tabParam) return
-    const hasActive = data.bookings.some((b) => tabForBooking(b) === "active")
+    const hasActive = data.bookings.some((b) => tabForStatus(b.status) === "active")
     if (!hasActive && activeTab === "active") {
-      const hasUpcoming = data.bookings.some((b) => tabForBooking(b) === "upcoming")
+      const hasUpcoming = data.bookings.some((b) => tabForStatus(b.status) === "upcoming")
       setActiveTab(hasUpcoming ? "upcoming" : "completed")
     }
     setAutoSwitched(true)
@@ -152,16 +136,17 @@ function SessionsContent() {
   }, [bookings])
 
   const filtered = bookings
-    .filter((b) => tabForBooking(b) === activeTab)
+    .filter((b) => tabForStatus(b.status) === activeTab)
     .sort((a, b) => {
+      const key = (x: BookingRecord) => `${x.date}T${x.startTime || "00:00"}`
       if (activeTab === "upcoming" || activeTab === "active") {
-        return bookingStartKey(a).localeCompare(bookingStartKey(b))
+        return key(a).localeCompare(key(b))
       }
-      return bookingStartKey(b).localeCompare(bookingStartKey(a))
+      return key(b).localeCompare(key(a))
     })
 
   // Count for tab badges
-  const activeCount = bookings.filter((b) => tabForBooking(b) === "active").length
+  const activeCount = bookings.filter((b) => tabForStatus(b.status) === "active").length
 
   return (
     <PageContainer>

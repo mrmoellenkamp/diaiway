@@ -1,9 +1,6 @@
-const USERNAME_ALLOWED_REGEX = /^[\p{L}\p{N} ._'-]+$/u
-const USERNAME_HAS_ALNUM_REGEX = /[\p{L}\p{N}]/u
+"use server"
 
-export function normalizeUsername(username: string): string {
-  return username.trim().replace(/\s+/g, " ")
-}
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 
 /**
  * Validiert einen Usernamen: min. 3 Zeichen, nur Buchstaben, Ziffern, Unterstrich.
@@ -11,18 +8,15 @@ export function normalizeUsername(username: string): string {
 export async function validateUsername(
   username: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const trimmed = normalizeUsername(username)
+  const trimmed = username.trim()
   if (trimmed.length < 3) {
     return { ok: false, error: "Mindestens 3 Zeichen erforderlich." }
   }
   if (trimmed.length > 30) {
     return { ok: false, error: "Maximal 30 Zeichen." }
   }
-  if (!USERNAME_ALLOWED_REGEX.test(trimmed) || !USERNAME_HAS_ALNUM_REGEX.test(trimmed)) {
-    return {
-      ok: false,
-      error: "Erlaubt sind Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
-    }
+  if (!USERNAME_REGEX.test(trimmed)) {
+    return { ok: false, error: "Nur Buchstaben, Ziffern und Unterstrich erlaubt." }
   }
   return { ok: true }
 }
