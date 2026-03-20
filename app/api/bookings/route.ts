@@ -25,7 +25,7 @@ export const GET = apiHandler(async (req) => {
   if (authResult.response) return authResult.response
   const { session } = authResult
 
-  await expireStaleScheduledBookings()
+  void expireStaleScheduledBookings().catch(() => {})
 
   const { searchParams } = new URL(req.url)
   const view = searchParams.get("view")
