@@ -1,7 +1,47 @@
 import { NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
+
+const ADMIN_STATS_BOOKING_SELECT = {
+  id: true,
+  userId: true,
+  expertId: true,
+  userName: true,
+  expertName: true,
+  date: true,
+  startTime: true,
+  status: true,
+  price: true,
+  paymentStatus: true,
+  createdAt: true,
+  cancelledBy: true,
+} satisfies Prisma.BookingSelect
+
+const ADMIN_STATS_USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  appRole: true,
+  createdAt: true,
+} satisfies Prisma.UserSelect
+
+const ADMIN_STATS_EXPERT_SELECT = {
+  id: true,
+  name: true,
+  categoryName: true,
+  rating: true,
+  sessionCount: true,
+  reviewCount: true,
+  isLive: true,
+  pricePerSession: true,
+} satisfies Prisma.ExpertSelect
+
+type AdminStatsRecentBooking = Prisma.BookingGetPayload<{ select: typeof ADMIN_STATS_BOOKING_SELECT }>
+type AdminStatsRecentUser = Prisma.UserGetPayload<{ select: typeof ADMIN_STATS_USER_SELECT }>
+type AdminStatsTopExpert = Prisma.ExpertGetPayload<{ select: typeof ADMIN_STATS_EXPERT_SELECT }>
 
 /** Fallback wenn DB-Schema fehlt oder Aggregationen fehlschlagen — UI bleibt bedienbar. */
 function emptyStatsPayload(degradedReason: string) {
@@ -112,9 +152,9 @@ export async function GET() {
   let paidBookings: { _sum: { paidAmount: number | null }; _count: number }
   let paidThisMonth: { _sum: { paidAmount: number | null }; _count: number }
   let paidLastMonth: { _sum: { paidAmount: number | null }; _count: number }
-  let recentBookings: Awaited<ReturnType<typeof prisma.booking.findMany>>
-  let recentUsers: Awaited<ReturnType<typeof prisma.user.findMany>>
-  let topExperts: Awaited<ReturnType<typeof prisma.expert.findMany>>
+  let recentBookings: AdminStatsRecentBooking[]
+  let recentUsers: AdminStatsRecentUser[]
+  let topExperts: AdminStatsTopExpert[]
 
   try {
     ;[
@@ -167,46 +207,17 @@ export async function GET() {
     prisma.booking.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        userId: true,
-        expertId: true,
-        userName: true,
-        expertName: true,
-        date: true,
-        startTime: true,
-        status: true,
-        price: true,
-        paymentStatus: true,
-        createdAt: true,
-        cancelledBy: true,
-      },
+      select: ADMIN_STATS_BOOKING_SELECT,
     }),
     prisma.user.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        appRole: true,
-        createdAt: true,
-      },
+      select: ADMIN_STATS_USER_SELECT,
     }),
     prisma.expert.findMany({
       take: 5,
       orderBy: { sessionCount: "desc" },
-      select: {
-        id: true,
-        name: true,
-        categoryName: true,
-        rating: true,
-        sessionCount: true,
-        reviewCount: true,
-        isLive: true,
-        pricePerSession: true,
-      },
+      select: ADMIN_STATS_EXPERT_SELECT,
     }),
     ])
   } catch (err: unknown) {
