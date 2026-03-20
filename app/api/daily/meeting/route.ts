@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 export const runtime = "nodejs"
 
@@ -74,6 +75,15 @@ export async function POST(req: Request) {
   }
   if ((userRole === "shugyo" && !isShugyo) || (userRole === "takumi" && !isTakumi)) {
     return NextResponse.json({ error: "userRole stimmt nicht mit deiner Rolle in dieser Buchung überein." }, { status: 403 })
+  }
+
+  const endAt = parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00")
+  const now = new Date()
+  if (["pending", "confirmed"].includes(booking.status) && endAt <= now) {
+    return NextResponse.json(
+      { error: "Diese Buchung ist abgelaufen und kann nicht mehr gestartet werden." },
+      { status: 409 }
+    )
   }
 
   const headers: Record<string, string> = {

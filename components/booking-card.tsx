@@ -21,7 +21,7 @@ import {
 import { Video, Clock, Calendar, Phone, PhoneCall, X, XCircle, Loader2, AlertTriangle, CheckCircle2, UserX, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
-import { formatDateBerlin, formatDateBerlinShort } from "@/lib/date-utils"
+import { formatDateBerlin, formatDateBerlinShort, parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
 
 const STATUS_KEYS: Record<string, string> = {
@@ -82,9 +82,11 @@ export function BookingCard({
     label: t(statusKey),
     className: statusClassNames[booking.status] || statusClassNames.pending,
   }
+  const isExpiredConfirmed = booking.status === "confirmed" &&
+    parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00") <= new Date()
   const isLive = booking.status === "active"
-  const canJoin = booking.status === "confirmed" || booking.status === "active"
-  const canCancel = ["pending", "confirmed", "active"].includes(booking.status)
+  const canJoin = booking.status === "active" || (booking.status === "confirmed" && !isExpiredConfirmed)
+  const canCancel = ["pending", "active"].includes(booking.status) || (booking.status === "confirmed" && !isExpiredConfirmed)
   const bookingId = booking.id || booking._id || ""
 
   // When dialog opens, fetch real-time cancel fee preview
