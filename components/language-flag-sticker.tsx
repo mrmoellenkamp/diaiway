@@ -36,8 +36,8 @@ const LANG_NAMES: Record<string, string> = {
 
 interface LanguageFlagStickerProps {
   lang: string
-  /** "code" = Flag+DE, "full" = Flag+Deutsch, "none" = only flag mit Rahmen, "abbrev" = nur DE (ohne Flag/Rahmen), "flagOnly" = nur Fahne ohne Rahmen/Kürzel, "codeNoFrame" = Flag+DE ohne Rahmen (für Header) */
-  showLabel?: "code" | "full" | "none" | "abbrev" | "flagOnly" | "codeNoFrame"
+  /** "code" = Flag+DE, "full" = Flag+Deutsch, "none" = only flag mit Rahmen, "abbrev" = nur DE (ohne Flag/Rahmen), "flagOnly" = nur Fahne ohne Rahmen/Kürzel */
+  showLabel?: "code" | "full" | "none" | "abbrev" | "flagOnly"
   size?: "sm" | "md"
   className?: string
 }
@@ -64,32 +64,6 @@ export function LanguageFlagSticker({
         title={LANG_NAMES[lang.toLowerCase()] ?? lang}
       >
         {lang.toUpperCase()}
-      </span>
-    )
-  }
-
-  if (showLabel === "codeNoFrame") {
-    const FlagSvg = hasFlag ? FLAG_COMPONENTS[countryCode] : null
-    return (
-      <span
-        className={cn("inline-flex items-center gap-1", size === "sm" && "gap-0.5", className)}
-        title={LANG_NAMES[lang.toLowerCase()] ?? lang}
-      >
-        {FlagSvg && (
-          <span
-            className={cn(
-              "inline-block flex-shrink-0 overflow-hidden rounded-[0.2rem]",
-              size === "sm" && "size-[1rem]",
-              size === "md" && "size-4"
-            )}
-            aria-hidden
-          >
-            <FlagSvg className="size-full object-cover" />
-          </span>
-        )}
-        <span className={cn("font-medium text-inherit", size === "sm" && "text-xs", size === "md" && "text-sm")}>
-          {lang.toUpperCase()}
-        </span>
       </span>
     )
   }
