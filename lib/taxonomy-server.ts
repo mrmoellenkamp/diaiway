@@ -5,6 +5,22 @@ import { apiCategoryToCategory } from "@/lib/taxonomy-dto"
 import type { Category } from "@/lib/types"
 import { getStaticCategoriesFallback, getStaticCategoryBySlugFallback } from "@/lib/taxonomy-fallback"
 
+/**
+ * True, wenn die Taxonomie-Migration auf der DB liegt (`TaxonomyCategory` + `TaxonomySpecialty`).
+ * Sonst: `prisma migrate deploy` (Migration `20260320120000_taxonomy_categories`).
+ */
+export async function isTaxonomySchemaAvailable(): Promise<boolean> {
+  try {
+    await Promise.all([
+      prisma.taxonomyCategory.findFirst({ select: { id: true } }),
+      prisma.taxonomySpecialty.findFirst({ select: { id: true } }),
+    ])
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Legt die Standard-Kategorien aus lib/categories.ts an, falls die Tabelle leer ist. */
 export async function ensureTaxonomySeeded(): Promise<void> {
   try {

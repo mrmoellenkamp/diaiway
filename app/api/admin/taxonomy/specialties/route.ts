@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdminApi } from "@/lib/require-admin"
+import { isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
 
 export const runtime = "nodejs"
 
 export async function POST(req: Request) {
   const admin = await requireAdminApi()
   if (!admin.ok) return admin.response
+  if (!(await isTaxonomySchemaAvailable())) {
+    return NextResponse.json(
+      {
+        error: "Taxonomie-Tabellen fehlen. Zuerst npx prisma migrate deploy.",
+        code: "TAXONOMY_SCHEMA_MISSING",
+      },
+      { status: 503 },
+    )
+  }
   try {
     const body = await req.json()
     const categoryId = typeof body.categoryId === "string" ? body.categoryId : ""

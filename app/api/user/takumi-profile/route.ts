@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { ensureTaxonomySeeded } from "@/lib/taxonomy-server"
+import { ensureTaxonomySeeded, isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
 
 export const runtime = "nodejs"
 
@@ -14,15 +14,26 @@ export async function GET() {
   }
 
   try {
-    await ensureTaxonomySeeded()
-    const expert = await prisma.expert.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        categoryAssignments: { select: { categoryId: true } },
-        specialtyAssignments: { select: { specialtyId: true } },
-      },
-    })
+    const taxonomyReady = await isTaxonomySchemaAvailable()
+    if (taxonomyReady) {
+      await ensureTaxonomySeeded()
+    }
+
+    const expert = taxonomyReady
+      ? await prisma.expert.findUnique({
+          where: { userId: session.user.id },
+          include: {
+            categoryAssignments: { select: { categoryId: true } },
+            specialtyAssignments: { select: { specialtyId: true } },
+          },
+        })
+      : await prisma.expert.findUnique({
+          where: { userId: session.user.id },
+        })
     if (!expert) return NextResponse.json({ exists: false })
+
+    const categoryAssignments = "categoryAssignments" in expert ? expert.categoryAssignments : []
+    const specialtyAssignments = "specialtyAssignments" in expert ? expert.specialtyAssignments : []
 
     return NextResponse.json({
       exists: true,
@@ -33,8 +44,8 @@ export async function GET() {
       categoryName: expert.categoryName,
       subcategory: expert.subcategory,
       taxonomy: {
-        categoryIds: expert.categoryAssignments.map((a) => a.categoryId),
-        specialtyIds: expert.specialtyAssignments.map((a) => a.specialtyId),
+        categoryIds: categoryAssignments.map((a) => a.categoryId),
+        specialtyIds: specialtyAssignments.map((a) => a.specialtyId),
         primaryCategoryId: expert.primaryCategoryId,
         primarySpecialtyId: expert.primarySpecialtyId,
       },
@@ -118,7 +129,10 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json()
-    await ensureTaxonomySeeded()
+    const taxonomyReady = await isTaxonomySchemaAvailable()
+    if (taxonomyReady) {
+      await ensureTaxonomySeeded()
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -162,6 +176,17 @@ export async function PUT(req: Request) {
     let subcategoryForCreate = ""
 
     if (hasNewTaxonomy) {
+      if (!taxonomyReady) {
+        return NextResponse.json(
+          {
+            error:
+              "Die Kategorie-Datenbank ist auf diesem Server noch nicht eingerichtet. Bitte Migration ausführen: npx prisma migrate deploy (Ordner 20260320120000_taxonomy_categories). Bis dahin kannst du das Profil nur mit der einfachen Kategorieauswahl (Slug/Text) speichern.",
+            code: "TAXONOMY_SCHEMA_MISSING",
+          },
+          { status: 503 },
+        )
+      }
+
       const categoryIds = [...new Set(body.categoryIds as string[])]
       const specialtyIds = [...new Set(body.specialtyIds as string[])]
       const primaryCategoryId = body.primaryCategoryId as string
@@ -309,7 +334,9 @@ export async function PUT(req: Request) {
     const slug = (data.categorySlug as string) || expert.categorySlug
     const sub = (data.subcategory as string) ?? expert.subcategory
     const cname = (data.categoryName as string) || expert.categoryName
-    await applyTaxonomyFromLegacy(expert.id, slug, sub, cname)
+    if (taxonomyReady) {
+      await applyTaxonomyFromLegacy(expert.id, slug, sub, cname)
+    }
 
     await prisma.user.update({
       where: { id: session.user.id },

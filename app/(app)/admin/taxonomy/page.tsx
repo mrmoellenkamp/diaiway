@@ -53,6 +53,8 @@ type AdminCategory = {
 export default function AdminTaxonomyPage() {
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<AdminCategory[]>([])
+  /** DB-Migration fehlt (TaxonomyCategory / TaxonomySpecialty) */
+  const [schemaBlockMessage, setSchemaBlockMessage] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -75,6 +77,15 @@ export default function AdminTaxonomyPage() {
       const res = await fetch("/api/admin/taxonomy/categories")
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Laden fehlgeschlagen")
+
+      if (data.schemaMissing && typeof data.schemaMessage === "string") {
+        setSchemaBlockMessage(data.schemaMessage)
+        setCategories([])
+        setSelectedId(null)
+        return
+      }
+
+      setSchemaBlockMessage(null)
       const list = (data.categories ?? []) as AdminCategory[]
       setCategories(list)
       setSelectedId((prev) => {
@@ -82,7 +93,8 @@ export default function AdminTaxonomyPage() {
         return list[0]?.id ?? null
       })
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Fehler")
+      setSchemaBlockMessage(null)
+      toast.error(e instanceof Error ? e.message : "Fehler beim Laden.")
     } finally {
       setLoading(false)
     }
@@ -257,14 +269,33 @@ export default function AdminTaxonomyPage() {
             <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
             Aktualisieren
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleBackfill}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleBackfill}
+            disabled={!!schemaBlockMessage}
+            title={schemaBlockMessage ?? undefined}
+          >
             Legacy-Takumis zuordnen
           </Button>
-          <Button size="sm" className="gap-1" onClick={() => setNewOpen(true)}>
+          <Button
+            size="sm"
+            className="gap-1"
+            onClick={() => setNewOpen(true)}
+            disabled={!!schemaBlockMessage}
+            title={schemaBlockMessage ?? undefined}
+          >
             <Plus className="size-4" />
             Neue Kategorie
           </Button>
         </div>
+
+        {schemaBlockMessage && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <p className="font-semibold">Datenbank-Schema unvollständig</p>
+            <p className="mt-1 text-destructive/90">{schemaBlockMessage}</p>
+          </div>
+        )}
 
         {loading && categories.length === 0 ? (
           <div className="flex justify-center py-16">
@@ -277,6 +308,13 @@ export default function AdminTaxonomyPage() {
                 <CardTitle className="text-sm">Kategorien</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto">
+                {categories.length === 0 && !loading && (
+                  <p className="text-sm text-muted-foreground py-6 text-center px-2">
+                    {schemaBlockMessage
+                      ? "Nach der Migration erscheinen hier die Kategorien."
+                      : "Noch keine Kategorien — „Neue Kategorie“ anlegen."}
+                  </p>
+                )}
                 {categories.map((c) => (
                   <button
                     key={c.id}

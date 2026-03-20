@@ -60,6 +60,8 @@ import {
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 interface Stats {
+  degraded?: boolean
+  degradedReason?: string
   users: { total: number; shugyo: number; takumi: number; newThisMonth: number; newLast30Days: number }
   experts: { total: number; live: number; verified: number }
   bookings: { total: number; thisMonth: number; last7Days: number; byStatus: Record<string, number> }
@@ -175,6 +177,12 @@ function OverviewTab({ stats }: { stats: Stats }) {
   const bs = stats.bookings.byStatus
   return (
     <div className="flex flex-col gap-5">
+      {stats.degraded && stats.degradedReason && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          <span className="font-semibold">Statistiken eingeschränkt. </span>
+          {stats.degradedReason}
+        </div>
+      )}
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard icon={Users} label="Nutzer gesamt" value={stats.users.total}
@@ -1788,7 +1796,13 @@ export default function AdminPage() {
     setStatsLoading(true)
     try {
       const res = await fetch("/api/admin/stats")
-      if (res.ok) setStats(await res.json())
+      if (res.ok) {
+        const data = (await res.json()) as Stats
+        setStats(data)
+        if (data.degraded && data.degradedReason) {
+          toast.warning(data.degradedReason)
+        }
+      }
     } finally {
       setStatsLoading(false)
     }

@@ -6,8 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Ohne Pooler: gleiche URL wie DATABASE_URL in .env setzen — oder `npm run db:migrate:deploy` (setzt Fallback).
+  // Mit Pooler (Vercel/Neon): DIRECT_URL = direkte Postgres-URL für Migrationen.
   directUrl = env("DIRECT_URL")
 }
 

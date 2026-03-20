@@ -1,14 +1,31 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdminApi } from "@/lib/require-admin"
-import { generateUniqueCategorySlug, getAllTaxonomyCategoriesAdmin } from "@/lib/taxonomy-server"
+import {
+  generateUniqueCategorySlug,
+  getAllTaxonomyCategoriesAdmin,
+  isTaxonomySchemaAvailable,
+} from "@/lib/taxonomy-server"
 import { isValidTaxonomyIconKey } from "@/lib/taxonomy-icons"
 
 export const runtime = "nodejs"
 
+const SCHEMA_HINT =
+  "Die Tabellen TaxonomyCategory / TaxonomySpecialty fehlen. Auf dem Server ausführen: npx prisma migrate deploy (Migration 20260320120000_taxonomy_categories)."
+
 export async function GET() {
   const admin = await requireAdminApi()
   if (!admin.ok) return admin.response
+
+  const schemaOk = await isTaxonomySchemaAvailable()
+  if (!schemaOk) {
+    return NextResponse.json({
+      categories: [],
+      schemaMissing: true,
+      schemaMessage: SCHEMA_HINT,
+    })
+  }
+
   try {
     const rows = await getAllTaxonomyCategoriesAdmin()
     return NextResponse.json({
@@ -40,6 +57,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const admin = await requireAdminApi()
   if (!admin.ok) return admin.response
+  if (!(await isTaxonomySchemaAvailable())) {
+    return NextResponse.json({ error: SCHEMA_HINT, code: "TAXONOMY_SCHEMA_MISSING" }, { status: 503 })
+  }
   try {
     const body = await req.json()
     const name = typeof body.name === "string" ? body.name.trim() : ""

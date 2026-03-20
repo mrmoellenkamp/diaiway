@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdminApi } from "@/lib/require-admin"
+import { isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
 
 export const runtime = "nodejs"
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireAdminApi()
   if (!admin.ok) return admin.response
+  if (!(await isTaxonomySchemaAvailable())) {
+    return NextResponse.json(
+      { error: "Taxonomie-Schema fehlt. npx prisma migrate deploy ausführen.", code: "TAXONOMY_SCHEMA_MISSING" },
+      { status: 503 },
+    )
+  }
   const { id } = await ctx.params
   try {
     const body = await req.json()
@@ -33,6 +40,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await requireAdminApi()
   if (!admin.ok) return admin.response
+  if (!(await isTaxonomySchemaAvailable())) {
+    return NextResponse.json(
+      { error: "Taxonomie-Schema fehlt. npx prisma migrate deploy ausführen.", code: "TAXONOMY_SCHEMA_MISSING" },
+      { status: 503 },
+    )
+  }
   const { id } = await ctx.params
   try {
     const n = await prisma.specialtyOnExpert.count({ where: { specialtyId: id } })
