@@ -5,6 +5,7 @@ import { createHmac } from "crypto"
 import { getInvoiceGateResult } from "@/lib/payment-invoice-guard"
 import { getRequestLocale } from "@/lib/server-locale"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { ensureCustomerNumber } from "@/lib/billing"
 
 export const runtime = "nodejs"
 
@@ -185,7 +186,12 @@ export async function GET(
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true, stripeSessionId: true },
+    select: {
+      paymentStatus: true,
+      stripeSessionId: true,
+      userId: true,
+      expert: { select: { userId: true } },
+    },
   })
   if (!booking) {
     return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
@@ -212,6 +218,15 @@ export async function GET(
             paidAmount: session.amount_total ?? 0,
           },
         })
+        // Fallback ohne Webhook/verifySessionPayment: KD trotzdem setzen (onPaymentReceived läuft hier nicht)
+        await ensureCustomerNumber(booking.userId).catch((err) =>
+          console.error("[pay GET status] ensureCustomerNumber shugyo:", err)
+        )
+        if (booking.expert?.userId) {
+          await ensureCustomerNumber(booking.expert.userId).catch((err) =>
+            console.error("[pay GET status] ensureCustomerNumber takumi:", err)
+          )
+        }
         return NextResponse.json({ status: "paid" })
       }
     } catch {

@@ -3,7 +3,7 @@
 import { put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
-import { getNextDocumentNumber } from "@/lib/billing"
+import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
 import {
   generateCreditNotePdf,
   generateInvoicePdf,
@@ -30,6 +30,10 @@ export async function creditWalletTopup(
       where: { userId, referenceId: stripeSessionId, type: "topup" },
     })
     if (existing) return { ok: true } // Idempotenz
+
+    await ensureCustomerNumber(userId).catch((err) =>
+      console.error("[creditWalletTopup] ensureCustomerNumber:", err)
+    )
 
     const wtId = await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -229,6 +233,14 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
   if (!booking) throw new Error("Booking not found")
   if (!booking.expert?.userId) throw new Error("Expert has no user")
 
+  // KD-Nummer spätestens beim Zahlungseingang (Shugyo + Takumi für spätere Belege)
+  await ensureCustomerNumber(booking.userId).catch((err) =>
+    console.error("[onPaymentReceived] ensureCustomerNumber shugyo:", err)
+  )
+  await ensureCustomerNumber(booking.expert.userId).catch((err) =>
+    console.error("[onPaymentReceived] ensureCustomerNumber takumi:", err)
+  )
+
   const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = totalAmountCents - platformFee
 
@@ -268,6 +280,13 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 
   const inv = validateInvoiceDataForPayment(booking.user?.invoiceData ?? null)
   if (!inv.ok) return { ok: false, error: "INVOICE_INCOMPLETE" }
+
+  await ensureCustomerNumber(booking.userId).catch((err) =>
+    console.error("[payBookingWithWallet] ensureCustomerNumber shugyo:", err)
+  )
+  await ensureCustomerNumber(expertUserId).catch((err) =>
+    console.error("[payBookingWithWallet] ensureCustomerNumber takumi:", err)
+  )
 
   const totalAmountCents = Math.round(
     (Number(booking.totalPrice ?? booking.price ?? 0)) * 100

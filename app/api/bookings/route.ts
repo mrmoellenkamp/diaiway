@@ -177,7 +177,9 @@ export const POST = apiHandler(async (req) => {
 
   const statusToken = randomBytes(32).toString("hex")
 
-  ensureCustomerNumber(session.user.id).catch(() => {})
+  await ensureCustomerNumber(session.user.id).catch((err) =>
+    console.error("[bookings POST] ensureCustomerNumber:", err)
+  )
 
   const booking = await prisma.$transaction(
     async (tx) => {

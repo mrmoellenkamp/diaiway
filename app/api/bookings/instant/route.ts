@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { ensureCustomerNumber } from "@/lib/billing"
 import { isWithinInstantSlots } from "@/lib/availability-utils"
 import { sendPushToUser } from "@/lib/push"
 import type { WeeklySlots } from "@/lib/availability-utils"
@@ -100,6 +101,9 @@ export async function POST(req: Request) {
     const totalPrice = price15Min * 2 // 30 Min als Platzhalter
 
     const statusToken = randomBytes(24).toString("hex")
+    await ensureCustomerNumber(session.user.id).catch((err) =>
+      console.error("[bookings/instant] ensureCustomerNumber:", err)
+    )
     const booking = await prisma.booking.create({
       data: {
         expertId: expert.id,
