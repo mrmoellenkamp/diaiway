@@ -144,12 +144,20 @@ function RegisterForm() {
       setError(t("register.errorEmpty"))
       return
     }
-    if (username.trim() && (usernameCheck === "taken" || usernameCheck === "invalid")) {
+    if (!username.trim()) {
+      setError(t("register.usernameRequired"))
+      return
+    }
+    if (usernameCheck === "idle" || usernameCheck === "checking") {
+      setError(t("register.usernameWaitCheck"))
+      return
+    }
+    if (usernameCheck === "taken" || usernameCheck === "invalid") {
       setError(usernameReason || t("register.usernameInvalid"))
       return
     }
-    if (username.trim() && usernameCheck === "checking") {
-      setError(t("register.usernameChecking"))
+    if (usernameCheck !== "available") {
+      setError(t("register.usernameInvalid"))
       return
     }
     if (password.length < 8) {
@@ -174,7 +182,7 @@ function RegisterForm() {
           name: name.trim(),
           email: email.toLowerCase().trim(),
           password,
-          username: username.trim() || undefined,
+          username: username.trim(),
           // Honeypot value — empty for real users
           _hp: honeypotRef.current?.value ?? "",
         }),

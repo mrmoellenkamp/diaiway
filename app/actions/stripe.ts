@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
+import { assertInvoiceCompleteForPayment } from "@/lib/payment-invoice-guard"
 
 export interface SessionCheckoutParams {
   bookingId: string
@@ -31,6 +32,8 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
+
+  await assertInvoiceCompleteForPayment(shugyoId)
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")
@@ -104,6 +107,8 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
+
+  await assertInvoiceCompleteForPayment(shugyoId)
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")

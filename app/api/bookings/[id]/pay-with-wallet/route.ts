@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { payBookingWithWallet } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { markVerified } from "@/lib/verification-service"
+import { getInvoiceIncompleteMessageForUser } from "@/lib/payment-invoice-guard"
 
 export const runtime = "nodejs"
 
@@ -34,6 +35,11 @@ export async function POST(
   }
   if (booking.paymentStatus === "paid") {
     return NextResponse.json({ ok: true, message: "Bereits bezahlt." })
+  }
+
+  const invoiceMsg = await getInvoiceIncompleteMessageForUser(session.user.id)
+  if (invoiceMsg) {
+    return NextResponse.json({ error: invoiceMsg, code: "INVOICE_INCOMPLETE" }, { status: 400 })
   }
 
   const result = await payBookingWithWallet(bookingId)
