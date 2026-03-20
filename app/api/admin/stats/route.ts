@@ -8,8 +8,7 @@ export async function GET() {
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-
-  await expireStaleScheduledBookings()
+  void expireStaleScheduledBookings().catch(() => {})
 
   // Sync: Nutzer mit appRole=takumi müssen einen Expert haben (konsistente Anzeige)
   const takumiUsersToSync = await prisma.user.findMany({

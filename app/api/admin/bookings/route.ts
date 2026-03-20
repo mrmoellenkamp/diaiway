@@ -8,8 +8,7 @@ export async function GET(req: NextRequest) {
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
-
-  await expireStaleScheduledBookings()
+  void expireStaleScheduledBookings().catch(() => {})
 
   const { searchParams } = req.nextUrl
   const q = searchParams.get("q") || ""

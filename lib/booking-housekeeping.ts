@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __bookingHousekeepingLastRunAtMs: number | undefined
+}
+
 function berlinDateStamp(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Berlin",
@@ -19,6 +24,12 @@ function berlinDateStamp(date = new Date()): string {
  * Scope is intentionally conservative: only unpaid/failed scheduled bookings.
  */
 export async function expireStaleScheduledBookings(now = new Date()): Promise<number> {
+  // Rate limit per node process to avoid hammering DB on SWR/refresh traffic.
+  const minIntervalMs = 60 * 60 * 1000 // 60 minutes
+  const lastRunAt = globalThis.__bookingHousekeepingLastRunAtMs ?? 0
+  if (Date.now() - lastRunAt < minIntervalMs) return 0
+  globalThis.__bookingHousekeepingLastRunAtMs = Date.now()
+
   const todayBerlin = berlinDateStamp(now)
   const candidates = await prisma.booking.findMany({
     where: {
