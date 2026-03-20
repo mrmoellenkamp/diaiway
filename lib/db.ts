@@ -37,28 +37,36 @@ const prismaClient =
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   })
 
-// Attach middleware once per process.
+// Attach query middleware once per process.
+// Prisma v6 in some environments may not expose `$use` (query middleware).
+// The guard prevents the whole server from crashing and keeps auth-side retries intact.
 if (!(globalThis as any).__prismaRetryAttached) {
-  prismaClient.$use(async (params, next) => {
-    const action = params.action
-    const shouldRetry = READ_ACTIONS.has(action) // avoid retrying writes (idempotency assumptions differ)
+  const anyPrisma = prismaClient as any
+  if (typeof anyPrisma.$use === "function") {
+    anyPrisma.$use(async (params: any, next: any) => {
+      const action = params.action
+      const shouldRetry = READ_ACTIONS.has(action) // avoid retrying writes (idempotency assumptions differ)
 
-    if (!shouldRetry) return next(params)
+      if (!shouldRetry) return next(params)
 
-    const maxAttempts = 3
-    let lastErr: unknown
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        return await next(params)
-      } catch (err) {
-        lastErr = err
-        if (!isTransientDbError(err) || attempt === maxAttempts - 1) throw err
-        const backoff = 200 * Math.pow(2, attempt) // 200ms, 400ms, 800ms
-        await new Promise((r) => setTimeout(r, backoff + Math.floor(Math.random() * 80)))
+      const maxAttempts = 3
+      let lastErr: unknown
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          return await next(params)
+        } catch (err) {
+          lastErr = err
+          if (!isTransientDbError(err) || attempt === maxAttempts - 1) throw err
+          const backoff = 200 * Math.pow(2, attempt) // 200ms, 400ms, 800ms
+          await new Promise((r) => setTimeout(r, backoff + Math.floor(Math.random() * 80)))
+        }
       }
-    }
-    throw lastErr
-  })
+      throw lastErr
+    })
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn("[db] PrismaClient.$use not available; skipping query retry middleware.")
+  }
   ;(globalThis as any).__prismaRetryAttached = true
 }
 

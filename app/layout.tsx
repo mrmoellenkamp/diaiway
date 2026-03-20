@@ -65,8 +65,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const assetPrefix = process.env.NEXT_PUBLIC_ASSET_PREFIX
+  // When we run dev with `NEXT_PUBLIC_ASSET_PREFIX=./`, Next emits relative
+  // asset URLs like `./_next/...`. Without a base tag, those break on
+  // nested routes (e.g. `/profile/_next/...`). Base to `/` so `./_next`
+  // resolves to `/_next`.
+  const needsBaseHref = assetPrefix === "./"
+
   return (
     <html lang="de" className={`${(_geist as { variable?: string }).variable ?? ""} ${(_geistMono as { variable?: string }).variable ?? ""} ${(_notoJP as { variable?: string }).variable ?? ""}`.trim()}>
+      {needsBaseHref ? (
+        <head>
+          <base href="/" />
+        </head>
+      ) : null}
       <body className="font-sans antialiased app-bottom-space">
         <ErrorBoundary>
           <SessionProvider>
