@@ -28,8 +28,9 @@ Nach Änderungen: **Production neu deployen**.
 ## 3. Was der Code bereits macht
 
 - **`trustHost: true`** in `lib/auth.ts` und `lib/auth-edge.ts` — korrekte Host-Erkennung hinter Vercel (Proxy-Header).
-- Nach Credentials-Login: **`getSession()`** (NextAuth-Client synchronisieren).
-- Safari / iOS-Browser (nicht native Capacitor-Shell): **harter Seitenwechsel** nach Login (`window.location.assign`), siehe `lib/browser-auth-nav.ts`.
+- Login über **`signIn("credentials", …)`** (next-auth/react), nicht roher `fetch` — bessere CSRF-/Cookie-Koordination (wichtig für WebKit).
+- Danach **`getSession()`** + Session-Fetch für Nav-Ziel.
+- Safari / iOS-Browser (nicht native Capacitor-Shell): **harter Seitenwechsel** (`window.location.assign`) und **~280 ms Pause** vor dem Redirect, damit Safari das Session-Cookie zuverlässig speichert (`lib/browser-auth-nav.ts`).
 
 ## 4. Was Nutzer nicht tun müssen
 

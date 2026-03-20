@@ -19,3 +19,11 @@ export function shouldUseHardNavigationAfterLogin(): boolean {
   if (/Chrome\/|Chromium\/|Edg\/|Firefox\/|Brave\//i.test(ua)) return false
   return /Version\/[\d.]+.*Safari\//i.test(ua)
 }
+
+/**
+ * Safari/WebKit schreibt Set-Cookie manchmal verzögert; sofortiges
+ * `location.assign` kann die Session auf der Zielseite „vergessen“.
+ */
+export function webkitCookieSettleDelayMs(): number {
+  return shouldUseHardNavigationAfterLogin() ? 280 : 0
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
-import { signOut, getCsrfToken, getSession } from "next-auth/react"
+import { signOut, signIn, getSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ import {
   saveLastUser,
   saveStayLoggedIn,
 } from "@/hooks/use-native-bridge"
-import { shouldUseHardNavigationAfterLogin } from "@/lib/browser-auth-nav"
+import { shouldUseHardNavigationAfterLogin, webkitCookieSettleDelayMs } from "@/lib/browser-auth-nav"
 
 // ─── Biometric icon helper ────────────────────────────────────────────────────
 
@@ -125,6 +125,11 @@ function LoginContent() {
   const navigateAfterLogin = useCallback(
     async (navUrl?: string) => {
       const useHardNav = !isNative && shouldUseHardNavigationAfterLogin()
+      const settleMs = webkitCookieSettleDelayMs()
+      const hardGo = async (absoluteUrl: string) => {
+        if (settleMs > 0) await new Promise((r) => setTimeout(r, settleMs))
+        window.location.assign(absoluteUrl)
+      }
 
       const target = navUrl || explicitCallback
       if (target && target !== "/") {
@@ -132,15 +137,16 @@ function LoginContent() {
         // hard WebView reloads that can look like an app close on Android.
         if (target.startsWith("/")) {
           if (useHardNav) {
-            window.location.assign(`${window.location.origin}${target}`)
+            await hardGo(`${window.location.origin}${target}`)
             return
           }
           router.replace(target)
           router.refresh()
         } else if (target.startsWith(window.location.origin)) {
           const path = target.slice(window.location.origin.length) || "/"
+          const normalized = path.startsWith("/") ? path : `/${path}`
           if (useHardNav) {
-            window.location.assign(`${window.location.origin}${path.startsWith("/") ? path : `/${path}`}`)
+            await hardGo(`${window.location.origin}${normalized}`)
             return
           }
           router.replace(path)
@@ -157,7 +163,7 @@ function LoginContent() {
       const path =
         role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
       if (useHardNav) {
-        window.location.assign(`${window.location.origin}${path}`)
+        await hardGo(`${window.location.origin}${path}`)
         return
       }
       router.replace(path)
@@ -168,40 +174,45 @@ function LoginContent() {
 
   // ── Core login action (shared by form + biometric replay)
   const performLogin = useCallback(
-    async (loginEmail: string, loginPassword: string): Promise<{ ok: boolean; navUrl?: string; name?: string }> => {
-      const csrfToken = await getCsrfToken()
-      const body = new URLSearchParams({
-        csrfToken: csrfToken ?? "",
-        email:       loginEmail.toLowerCase().trim(),
-        password:    loginPassword.trim(),
-        callbackUrl: explicitCallback || "/categories",
-        json:        "true",
-      })
-      const res  = await fetch("/api/auth/callback/credentials", {
-        method:  "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        credentials: "include",
-        body: body.toString(),
-      })
-      const data = await res.json().catch(() => ({}))
-      const err  = data?.error ?? data?.cause ?? (res.ok ? null : "CredentialsSignin")
-      if (err) return { ok: false }
+    async (
+      loginEmail: string,
+      loginPassword: string
+    ): Promise<{ ok: boolean; navUrl?: string; name?: string; rawError?: string }> => {
+      const callbackUrl = explicitCallback || "/categories"
 
-      // Read session for name + nav target
-      const sessionRes  = await fetch("/api/auth/session", { credentials: "include" })
-      const sessionData = await sessionRes.json()
-      const userName    = sessionData?.user?.username ?? sessionData?.user?.name ?? loginEmail
-      const role        = sessionData?.user?.role    ?? "user"
-      const appRole     = sessionData?.user?.appRole ?? "shugyo"
-      const navUrl =
-        data?.url          ? data.url :
-        explicitCallback   ? explicitCallback :
-        role === "admin"   ? "/admin" :
-        appRole === "takumi" ? "/profile" : "/categories"
+      // Offizieller Client-Flow (nicht roher fetch) — bessere CSRF/Cookie-Abstimmung, v. a. WebKit/Safari.
+      const result = await signIn("credentials", {
+        email: loginEmail.toLowerCase().trim(),
+        password: loginPassword.trim(),
+        redirect: false,
+        callbackUrl,
+      })
 
-      // Wichtig: SessionProvider / useSession() sonst weiter „unauthenticated“ nach
-      // manuellem credentials-fetch (kein Full-Reload) → Header zeigt „Anmelden“.
+      const err =
+        (result as { error?: string } | undefined)?.error ??
+        ((result as { ok?: boolean } | undefined)?.ok === false ? "CredentialsSignin" : undefined)
+      if (err) return { ok: false, rawError: err }
+
       await getSession()
+
+      const sessionRes = await fetch("/api/auth/session", { credentials: "include" })
+      const sessionData = await sessionRes.json()
+      const userName = sessionData?.user?.username ?? sessionData?.user?.name ?? loginEmail
+      const role = sessionData?.user?.role ?? "user"
+      const appRole = sessionData?.user?.appRole ?? "shugyo"
+
+      const rolePath =
+        role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
+      let navUrl = explicitCallback && explicitCallback !== "/" ? explicitCallback : rolePath
+      const signInUrl = (result as { url?: string | null } | undefined)?.url
+      if (
+        signInUrl &&
+        signInUrl.startsWith(window.location.origin) &&
+        !signInUrl.includes("/api/auth/")
+      ) {
+        const p = signInUrl.slice(window.location.origin.length) || "/"
+        navUrl = p.startsWith("/") ? p : `/${p}`
+      }
 
       return { ok: true, navUrl, name: userName }
     },
@@ -217,9 +228,9 @@ function LoginContent() {
 
     setIsLoading(true)
     try {
-      const { ok, navUrl, name } = await performLogin(email, password)
+      const { ok, navUrl, name, rawError } = await performLogin(email, password)
       if (!ok) {
-        setError(t("login.errorInvalid"))
+        setError(getErrorMessage(rawError || "CredentialsSignin"))
         setIsLoading(false)
         return
       }
@@ -267,9 +278,9 @@ function LoginContent() {
         return
       }
 
-      const { ok, navUrl, name } = await performLogin(creds.username, creds.password)
+      const { ok, navUrl, name, rawError } = await performLogin(creds.username, creds.password)
       if (!ok) {
-        setError(t("login.biometricError"))
+        setError(rawError ? getErrorMessage(rawError) : t("login.biometricError"))
         setBiometricLoading(false)
         setShowQuickLogin(false) // fall through to manual form
         return
