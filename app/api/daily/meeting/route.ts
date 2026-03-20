@@ -78,8 +78,8 @@ export async function POST(req: Request) {
   }
 
   const endAt = parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00")
-  const now = new Date()
-  if (["pending", "confirmed"].includes(booking.status) && endAt <= now) {
+  const nowDate = new Date()
+  if (["pending", "confirmed"].includes(booking.status) && endAt <= nowDate) {
     return NextResponse.json(
       { error: "Diese Buchung ist abgelaufen und kann nicht mehr gestartet werden." },
       { status: 409 }
@@ -93,9 +93,9 @@ export async function POST(req: Request) {
 
   const roomName = `room-${bookingId.trim()}`
 
-  const now = Math.floor(Date.now() / 1000)
-  const expValue = now + 3600
-  const nbfValue = now - 60
+  const nowUnix = Math.floor(Date.now() / 1000)
+  const expValue = nowUnix + 3600
+  const nbfValue = nowUnix - 60
 
   const roomPayload = {
     name: roomName,
