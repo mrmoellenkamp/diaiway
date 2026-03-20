@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
-import { signOut, getCsrfToken } from "next-auth/react"
+import { signOut, getCsrfToken, getSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -129,8 +129,10 @@ function LoginContent() {
         // hard WebView reloads that can look like an app close on Android.
         if (target.startsWith("/")) {
           router.replace(target)
+          router.refresh()
         } else if (target.startsWith(window.location.origin)) {
           router.replace(target.slice(window.location.origin.length) || "/")
+          router.refresh()
         } else {
           window.location.href = target
         }
@@ -143,6 +145,7 @@ function LoginContent() {
       if (role === "admin")           router.replace("/admin")
       else if (appRole === "takumi")  router.replace("/profile")
       else                            router.replace("/categories")
+      router.refresh()
     },
     [explicitCallback, router]
   )
@@ -179,6 +182,10 @@ function LoginContent() {
         explicitCallback   ? explicitCallback :
         role === "admin"   ? "/admin" :
         appRole === "takumi" ? "/profile" : "/categories"
+
+      // Wichtig: SessionProvider / useSession() sonst weiter „unauthenticated“ nach
+      // manuellem credentials-fetch (kein Full-Reload) → Header zeigt „Anmelden“.
+      await getSession()
 
       return { ok: true, navUrl, name: userName }
     },
