@@ -8,10 +8,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageContainer } from "@/components/page-container"
-import { ArrowLeft, FolderOpen, ImageIcon, Loader2, User, Euro, Clock } from "lucide-react"
+import { FolderOpen, ImageIcon, Loader2, User, Euro, Clock } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { useApp } from "@/lib/app-context"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import type { SocialLinks } from "@/lib/types"
 
 // ─── Social links für Takumi-Vorschau ──────────────────────────────────────
@@ -171,16 +172,11 @@ export default function ProfilePreviewPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6 pb-12">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild aria-label={t("profile.backToProfile")}>
-            <Link href="/profile">
-              <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
-          <h1 className="text-lg font-bold text-foreground">{t("profile.previewTitle")}</h1>
-        </div>
-
-        <p className="text-xs text-muted-foreground">{t("profile.previewDesc")}</p>
+        <AppSubpageHeader
+          title={t("profile.previewTitle")}
+          subtitle={t("profile.previewDesc")}
+          backAriaLabel={t("profile.backToProfile")}
+        />
 
         {/* Gemeinsamer Header: Avatar, Name, Mitglied seit */}
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card p-6">

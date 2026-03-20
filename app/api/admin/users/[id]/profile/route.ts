@@ -166,6 +166,49 @@ export async function PATCH(
     return NextResponse.json({ error: "Ungültiger JSON-Body." }, { status: 400 })
   }
 
+  const targetBeforeTx = await prisma.user.findUnique({
+    where: { id },
+    select: { email: true },
+  })
+  if (!targetBeforeTx) {
+    return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
+  }
+  const isAnonymizedBeforeTx = targetBeforeTx.email?.endsWith("@anonymized.local") ?? false
+
+  // Gleiche Regeln wie PATCH /api/user/profile (keine Pflicht für anonymisierte Konten)
+  if (body.user && body.user.username !== undefined && !isAnonymizedBeforeTx) {
+    const raw = body.user.username
+    if (raw !== null && typeof raw !== "string") {
+      return NextResponse.json({ error: "Ungültiger Benutzername.", field: "username" }, { status: 400 })
+    }
+    let nextUsername: string | null
+    if (raw === null) {
+      nextUsername = null
+    } else {
+      const val = raw.trim()
+      if (val === "") {
+        nextUsername = null
+      } else {
+        const { validateUsername } = await import("@/app/actions/username")
+        const res = await validateUsername(val)
+        if (!res.ok) {
+          return NextResponse.json({ error: res.error, field: "username" }, { status: 400 })
+        }
+        const dupe = await prisma.user.findFirst({
+          where: { username: val, NOT: { id } },
+        })
+        if (dupe) {
+          return NextResponse.json(
+            { error: "Dieser Benutzername ist bereits vergeben.", field: "username" },
+            { status: 409 }
+          )
+        }
+        nextUsername = val
+      }
+    }
+    body.user = { ...body.user, username: nextUsername }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       if (body.user && Object.keys(body.user).length > 0) {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUpload } from "@/components/image-upload"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 import { PageContainer } from "@/components/page-container"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
-import { ArrowLeft, Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { categories } from "@/lib/categories"
 
@@ -110,18 +110,7 @@ export default function TakumiPortfolioPage() {
     <div className="min-h-screen bg-background pb-safe">
       <PageContainer>
         <div className="flex flex-col gap-6">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="icon" className="shrink-0">
-              <Link href="/profile">
-                <ArrowLeft className="size-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">{t("portfolio.title")}</h1>
-              <p className="text-xs text-muted-foreground">{t("portfolio.subtitle")}</p>
-            </div>
-          </div>
+          <AppSubpageHeader title={t("portfolio.title")} subtitle={t("portfolio.subtitle")} />
 
           {/* Galerie — Lightbox immer, Löschen nur für Takumi */}
           <TakumiPortfolioGallery

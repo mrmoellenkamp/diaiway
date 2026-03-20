@@ -1,7 +1,7 @@
 export default function Head() {
   return (
     <>
-      <title>Rechnungsdaten</title>
+      <title>Meine Rechnungsdaten</title>
     </>
   )
 }

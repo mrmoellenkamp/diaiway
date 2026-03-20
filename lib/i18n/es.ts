@@ -44,6 +44,12 @@ const es = {
   "footer.newsletterContact": "Newsletter y contacto",
   "footer.copyright": "© diAiway · Todos los derechos reservados",
 
+  "help.pageSubtitle": "¿Cómo podemos ayudarte?",
+  "legal.privacyTitle": "Privacidad",
+  "legal.privacySubtitle": "Política de privacidad",
+  "legal.imprintTitle": "Aviso legal",
+  "legal.imprintSubtitle": "Información legal del proveedor",
+
   // Nav
   "nav.login": "Iniciar sesión",
   "nav.register": "Registrarse gratis",
@@ -172,7 +178,7 @@ const es = {
   "register.success": "¡Cuenta creada! Bienvenido a diAiway.",
   "register.username": "Nombre de usuario",
   "register.usernamePlaceholder": "p. ej. max_mustermann",
-  "register.usernameHint": "3–30 caracteres. Permitido: letras, dígitos, espacios y . _ - '",
+  "register.usernameHint": "3–50 caracteres. Letras (cualquier idioma), dígitos, espacios, signos; emojis permitidos. Sin saltos de línea ni caracteres invisibles.",
   "register.usernameRequired": "Elige un nombre de usuario.",
   "register.usernameWaitCheck": "Espera a que se verifique el nombre de usuario.",
   "register.usernameChecking": "Verificando…",
@@ -309,12 +315,12 @@ const es = {
   "categoryDetail.loading": "Cargando expertos...",
 
   // Profile
-  "profile.editProfile": "Editar perfil",
+  "profile.editProfile": "Editar mi perfil",
   "profile.myBookings": "Mis reservas",
   "profile.payments": "Pagos y saldo",
-  "profile.finances": "Finanzas",
+  "profile.finances": "Mis finanzas",
   "profile.statistics": "Estadísticas",
-  "profile.invoiceData": "Datos de facturación",
+  "profile.invoiceData": "Mis datos de facturación",
   "profile.privacy": "Privacidad",
   "profile.helpSupport": "Ayuda y soporte",
   "profile.comingSoon": "¡Próximamente!",
@@ -330,7 +336,7 @@ const es = {
   "profile.accountPaused": "Cuenta pausada.",
 
   // Settings
-  "settings.title": "Cuenta de usuario",
+  "settings.title": "Mi cuenta de usuario",
   "settings.subtitle": "Gestión de cuenta y contraseña",
   "settings.accountManagement": "Gestión de cuenta",
   "settings.accountManagementDesc": "Pausar o eliminar permanentemente tu cuenta.",
@@ -352,7 +358,7 @@ const es = {
   "profile.favorites": "Favoritos",
   "profile.favoriteTakumis": "Takumis favoritos",
   "profile.username": "Nombre de usuario",
-  "profile.usernameHint": "Opcional. 3–30 caracteres. Permitido: letras, dígitos, espacios y . _ - '",
+  "profile.usernameHint": "Opcional. 3–50 caracteres: letras, dígitos, espacios, signos; emojis permitidos. Sin saltos de línea ni caracteres invisibles.",
   "profile.languages": "Idiomas",
   "profile.languagesDesc": "¿Qué idiomas hablas?",
   "profile.languagesSaved": "Idiomas guardados.",
@@ -417,10 +423,10 @@ const es = {
   "profile.previewDesc": "Así ven otros tu perfil.",
   "profile.backToProfile": "Volver al perfil",
   "profile.previewLoginRequired": "Por favor inicia sesión.",
-  "profile.account": "Cuenta",
+  "profile.account": "Mi cuenta de usuario",
 
   // Finances
-  "finances.title": "Finanzas",
+  "finances.title": "Mis finanzas",
   "finances.balance": "Saldo",
   "finances.pendingBalance": "Pendiente",
   "finances.transactions": "Pagos y facturas",
@@ -441,7 +447,7 @@ const es = {
   "finances.topupSuccess": "¡Pago exitoso! Tu saldo ha sido acreditado.",
 
   // Invoice Data
-  "invoice.title": "Datos de facturación",
+  "invoice.title": "Mis datos de facturación",
   "invoice.subtitle": "Datos para facturas y notas de crédito",
   "invoice.typePrivate": "Particular",
   "invoice.typeCompany": "Empresa",
@@ -588,7 +594,7 @@ const es = {
   "admin.ban": "Bloquear",
 
   // Edit Profile
-  "editProfile.title": "Editar perfil",
+  "editProfile.title": "Editar mi perfil",
   "editProfile.personalData": "Datos personales",
   "editProfile.uploadHint": "Toca el icono de cámara para subir (máx. 5 MB)",
   "editProfile.takumiMode": "Modo Takumi",

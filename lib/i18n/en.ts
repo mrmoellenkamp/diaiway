@@ -44,6 +44,12 @@ const en = {
   "footer.newsletterContact": "Newsletter & Contact",
   "footer.copyright": "© diAiway · All rights reserved",
 
+  "help.pageSubtitle": "How can we help you?",
+  "legal.privacyTitle": "Privacy Policy",
+  "legal.privacySubtitle": "Privacy statement",
+  "legal.imprintTitle": "Imprint",
+  "legal.imprintSubtitle": "Legal provider information",
+
   // Nav
   "nav.login": "Log in",
   "nav.register": "Sign up free",
@@ -172,7 +178,7 @@ const en = {
   "register.success": "Account created! Welcome to diAiway.",
   "register.username": "Username",
   "register.usernamePlaceholder": "e.g. max_mustermann",
-  "register.usernameHint": "3–30 characters. Allowed: letters, digits, spaces, and . _ - '",
+  "register.usernameHint": "3–50 characters. Letters (any script), digits, spaces, punctuation and symbols; emojis OK. No line breaks or invisible characters.",
   "register.usernameRequired": "Please choose a username.",
   "register.usernameWaitCheck": "Please wait until the username has been checked.",
   "register.usernameChecking": "Checking…",
@@ -309,12 +315,12 @@ const en = {
   "categoryDetail.loading": "Loading experts...",
 
   // Profile
-  "profile.editProfile": "Edit profile",
+  "profile.editProfile": "Edit my profile",
   "profile.myBookings": "My Bookings",
   "profile.payments": "Payments & Balance",
-  "profile.finances": "Finances",
+  "profile.finances": "My finances",
   "profile.statistics": "Statistics",
-  "profile.invoiceData": "Invoice Data",
+  "profile.invoiceData": "My billing details",
   "profile.privacy": "Privacy",
   "profile.helpSupport": "Help & Support",
   "profile.comingSoon": "Coming soon!",
@@ -330,7 +336,7 @@ const en = {
   "profile.accountPaused": "Account paused.",
 
   // Settings
-  "settings.title": "Account",
+  "settings.title": "My account",
   "settings.subtitle": "Account and password management",
   "settings.accountManagement": "Account management",
   "settings.accountManagementDesc": "Pause or permanently delete your account.",
@@ -352,7 +358,7 @@ const en = {
   "profile.favorites": "Favorites",
   "profile.favoriteTakumis": "Favorite Takumis",
   "profile.username": "Username",
-  "profile.usernameHint": "Optional. 3–30 characters. Allowed: letters, digits, spaces, and . _ - '",
+  "profile.usernameHint": "Optional. 3–50 characters: letters, digits, spaces, punctuation/symbols; emojis OK. No line breaks or invisible characters.",
   "profile.languages": "Languages",
   "profile.languagesDesc": "Which languages do you speak?",
   "profile.languagesSaved": "Languages saved.",
@@ -417,10 +423,10 @@ const en = {
   "profile.previewDesc": "This is how others see your profile.",
   "profile.backToProfile": "Back to profile",
   "profile.previewLoginRequired": "Please log in.",
-  "profile.account": "Account",
+  "profile.account": "My account",
 
   // Finances
-  "finances.title": "Finances",
+  "finances.title": "My finances",
   "finances.balance": "Balance",
   "finances.pendingBalance": "Pending",
   "finances.transactions": "Payments & Invoices",
@@ -441,7 +447,7 @@ const en = {
   "finances.topupSuccess": "Payment successful! Your balance has been credited.",
 
   // Invoice Data
-  "invoice.title": "Invoice Data",
+  "invoice.title": "My billing details",
   "invoice.subtitle": "Details for invoices and credit notes",
   "invoice.typePrivate": "Private",
   "invoice.typeCompany": "Company",
@@ -588,7 +594,7 @@ const en = {
   "admin.ban": "Ban",
 
   // Edit Profile
-  "editProfile.title": "Edit Profile",
+  "editProfile.title": "Edit my profile",
   "editProfile.personalData": "Personal Data",
   "editProfile.uploadHint": "Tap the camera icon to upload (max. 5 MB)",
   "editProfile.takumiMode": "Takumi Mode",

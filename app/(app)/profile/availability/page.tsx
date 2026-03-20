@@ -11,9 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { PageContainer } from "@/components/page-container"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
 import {
-  ArrowLeft, Plus, Trash2, Loader2, Save, Clock, Calendar,
+  Plus, Trash2, Loader2, Save, Clock, Calendar,
   CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight,
   CalendarX2, CalendarDays, Info, Phone,
 } from "lucide-react"
@@ -410,18 +411,10 @@ export default function AvailabilityPage() {
       <PageContainer>
         <div className="flex flex-col gap-5">
 
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="icon" className="shrink-0">
-              <Link href="/profile"><ArrowLeft className="size-5" /></Link>
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">{t("avail.title")}</h1>
-              <p className="text-xs text-muted-foreground">
-                {t("avail.tabWeekly")} · {t("avail.tabInstant")} · {t("avail.tabSeasonal")} · {t("avail.tabCalendar")}
-              </p>
-            </div>
-          </div>
+          <AppSubpageHeader
+            title={t("avail.title")}
+            subtitle={`${t("avail.tabWeekly")} · ${t("avail.tabInstant")} · ${t("avail.tabSeasonal")} · ${t("avail.tabCalendar")}`}
+          />
 
           {/* Pending bookings alert */}
           {pendingBookings.length > 0 && (

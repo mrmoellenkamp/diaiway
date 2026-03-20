@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import Link from "next/link"
 import { PageContainer } from "@/components/page-container"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck } from "lucide-react"
+import { Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -113,17 +113,7 @@ export default function FinancesPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="shrink-0">
-            <Link href="/profile">
-              <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">{t("finances.title")}</h1>
-            <p className="text-xs text-muted-foreground">{t("finances.transactions")}</p>
-          </div>
-        </div>
+        <AppSubpageHeader title={t("finances.title")} subtitle={t("finances.transactions")} />
 
         {loading ? (
           <div className="flex justify-center py-12">

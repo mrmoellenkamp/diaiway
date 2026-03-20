@@ -1,7 +1,7 @@
 export default function Head() {
   return (
     <>
-      <title>Benutzerkonto</title>
+      <title>Mein Benutzerkonto</title>
     </>
   )
 }

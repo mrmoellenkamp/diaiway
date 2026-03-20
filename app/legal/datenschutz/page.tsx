@@ -1,5 +1,5 @@
-import Link from "next/link"
-import { ArrowLeft, Mail, Phone, Building2, Shield } from "lucide-react"
+import { Mail, Phone, Building2, Shield } from "lucide-react"
+import { LegalSubpageHeader } from "@/components/app-subpage-header"
 
 export const metadata = { title: "Datenschutz – diAIway" }
 
@@ -8,20 +8,7 @@ export default function DatenschutzPage() {
     <div className="min-h-screen bg-background">
       <main className="mx-auto w-full max-w-lg px-4 py-8 pb-safe min-w-0">
 
-        {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
-          <Link
-            href="/profile"
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
-            aria-label="Zurück"
-          >
-            <ArrowLeft className="size-5 text-foreground" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Datenschutz</h1>
-            <p className="text-sm text-muted-foreground">Datenschutzerklärung</p>
-          </div>
-        </div>
+        <LegalSubpageHeader variant="privacy" className="mb-8" />
 
         <div className="flex flex-col gap-8">
 

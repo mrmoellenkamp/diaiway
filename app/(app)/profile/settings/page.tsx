@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { ArrowLeft, PauseCircle, Trash2, AlertTriangle, Lock, KeyRound, Loader2 } from "lucide-react"
+import { PauseCircle, Trash2, AlertTriangle, Lock, KeyRound, Loader2 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { NativeTestCenter } from "@/components/native-test-center"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 
 export default function SettingsPage() {
   const { t } = useI18n()
@@ -66,17 +67,7 @@ export default function SettingsPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="shrink-0">
-            <Link href="/profile">
-              <ArrowLeft className="size-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">{t("settings.title")}</h1>
-            <p className="text-xs text-muted-foreground">{t("settings.subtitle")}</p>
-          </div>
-        </div>
+        <AppSubpageHeader title={t("settings.title")} subtitle={t("settings.subtitle")} />
 
         {/* Kontoverwaltung */}
         <Card>

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
@@ -11,8 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImageUpload } from "@/components/image-upload"
 import { useI18n } from "@/lib/i18n"
-import { ArrowLeft, Plus, Loader2, Trash2, ImageIcon } from "lucide-react"
+import { Plus, Loader2, Trash2, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -198,16 +198,10 @@ export default function ShugyoDashboardPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        <Link
-          href="/profile"
-          className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors -ml-1"
-          aria-label={t("common.back")}
-        >
-          <ArrowLeft className="size-5" />
-        </Link>
-
-        <h1 className="text-xl font-bold text-foreground">{t("shugyo.dashboardTitle")}</h1>
-        <p className="text-sm text-muted-foreground">{t("shugyo.dashboardDesc")}</p>
+        <AppSubpageHeader
+          title={t("shugyo.dashboardTitle")}
+          subtitle={t("shugyo.dashboardDesc")}
+        />
 
         {/* Projects */}
         <div className="flex flex-col gap-4">

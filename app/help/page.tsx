@@ -1,6 +1,6 @@
-import Link from "next/link"
+"use client"
+
 import {
-  ArrowLeft,
   Mail,
   MessageCircle,
   BookOpen,
@@ -12,8 +12,8 @@ import {
 } from "lucide-react"
 import { HelpFaqSection } from "@/components/help-faq-section"
 import { SupportTicketForm } from "@/components/support-ticket-form"
-
-export const metadata = { title: "Hilfe & Support – diAiway" }
+import { AppSubpageHeader } from "@/components/app-subpage-header"
+import { useI18n } from "@/lib/i18n"
 
 function TopicCard({
   icon: Icon,
@@ -38,23 +38,15 @@ function TopicCard({
 }
 
 export default function HelpPage() {
+  const { t } = useI18n()
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto w-full max-w-lg px-4 py-6 pb-safe min-w-0">
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <Link
-            href="/profile"
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
-            aria-label="Zurück"
-          >
-            <ArrowLeft className="size-5 text-foreground" />
-          </Link>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Hilfe & Support</h1>
-            <p className="text-xs text-muted-foreground">Wie können wir dir helfen?</p>
-          </div>
-        </div>
+        <AppSubpageHeader
+          className="mb-6"
+          title={t("footer.helpSupport")}
+          subtitle={t("help.pageSubtitle")}
+        />
 
         <div className="flex flex-col gap-8">
           {/* Contact CTA */}

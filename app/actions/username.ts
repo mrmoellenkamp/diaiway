@@ -1,22 +1,39 @@
 "use server"
 
-const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/
+/** Sichtbarer Anzeigename: Länge nach trim (UTF-16 Code Units, wie String.length). */
+export const USERNAME_MIN_LENGTH = 3
+export const USERNAME_MAX_LENGTH = 50
 
 /**
- * Validiert einen Usernamen: min. 3 Zeichen, nur Buchstaben, Ziffern, Unterstrich.
+ * Verboten: Steuerzeichen, Zeilenumbrüche, Tab, viele unsichtbare / BiDi-Zeichen.
+ * Erlaubt: Buchstaben (inkl. Umlaute), Ziffern, Leerzeichen, Satzzeichen, Symbole, Emojis (inkl. ZWJ U+200D für zusammengesetzte Emoji).
+ */
+// Steuer-/Unsichtbare gezielt sperren (no-control-regex: Muster ist Absicht)
+/* eslint-disable no-control-regex */
+const USERNAME_FORBIDDEN_CHARS =
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F\u200B\u200C\u200E\u200F\u2028\u2029\u202A-\u202E\u2060-\u2064\uFEFF]/u
+/* eslint-enable no-control-regex */
+
+/**
+ * Validiert einen Usernamen (Anzeigename): 3–50 Zeichen, keine Steuer-/Linebreak-/unsichtbaren Zeichen.
+ * Leerzeichen und Sonderzeichen inkl. Emoji sind erlaubt, sofern nicht in der Sperrliste.
  */
 export async function validateUsername(
   username: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const trimmed = username.trim()
-  if (trimmed.length < 3) {
-    return { ok: false, error: "Mindestens 3 Zeichen erforderlich." }
+  if (trimmed.length < USERNAME_MIN_LENGTH) {
+    return { ok: false, error: `Mindestens ${USERNAME_MIN_LENGTH} Zeichen erforderlich.` }
   }
-  if (trimmed.length > 30) {
-    return { ok: false, error: "Maximal 30 Zeichen." }
+  if (trimmed.length > USERNAME_MAX_LENGTH) {
+    return { ok: false, error: `Maximal ${USERNAME_MAX_LENGTH} Zeichen.` }
   }
-  if (!USERNAME_REGEX.test(trimmed)) {
-    return { ok: false, error: "Nur Buchstaben, Ziffern und Unterstrich erlaubt." }
+  if (USERNAME_FORBIDDEN_CHARS.test(trimmed)) {
+    return {
+      ok: false,
+      error:
+        "Unzulässige Zeichen: keine Zeilenumbrüche, Tabs, Steuerzeichen oder unsichtbare Zeichen.",
+    }
   }
   return { ok: true }
 }

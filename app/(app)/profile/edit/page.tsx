@@ -15,9 +15,9 @@ import { useApp } from "@/lib/app-context"
 import { useI18n } from "@/lib/i18n"
 import { useCategories } from "@/lib/categories-i18n"
 import { LanguageFlagSticker } from "@/components/language-flag-sticker"
+import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
 import {
-  ArrowLeft,
   Loader2,
   Save,
   User,
@@ -330,12 +330,7 @@ export default function EditProfilePage() {
   return (
     <div className="flex min-h-screen flex-col bg-background pb-safe">
       <div className="mx-auto flex w-full max-w-lg flex-col gap-5 px-4 py-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
-            <ArrowLeft className="size-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">{t("editProfile.title")}</h1>
-        </div>
+        <AppSubpageHeader title={t("editProfile.title")} />
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="size-6 animate-spin text-primary" />
@@ -411,7 +406,7 @@ export default function EditProfilePage() {
                     value={username}
                     onChange={(e) => { setUsername(e.target.value); setFieldErrors((prev) => ({ ...prev, username: "" })) }}
                     placeholder="z.B. max_mustermann"
-                    className={`font-mono${fieldErrors.username ? " border-destructive focus-visible:ring-destructive" : ""}`}
+                    className={fieldErrors.username ? "border-destructive focus-visible:ring-destructive" : ""}
                   />
                   {fieldErrors.username ? (
                     <p className="flex items-center gap-1 text-[11px] text-destructive">

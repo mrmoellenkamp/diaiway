@@ -44,6 +44,13 @@ const de = {
   "footer.newsletterContact": "Newsletter & Kontakt",
   "footer.copyright": "© diAiway · Alle Rechte vorbehalten",
 
+  // Hilfe & Recht (Unterseiten-Header)
+  "help.pageSubtitle": "Wie können wir dir helfen?",
+  "legal.privacyTitle": "Datenschutz",
+  "legal.privacySubtitle": "Datenschutzerklärung",
+  "legal.imprintTitle": "Impressum",
+  "legal.imprintSubtitle": "Rechtliche Anbieterkennung",
+
   // Nav
   "nav.login": "Anmelden",
   "nav.register": "Kostenlos registrieren",
@@ -178,7 +185,7 @@ const de = {
   "register.success": "Konto erstellt! Willkommen bei diAiway.",
   "register.username": "Benutzername",
   "register.usernamePlaceholder": "z. B. max_mustermann",
-  "register.usernameHint": "3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
+  "register.usernameHint": "3–50 Zeichen. Buchstaben (alle Sprachen), Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche oder unsichtbaren Zeichen.",
   "register.usernameRequired": "Bitte wähle einen Benutzernamen.",
   "register.usernameWaitCheck": "Bitte warte, bis der Benutzername geprüft wurde.",
   "register.usernameChecking": "Wird geprüft…",
@@ -310,12 +317,12 @@ const de = {
   "categoryDetail.loading": "Experten werden geladen...",
 
   // Profile
-  "profile.editProfile": "Profil bearbeiten",
+  "profile.editProfile": "Mein Profil bearbeiten",
   "profile.myBookings": "Meine Buchungen",
   "profile.payments": "Zahlungen & Guthaben",
-  "profile.finances": "Finanzen",
+  "profile.finances": "Meine Finanzen",
   "profile.statistics": "Statistiken",
-  "profile.invoiceData": "Rechnungsdaten",
+  "profile.invoiceData": "Meine Rechnungsdaten",
   "profile.privacy": "Datenschutz",
   "profile.helpSupport": "Hilfe & Support",
   "profile.comingSoon": "Funktion kommt bald!",
@@ -331,7 +338,7 @@ const de = {
   "profile.accountPaused": "Konto pausiert.",
 
   // Settings
-  "settings.title": "Benutzerkonto",
+  "settings.title": "Mein Benutzerkonto",
   "settings.subtitle": "Kontoverwaltung und Passwort",
   "settings.accountManagement": "Kontoverwaltung",
   "settings.accountManagementDesc": "Konto pausieren oder dauerhaft löschen.",
@@ -353,7 +360,7 @@ const de = {
   "profile.favorites": "Favoriten",
   "profile.favoriteTakumis": "Favoriten-Takumis",
   "profile.username": "Benutzername",
-  "profile.usernameHint": "Optional. 3–30 Zeichen. Erlaubt: Buchstaben, Ziffern, Leerzeichen sowie . _ - '",
+  "profile.usernameHint": "Optional. 3–50 Zeichen: Buchstaben, Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche oder unsichtbaren Zeichen.",
   "profile.languages": "Sprachen",
   "profile.languagesDesc": "Welche Sprachen sprichst du?",
   "profile.languagesSaved": "Sprachen gespeichert.",
@@ -420,10 +427,10 @@ const de = {
   "profile.previewDesc": "So sehen andere dein Profil.",
   "profile.backToProfile": "Zurück zum Profil",
   "profile.previewLoginRequired": "Bitte melde dich an.",
-  "profile.account": "Benutzerkonto",
+  "profile.account": "Mein Benutzerkonto",
 
   // Finances
-  "finances.title": "Finanzen",
+  "finances.title": "Meine Finanzen",
   "finances.balance": "Guthaben",
   "finances.pendingBalance": "In Prüfung",
   "finances.transactions": "Zahlungen & Rechnungen",
@@ -444,7 +451,7 @@ const de = {
   "finances.topupSuccess": "Zahlung erfolgreich! Dein Guthaben wurde gutgeschrieben.",
 
   // Invoice Data (Rechnungsdaten)
-  "invoice.title": "Rechnungsdaten",
+  "invoice.title": "Meine Rechnungsdaten",
   "invoice.subtitle": "Angaben für Rechnungen und Gutschriften",
   "invoice.typePrivate": "Privatperson",
   "invoice.typeCompany": "Unternehmen",
@@ -591,7 +598,7 @@ const de = {
   "admin.ban": "Sperren",
 
   // Edit Profile
-  "editProfile.title": "Profil bearbeiten",
+  "editProfile.title": "Mein Profil bearbeiten",
   "editProfile.personalData": "Persönliche Daten",
   "editProfile.uploadHint": "Klicke auf das Kamera-Symbol zum Hochladen (max. 5 MB)",
   "editProfile.takumiMode": "Takumi-Modus",
