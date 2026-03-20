@@ -24,6 +24,7 @@ import {
   saveLastUser,
   saveStayLoggedIn,
 } from "@/hooks/use-native-bridge"
+import { shouldUseHardNavigationAfterLogin } from "@/lib/browser-auth-nav"
 
 // ─── Biometric icon helper ────────────────────────────────────────────────────
 
@@ -123,15 +124,26 @@ function LoginContent() {
   // Never go to "/" on native – root page signs out when stayLoggedIn=false, causing a loop
   const navigateAfterLogin = useCallback(
     async (navUrl?: string) => {
+      const useHardNav = !isNative && shouldUseHardNavigationAfterLogin()
+
       const target = navUrl || explicitCallback
       if (target && target !== "/") {
         // In Capacitor use client-side routing for in-app paths to avoid
         // hard WebView reloads that can look like an app close on Android.
         if (target.startsWith("/")) {
+          if (useHardNav) {
+            window.location.assign(`${window.location.origin}${target}`)
+            return
+          }
           router.replace(target)
           router.refresh()
         } else if (target.startsWith(window.location.origin)) {
-          router.replace(target.slice(window.location.origin.length) || "/")
+          const path = target.slice(window.location.origin.length) || "/"
+          if (useHardNav) {
+            window.location.assign(`${window.location.origin}${path.startsWith("/") ? path : `/${path}`}`)
+            return
+          }
+          router.replace(path)
           router.refresh()
         } else {
           window.location.href = target
@@ -142,12 +154,16 @@ function LoginContent() {
       const d = await r.json()
       const role    = d?.user?.role    ?? "user"
       const appRole = d?.user?.appRole ?? "shugyo"
-      if (role === "admin")           router.replace("/admin")
-      else if (appRole === "takumi")  router.replace("/profile")
-      else                            router.replace("/categories")
+      const path =
+        role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
+      if (useHardNav) {
+        window.location.assign(`${window.location.origin}${path}`)
+        return
+      }
+      router.replace(path)
       router.refresh()
     },
-    [explicitCallback, router]
+    [explicitCallback, router, isNative]
   )
 
   // ── Core login action (shared by form + biometric replay)
