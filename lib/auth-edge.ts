@@ -6,6 +6,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 
 export const { auth: authMiddleware } = NextAuth({
+  trustHost: true,
   providers: [
     // Credentials provider stub -- authorize is never called in middleware,
     // but the provider must be declared so the JWT strategy matches.

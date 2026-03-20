@@ -13,6 +13,7 @@
 | **Verborgene Mechaniken** | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) |
 | **Admin** | [ADMIN.md](ADMIN.md) |
 | **Umgebungsvariablen** | [ENV.md](ENV.md) |
+| **Production-Login / Safari** | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) |
 
 ---
 

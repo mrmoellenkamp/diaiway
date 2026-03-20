@@ -265,6 +265,7 @@ npx prisma studio
 | [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Instant-Abrechnung, Session Activity, LogoutBackGuard |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
+| [docs/DEPLOYMENT-AUTH.md](docs/DEPLOYMENT-AUTH.md) | **Production-Login:** `NEXTAUTH_URL`, www→apex, Safari/WebKit |
 | [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor integriert) |
 | [docs/MOBILE-BUILD.md](docs/MOBILE-BUILD.md) | Mobile Build (Capacitor) |
 | [docs/DEEP-LINKING-SETUP.md](docs/DEEP-LINKING-SETUP.md) | Deep-Links (Waymail, Chat) |

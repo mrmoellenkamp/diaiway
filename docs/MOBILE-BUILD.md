@@ -4,7 +4,7 @@
 
 This Next.js app uses **API routes** and **dynamic server features** (auth, database). A full static export (`output: "export"`) is **not possible** without refactoring. Instead, the mobile app uses:
 
-- **server.url**: Loads the live webapp (www.diaiway.com) in the WebView
+- **server.url**: Loads the live webapp (`https://diaiway.com`) in the WebView
 - **webDir: "out"**: Minimal placeholder created by `scripts/prepare-mobile-webdir.mjs` for `cap sync`
 
 ## Workflow
@@ -23,7 +23,7 @@ This runs:
 | File | Key | Value |
 |------|-----|-------|
 | `capacitor.config.ts` | webDir | `"out"` |
-| `capacitor.config.ts` | server.url | `https://www.diaiway.com` (edit for staging) |
+| `capacitor.config.ts` | server.url | `https://diaiway.com` (edit for staging) |
 | `capacitor.config.ts` | appId | `com.diaiway.app` |
 | `capacitor.config.ts` | appName | `diaiway` |
 

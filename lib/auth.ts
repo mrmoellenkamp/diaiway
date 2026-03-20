@@ -42,6 +42,8 @@ async function withDbRetry<T>(task: () => Promise<T>, attempts = 3): Promise<T> 
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Vercel / Reverse-Proxy: Host-Header vertrauen — sonst können Auth-URLs/Cookies inkonsistent sein
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",

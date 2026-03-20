@@ -48,6 +48,13 @@ const nextConfig = {
   async redirects() {
     return [
       { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },
+      // Kanonische Produkt-URL: Apex (ohne www) — verhindert doppelte Hosts + Session-Cookie-Probleme (Safari/WebKit)
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.diaiway.com" }],
+        destination: "https://diaiway.com/:path*",
+        permanent: true,
+      },
     ]
   },
   typescript: {
