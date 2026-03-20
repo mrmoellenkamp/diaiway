@@ -1,11 +1,28 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { ensureTaxonomySeeded } from "@/lib/taxonomy-server"
+import { getStaticCategoriesFallback } from "@/lib/taxonomy-fallback"
+import { corsPreflightResponse, withApiCors } from "@/lib/api-cors"
 
 export const runtime = "nodejs"
 
+function categoriesToPayload(cats: ReturnType<typeof getStaticCategoriesFallback>) {
+  return cats.map((c) => ({
+    id: c.id,
+    slug: c.slug,
+    name: c.name,
+    description: c.description,
+    iconKey: c.icon,
+    iconImageUrl: c.iconImageUrl ?? null,
+    color: c.color,
+    sortOrder: 0,
+    specialties: c.subcategories.map((s) => ({ id: s.id, name: s.name })),
+    takumiCount: c.takumiCount ?? 0,
+  }))
+}
+
 /** Öffentlich: aktive Kategorien inkl. Fachbereiche (für App / Profil). */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await ensureTaxonomySeeded()
     const [categories, counts] = await Promise.all([
@@ -40,16 +57,34 @@ export async function GET() {
       takumiCount: countMap.get(c.id) ?? 0,
     }))
 
-    return NextResponse.json(
-      { categories: payload },
-      {
-        headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+    return withApiCors(
+      request,
+      NextResponse.json(
+        { categories: payload },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          },
         },
-      },
+      ),
     )
   } catch (err: unknown) {
-    console.error("[taxonomy/categories GET]", err)
-    return NextResponse.json({ error: "Kategorien konnten nicht geladen werden." }, { status: 500 })
+    console.error("[taxonomy/categories GET] Fallback (Migration fehlt?):", err)
+    const payload = categoriesToPayload(getStaticCategoriesFallback())
+    return withApiCors(
+      request,
+      NextResponse.json(
+        { categories: payload },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+          },
+        },
+      ),
+    )
   }
+}
+
+export async function OPTIONS(request: Request) {
+  return corsPreflightResponse(request)
 }

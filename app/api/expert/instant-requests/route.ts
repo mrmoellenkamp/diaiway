@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { corsPreflightResponse, withApiCors } from "@/lib/api-cors"
 
 /**
  * GET /api/expert/instant-requests
  * Takumi: Offene PENDING Instant-Buchungen (Anklopf).
+ * CORS: Capacitor / alternative Origins (Safari „access control checks“).
  */
-export async function GET() {
+export async function OPTIONS(request: Request) {
+  return corsPreflightResponse(request)
+}
+
+export async function GET(request: Request) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 })
+    return withApiCors(request, NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 }))
   }
 
   const appRole = (session.user as { appRole?: string })?.appRole
   if (appRole !== "takumi") {
-    return NextResponse.json({ error: "Nur für Takumi." }, { status: 403 })
+    return withApiCors(request, NextResponse.json({ error: "Nur für Takumi." }, { status: 403 }))
   }
 
   const expert = await prisma.expert.findFirst({
@@ -22,7 +28,7 @@ export async function GET() {
     select: { id: true },
   })
   if (!expert) {
-    return NextResponse.json({ requests: [] })
+    return withApiCors(request, NextResponse.json({ requests: [] }))
   }
 
   const requests = await prisma.booking.findMany({
@@ -40,12 +46,15 @@ export async function GET() {
     },
   })
 
-  return NextResponse.json({
-    requests: requests.map((r) => ({
-      id: r.id,
-      userName: r.userName,
-      statusToken: r.statusToken,
-      createdAt: r.createdAt.toISOString(),
-    })),
-  })
+  return withApiCors(
+    request,
+    NextResponse.json({
+      requests: requests.map((r) => ({
+        id: r.id,
+        userName: r.userName,
+        statusToken: r.statusToken,
+        createdAt: r.createdAt.toISOString(),
+      })),
+    }),
+  )
 }

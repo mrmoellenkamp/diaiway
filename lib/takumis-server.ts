@@ -8,18 +8,26 @@ import { ensureTaxonomySeeded } from "@/lib/taxonomy-server"
 import { expertRowToTakumi, expertTaxonomyInclude } from "@/lib/expert-to-takumi"
 
 export async function getTakumisForServer(): Promise<Takumi[]> {
-  await ensureTaxonomySeeded()
+  try {
+    await ensureTaxonomySeeded()
 
-  const experts = await prisma.expert.findMany({
-    include: expertTaxonomyInclude,
-    orderBy: { rating: "desc" },
-  })
+    const experts = await prisma.expert.findMany({
+      include: expertTaxonomyInclude,
+      orderBy: { rating: "desc" },
+    })
 
-  const active = experts.filter((e) => {
-    if (!e.userId) return true
-    const u = e.user
-    return u && u.appRole === "takumi"
-  })
+    const active = experts.filter((e) => {
+      if (!e.userId) return true
+      const u = e.user
+      return u && u.appRole === "takumi"
+    })
 
-  return active.map((e) => expertRowToTakumi(e))
+    return active.map((e) => expertRowToTakumi(e))
+  } catch (err) {
+    console.error(
+      "[getTakumisForServer] Taxonomie-Join fehlgeschlagen (Migration fehlt?). Leere Liste — bitte `prisma migrate deploy`.",
+      err,
+    )
+    return []
+  }
 }

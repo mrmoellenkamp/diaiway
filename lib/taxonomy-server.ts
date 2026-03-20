@@ -3,11 +3,17 @@ import { categories as staticCategories } from "@/lib/categories"
 import { isValidTaxonomyIconKey } from "@/lib/taxonomy-icons"
 import { apiCategoryToCategory } from "@/lib/taxonomy-dto"
 import type { Category } from "@/lib/types"
+import { getStaticCategoriesFallback, getStaticCategoryBySlugFallback } from "@/lib/taxonomy-fallback"
 
 /** Legt die Standard-Kategorien aus lib/categories.ts an, falls die Tabelle leer ist. */
 export async function ensureTaxonomySeeded(): Promise<void> {
-  const n = await prisma.taxonomyCategory.count()
-  if (n > 0) return
+  try {
+    const n = await prisma.taxonomyCategory.count()
+    if (n > 0) return
+  } catch (err) {
+    console.warn("[ensureTaxonomySeeded] Taxonomie-Schema fehlt oder DB-Fehler — bitte Migration ausführen:", err)
+    return
+  }
 
   for (let i = 0; i < staticCategories.length; i++) {
     const c = staticCategories[i]
@@ -78,37 +84,50 @@ export async function getTaxonomyCategoryBySlug(slug: string) {
 
 /** Für Server Components: fertige `Category`-Objekte inkl. Takumi-Zählung. */
 export async function getPublicCategoriesForApp(): Promise<Category[]> {
-  const rows = await getPublicTaxonomyCategories()
-  return rows.map((c) =>
-    apiCategoryToCategory({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description,
-      iconKey: c.iconKey,
-      iconImageUrl: c.iconImageUrl,
-      color: c.color,
-      specialties: c.specialties,
-      takumiCount: c.takumiCount,
-    }),
-  )
+  try {
+    const rows = await getPublicTaxonomyCategories()
+    return rows.map((c) =>
+      apiCategoryToCategory({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        description: c.description,
+        iconKey: c.iconKey,
+        iconImageUrl: c.iconImageUrl,
+        color: c.color,
+        specialties: c.specialties,
+        takumiCount: c.takumiCount,
+      }),
+    )
+  } catch (err) {
+    console.error(
+      "[getPublicCategoriesForApp] DB-Taxonomie nicht verfügbar — statischer Fallback. Migration `20260320120000_taxonomy_categories` ausführen.",
+      err,
+    )
+    return getStaticCategoriesFallback()
+  }
 }
 
 export async function getCategoryForAppBySlug(slug: string): Promise<Category | null> {
-  const row = await getTaxonomyCategoryBySlug(slug)
-  if (!row) return null
-  const count = await prisma.categoryOnExpert.count({ where: { categoryId: row.id } })
-  return apiCategoryToCategory({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description,
-    iconKey: row.iconKey,
-    iconImageUrl: row.iconImageUrl,
-    color: row.color,
-    specialties: row.specialties,
-    takumiCount: count,
-  })
+  try {
+    const row = await getTaxonomyCategoryBySlug(slug)
+    if (!row) return getStaticCategoryBySlugFallback(slug)
+    const count = await prisma.categoryOnExpert.count({ where: { categoryId: row.id } })
+    return apiCategoryToCategory({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      iconKey: row.iconKey,
+      iconImageUrl: row.iconImageUrl,
+      color: row.color,
+      specialties: row.specialties,
+      takumiCount: count,
+    })
+  } catch (err) {
+    console.error("[getCategoryForAppBySlug] Fallback für slug=%s:", slug, err)
+    return getStaticCategoryBySlugFallback(slug)
+  }
 }
 
 /** Admin: inkl. inaktiv */

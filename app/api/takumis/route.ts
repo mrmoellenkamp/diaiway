@@ -34,9 +34,16 @@ export async function GET() {
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "DB-Fehler"
-    console.error("[diAiway] GET /api/takumis error:", message)
-    const { sanitizeErrorForClient } = await import("@/lib/security")
-    return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
+    console.error(
+      "[diAiway] GET /api/takumis: Taxonomie/Expert-Query fehlgeschlagen (Migration?). Leere Liste.",
+      message,
+    )
+    return new NextResponse(JSON.stringify([]), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+      },
+    })
   }
 }
 
