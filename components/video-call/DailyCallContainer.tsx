@@ -70,6 +70,8 @@ interface MediaDevice {
 
 const TIMER_DURATION_SEC = 5 * 60
 const AUDIO_LEVEL_SPEAKING_THRESHOLD = 0.02
+const MAX_JOIN_RETRIES = 3
+const JOIN_RETRY_DELAYS_MS = [2000, 2500, 3000] as const
 
 /** Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung. */
 function calculateRemainingTime(
@@ -268,9 +270,6 @@ export function DailyCallContainer({
   const joinRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleJoinRef = useRef<((isRetry?: boolean) => Promise<void>) | null>(null)
 
-  const MAX_JOIN_RETRIES = 3
-  const RETRY_DELAYS_MS = [2000, 2500, 3000]
-
   const [isFrozen, setIsFrozen] = useState(false)
   const [reconnectState, setReconnectState] = useState<ReconnectState>(null)
   const [isShugyoFrozen, setIsShugyoFrozen] = useState(false)
@@ -313,17 +312,17 @@ export function DailyCallContainer({
     }
     localStreamRef.current?.getTracks().forEach((t) => t.stop())
     localStreamRef.current = null
-    micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
+    if (micLevelIntervalRef.current) clearInterval(micLevelIntervalRef.current)
     micLevelIntervalRef.current = null
     audioContextRef.current?.close()
-    timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
     timerIntervalRef.current = null
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null
       remoteAudioRef.current.pause()
     }
     initGuardRef.current = false
-    joinRetryTimeoutRef.current && clearTimeout(joinRetryTimeoutRef.current)
+    if (joinRetryTimeoutRef.current) clearTimeout(joinRetryTimeoutRef.current)
     joinRetryTimeoutRef.current = null
   }, [])
 
@@ -458,7 +457,7 @@ export function DailyCallContainer({
       localStreamRef.current?.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
       audioContextRef.current?.close()
-      micLevelIntervalRef.current && clearInterval(micLevelIntervalRef.current)
+      if (micLevelIntervalRef.current) clearInterval(micLevelIntervalRef.current)
       cleanup?.()
     }
   }, [phase, startLobbyPreview])
@@ -597,7 +596,7 @@ export function DailyCallContainer({
       const retryIndex = joinRetryCountRef.current
       if (retryIndex < MAX_JOIN_RETRIES) {
         joinRetryCountRef.current = retryIndex + 1
-        const delay = RETRY_DELAYS_MS[retryIndex] ?? 2500
+        const delay = JOIN_RETRY_DELAYS_MS[retryIndex] ?? 2500
         joinRetryTimeoutRef.current = setTimeout(() => {
           joinRetryTimeoutRef.current = null
           handleJoinRef.current?.(true)
@@ -608,7 +607,7 @@ export function DailyCallContainer({
         setPhase("LOBBY")
       }
     }
-  }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId, onSessionStarted])
+  }, [phase, bookingId, callMode, userRole, selectedCameraId, selectedMicId, onSessionStarted, t])
 
   useEffect(() => {
     handleJoinRef.current = handleJoin
@@ -673,7 +672,7 @@ export function DailyCallContainer({
             toast.warning(t("toast.balanceLow"))
           }
           if (remaining <= 0) {
-            timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
             frozenAtMsRef.current = Date.now()
             setIsFrozen(true)
             try {
@@ -700,7 +699,7 @@ export function DailyCallContainer({
                 haptic5MinFiredRef.current = true
                 hapticHeavy()
               }
-              timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+              if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
               return 0
             }
             return prev - 1
@@ -718,7 +717,7 @@ export function DailyCallContainer({
       syncRemoteParticipant()
     }
 
-    const handleParticipantJoined = (ev: any) => {
+    const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
       console.log("PARTICIPANT DETECTED:", ev?.participant?.session_id)
       const p = ev?.participant
       if (p?.session_id && p.session_id !== call.participants()?.local?.session_id) {
@@ -836,7 +835,7 @@ export function DailyCallContainer({
       }
     }
 
-    const handleError = (err: any) => {
+    const handleError = (err: unknown) => {
       console.error("[DailyCall] DAILY ERROR:", err)
       setReconnectState((prev) => (prev ? prev : { phase: "waiting", secondsLeft: 60 }))
     }
@@ -895,9 +894,9 @@ export function DailyCallContainer({
       call.off("participant-left", handleParticipantLeft)
       call.off("remote-participants-audio-level", handleRemoteAudioLevel)
       call.off("track-started", handleTrackStarted)
-      timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
     }
-  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId])
+  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId, t])
 
   // --- App State: Background → local notification; Foreground → cancel notification ---
   useEffect(() => {
@@ -917,17 +916,18 @@ export function DailyCallContainer({
     }
   }, [phase])
 
-  // --- Graceful Reconnect: 60s countdown + Capacitor Network listener ---
+  // --- Graceful Reconnect: 60s countdown (boolean-Dep bleibt während Countdown true → Interval wird nicht jede Sek. neu gestartet)
+  const reconnectCountdownActive = reconnectState != null && reconnectState.secondsLeft > 0
   useEffect(() => {
-    if (!reconnectState || reconnectState.secondsLeft <= 0) return
-    const t = setInterval(() => {
+    if (!reconnectCountdownActive) return
+    const id = setInterval(() => {
       setReconnectState((prev) => {
         if (!prev || prev.secondsLeft <= 1) return null
         return { phase: "waiting", secondsLeft: prev.secondsLeft - 1 }
       })
     }, 1000)
-    return () => clearInterval(t)
-  }, [reconnectState?.secondsLeft])
+    return () => clearInterval(id)
+  }, [reconnectCountdownActive])
 
   useEffect(() => {
     if (!reconnectState || phase !== "IN_CALL") return
@@ -1041,7 +1041,7 @@ export function DailyCallContainer({
     poll()
     const timer = setInterval(poll, 5000)
     return () => clearInterval(timer)
-  }, [isFrozen, userRole, phase, bookingId, pricePerMinuteCents, forceEndFromFreeze])
+  }, [isFrozen, userRole, phase, callMode, bookingId, pricePerMinuteCents, forceEndFromFreeze])
 
   // Paket 4: Timer neu starten nach Resume (Shugyo hatte 0 Guthaben, hat aufgeladen)
   useEffect(() => {
@@ -1058,7 +1058,7 @@ export function DailyCallContainer({
       )
       setTimerSecondsLeft(remaining)
       if (remaining <= 0) {
-        timerIntervalRef.current && clearInterval(timerIntervalRef.current)
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
         frozenAtMsRef.current = Date.now()
         setIsFrozen(true)
         const call = callObjectRef.current
@@ -1113,9 +1113,6 @@ export function DailyCallContainer({
     return () => clearInterval(timer)
   }, [userRole, bookingMode, phase, bookingId, performCleanup, onCallEnded])
 
-  // --- Paket 4: Resume – balanceCents für Timer nach Aufladung ---
-  const effectiveBalanceCents = balanceCentsForTimer ?? userBalanceCents
-
   // --- Zuweisung: Remote-Video+Audio-Tracks → remoteVideoRef / remoteAudioRef ---
   const assignRemoteVideoTrack = useCallback(() => {
     const call = callObjectRef.current
@@ -1146,7 +1143,7 @@ export function DailyCallContainer({
       audioEl.srcObject = new MediaStream([audioTrack])
       audioEl.play().catch((e) => console.error("Audio Play Error:", e))
     }
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, remoteParticipant?.audioTrack])
+  }, [phase, callMode, remoteParticipant])
 
   // --- Video+Audio-Mapping useEffect: reagiert auf remoteParticipant + tracks ---
   useEffect(() => {
@@ -1164,7 +1161,7 @@ export function DailyCallContainer({
     return () => {
       if (videoEl) videoEl.srcObject = null
     }
-  }, [phase, callMode, remoteParticipant?.sessionId, remoteParticipant?.hasVideo, remoteParticipant?.hasAudio, remoteParticipant?.audioTrack, assignRemoteVideoTrack])
+  }, [phase, callMode, remoteParticipant, assignRemoteVideoTrack])
 
   // --- Warnung: remoteParticipant fehlt (sofort prüfen, kein Timeout) ---
   useEffect(() => {

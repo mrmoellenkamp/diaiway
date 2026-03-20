@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
-import { Shield, ArrowLeft, Loader2, UserX, CheckCircle2, Ban } from "lucide-react"
+import { Shield, ArrowLeft, Loader2, UserX, CheckCircle2 } from "lucide-react"
 
 interface SafetyIncidentEnriched {
   id: string

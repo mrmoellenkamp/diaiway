@@ -186,9 +186,12 @@ export default function ProfilePreviewPage() {
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card p-6">
           <Avatar className="size-20 border-4 border-primary/10">
             {(appRole === "takumi" && user.takumi?.imageUrl) || user.image ? (
-              <img
-                src={(appRole === "takumi" && user.takumi?.imageUrl) || user.image}
+              <Image
+                src={(appRole === "takumi" && user.takumi?.imageUrl) || user.image || ""}
                 alt={user.name}
+                width={80}
+                height={80}
+                unoptimized
                 className="size-full rounded-full object-cover"
               />
             ) : (

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { assertInvoiceCompleteForPayment } from "@/lib/payment-invoice-guard"
 import { getRequestLocale } from "@/lib/server-locale"
+import { markVerified } from "@/lib/verification-service"
 
 export interface SessionCheckoutParams {
   bookingId: string
@@ -173,11 +174,15 @@ export async function verifySessionPayment(bookingId: string) {
       paidAt: true,
       paidAmount: true,
       stripeSessionId: true,
+      userId: true,
     },
   })
   if (!booking) return { status: "error", message: "Booking not found" }
 
   if (booking.paymentStatus === "paid") {
+    if (booking.userId) {
+      await markVerified(booking.userId, "STRIPE_PAYMENT").catch(() => {})
+    }
     // Notification als Fallback sicherstellen (idempotent – erstellt keine Duplikate)
     notifyTakumiAfterPayment(bookingId).catch(() => {})
     return {

@@ -22,7 +22,7 @@ export function useCategories(): Category[] {
           (_, i) => t(`cat.${cat.slug}.sub${i}` as Parameters<typeof t>[0])
         ),
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [t]
   )
 }

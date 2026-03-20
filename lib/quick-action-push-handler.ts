@@ -25,7 +25,7 @@ export function startQuickActionPushListener(
   const setup = async () => {
     try {
       const { PushNotifications } = await import("@capacitor/push-notifications")
-      const { App } = await import("@capacitor/app")
+      await import("@capacitor/app")
 
       const handle = await PushNotifications.addListener(
         "pushNotificationActionPerformed",

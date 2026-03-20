@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import Image from "next/image"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
@@ -58,11 +59,13 @@ function MessageAttachment({
         </a>
       ) : (
         <a href={url} target="_blank" rel="noopener noreferrer" className="block">
-          <img
+          <Image
             src={thumbnailUrl || url}
             alt={filename || "Anhang"}
-            className="max-h-40 rounded-lg object-contain"
-            loading="lazy"
+            width={300}
+            height={160}
+            unoptimized
+            className="max-h-40 w-auto rounded-lg object-contain"
           />
         </a>
       )}
@@ -94,9 +97,12 @@ function PendingAttachmentPreview({
   return (
     <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
       {showThumb ? (
-        <img
+        <Image
           src={thumbnailUrl!}
           alt=""
+          width={56}
+          height={56}
+          unoptimized
           className="size-14 shrink-0 rounded-lg object-cover"
           onError={() => setThumbError(true)}
         />
@@ -155,7 +161,7 @@ export function UserChatBox({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; thumbnailUrl: string | null; filename: string } | null>(null)
-  const { upload, phase: uploadPhase, statusLabel, error: uploadError, isScanning: uploadScanning, reset: resetUpload, clearError: clearUploadError } = useSecureFileUpload()
+  const { upload, phase: _uploadPhase, statusLabel, error: uploadError, isScanning: uploadScanning, reset: resetUpload, clearError: clearUploadError } = useSecureFileUpload()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
   const [interactionLocked, setInteractionLocked] = useState(inDrawer)
@@ -230,7 +236,7 @@ export function UserChatBox({
       attachmentThumbnailUrl?: string | null
       attachmentFilename?: string | null
     }, msgId: string, retries = 0) => {
-      let tempId = msgId
+      const tempId = msgId
       try {
         const res = await fetch("/api/messages", {
           method: "POST",
@@ -277,7 +283,7 @@ export function UserChatBox({
         }
       }
     },
-    []
+    [t]
   )
 
   async function handleSend() {
@@ -444,7 +450,14 @@ export function UserChatBox({
               >
                 {msg.sender === "partner" ? (
                   partnerImageUrl ? (
-                    <img src={partnerImageUrl} alt="" className="size-full object-cover" />
+                    <Image
+                      src={partnerImageUrl}
+                      alt=""
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="size-full object-cover"
+                    />
                   ) : (
                     partnerAvatar
                   )

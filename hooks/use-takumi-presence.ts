@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 
 const HEARTBEAT_INTERVAL_MS = 20 * 1000 // 20 Sekunden (unter 30s Timeout) → stabiler Online-Status
-const FETCH_INTERVAL_MS = 2 * 60 * 1000
 
 /**
  * Sendet Präsenz-Heartbeat nur wenn liveStatus === 'available'.

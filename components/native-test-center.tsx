@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useNativeBridge } from "@/hooks/use-native-bridge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -117,10 +118,13 @@ export function NativeTestCenter() {
           </p>
         )}
         {lastPhoto && (
-          <img
+          <Image
             src={lastPhoto}
             alt="Letztes Foto"
-            className="mt-2 rounded-lg max-h-32 object-cover"
+            width={320}
+            height={128}
+            unoptimized
+            className="mt-2 max-h-32 w-auto rounded-lg object-cover"
           />
         )}
       </CardContent>

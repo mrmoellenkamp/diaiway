@@ -57,7 +57,7 @@ export function useSecureFileUpload() {
       }
       setResult(uploadResult)
       return { ok: true as const, result: uploadResult }
-    } catch (e) {
+    } catch (_e) {
       const errMsg = "Upload fehlgeschlagen."
       setError(errMsg)
       setPhase("error")

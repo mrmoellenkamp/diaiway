@@ -154,6 +154,17 @@ npm run dev
 
 App: [http://localhost:3000](http://localhost:3000)
 
+### Qualität (Lint & Typen)
+
+```bash
+npm run lint        # ESLint (Next.js Core Web Vitals + TypeScript)
+npm run lint:fix    # automatische Fixes wo möglich
+npm run typecheck   # TypeScript ohne Build
+npm run check       # lint + typecheck (empfohlen vor Commit/CI)
+```
+
+**GitHub Actions:** `.github/workflows/ci.yml` führt bei Push/PR auf `main`/`master` ebenfalls `npm run check` aus (parallel zu `docs-check.yml` für Doku/i18n).
+
 ---
 
 ## Mobile Build (Capacitor)

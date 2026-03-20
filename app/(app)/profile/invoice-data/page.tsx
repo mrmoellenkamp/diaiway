@@ -39,15 +39,6 @@ const defaultPrivate: InvoiceData = {
   email: "",
 }
 
-const defaultCompany: InvoiceData = {
-  ...defaultPrivate,
-  type: "unternehmen",
-  companyName: "",
-  vatId: "",
-  taxNumber: "",
-  kleinunternehmer: false,
-}
-
 export default function InvoiceDataPage() {
   const { t } = useI18n()
   const [loading, setLoading] = useState(true)

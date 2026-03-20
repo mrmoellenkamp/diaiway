@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -256,10 +257,12 @@ export default function ShugyoDashboardPage() {
                     <>
                       <div className="relative aspect-video w-full bg-muted/50">
                         {p.imageUrl ? (
-                          <img
+                          <Image
                             src={p.imageUrl}
                             alt={p.title}
-                            className="size-full object-cover"
+                            fill
+                            unoptimized
+                            className="object-cover"
                           />
                         ) : (
                           <div className="flex size-full items-center justify-center">

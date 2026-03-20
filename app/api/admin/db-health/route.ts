@@ -36,8 +36,12 @@ export async function GET() {
     await prisma.$queryRaw`SELECT 1 as ok`
     dbOk = true
   } catch (e: unknown) {
-    const err: any = e
-    dbError = { code: err?.code, message: err?.message ?? "DB test failed" }
+    const code =
+      e && typeof e === "object" && "code" in e
+        ? String((e as { code?: unknown }).code)
+        : undefined
+    const message = e instanceof Error ? e.message : "DB test failed"
+    dbError = { code, message }
   }
 
   return NextResponse.json({

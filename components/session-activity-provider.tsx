@@ -27,10 +27,9 @@ const SessionActivityContext = createContext<SessionActivityContextValue | null>
 )
 
 const COUNTDOWN_INTERVAL_MS = 1000
-const WARNING_THRESHOLD = INACTIVITY_TIMEOUT_SEC - INACTIVITY_WARNING_SEC // 14 min
 
 export function SessionActivityProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const pathname = usePathname()
   const [secondsLeft, setSecondsLeft] = useState(INACTIVITY_TIMEOUT_SEC)
   const [showWarning, setShowWarning] = useState(false)

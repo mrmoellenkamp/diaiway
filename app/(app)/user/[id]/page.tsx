@@ -84,7 +84,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
         <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card p-6">
           <Avatar className="size-20 border-4 border-primary/10">
             {user.image ? (
-              <img src={user.image} alt={user.name} className="size-full object-cover" />
+              <Image
+                src={user.image}
+                alt={user.name}
+                width={80}
+                height={80}
+                unoptimized
+                className="size-full object-cover"
+              />
             ) : (
               <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
                 {initials}

@@ -11,7 +11,7 @@ import { useI18n } from "@/lib/i18n"
  * Beeinflusst liveStatus in der Expert-Tabelle.
  */
 export function TakumiStatusCard() {
-  const { t, locale } = useI18n()
+  const { locale } = useI18n()
   const [liveStatus, setLiveStatus] = useState<"offline" | "available" | null>(null)
   const [updating, setUpdating] = useState(false)
 

@@ -13,7 +13,7 @@ export const runtime = "nodejs"
 /** Minimum password requirements */
 function validatePassword(pw: string): string | null {
   if (pw.length < 8) return "Das Passwort muss mindestens 8 Zeichen lang sein."
-  if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw))
+  if (!/[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw))
     return "Das Passwort muss mindestens eine Zahl oder ein Sonderzeichen enthalten."
   return null
 }

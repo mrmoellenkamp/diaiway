@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
 import { Menu, X, User, Mail, FolderOpen, LogOut } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -61,7 +62,14 @@ export function LandingHeader() {
               <div className="flex items-center gap-3 px-3 py-2.5">
                 <Avatar className="size-10 border-2 border-primary/10">
                   {session?.user?.image ? (
-                    <img src={session.user.image} alt={userName} className="size-full rounded-full object-cover" />
+                    <Image
+                      src={session.user.image}
+                      alt={userName}
+                      width={40}
+                      height={40}
+                      unoptimized
+                      className="size-full rounded-full object-cover"
+                    />
                   ) : (
                     <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
                       {initials}

@@ -363,7 +363,7 @@ function SessionCallContent() {
     } catch (e) {
       setError(e instanceof Error ? e.message : t("toast.loadError"))
     }
-  }, [bookingId])
+  }, [bookingId, t])
 
   useEffect(() => {
     fetchBooking()

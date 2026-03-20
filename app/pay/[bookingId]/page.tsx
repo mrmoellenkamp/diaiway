@@ -24,7 +24,7 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
   const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
 
-  const checkPayment = async (): Promise<boolean> => {
+  const checkPayment = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetch(`/api/pay/${bookingId}?token=${encodeURIComponent(token)}`)
       const data = await res.json()
@@ -41,7 +41,7 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
       // weiter pollen
     }
     return false
-  }
+  }, [bookingId, token])
 
   onCompleteRef.current = async () => {
     for (let i = 0; i < 5; i++) {
@@ -89,7 +89,7 @@ function PayPageInner({ bookingId }: { bookingId: string }) {
       if (done) clearInterval(interval)
     }, 1500)
     return () => clearInterval(interval)
-  }, [polling])
+  }, [polling, checkPayment])
 
   return (
     <div className="min-h-screen bg-white">

@@ -15,7 +15,7 @@ function VerifyEmailContent() {
   const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status, update: updateSession } = useSession()
+  const { data: session, status } = useSession()
   const [resending, setResending] = useState(false)
   const [cooldown, setCooldown] = useState(0)
 

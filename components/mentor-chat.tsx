@@ -14,7 +14,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Video,
-  Loader2,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -72,7 +71,6 @@ export function MentorChat({ variant, className }: MentorChatProps) {
   const {
     storedMessages,
     setStoredMessages,
-    storedMessagesRef,
     pendingMentorMessage,
     setPendingMentorMessage,
     viewingTakumiId,
@@ -183,11 +181,6 @@ export function MentorChat({ variant, className }: MentorChatProps) {
     sendMessage({ text: t("mentor.declineSearch") })
   }
 
-  function handlePhotoUpload() {
-    if (isStreaming) return
-    fileInputRef.current?.click()
-  }
-
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -277,9 +270,7 @@ export function MentorChat({ variant, className }: MentorChatProps) {
         )}
 
         {messages.map((msg) => {
-          const text = getMessageText(msg)
           const showTakumiTip = msg.role === "assistant" && hasTakumiTip(msg)
-          const displayText = cleanText(text)
 
           return (
             <div key={msg.id}>

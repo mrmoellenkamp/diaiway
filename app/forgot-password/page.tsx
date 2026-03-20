@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   useEffect(() => {
     if (session?.user?.email && !email) setEmail(session.user.email)
-  }, [session?.user?.email])
+  }, [session?.user?.email, email])
   const [isLoading, setIsLoading] = useState(false)
   const [isSent, setIsSent] = useState(false)
   const [error, setError] = useState("")

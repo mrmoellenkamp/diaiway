@@ -24,7 +24,7 @@ import { NativeTestCenter } from "@/components/native-test-center"
 
 export default function SettingsPage() {
   const { t } = useI18n()
-  const { data: session } = useSession()
+  useSession()
   const [pausing, setPausing] = useState(false)
   const [deleting, setDeleting] = useState(false)
 

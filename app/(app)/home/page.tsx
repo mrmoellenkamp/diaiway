@@ -10,7 +10,7 @@ import { PageContainer } from "@/components/page-container"
 import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useApp } from "@/lib/app-context"
-import { Search, ArrowRight, Sparkles } from "lucide-react"
+import { Search, ArrowRight } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 
 export default function HomePage() {

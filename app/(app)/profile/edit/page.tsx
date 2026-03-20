@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
@@ -49,7 +49,7 @@ export default function EditProfilePage() {
   const router = useRouter()
   const { data: session, update: updateSession } = useSession()
   const { role, setRole } = useApp()
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const categories = useCategories()
   const isTakumi = role === "takumi"
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -725,7 +725,7 @@ export default function EditProfilePage() {
                         ),
                         color: "text-muted-foreground",
                       },
-                    ].map(({ key, label, value, set, placeholder, icon, color }) => (
+                    ].map(({ key, label: _label, value, set, placeholder, icon, color }) => (
                       <div key={key} className="flex items-center gap-2">
                         <span className={`${color} mt-0.5`}>{icon}</span>
                         <div className="flex flex-1 flex-col gap-0.5">

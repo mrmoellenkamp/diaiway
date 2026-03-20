@@ -15,7 +15,7 @@ interface CategoryDetailSkeletonProps {
 }
 
 /** Skeleton während Server-Daten streamt – verhindert Layout-Shift (CLS) */
-export function CategoryDetailSkeleton({ slug, category }: CategoryDetailSkeletonProps) {
+export function CategoryDetailSkeleton({ slug: _slug, category }: CategoryDetailSkeletonProps) {
   return (
     <PageContainer>
       <div className="flex flex-col gap-4">

@@ -14,8 +14,6 @@ import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
 
 export const runtime = "nodejs"
 
-const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
-
 /** GET — list bookings for the current user (as booker or as expert)
  * Query: view=takumi — only bookings where user is the expert (for availability dashboard)
  *        view=shugyo — only bookings where user is the booker (default: both)

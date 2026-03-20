@@ -10,8 +10,6 @@ import { ArrowLeft, Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCh
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
-import { formatDateBerlinShort } from "@/lib/date-utils"
-
 function formatCents(cents: number): string {
   const abs = Math.abs(cents)
   const sign = cents < 0 ? "−" : ""

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db"
  * GET /api/admin/safety/incidents
  * Listet alle Safety-Incidents (KI-Alert-Snapshots) für Admin-Beweissicherung.
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await auth()
   const user = session?.user as { id?: string; role?: string } | null
   if (!user?.id || user.role !== "admin") {

@@ -30,10 +30,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import {
-  Euro,
   CreditCard,
   Wallet,
-  AlertTriangle,
   RefreshCw,
   Loader2,
   ArrowLeft,

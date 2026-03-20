@@ -17,7 +17,7 @@ export async function compressImageToMaxSize(
     throw new Error("Nur Bilder können komprimiert werden")
   }
 
-  let img = sharp(buffer)
+  const img = sharp(buffer)
   const meta = await img.metadata()
   const width = meta.width ?? 0
   const height = meta.height ?? 0

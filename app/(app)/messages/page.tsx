@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Mail, Building2, MailOpen, MessageSquareDashed, Trash2, X } from "lucide-react"
+import { Bell, Calendar, CheckCircle2, XCircle, MessageCircle, Loader2, Building2, MailOpen, MessageSquareDashed, Trash2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -280,7 +280,8 @@ function MessagesPageContent() {
 
           setWaymailFolder("inbox")
           setWaymailDetail(d)
-          const alreadyRead = d.read === true || waymails.find((x) => x.id === waymailParam)?.read
+          // read-Status kommt vom Server (GET); lokale waymails-Liste absichtlich nicht in deps (Deep-Link)
+          const alreadyRead = d.read === true
           if (!alreadyRead) {
             fetch(`/api/messages?waymail=${encodeURIComponent(waymailParam)}`, { method: "PATCH" })
               .then((r) => r.ok && refreshNotificationCount?.())
@@ -290,7 +291,7 @@ function MessagesPageContent() {
         })
         .catch(() => setWaymailDetail(null))
     }
-  }, [waymailParam])
+  }, [waymailParam, refreshNotificationCount])
 
   const fetchWaymails = useCallback(async () => {
     setLoadingWaymails(true)

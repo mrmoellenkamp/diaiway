@@ -14,10 +14,9 @@ import { BookingCalendar } from "@/components/booking-calendar"
 import { PageContainer } from "@/components/page-container"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
-import { notFound } from "next/navigation"
 import { toast } from "sonner"
 import {
-  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, CreditCard, RefreshCcw, Mic,
+  ArrowLeft, CheckCircle, Shield, Clock, Video, Info, Loader2, Calendar, RefreshCcw, Mic,
 } from "lucide-react"
 import { parseBerlinDateTime, isBeyondMaxBookingDays } from "@/lib/date-utils"
 import { BookingCheckout } from "@/components/booking-checkout"

@@ -187,7 +187,7 @@ export async function PATCH(
           if (k === "invoiceData") {
             const sanitized = sanitizeInvoiceData(body.user!.invoiceData)
             if (sanitized !== null) data[k] = sanitized
-          } else if (k === ("isVerified" as any)) {
+          } else if (k === "isVerified") {
             data.isVerified = !!body.user!.isVerified
             data.verificationSource = body.user!.isVerified ? "MANUAL" : "NONE"
           } else if (k === "languages") {
@@ -195,8 +195,7 @@ export async function PATCH(
             const arr = Array.isArray(body.user!.languages) ? body.user!.languages : []
             data.languages = [...new Set(arr.filter((l: string) => valid.includes(String(l).toLowerCase())))]
           } else {
-            // @ts-ignore - dynamische Keys
-            data[k] = body.user![k]
+            data[k] = body.user![k] as unknown
           }
         }
         if (Object.keys(data).length > 0) {

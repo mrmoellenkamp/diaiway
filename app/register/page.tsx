@@ -164,7 +164,7 @@ function RegisterForm() {
       setError(t("register.errorPasswordLength"))
       return
     }
-    if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       setError(t("register.errorPasswordWeak"))
       return
     }

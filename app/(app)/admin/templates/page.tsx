@@ -53,7 +53,7 @@ export default function AdminTemplatesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => { void load() }, [load])
 

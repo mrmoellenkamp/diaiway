@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Send, Loader2, Paperclip, Check, XCircle } from "lucide-react"
@@ -30,9 +31,12 @@ function PendingAttachmentPreview({
   return (
     <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
       {showThumb ? (
-        <img
+        <Image
           src={thumbnailUrl!}
           alt=""
+          width={56}
+          height={56}
+          unoptimized
           className="size-14 shrink-0 rounded-lg object-cover"
           onError={() => setThumbError(true)}
         />

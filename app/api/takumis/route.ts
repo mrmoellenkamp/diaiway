@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { emailForName } from "@/lib/email-utils"
 import { requireAdmin } from "@/lib/api-auth"
@@ -74,7 +73,6 @@ export async function GET() {
 export async function POST(req: Request) {
   const authResult = await requireAdmin()
   if (authResult.response) return authResult.response
-  const { session } = authResult
 
   try {
     const body = await req.json()

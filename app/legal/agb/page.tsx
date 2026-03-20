@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowLeft, Scale, ShieldCheck, FileText } from "lucide-react"
+import { ArrowLeft, Scale, FileText } from "lucide-react"
 
 export const metadata = { title: "AGB – diAIway" }
 

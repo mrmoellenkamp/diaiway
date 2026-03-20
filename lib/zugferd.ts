@@ -4,7 +4,6 @@
  */
 
 import { PDFDocument } from "pdf-lib"
-import { BILLING_SENDER } from "./billing-config"
 
 function escapeXml(s: string): string {
   return s
@@ -47,10 +46,10 @@ export function buildFacturXXml(opts: {
     sellerCountry,
     sellerVatId,
     buyerName,
-    buyerEmail,
+    buyerEmail: _buyerEmail,
     lineItemDesc,
     lineQuantity,
-    lineUnitPriceCents,
+    lineUnitPriceCents: _lineUnitPriceCents,
     lineAmountCents,
     totalAmountCents,
     currency,

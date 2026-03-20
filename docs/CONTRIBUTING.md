@@ -16,8 +16,11 @@
 
 ## Code-Stil
 
-- ESLint ausführen: `npm run lint`
-- TypeScript: strikte Typen nutzen
+- **Lint:** `npm run lint` (ESLint 9 Flat Config, Next.js 16 ohne `next lint`)
+- **Auto-Fix:** `npm run lint:fix`
+- **Typecheck:** `npm run typecheck` (`tsc --noEmit`)
+- **Alles vor PR/Release:** `npm run check` (= Lint + Typecheck)
+- TypeScript: strikte Typen nutzen (`strict` ist aktiv)
 
 ## Datenbank-Änderungen
 

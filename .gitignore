@@ -31,3 +31,6 @@ ios/DerivedData/
 out/*
 !out/index.html
 !out/error.html
+
+# ESLint JSON reports (lokal)
+eslint-report.json

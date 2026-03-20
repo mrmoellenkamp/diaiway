@@ -8,7 +8,7 @@ export const runtime = "nodejs"
  * GET /api/admin/safety
  * Listet alle Safety Reports (diaiway Safety Enforcement).
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await auth()
   const user = session?.user as { id?: string; role?: string } | null
   if (!user?.id || user.role !== "admin") {

@@ -4,9 +4,8 @@ import { put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
+import { markVerified } from "@/lib/verification-service"
 import {
-  generateCreditNotePdf,
-  generateInvoicePdf,
   generateStornoCreditNotePdf,
   generateStornoInvoicePdf,
   generateWalletTopupInvoicePdf,
@@ -29,7 +28,16 @@ export async function creditWalletTopup(
     const existing = await prisma.walletTransaction.findFirst({
       where: { userId, referenceId: stripeSessionId, type: "topup" },
     })
-    if (existing) return { ok: true } // Idempotenz
+    if (existing) {
+      // Erste Zahlung: KD + Verifizierung auch bei wiederholter Bestätigung/Webhook
+      await ensureCustomerNumber(userId).catch((err) =>
+        console.error("[creditWalletTopup] ensureCustomerNumber:", err)
+      )
+      await markVerified(userId, "STRIPE_PAYMENT").catch((err) =>
+        console.error("[creditWalletTopup] markVerified:", err)
+      )
+      return { ok: true } // Idempotenz
+    }
 
     await ensureCustomerNumber(userId).catch((err) =>
       console.error("[creditWalletTopup] ensureCustomerNumber:", err)
@@ -50,6 +58,10 @@ export async function creditWalletTopup(
       })
       return wt.id
     })
+
+    await markVerified(userId, "STRIPE_PAYMENT").catch((err) =>
+      console.error("[creditWalletTopup] markVerified:", err)
+    )
 
     // Rechnung für Wallet-Aufladung erstellen
     try {
@@ -240,6 +252,10 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
   await ensureCustomerNumber(booking.expert.userId).catch((err) =>
     console.error("[onPaymentReceived] ensureCustomerNumber takumi:", err)
   )
+  // Shugyo: erste erfolgreiche Buchungszahlung → verifiziert (wie Schema STRIPE_PAYMENT)
+  await markVerified(booking.userId, "STRIPE_PAYMENT").catch((err) =>
+    console.error("[onPaymentReceived] markVerified:", err)
+  )
 
   const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = totalAmountCents - platformFee
@@ -348,6 +364,9 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
         },
       })
     })
+    await markVerified(booking.userId, "STRIPE_PAYMENT").catch((err) =>
+      console.error("[payBookingWithWallet] markVerified:", err)
+    )
     return { ok: true }
   } catch (err) {
     if ((err as Error)?.message === "INSUFFICIENT_FUNDS") {

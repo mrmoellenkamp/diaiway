@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isSearchingExperts, setIsSearchingExperts] = useState(false)
   const [searchResults, setSearchResults] = useState<string[] | null>(null)
 
-  function refreshNotificationCount() {
+  const refreshNotificationCount = useCallback(() => {
     if (sessionStatus !== "authenticated" || !session?.user) return
     fetch("/api/notifications")
       .then((r) => (r.ok ? r.json() : null))
@@ -135,11 +135,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {})
-  }
+  }, [sessionStatus, session?.user])
 
   useEffect(() => {
     if (sessionStatus === "authenticated" && session?.user) refreshNotificationCount()
-  }, [sessionStatus, session?.user])
+  }, [sessionStatus, session?.user, refreshNotificationCount])
 
   async function sendDirectMessage(recipientExpertId: string, text: string) {
     try {

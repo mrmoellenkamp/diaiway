@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { payBookingWithWallet } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
-import { markVerified } from "@/lib/verification-service"
 import { getInvoiceGateResult } from "@/lib/payment-invoice-guard"
 import { getRequestLocale } from "@/lib/server-locale"
 import { rateLimitAll, getClientIp } from "@/lib/rate-limit"
@@ -89,8 +88,6 @@ export async function POST(
       { status: 400 }
     )
   }
-
-  await markVerified(session.user.id, "STRIPE_PAYMENT").catch(() => {})
 
   try {
     await notifyTakumiAfterPayment(bookingId)

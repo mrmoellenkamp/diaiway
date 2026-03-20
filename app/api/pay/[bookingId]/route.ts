@@ -6,6 +6,7 @@ import { getInvoiceGateResult } from "@/lib/payment-invoice-guard"
 import { getRequestLocale } from "@/lib/server-locale"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { ensureCustomerNumber } from "@/lib/billing"
+import { markVerified } from "@/lib/verification-service"
 
 export const runtime = "nodejs"
 
@@ -227,6 +228,9 @@ export async function GET(
             console.error("[pay GET status] ensureCustomerNumber takumi:", err)
           )
         }
+        await markVerified(booking.userId, "STRIPE_PAYMENT").catch((err) =>
+          console.error("[pay GET status] markVerified:", err)
+        )
         return NextResponse.json({ status: "paid" })
       }
     } catch {

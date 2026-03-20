@@ -12,7 +12,7 @@ import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { notFound } from "next/navigation"
 import {
-  ArrowLeft, Clock, Video, MessageSquare, Shield, Star, Send, Mail, MessageCircle, Calendar, Loader2, Share2,
+  ArrowLeft, Clock, Video, MessageSquare, Shield, Star, Mail, MessageCircle, Calendar, Loader2, Share2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,7 @@ import { useI18n } from "@/lib/i18n"
 import { useCategories } from "@/lib/categories-i18n"
 import {
   Users, Euro, AlertTriangle, Database, Loader2, UserPlus,
-  BarChart3, TrendingUp, TrendingDown, Activity, BookOpen,
+  BarChart3, Activity, BookOpen,
   Star, Wifi, WifiOff, Shield, RefreshCw, Search, ChevronLeft,
   ChevronRight, Trash2, Edit2, Check, X, CalendarDays, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus, Lock, FileArchive, FileText,
@@ -481,7 +482,14 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                 <div className="flex items-center gap-3">
                   <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
                     {u.image ? (
-                      <img src={u.image} alt={displayName} className="size-full rounded-full object-cover" />
+                      <Image
+                        src={u.image}
+                        alt={displayName}
+                        width={36}
+                        height={36}
+                        unoptimized
+                        className="size-full rounded-full object-cover"
+                      />
                     ) : displayName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">

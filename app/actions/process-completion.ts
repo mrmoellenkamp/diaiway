@@ -9,7 +9,6 @@ import { generateInvoicePdf, generateCreditNotePdf } from "@/lib/pdf-invoice"
 import { sendInvoiceReadyEmail, sendCreditNoteReadyEmail } from "@/lib/email"
 import { getBillingDownloadUrl } from "@/lib/billing-download"
 
-const PLATFORM_FEE_PERCENT = 15
 const RELEASE_DELAY_HOURS = 24
 
 /**

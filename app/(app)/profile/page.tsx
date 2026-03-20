@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -97,7 +97,6 @@ export default function ProfilePage() {
   const { role, setRole, setIsLoggedIn, profileData, profileLoading: appProfileLoading, refreshProfile } = useApp()
   const { t } = useI18n()
   const { mutate } = useSWRConfig()
-  const router = useRouter()
   const [hideOnlineStatus, setHideOnlineStatus] = useState(false)
   const isTakumi = role === "takumi"
 
@@ -422,7 +421,14 @@ export default function ProfilePage() {
                 >
                   <Avatar className="size-20 border-4 border-primary/10">
                     {userImage ? (
-                      <img src={userImage} alt={userName} className="size-full rounded-full object-cover" />
+                      <Image
+                        src={userImage}
+                        alt={userName}
+                        width={80}
+                        height={80}
+                        unoptimized
+                        className="size-full rounded-full object-cover"
+                      />
                     ) : (
                       <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
                         {userInitials}

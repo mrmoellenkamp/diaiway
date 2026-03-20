@@ -38,7 +38,7 @@ export function SessionCheckout({
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
   const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
 
-  const checkPayment = async () => {
+  const checkPayment = useCallback(async () => {
     try {
       const result = await verifySessionPayment(bookingId)
       if (result.status === "paid") {
@@ -55,7 +55,7 @@ export function SessionCheckout({
       /* weiter pollen */
     }
     return false
-  }
+  }, [bookingId, onSuccess, onError, t])
 
   // Ref immer aktuell halten
   onCompleteRef.current = async () => {
@@ -109,7 +109,7 @@ export function SessionCheckout({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [polling, bookingId, onSuccess, onError])
+  }, [polling, checkPayment])
 
   if (loading) {
     return (

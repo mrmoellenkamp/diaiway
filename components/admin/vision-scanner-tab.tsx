@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import NextImage from "next/image"
 import {
   Camera, Loader2, Tag, Box, Type, Shield, Palette, Smile, Globe,
   Upload, RefreshCw, Check, AlertCircle, X, Zap, ImageIcon, ChevronDown, ChevronUp,
@@ -211,12 +212,13 @@ export function VisionScannerTab() {
           ) : (
             <div className="space-y-2">
               <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <NextImage
                   src={imageDataUrl}
                   alt="Ausgewähltes Bild"
-                  className="w-full rounded-lg border border-slate-200 bg-slate-100 object-contain"
-                  style={{ maxHeight: "160px" }}
+                  width={800}
+                  height={160}
+                  unoptimized
+                  className="max-h-[160px] w-full rounded-lg border border-slate-200 bg-slate-100 object-contain"
                 />
                 <button
                   type="button"

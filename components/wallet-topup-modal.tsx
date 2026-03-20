@@ -76,7 +76,7 @@ export function WalletTopupModal({
     } catch {
       return false
     }
-  }, [sessionId])
+  }, [sessionId, t])
 
   // Ref immer aktuell halten — confirmTopup kann sich durch sessionId ändern,
   // aber stableOnComplete bleibt stabil

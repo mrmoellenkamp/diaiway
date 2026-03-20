@@ -45,11 +45,11 @@ export function BookingCheckout({
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
   const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
 
-  const ensureTakumiNotified = () => {
+  const ensureTakumiNotified = useCallback(() => {
     fetch(`/api/bookings/${bookingId}/notify-takumi`, { method: "POST" }).catch(() => {})
-  }
+  }, [bookingId])
 
-  const checkPayment = async () => {
+  const checkPayment = useCallback(async () => {
     try {
       const result = await verifySessionPayment(bookingId)
       if (result.status === "paid") {
@@ -67,7 +67,7 @@ export function BookingCheckout({
       /* weiter pollen */
     }
     return false
-  }
+  }, [bookingId, ensureTakumiNotified, onSuccess, onError, t])
 
   // Ref immer aktuell halten — wird bei jedem Render neu gesetzt,
   // aber stableOnComplete bleibt stabil
@@ -94,7 +94,7 @@ export function BookingCheckout({
     [clientSecret, stableOnComplete]
   )
 
-  const startStripe = () => {
+  const startStripe = useCallback(() => {
     setLoading(true)
     startBookingCheckout({ bookingId, takumiName, priceInCents })
       .then((result) => {
@@ -106,13 +106,13 @@ export function BookingCheckout({
         onError(err.message || t("booking.checkoutStartFailed"))
         setLoading(false)
       })
-  }
+  }, [bookingId, takumiName, priceInCents, onError, t])
 
   useEffect(() => {
     if (paymentMethod === "card" && !clientSecret && !loading) {
       startStripe()
     }
-  }, [paymentMethod])
+  }, [paymentMethod, clientSecret, loading, startStripe])
 
   useEffect(() => {
     if (!polling) return
@@ -121,7 +121,7 @@ export function BookingCheckout({
       if (done) clearInterval(interval)
     }, 1000)
     return () => clearInterval(interval)
-  }, [polling, bookingId, onSuccess, onError])
+  }, [polling, checkPayment])
 
   async function handlePayWithWallet() {
     setLoading(true)

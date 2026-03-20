@@ -89,25 +89,35 @@ export async function registerPushAndGetToken(): Promise<string | null> {
     if (perm.receive !== "granted") {
       throw new Error("Push-Berechtigung wurde verweigert.")
     }
-    return new Promise<string | null>(async (resolve, reject) => {
+    return new Promise<string | null>((resolve, reject) => {
       let settled = false
+      let handle: Awaited<ReturnType<typeof PushNotifications.addListener>> | undefined
+
       const done = (v: string | null) => {
         if (settled) return
         settled = true
-        void h.remove()
+        void handle?.remove()
         resolve(v)
       }
-      const h = await PushNotifications.addListener(
-        "registration",
-        (ev: { value?: string }) => done(ev.value ?? null)
-      )
-      PushNotifications.register().catch((e) => {
-        if (!settled) {
-          settled = true
-          void h.remove()
+
+      void (async () => {
+        try {
+          handle = await PushNotifications.addListener(
+            "registration",
+            (ev: { value?: string }) => done(ev.value ?? null)
+          )
+          void PushNotifications.register().catch((e) => {
+            if (!settled) {
+              settled = true
+              void handle?.remove()
+              reject(e)
+            }
+          })
+        } catch (e) {
           reject(e)
         }
-      })
+      })()
+
       setTimeout(() => done(null), 10000)
     })
   } catch (err) {

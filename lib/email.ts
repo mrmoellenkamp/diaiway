@@ -181,10 +181,6 @@ function emailWrapper(title: string, body: string): string {
 </table></td></tr></table></body></html>`
 }
 
-function btn(href: string, label: string, color: string): string {
-  return `<a href="${href}" style="display:inline-block;padding:12px 28px;background-color:${color};color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:10px;margin-right:8px;">${label}</a>`
-}
-
 /* ----- Booking request email to Takumi ----- */
 export async function sendBookingRequestEmail(opts: {
   to: string

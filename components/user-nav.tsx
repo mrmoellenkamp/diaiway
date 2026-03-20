@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
+import Image from "next/image"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -87,7 +88,14 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         <div className="flex items-center gap-3 px-3 py-2">
           <Avatar className="size-9 border-2 border-primary/10">
             {session.user.image ? (
-              <img src={session.user.image} alt={userName} className="size-full rounded-full object-cover" />
+              <Image
+                src={session.user.image}
+                alt={userName}
+                width={36}
+                height={36}
+                unoptimized
+                className="size-full rounded-full object-cover"
+              />
             ) : (
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                 {initials}
@@ -147,7 +155,14 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         <button className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:min-w-0">
           <Avatar className="size-8 border-2 border-primary/10">
             {session.user.image ? (
-              <img src={session.user.image} alt={userName} className="size-full rounded-full object-cover" />
+              <Image
+                src={session.user.image}
+                alt={userName}
+                width={32}
+                height={32}
+                unoptimized
+                className="size-full rounded-full object-cover"
+              />
             ) : (
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                 {initials}

@@ -77,7 +77,7 @@ export async function GET(req: Request) {
         createdAt: w.createdAt.toISOString(),
         amountCents: w.amountCents,
         description: `${w.user.name} · ${w.type} ${sign}${(w.amountCents / 100).toFixed(2)} €`,
-        referenceId: w.userId,
+        referenceId: refId,
         profileUrl: `/user/${w.userId}`,
         paymentType: w.type,
       })

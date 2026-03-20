@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Loader2, Lock, Clock, Phone } from "lucide-react"
@@ -118,6 +118,8 @@ export function BookingCalendar({
   selectedSprechzeit,
 }: BookingCalendarProps) {
   const { t } = useI18n()
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
   const today = new Date()
 
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -150,13 +152,13 @@ export function BookingCalendar({
       .finally(() => setLoadingAvail(false))
   }, [takumiId])
 
-  // ── Bei Daueränderung: Endezeit aktualisieren, falls Termin gewählt ─────
+  // ── Endezeit an Dauer / gewählten Slot koppeln (Callback per Ref → keine instabile onSelect-Dep) ─────
   useEffect(() => {
     if (pickedDate && selectedDate === pickedDate && selectedTime) {
       const endTime = minutesToTime(timeToMinutes(selectedTime) + duration)
-      onSelect(pickedDate, selectedTime, endTime)
+      onSelectRef.current(pickedDate, selectedTime, endTime)
     }
-  }, [duration])
+  }, [duration, pickedDate, selectedDate, selectedTime])
 
   // ── Load resolved slots + blocked for picked date ───────────────────────
   useEffect(() => {

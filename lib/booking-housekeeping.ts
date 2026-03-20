@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __bookingHousekeepingLastRunAtMs: number | undefined
 }
 

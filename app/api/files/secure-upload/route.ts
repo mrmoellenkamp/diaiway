@@ -130,7 +130,7 @@ function parseMultipartStream(request: NextRequest): Promise<ParsedFile | null> 
     let fileLimitReached = false
     let settled = false
 
-    const settle = (fn: () => void, value: ParsedFile | null) => {
+    const settle = (fn: () => void, _value: ParsedFile | null) => {
       if (settled) return
       settled = true
       fn()
@@ -251,7 +251,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let { buffer, mime, originalFilename } = parsed
+    const { originalFilename } = parsed
+    let { buffer, mime } = parsed
 
     // PDFs: Größenlimit strikt; Bilder: automatisch komprimieren
     if (mime === "application/pdf") {
