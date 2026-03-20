@@ -179,6 +179,18 @@ const en = {
   "register.usernameAvailable": "Available",
   "register.usernameTaken": "Already taken",
   "register.usernameInvalid": "Invalid username",
+
+  "invoice.error.incomplete": "Please complete your billing details first ({fields}).",
+  "invoice.field.type": "Customer type (private / business)",
+  "invoice.field.fullName": "Full name",
+  "invoice.field.street": "Street",
+  "invoice.field.houseNumber": "House number",
+  "invoice.field.zip": "Postal code",
+  "invoice.field.city": "City",
+  "invoice.field.country": "Country",
+  "invoice.field.email": "Email",
+  "invoice.field.companyName": "Company name",
+
   "profile.editUsername": "Edit",
   "register.shugyoIcon": "修行",
   "register.shugyoSubtitle": "Learner & Seeker",

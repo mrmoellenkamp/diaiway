@@ -407,6 +407,7 @@ export async function PATCH(
       }
 
       let chargedAmountCents: number | undefined
+      let instantBillingError: string | undefined
       if (booking.bookingMode === "instant" && isBooker && booking.expert) {
         const price15 =
           booking.callType === "VOICE"
@@ -425,8 +426,17 @@ export async function PATCH(
           })
         )
         const chargeResult = await chargeInstantCallToWallet(id, duration, pricePerMinuteCents, hasPaidBefore)
-        if (!chargeResult.ok && chargeResult.error !== "Insufficient wallet balance") {
-          console.warn("[end-session] Instant charge failed:", chargeResult.error)
+        if (!chargeResult.ok) {
+          instantBillingError = chargeResult.error
+          if (chargeResult.error === "INVOICE_INCOMPLETE") {
+            console.error(
+              "[end-session] Instant charge blocked: invoice incomplete bookingId=%s userId=%s",
+              id,
+              booking.userId
+            )
+          } else if (chargeResult.error !== "Insufficient wallet balance") {
+            console.warn("[end-session] Instant charge failed:", chargeResult.error)
+          }
         }
         chargedAmountCents = chargeResult.amountCents
       }
@@ -457,6 +467,7 @@ export async function PATCH(
         autoRefunded,
         isFreeSession,
         chargedAmountCents,
+        ...(instantBillingError ? { instantBillingError } : {}),
       })
     }
 

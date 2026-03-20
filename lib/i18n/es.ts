@@ -179,6 +179,18 @@ const es = {
   "register.usernameAvailable": "Disponible",
   "register.usernameTaken": "Ya está en uso",
   "register.usernameInvalid": "Nombre de usuario no válido",
+
+  "invoice.error.incomplete": "Completa primero tus datos de facturación ({fields}).",
+  "invoice.field.type": "Tipo de cliente (particular / empresa)",
+  "invoice.field.fullName": "Nombre completo",
+  "invoice.field.street": "Calle",
+  "invoice.field.houseNumber": "Número",
+  "invoice.field.zip": "Código postal",
+  "invoice.field.city": "Ciudad",
+  "invoice.field.country": "País",
+  "invoice.field.email": "Correo electrónico",
+  "invoice.field.companyName": "Nombre de la empresa",
+
   "profile.editUsername": "Editar",
   "register.shugyoIcon": "修行",
   "register.shugyoSubtitle": "Aprendiz y buscador",

@@ -2,6 +2,7 @@
 
 import { put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
+import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { getNextDocumentNumber } from "@/lib/billing"
 import {
   generateCreditNotePdf,
@@ -255,12 +256,18 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { expert: true },
+    include: {
+      expert: true,
+      user: { select: { invoiceData: true } },
+    },
   })
   if (!booking) return { ok: false, error: "Booking not found" }
   if (booking.paymentStatus === "paid") return { ok: true }
   const expertUserId = booking.expert?.userId
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  const inv = validateInvoiceDataForPayment(booking.user?.invoiceData ?? null)
+  if (!inv.ok) return { ok: false, error: "INVOICE_INCOMPLETE" }
 
   const totalAmountCents = Math.round(
     (Number(booking.totalPrice ?? booking.price ?? 0)) * 100
@@ -350,12 +357,18 @@ export async function chargeInstantCallToWallet(
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { expert: true },
+    include: {
+      expert: true,
+      user: { select: { invoiceData: true } },
+    },
   })
   if (!booking) return { ok: false, error: "Booking not found" }
   if (booking.paymentStatus === "paid") return { ok: true, amountCents }
   const expertUserId = booking.expert?.userId
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
+
+  const invInstant = validateInvoiceDataForPayment(booking.user?.invoiceData ?? null)
+  if (!invInstant.ok) return { ok: false, error: "INVOICE_INCOMPLETE", amountCents }
 
   const shugyo = await prisma.user.findUnique({
     where: { id: booking.userId },

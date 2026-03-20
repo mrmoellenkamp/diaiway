@@ -185,6 +185,19 @@ const de = {
   "register.usernameAvailable": "Verfügbar",
   "register.usernameTaken": "Bereits vergeben",
   "register.usernameInvalid": "Ungültiger Benutzername",
+
+  // Rechnungsdaten (Server + Client, Zahlungsfreigabe)
+  "invoice.error.incomplete": "Bitte vervollständige zuerst deine Rechnungsdaten ({fields}).",
+  "invoice.field.type": "Kundentyp (Privat/Unternehmen)",
+  "invoice.field.fullName": "Vollständiger Name",
+  "invoice.field.street": "Straße",
+  "invoice.field.houseNumber": "Hausnummer",
+  "invoice.field.zip": "PLZ",
+  "invoice.field.city": "Stadt",
+  "invoice.field.country": "Land",
+  "invoice.field.email": "E-Mail",
+  "invoice.field.companyName": "Firmenname",
+
   "profile.editUsername": "Bearbeiten",
 
   // Forgot Password

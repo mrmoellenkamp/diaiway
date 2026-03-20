@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { assertInvoiceCompleteForPayment } from "@/lib/payment-invoice-guard"
+import { getRequestLocale } from "@/lib/server-locale"
 
 export interface SessionCheckoutParams {
   bookingId: string
@@ -33,7 +34,8 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
 
-  await assertInvoiceCompleteForPayment(shugyoId)
+  const locale = await getRequestLocale()
+  await assertInvoiceCompleteForPayment(shugyoId, locale)
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")
@@ -108,7 +110,8 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
   if (!session?.user?.id) throw new Error("Nicht angemeldet")
   const shugyoId = session.user.id
 
-  await assertInvoiceCompleteForPayment(shugyoId)
+  const locale = await getRequestLocale()
+  await assertInvoiceCompleteForPayment(shugyoId, locale)
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (!booking) throw new Error("Booking not found")

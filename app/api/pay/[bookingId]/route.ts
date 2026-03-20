@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 import { createHmac } from "crypto"
+import { getInvoiceGateResult } from "@/lib/payment-invoice-guard"
+import { getRequestLocale } from "@/lib/server-locale"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
@@ -39,9 +42,31 @@ export async function POST(
   const url = new URL(req.url)
   const token = url.searchParams.get("token") ?? ""
 
+  const ip = getClientIp(req)
+  const rl = rateLimit(`pay-link:${ip}`, { limit: 40, windowSec: 3600 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Zu viele Anfragen. Bitte später erneut versuchen.", retryAfterSec: rl.retryAfterSec },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+    )
+  }
+
   const auth = validateToken(token, bookingId)
   if (!auth) {
     return NextResponse.json({ error: "Ungültiger oder abgelaufener Token." }, { status: 401 })
+  }
+
+  const locale = await getRequestLocale()
+  const invoiceGate = await getInvoiceGateResult(auth.userId, locale)
+  if (!invoiceGate.ok) {
+    return NextResponse.json(
+      {
+        error: invoiceGate.message,
+        code: "INVOICE_INCOMPLETE",
+        missingFieldKeys: invoiceGate.missingFieldKeys,
+      },
+      { status: 400 }
+    )
   }
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
@@ -144,6 +169,15 @@ export async function GET(
   const url = new URL(req.url)
   const token = url.searchParams.get("token") ?? ""
 
+  const ip = getClientIp(req)
+  const rl = rateLimit(`pay-status:${ip}`, { limit: 120, windowSec: 3600 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Zu viele Anfragen.", retryAfterSec: rl.retryAfterSec },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+    )
+  }
+
   const auth = validateToken(token, bookingId)
   if (!auth) {
     return NextResponse.json({ error: "Ungültiger Token." }, { status: 401 })
@@ -174,7 +208,8 @@ export async function GET(
           data: {
             paymentStatus: "paid",
             paidAt: new Date(),
-            paidAmount: (session.amount_total ?? 0) / 100,
+            // paidAmount = EUR-Cents (wie Stripe amount_total, vgl. verifySessionPayment)
+            paidAmount: session.amount_total ?? 0,
           },
         })
         return NextResponse.json({ status: "paid" })

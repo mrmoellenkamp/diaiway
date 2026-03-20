@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { markVerified } from "@/lib/verification-service"
+import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -121,9 +122,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const existing = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true },
+    select: {
+      paymentStatus: true,
+      userId: true,
+      user: { select: { invoiceData: true } },
+    },
   })
   if (existing?.paymentStatus === "paid") return // Idempotenz
+
+  if (
+    paymentType === "booking_payment" &&
+    existing?.userId &&
+    !validateInvoiceDataForPayment(existing.user?.invoiceData ?? null).ok
+  ) {
+    console.error(
+      "[Stripe Webhook] AUDIT: booking_payment completed at Stripe but Shugyo invoice profile incomplete bookingId=%s userId=%s (Zahlung wird trotzdem gebucht — manuell prüfen)",
+      bookingId,
+      existing.userId
+    )
+  }
 
   // Bei manual capture: payment_status = "unpaid" (autorisiert, nicht eingezogen) – trotzdem erfüllen
   const amountTotal = session.amount_total ?? 0
@@ -172,9 +189,25 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true, userId: true },
+    select: {
+      paymentStatus: true,
+      userId: true,
+      user: { select: { invoiceData: true } },
+    },
   })
   if (!booking || booking.paymentStatus === "paid") return
+
+  if (
+    pi.metadata?.type === "booking_payment" &&
+    booking.userId &&
+    !validateInvoiceDataForPayment(booking.user?.invoiceData ?? null).ok
+  ) {
+    console.error(
+      "[Stripe Webhook] AUDIT: payment_intent capturable but invoice incomplete bookingId=%s userId=%s",
+      bookingId,
+      booking.userId
+    )
+  }
 
   const amountTotal = pi.amount ?? 0
   await prisma.booking.update({

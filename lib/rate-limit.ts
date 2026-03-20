@@ -1,8 +1,10 @@
 /**
  * In-memory sliding-window rate limiter.
  *
- * Works well on a single server / Vercel Lambda (instances are reused).
- * For multi-region production, swap the Map with Upstash Redis.
+ * Pro Vercel-Instanz (Lambda) — Zähler werden bei Kaltstarts zurückgesetzt, aber bei wiederholten
+ * Requests derselben Region oft wiederverwendet. Zusätzlich kostenlos: **Vercel Firewall / Bot
+ * Protection** im Dashboard für globale Absicherung. Redis/Upstash nur nötig, wenn ihr
+ * harte globale Limits ohne Plattform-Features braucht.
  *
  * Usage:
  *   const { success, retryAfterSec } = rateLimit(`login:${email}`, { limit: 5, windowSec: 900 })
@@ -58,11 +60,33 @@ export function rateLimit(
   return { success: true, remaining: limit - entry.count, retryAfterSec: 0 }
 }
 
+/**
+ * Mehrere Buckets nacheinander: alle müssen unter dem Limit bleiben.
+ * Bei erstem Fehler: sofort abbrechen (vorherige Keys haben bereits +1 gezählt — bewusst).
+ * Keys von restriktiv/specifisch → breit sortieren (z. B. userId vor IP).
+ */
+export function rateLimitAll(
+  keys: string[],
+  opts: { limit: number; windowSec: number }
+): RateLimitResult {
+  let last: RateLimitResult = { success: true, remaining: opts.limit, retryAfterSec: 0 }
+  for (const key of keys) {
+    last = rateLimit(key, opts)
+    if (!last.success) return last
+  }
+  return last
+}
+
 /** Extract the best-effort client IP from a Next.js request */
 export function getClientIp(req: Request): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown"
-  )
+  const xff = req.headers.get("x-forwarded-for")
+  if (xff) {
+    const first = xff.split(",")[0]?.trim()
+    if (first) return first
+  }
+  const realIp = req.headers.get("x-real-ip")?.trim()
+  if (realIp) return realIp
+  const cf = req.headers.get("cf-connecting-ip")?.trim()
+  if (cf) return cf
+  return "unknown"
 }

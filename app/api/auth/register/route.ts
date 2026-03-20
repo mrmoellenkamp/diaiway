@@ -67,6 +67,15 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase().trim()
 
+    const MAX_NAME_LEN = 120
+    const MAX_EMAIL_LEN = 254
+    if (name.trim().length > MAX_NAME_LEN) {
+      return NextResponse.json({ error: `Der Name darf maximal ${MAX_NAME_LEN} Zeichen haben.` }, { status: 400 })
+    }
+    if (normalizedEmail.length > MAX_EMAIL_LEN) {
+      return NextResponse.json({ error: "E-Mail-Adresse ist zu lang." }, { status: 400 })
+    }
+
     // ── Duplicate check ───────────────────────────────────────────────────────
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) {

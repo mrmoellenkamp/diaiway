@@ -40,13 +40,14 @@ diAIway ist eine **Hybrid-App**:
 
 1. Shugyo wählt Takumi + Termin → `POST /api/bookings` (max. 7 Tage im Voraus; `deferNotification: true`)
 2. Buchung mit `paymentStatus: unpaid` erstellt
-3. Zahlung: Stripe Embedded Checkout (Hold) oder `POST /api/bookings/[id]/pay-with-wallet`
-4. Nach Zahlung: Webhook oder `verifySessionPayment` → `paymentStatus: paid`
-5. `notifyAfterPayment` (idempotent) → E-Mail + Push an Takumi
-6. Client-Fallback: `POST /api/bookings/[id]/notify-takumi`
-7. Takumi: E-Mail-Link, In-App oder Geplant-Tab → `/booking/respond/[id]` (Annehmen/Ablehnen/Rückfrage)
-8. Shugyo erhält E-Mail + Notification
-9. Session starten (max. 5 Min vor Termin)
+3. **Rechnungsdaten-Pflicht (Shugyo):** Vollständiges `invoiceData` (Privat/Unternehmen + Pflichtfelder, siehe `lib/invoice-requirements.ts`) wird serverseitig geprüft vor **jedem** Zahlungsstart: `startBookingCheckout` / `startSessionCheckout`, `POST /api/bookings/[id]/pay-with-wallet`, `lib/wallet-service` (`payBookingWithWallet`, `chargeInstantCallToWallet` bei Betrag > 0), sowie `POST /api/pay/[bookingId]` (E-Mail-Link mit HMAC-Token). Antworten können `code: "INVOICE_INCOMPLETE"` und `missingFieldKeys` liefern. Locale für Texte: Cookie `diaiway-locale` oder `Accept-Language` (`lib/server-locale.ts`).
+4. Zahlung: Stripe Embedded Checkout (Hold) oder Wallet; Pay-Link mit Rate-Limit pro IP; Wallet-Zahlung zusätzlich **pro Nutzer + IP** (`rateLimitAll`), ohne Extra-Kosten (In-Memory pro Instanz — ergänzend Vercel Firewall im Dashboard möglich)
+5. Nach Zahlung: Webhook oder `verifySessionPayment` → `paymentStatus: paid` (Webhook loggt **AUDIT**, falls bei `booking_payment` dennoch unvollständige Rechnungsdaten erkannt werden — Zahlung wird nicht automatisch storniert)
+6. `notifyAfterPayment` (idempotent) → E-Mail + Push an Takumi
+7. Client-Fallback: `POST /api/bookings/[id]/notify-takumi`
+8. Takumi: E-Mail-Link, In-App oder Geplant-Tab → `/booking/respond/[id]` (Annehmen/Ablehnen/Rückfrage)
+9. Shugyo erhält E-Mail + Notification
+10. Session starten (max. 5 Min vor Termin)
 
 ### Instant Connect (Shugyo wartet auf Takumi)
 - **Eligibility**: Takumi muss `liveStatus = available` haben; optional `instantSlots` im Kalender

@@ -4,11 +4,19 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import de from "./de"
 import en from "./en"
 import es from "./es"
+import type { AppLocale } from "./types"
 
-export type Locale = "de" | "en" | "es"
+export type Locale = AppLocale
 type Dictionary = Record<string, string>
 
 const dictionaries: Record<Locale, Dictionary> = { de, en, es }
+
+/** Cookie für Server-Locale (z. B. Rechnungsfehler); Secure nur auf HTTPS. */
+function setLocaleCookie(locale: Locale) {
+  if (typeof document === "undefined") return
+  const secure = window.location.protocol === "https:"
+  document.cookie = `diaiway-locale=${locale}; path=/; max-age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`
+}
 
 export const localeNames: Record<Locale, string> = {
   de: "Deutsch",
@@ -38,6 +46,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (stored && dictionaries[stored]) {
       setLocaleState(stored)
       document.documentElement.lang = stored
+      setLocaleCookie(stored)
     }
   }, [])
 
@@ -45,6 +54,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(l)
     localStorage.setItem("diaiway-locale", l)
     document.documentElement.lang = l
+    setLocaleCookie(l)
   }, [])
 
   const t = useCallback(
