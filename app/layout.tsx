@@ -5,7 +5,6 @@ import { Toaster } from 'sonner'
 import { AppProvider } from '@/lib/app-context'
 import { I18nProvider } from '@/lib/i18n'
 import { SessionProvider } from '@/components/session-provider'
-import { auth } from '@/lib/auth'
 import { AiMentorFab } from '@/components/ai-mentor-fab'
 import { GlobalNavigation } from '@/components/global-navigation'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -61,12 +60,11 @@ export const viewport: Viewport = {
   viewportFit: 'cover', // Enables safe-area-inset-* on iOS notch devices
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const session = await auth()
   const assetPrefix = process.env.NEXT_PUBLIC_ASSET_PREFIX
   // When we run dev with `NEXT_PUBLIC_ASSET_PREFIX=./`, Next emits relative
   // asset URLs like `./_next/...`. Without a base tag, those break on
@@ -83,7 +81,7 @@ export default async function RootLayout({
       ) : null}
       <body className="font-sans antialiased app-bottom-space">
         <ErrorBoundary>
-          <SessionProvider session={session}>
+          <SessionProvider>
             <SessionActivityProvider>
               <I18nProvider>
                 <AppProvider>
