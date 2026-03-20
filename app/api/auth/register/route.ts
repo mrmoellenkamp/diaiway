@@ -94,8 +94,8 @@ export async function POST(req: Request) {
     if (!desiredUsername) {
       return NextResponse.json({ error: "Benutzername ist erforderlich." }, { status: 400 })
     }
-    const { validateUsername } = await import("@/app/actions/username")
-    const validation = await validateUsername(desiredUsername)
+    const { validateUsername } = await import("@/lib/username-validation")
+    const validation = validateUsername(desiredUsername)
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }

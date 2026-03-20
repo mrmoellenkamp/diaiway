@@ -189,8 +189,8 @@ export async function PATCH(
       if (val === "") {
         nextUsername = null
       } else {
-        const { validateUsername } = await import("@/app/actions/username")
-        const res = await validateUsername(val)
+        const { validateUsername } = await import("@/lib/username-validation")
+        const res = validateUsername(val)
         if (!res.ok) {
           return NextResponse.json({ error: res.error, field: "username" }, { status: 400 })
         }

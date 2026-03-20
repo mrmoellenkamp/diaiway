@@ -61,8 +61,8 @@ async function patchProfile(req: Request, _context: RouteContext) {
     if (val === "") {
       data.username = null
     } else {
-      const { validateUsername } = await import("@/app/actions/username")
-      const res = await validateUsername(val)
+      const { validateUsername } = await import("@/lib/username-validation")
+      const res = validateUsername(val)
       if (!res.ok) {
         return NextResponse.json({
           error: "Validierungsfehler",

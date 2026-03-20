@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { validateUsername } from "@/app/actions/username"
+import { validateUsername } from "@/lib/username-validation"
 import { auth } from "@/lib/auth"
 
 export const runtime = "nodejs"
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const username = searchParams.get("username") ?? ""
 
-  const validation = await validateUsername(username)
+  const validation = validateUsername(username)
   if (!validation.ok) {
     return NextResponse.json({ available: false, reason: validation.error }, { status: 200 })
   }
