@@ -25,8 +25,8 @@ export async function GET(req: Request) {
           id: row.id,
           title: tr.title,
           body: tr.body,
-          linkUrl: row.linkUrl,
-          linkLabel: row.linkLabel,
+          linkUrl: tr.linkUrl ?? row.linkUrl,
+          linkLabel: tr.linkLabel ?? row.linkLabel,
           publishedAt: row.publishedAt?.toISOString() ?? null,
           localeUsed: tr.locale,
         }

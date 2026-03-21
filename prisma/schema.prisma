@@ -625,6 +625,9 @@ model HomeNewsTranslation {
   locale     String
   title      String
   body       String       @db.Text
+  /// Optional: eigener Link pro Sprache; sonst HomeNewsItem.linkUrl / linkLabel
+  linkUrl    String?
+  linkLabel  String?
 
   @@unique([newsItemId, locale])
   @@index([newsItemId])

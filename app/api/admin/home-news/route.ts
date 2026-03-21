@@ -63,11 +63,13 @@ export async function POST(req: Request) {
         },
       })
       await tx.homeNewsTranslation.createMany({
-        data: Object.entries(translations).map(([locale, { title, body: b }]) => ({
+        data: Object.entries(translations).map(([locale, tr]) => ({
           newsItemId: created.id,
           locale,
-          title,
-          body: b,
+          title: tr.title,
+          body: tr.body,
+          linkUrl: tr.linkUrl ?? null,
+          linkLabel: tr.linkLabel ?? null,
         })),
       })
       return tx.homeNewsItem.findUniqueOrThrow({

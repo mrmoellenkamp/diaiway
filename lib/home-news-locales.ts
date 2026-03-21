@@ -14,9 +14,22 @@ export function normalizeHomeNewsLocale(raw: string | null | undefined): HomeNew
   return "de"
 }
 
-export type HomeNewsTranslationBlock = { title: string; body: string }
+export type HomeNewsTranslationBlock = {
+  title: string
+  body: string
+  linkUrl?: string | null
+  linkLabel?: string | null
+}
 
-/** Aus API-Body: nur vollständige Blöcke (Titel + Text). */
+/** Leer / fehlend → null (für DB). */
+function normalizeLinkField(v: unknown): string | null {
+  if (v === undefined || v === null) return null
+  if (typeof v !== "string") return null
+  const t = v.trim()
+  return t === "" ? null : t
+}
+
+/** Aus API-Body: nur vollständige Blöcke (Titel + Text); Links optional pro Sprache. */
 export function parseTranslationsFromBody(
   raw: unknown,
 ): Partial<Record<HomeNewsLocale, HomeNewsTranslationBlock>> | null {
@@ -28,13 +41,20 @@ export function parseTranslationsFromBody(
     if (!b || typeof b !== "object") continue
     const title = typeof (b as { title?: unknown }).title === "string" ? (b as { title: string }).title.trim() : ""
     const body = typeof (b as { body?: unknown }).body === "string" ? (b as { body: string }).body.trim() : ""
-    if (title && body) out[loc] = { title, body }
+    if (title && body) {
+      out[loc] = {
+        title,
+        body,
+        linkUrl: normalizeLinkField((b as { linkUrl?: unknown }).linkUrl),
+        linkLabel: normalizeLinkField((b as { linkLabel?: unknown }).linkLabel),
+      }
+    }
   }
   return Object.keys(out).length > 0 ? out : null
 }
 
 export function pickNewsTranslationForLocale<
-  T extends { locale: string; title: string; body: string },
+  T extends { locale: string; title: string; body: string; linkUrl?: string | null; linkLabel?: string | null },
 >(rows: T[], locale: HomeNewsLocale): T | null {
   const direct = rows.find((r) => r.locale === locale)
   if (direct) return direct

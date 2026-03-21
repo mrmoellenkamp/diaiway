@@ -9,15 +9,29 @@ export type HomeNewsItemWithTranslations = {
   publishedAt: Date | null
   createdAt: Date
   updatedAt: Date
-  translations: { locale: string; title: string; body: string }[]
+  translations: {
+    locale: string
+    title: string
+    body: string
+    linkUrl?: string | null
+    linkLabel?: string | null
+  }[]
 }
 
 /** Admin-API: flache Übersetzungen als Objekt { de, en, es }. */
 export function serializeAdminHomeNewsItem(item: HomeNewsItemWithTranslations) {
-  const translations: Partial<Record<HomeNewsLocale, { title: string; body: string }>> = {}
+  const translations: Partial<
+    Record<HomeNewsLocale, { title: string; body: string; linkUrl: string | null; linkLabel: string | null }>
+  > = {}
   for (const loc of HOME_NEWS_LOCALES) {
     const t = item.translations.find((x) => x.locale === loc)
-    if (t) translations[loc] = { title: t.title, body: t.body }
+    if (t)
+      translations[loc] = {
+        title: t.title,
+        body: t.body,
+        linkUrl: t.linkUrl ?? null,
+        linkLabel: t.linkLabel ?? null,
+      }
   }
   return {
     id: item.id,

@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Rocket, Mail, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BetaFounderCard } from "@/components/beta/beta-founder-card"
 import { BetaLocaleSwitch } from "@/components/beta/beta-locale-switch"
 import { getBetaMailto } from "@/lib/beta-mailto"
 
@@ -11,21 +12,16 @@ export function BetaSpanishLanding() {
 
   return (
     <main className="min-h-screen bg-stone-50 text-stone-900">
-      <section className="relative bg-white pb-3 pt-[max(0.5rem,env(safe-area-inset-top,0px))] md:pb-6">
+      <section className="relative bg-white pb-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] md:pb-8">
         <div className="absolute right-3 z-20 md:right-6 top-[max(0.5rem,env(safe-area-inset-top,0px))]">
           <BetaLocaleSwitch variant="light" />
         </div>
         <div className="mx-auto flex w-full justify-center px-3 pt-4 sm:px-4 md:pt-5">
-          <div className="relative aspect-square w-[min(78vw,420px)] overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-border/60 sm:w-[min(72vw,450px)] md:w-[min(45vh,480px)] lg:w-[min(51vh,540px)]">
-            <Image
-              src="/beta/hero-beta-es.png"
-              alt="diAiway: buscamos beta testers — taller con proyecto DIY, experto en pantalla e información asistida por IA"
-              fill
-              priority
-              className="object-contain object-center"
-              sizes="(max-width: 768px) 85vw, 540px"
-            />
-          </div>
+          <BetaFounderCard
+            label="Fundador"
+            name="Jens de diAiway"
+            imageAlt="Jens, fundador de diAiway"
+          />
         </div>
       </section>
 
@@ -58,7 +54,20 @@ export function BetaSpanishLanding() {
         <p className="mt-8 text-base font-medium text-stone-900 md:text-[17px]">
           Pero antes de pulsar «lanzar», necesito <strong>a ti</strong>.
         </p>
-        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+
+        <div className="mx-auto mt-8 flex w-full justify-center">
+          <div className="relative aspect-square w-full max-w-[min(88vw,26rem)] overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-border/60 sm:max-w-md md:max-w-lg">
+            <Image
+              src="/beta/hero-beta-es.png"
+              alt="diAiway: buscamos beta testers — taller con proyecto DIY, experto en pantalla e información asistida por IA"
+              fill
+              className="object-contain object-center"
+              sizes="(max-width: 768px) 88vw, 520px"
+            />
+          </div>
+        </div>
+
+        <p className="mt-8 text-base leading-relaxed text-stone-700 md:text-[17px]">
           ¿Te apetece probar{" "}
           <strong>
             di<span className="text-primary">Ai</span>way
@@ -94,22 +103,6 @@ export function BetaSpanishLanding() {
           Escríbeme un mensaje corto — o entra en la página de inicio y regístrate allí. Te agradezco un montón tu
           apoyo, <strong>de la forma que sea</strong>.
         </p>
-
-        <section className="mt-14 flex flex-col gap-5 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:gap-8 md:p-8">
-          <div className="relative mx-auto size-36 shrink-0 overflow-hidden rounded-2xl shadow-md ring-2 ring-primary/10 md:mx-0 md:size-40">
-            <Image
-              src="/beta/jens-founder.png"
-              alt="Jens, fundador de diAiway"
-              fill
-              className="object-cover object-[center_20%]"
-              sizes="160px"
-            />
-          </div>
-          <div className="min-w-0 text-center md:text-left">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-primary/70">Fundador</p>
-            <p className="mt-1 text-lg font-bold text-stone-900">Jens de diAiway</p>
-          </div>
-        </section>
       </article>
 
       <footer className="border-t border-stone-200 bg-white py-8">

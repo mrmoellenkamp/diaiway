@@ -58,12 +58,27 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         const title = typeof (block as { title?: unknown }).title === "string" ? (block as { title: string }).title.trim() : ""
         const bodyText =
           typeof (block as { body?: unknown }).body === "string" ? (block as { body: string }).body.trim() : ""
+        const trLinkUrl =
+          typeof (block as { linkUrl?: unknown }).linkUrl === "string"
+            ? (block as { linkUrl: string }).linkUrl.trim() || null
+            : null
+        const trLinkLabel =
+          typeof (block as { linkLabel?: unknown }).linkLabel === "string"
+            ? (block as { linkLabel: string }).linkLabel.trim() || null
+            : null
 
         if (title && bodyText) {
           await prisma.homeNewsTranslation.upsert({
             where: { newsItemId_locale: { newsItemId: id, locale: loc } },
-            create: { newsItemId: id, locale: loc, title, body: bodyText },
-            update: { title, body: bodyText },
+            create: {
+              newsItemId: id,
+              locale: loc,
+              title,
+              body: bodyText,
+              linkUrl: trLinkUrl,
+              linkLabel: trLinkLabel,
+            },
+            update: { title, body: bodyText, linkUrl: trLinkUrl, linkLabel: trLinkLabel },
           })
         } else if (title === "" && bodyText === "") {
           await prisma.homeNewsTranslation.deleteMany({ where: { newsItemId: id, locale: loc } })
