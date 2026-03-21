@@ -64,6 +64,18 @@ export function translateError(err: unknown): NextResponse {
         { status: 400 }
       )
     }
+    // DB-Schema älter als Prisma-Schema (Migrationen auf Production nicht angewendet)
+    if (err.code === "P2021" || err.code === "P2022") {
+      console.error("[api] DB-Schema passt nicht zum Code — fehlende Tabelle/Spalte:", err.code, err.meta)
+      return NextResponse.json(
+        {
+          error:
+            "Die Datenbank ist nicht auf dem gleichen Stand wie die App. Bitte ausstehende Prisma-Migrationen auf der Live-Datenbank ausführen (z. B. erfolgreicher Deploy mit DATABASE_URL auf Vercel, oder lokal: npm run db:migrate:deploy mit Production-URL).",
+          code: err.code,
+        },
+        { status: 500 }
+      )
+    }
   }
 
   // Slot-Konflikt (Buchung)

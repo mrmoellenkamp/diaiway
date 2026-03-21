@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { translateError } from "@/lib/api-handler"
 
 export const runtime = "nodejs"
 
@@ -52,7 +53,8 @@ export async function GET() {
       totalInboxUnread,
     })
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    console.error("[api/notifications] GET", err)
+    return translateError(err)
   }
 }
 
@@ -80,7 +82,8 @@ export async function PATCH(req: Request) {
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    console.error("[api/notifications] PATCH", err)
+    return translateError(err)
   }
 }
 
@@ -106,6 +109,7 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    console.error("[api/notifications] DELETE", err)
+    return translateError(err)
   }
 }

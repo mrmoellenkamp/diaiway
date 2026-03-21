@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { communicationUsername } from "@/lib/communication-display"
+import { translateError } from "@/lib/api-handler"
 
 /**
  * GET /api/user/profile-preview
@@ -94,7 +95,8 @@ export async function GET() {
       shugyo,
       takumi,
     })
-  } catch {
-    return NextResponse.json({ error: "Fehler." }, { status: 500 })
+  } catch (err) {
+    console.error("[api/user/profile-preview]", err)
+    return translateError(err)
   }
 }

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { corsPreflightResponse, withApiCors } from "@/lib/api-cors"
 import { communicationUsername } from "@/lib/communication-display"
+import { translateError } from "@/lib/api-handler"
 
 /**
  * GET /api/expert/instant-requests
@@ -14,49 +15,54 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return withApiCors(request, NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 }))
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return withApiCors(request, NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 }))
+    }
+
+    const appRole = (session.user as { appRole?: string })?.appRole
+    if (appRole !== "takumi") {
+      return withApiCors(request, NextResponse.json({ error: "Nur für Takumi." }, { status: 403 }))
+    }
+
+    const expert = await prisma.expert.findFirst({
+      where: { userId: session.user.id },
+      select: { id: true },
+    })
+    if (!expert) {
+      return withApiCors(request, NextResponse.json({ requests: [] }))
+    }
+
+    const requests = await prisma.booking.findMany({
+      where: {
+        expertId: expert.id,
+        bookingMode: "instant",
+        status: "pending",
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        userName: true,
+        statusToken: true,
+        createdAt: true,
+        user: { select: { username: true } },
+      },
+    })
+
+    return withApiCors(
+      request,
+      NextResponse.json({
+        requests: requests.map((r) => ({
+          id: r.id,
+          userName: communicationUsername(r.user?.username, "Shugyo"),
+          statusToken: r.statusToken,
+          createdAt: r.createdAt.toISOString(),
+        })),
+      }),
+    )
+  } catch (err) {
+    console.error("[api/expert/instant-requests]", err)
+    return withApiCors(request, translateError(err))
   }
-
-  const appRole = (session.user as { appRole?: string })?.appRole
-  if (appRole !== "takumi") {
-    return withApiCors(request, NextResponse.json({ error: "Nur für Takumi." }, { status: 403 }))
-  }
-
-  const expert = await prisma.expert.findFirst({
-    where: { userId: session.user.id },
-    select: { id: true },
-  })
-  if (!expert) {
-    return withApiCors(request, NextResponse.json({ requests: [] }))
-  }
-
-  const requests = await prisma.booking.findMany({
-    where: {
-      expertId: expert.id,
-      bookingMode: "instant",
-      status: "pending",
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      userName: true,
-      statusToken: true,
-      createdAt: true,
-      user: { select: { username: true } },
-    },
-  })
-
-  return withApiCors(
-    request,
-    NextResponse.json({
-      requests: requests.map((r) => ({
-        id: r.id,
-        userName: communicationUsername(r.user?.username, "Shugyo"),
-        statusToken: r.statusToken,
-        createdAt: r.createdAt.toISOString(),
-      })),
-    }),
-  )
 }
