@@ -6,10 +6,9 @@ import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
+import type { Stripe } from "@stripe/stripe-js"
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import { createStripeBrowserPromise } from "@/lib/stripe-client"
 
 function WalletPayInner() {
   const searchParams = useSearchParams()
@@ -19,6 +18,11 @@ function WalletPayInner() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading")
   const [errorMsg, setErrorMsg] = useState("")
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+
+  useEffect(() => {
+    setStripePromise(createStripeBrowserPromise())
+  }, [])
 
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
   const stableOnComplete = useCallback(() => onCompleteRef.current(), [])
@@ -127,10 +131,16 @@ function WalletPayInner() {
         </div>
       )}
 
-      {status === "ready" && clientSecret && options && (
+      {status === "ready" && clientSecret && options && stripePromise && (
         <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
+      )}
+      {status === "ready" && clientSecret && options && !stripePromise && (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+          <Loader2 className="size-10 animate-spin text-emerald-700" />
+          <p className="text-sm text-stone-500">Zahlungsformular wird vorbereitet…</p>
+        </div>
       )}
     </div>
   )

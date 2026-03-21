@@ -5,12 +5,11 @@ import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
 import { Loader2 } from "lucide-react"
 import { startSessionCheckout, verifySessionPayment, type SessionCheckoutParams } from "@/app/actions/stripe"
+import { createStripeBrowserPromise } from "@/lib/stripe-client"
 import { useI18n } from "@/lib/i18n"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import type { Stripe } from "@stripe/stripe-js"
 
 interface SessionCheckoutProps {
   bookingId: string
@@ -33,6 +32,11 @@ export function SessionCheckout({
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+
+  useEffect(() => {
+    setStripePromise(createStripeBrowserPromise())
+  }, [])
 
   // Ref-Wrapper: stabile Funktionsidentität für onComplete
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
@@ -124,6 +128,15 @@ export function SessionCheckout({
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <p className="text-sm text-destructive">{t("handshake.checkoutError")}</p>
+      </div>
+    )
+  }
+
+  if (!stripePromise) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12">
+        <Loader2 className="size-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">{t("handshake.loadingPayment")}</p>
       </div>
     )
   }

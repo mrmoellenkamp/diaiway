@@ -135,6 +135,22 @@ Bei jedem neuen Feature prüfen:
 3. **Chrome Remote Debugging** (Debug-APK): Am Desktop Chrome → `chrome://inspect#devices` → WebView öffnen → Console/Network. Im Projekt ist `WebView.setWebContentsDebuggingEnabled(true)` für **Debug-Builds** in `MainActivity` gesetzt.
 4. **Erster Paint**: Root-`app/loading.tsx` und inline `body`-Hintergrund im Layout reduzieren „reines Weiß“, wenn RSC/CSS verzögern.
 
+## Emulator / Performance (Android)
+
+Die App lädt standardmäßig **`https://diaiway.com`** im WebView. Im **AVD** wirkt das oft **deutlich langsamer** als auf einem echten Gerät: schwächere GPU-Emulation, TLS, Netzwerkweg aus der VM, große JS-Bundles.
+
+### Was du tun kannst
+
+1. **Echtes Gerät per USB** – am verlässlichsten für „fühlt sich die App schnell an?“
+2. **AVD-Einstellungen:** System-Image **x86_64** / **Google APIs**, **Hardware-Grafik** (GLES 2.0 oder „Automatic“), mehr **RAM** für die VM (z. B. 2048–4096 MB), ggf. **Cold Boot** statt angeschlagenem Snapshot.
+3. **Lokal statt Produktion (viel schneller beim Entwickeln):** Next.js auf dem Mac/PC starten (`pnpm dev`, Port **3000**), dann mit Umgebungsvariable syncen und bauen:
+   ```bash
+   export CAPACITOR_SERVER_URL=http://10.0.2.2:3000
+   npx cap sync android
+   ```
+   Im Emulator zeigt **10.0.2.2** auf den Host-Rechner (`localhost` im Emulator ist der Emulator selbst). `network_security_config` erlaubt Klartext für diese Adresse bereits. Ohne gesetzte Variable bleibt **`https://diaiway.com`** (Produktionsverhalten).
+4. **Release vs. Debug:** Debug-APKs sind ohne volle Optimierung; für einen **Performance-Check** einmal **Release** installieren (oder reales Gerät).
+
 ## Zu vermeiden
 
 | Vermeiden | Grund |

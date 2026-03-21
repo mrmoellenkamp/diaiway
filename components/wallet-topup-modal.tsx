@@ -13,15 +13,14 @@ import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
+import type { Stripe } from "@stripe/stripe-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { openNativeStripePayUrl } from "@/lib/native-pay-navigation"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import { createStripeBrowserPromise } from "@/lib/stripe-client"
 const MIN_EUR = 20
 const MAX_EUR = 100
 
@@ -45,6 +44,11 @@ export function WalletTopupModal({
   const [loading, setLoading] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+
+  useEffect(() => {
+    setStripePromise(createStripeBrowserPromise())
+  }, [])
 
   // Ref-Wrapper: stabile Funktionsidentität für onComplete
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
@@ -248,10 +252,16 @@ export function WalletTopupModal({
                   {error}
                 </div>
               )}
-              {clientSecret && !loading && options && (
+              {clientSecret && !loading && options && stripePromise && (
                 <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
                   <EmbeddedCheckout />
                 </EmbeddedCheckoutProvider>
+              )}
+              {clientSecret && !loading && options && !stripePromise && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="size-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">{t("wallet.loadingForm")}</p>
+                </div>
               )}
             </>
           )}

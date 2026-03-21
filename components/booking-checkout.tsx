@@ -5,13 +5,12 @@ import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
 import { Loader2, Wallet, CreditCard } from "lucide-react"
 import { startBookingCheckout, verifySessionPayment } from "@/app/actions/stripe"
+import { createStripeBrowserPromise } from "@/lib/stripe-client"
 import { useI18n } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import type { Stripe } from "@stripe/stripe-js"
 
 interface BookingCheckoutProps {
   bookingId: string
@@ -38,6 +37,12 @@ export function BookingCheckout({
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
+  /** Stripe nur nach Mount – kein loadStripe / EmbeddedCheckout während RSC-SSR */
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+
+  useEffect(() => {
+    setStripePromise(createStripeBrowserPromise())
+  }, [])
 
   // Ref-Wrapper: stabile Funktionsidentität für onComplete
   // onCompleteRef hält immer die aktuelle Implementierung,
@@ -190,6 +195,15 @@ export function BookingCheckout({
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <p className="text-sm text-destructive">{t("handshake.checkoutError")}</p>
+      </div>
+    )
+  }
+
+  if (!stripePromise) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12">
+        <Loader2 className="size-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">{t("handshake.loadingPayment")}</p>
       </div>
     )
   }
