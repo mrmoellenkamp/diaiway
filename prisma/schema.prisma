@@ -8,8 +8,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Ohne Pooler: gleiche URL wie DATABASE_URL in .env setzen — oder `npm run db:migrate:deploy` (setzt Fallback).
-  // Mit Pooler (Vercel/Neon): DIRECT_URL = direkte Postgres-URL für Migrationen.
+  // DIRECT_URL ist für Prisma-Pflicht. Ohne Pooler: in .env dieselbe URL wie DATABASE_URL eintragen.
+  // Oder Migrationen nur über npm-Skript (setzt Fallback): `npm run db:migrate:deploy` — NICHT roh `npx prisma migrate deploy`.
+  // Mit Pooler (Vercel/Neon): DIRECT_URL = direkte Postgres-URL (ohne PgBouncer).
   directUrl = env("DIRECT_URL")
 }
 
