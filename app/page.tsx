@@ -11,7 +11,7 @@ import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
-import { ArrowRight, Video, Shield, CheckCircle, Star } from "lucide-react"
+import { ArrowRight, Video, Shield, CheckCircle, Star, FlaskConical } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { takumiPublicLabel } from "@/lib/communication-display"
 
@@ -68,7 +68,7 @@ export default function LandingPage() {
   const isLoggedIn = !!session?.user
   const [showTakumis, setShowTakumis] = useState(false)
   const categories = useCategories()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   // Native: "stay yes" → redirect to profile; "stay no" → sign out and show login; null → normal landing
   useEffect(() => {
@@ -107,7 +107,20 @@ export default function LandingPage() {
             className="object-cover"
             priority
           />
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary to-transparent pointer-events-none" />
+
+          {/* Störer: runder Beta-Knopf auf dem Hero-Bild (nicht in der Text-Navigation) */}
+          <Link
+            href={`/beta/${locale}`}
+            aria-label={t("landing.betaButton")}
+            title={t("landing.betaButton")}
+            className="absolute bottom-3 right-3 z-20 flex size-[5.25rem] sm:size-[5.75rem] flex-col items-center justify-center gap-1 rounded-full border-2 border-primary-foreground/90 bg-accent text-accent-foreground shadow-[0_4px_24px_rgba(0,0,0,0.35)] ring-4 ring-primary/30 transition-transform hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground"
+          >
+            <FlaskConical className="size-[1.125rem] sm:size-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
+            <span className="max-w-[4.25rem] text-center text-[8px] font-extrabold leading-[1.05] tracking-wide sm:max-w-none sm:text-[9px]">
+              {t("landing.betaCircleLabel")}
+            </span>
+          </Link>
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
@@ -118,6 +131,7 @@ export default function LandingPage() {
           <p className="text-pretty text-sm leading-relaxed text-primary-foreground/70">
             {t("landing.heroIntro")}
           </p>
+
           <h2 className="text-base font-semibold text-primary-foreground">
             {t("landing.heroWaysTitle")}
           </h2>

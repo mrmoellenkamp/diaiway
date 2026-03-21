@@ -23,6 +23,7 @@
     "db:migrate:deploy": "node scripts/prisma-runner.mjs migrate deploy",
     "db:studio": "node scripts/prisma-runner.mjs studio",
     "seed:home-news-beta": "node scripts/prisma-runner.mjs generate && npx tsx scripts/seed-home-news-beta.ts",
+    "seed:home-news-post": "node scripts/prisma-runner.mjs generate && npx tsx scripts/seed-home-news-post.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

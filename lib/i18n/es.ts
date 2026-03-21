@@ -64,6 +64,10 @@ const es = {
   // Landing
   "landing.heroTitle": "Ayuda DIY al alcance de un clic. Seguro. Rápido. En todas partes.",
   "landing.heroIntro": "Soporte en vivo para tu proyecto. Da igual si tienes mano verde o manos manchadas de aceite – diAiway te lleva más lejos.",
+  "landing.betaBadge": "Beta",
+  "landing.betaIntro": "Información beta, feedback y próximos pasos – en una página dedicada (DE / EN / ES).",
+  "landing.betaButton": "Ir a la landing beta",
+  "landing.betaCircleLabel": "BETA-Tester",
   "landing.heroWaysTitle": "¡2 formas de llegar a tu solución! Así se hace...",
   "landing.heroWay1": "AI - check. Respuestas instantáneas a tus preguntas DIY. Con nuestra diAiway Intelligence especializada.",
   "landing.heroWay1Button": "Hisho (秘書),\ntu IA – Intelligence",
