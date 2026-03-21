@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import dynamic from 'next/dynamic'
 import { Geist, Geist_Mono, Noto_Sans_JP } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { AppProvider } from '@/lib/app-context'
@@ -22,13 +21,8 @@ import { DeepLinkHandler } from '@/components/deep-link-handler'
 import { LogoutBackGuard } from '@/components/logout-back-guard'
 import { SiteAnalyticsTracker } from '@/components/site-analytics-tracker'
 import { Footer } from '@/components/footer'
+import { VercelAnalytics } from '@/components/vercel-analytics'
 import './globals.css'
-
-/** WebView (Capacitor): kein SSR – vermeidet Hydration-/Skript-Konflikte mit älteren Android-WebViews */
-const Analytics = dynamic(
-  () => import('@vercel/analytics/next').then((m) => m.Analytics),
-  { ssr: false }
-)
 
 const _geist = Geist({ subsets: ["latin"], display: "swap" })
 const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
@@ -117,7 +111,7 @@ export default function RootLayout({
           </SessionProvider>
         </ErrorBoundary>
         <Toaster position="top-center" richColors expand={false} />
-        <Analytics />
+        <VercelAnalytics />
       </body>
     </html>
   )
