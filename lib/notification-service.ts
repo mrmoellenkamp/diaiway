@@ -10,6 +10,7 @@ import { sendPushToUser } from "@/lib/push"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { getRenderedTemplate } from "@/lib/template-service"
 import { seedCommunicationTemplates } from "@/lib/seed-templates"
+import { communicationUsername } from "@/lib/communication-display"
 
 export async function notifyAfterPayment(bookingId: string): Promise<{
   ok: boolean
@@ -20,7 +21,10 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { expert: true },
+      include: {
+        expert: { include: { user: { select: { username: true } } } },
+        user: { select: { username: true } },
+      },
     })
 
     if (!booking) {
@@ -29,6 +33,9 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
     if (booking.paymentStatus !== "paid") {
       return { ok: false, error: "Booking not yet paid" }
     }
+
+    const shugyoComm = communicationUsername(booking.user?.username, "Shugyo")
+    const takumiComm = communicationUsername(booking.expert?.user?.username, "Takumi")
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||
@@ -40,8 +47,8 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
     try {
       await sendBookingRequestEmail({
         to: booking.expertEmail,
-        takumiName: booking.expertName,
-        userName: booking.userName,
+        takumiName: takumiComm,
+        userName: shugyoComm,
         userEmail: booking.userEmail,
         date: booking.date,
         startTime: booking.startTime,
@@ -75,7 +82,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
       if (!existing) {
         const bookingTime = `${booking.startTime}–${booking.endTime} Uhr`
         let waymailSubject = "Neue Buchungsanfrage (bezahlt)"
-        let waymailBody = `${booking.userName} hat eine Session am ${booking.date} von ${bookingTime} gebucht und bezahlt.`
+        let waymailBody = `${shugyoComm} hat eine Session am ${booking.date} von ${bookingTime} gebucht und bezahlt.`
 
         const rendered = await getRenderedTemplate("booking-request-paid", "de", {
           senderUserId: booking.userId,
@@ -83,7 +90,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
           extraVariables: {
             booking_date: booking.date,
             booking_time: bookingTime,
-            service_name: booking.expertName,
+            service_name: takumiComm,
           },
         })
         if (rendered) {
@@ -97,7 +104,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
             extraVariables: {
               booking_date: booking.date,
               booking_time: bookingTime,
-              service_name: booking.expertName,
+              service_name: takumiComm,
             },
           })
           if (retry) {
@@ -124,7 +131,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
         const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(notifyUserId, {
           title: "Neue Buchung (bezahlt)",
-          body: `${booking.userName} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
+          body: `${shugyoComm} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
           url: waymailUrl,
         }).catch(() => {})
       }

@@ -156,6 +156,8 @@ const en = {
   "register.subtitle": "Choose your role and start your journey",
   "register.name": "Name",
   "register.namePlaceholder": "Your name",
+  "register.nameHint":
+    "Used for official documents (invoices, credit notes) and pre-filling your billing details—not shown as your public display name.",
   "register.email": "Email",
   "register.emailPlaceholder": "your@email.com",
   "register.password": "Password",
@@ -177,8 +179,9 @@ const en = {
   "register.errorNetwork": "Connection error. Please try again.",
   "register.success": "Account created! Welcome to diAiway.",
   "register.username": "Username",
-  "register.usernamePlaceholder": "e.g. max_mustermann",
-  "register.usernameHint": "3–50 characters. Letters (any script), digits, spaces, punctuation and symbols; emojis OK. No line breaks or invisible characters.",
+  "register.usernamePlaceholder": "Public username",
+  "register.usernameHint":
+    "Shown publicly on profiles, search, chat and system emails. 3–50 characters: letters (any script), digits, spaces, punctuation/symbols; emojis OK. No line breaks or invisible characters. Examples: your name, company name, pseudonym.",
   "register.usernameRequired": "Please choose a username.",
   "register.usernameWaitCheck": "Please wait until the username has been checked.",
   "register.usernameChecking": "Checking…",
@@ -358,7 +361,8 @@ const en = {
   "profile.favorites": "Favorites",
   "profile.favoriteTakumis": "Favorite Takumis",
   "profile.username": "Username",
-  "profile.usernameHint": "Optional. 3–50 characters: letters, digits, spaces, punctuation/symbols; emojis OK. No line breaks or invisible characters.",
+  "profile.usernameHint":
+    "Shown publicly on profiles, search, chat and system emails. Optional. 3–50 characters: letters, digits, spaces, punctuation/symbols; emojis OK. No line breaks. Examples: your name, company name, pseudonym.",
   "profile.languages": "Languages",
   "profile.languagesDesc": "Which languages do you speak?",
   "profile.languagesSaved": "Languages saved.",

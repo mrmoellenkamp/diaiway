@@ -8,6 +8,7 @@ import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/w
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { createSystemWaymail } from "@/lib/system-waymail"
+import { bookingPartyDisplayLabels } from "@/lib/booking-party-labels"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
@@ -41,14 +42,16 @@ export async function GET(
   if (error) return NextResponse.json({ error }, { status: token ? 403 : 401 })
   if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
 
+  const labels = await bookingPartyDisplayLabels(booking)
+
   return NextResponse.json({
     id: booking.id,
     userId: booking.userId,
     expertId: booking.expertId,
     expertUserId: booking.expert?.userId ?? null,
-    userName: booking.userName,
+    userName: labels.shugyoLabel,
     userEmail: booking.userEmail,
-    expertName: booking.expertName,
+    expertName: labels.takumiLabel,
     date: booking.date,
     startTime: booking.startTime,
     endTime: booking.endTime,
@@ -136,11 +139,13 @@ export async function POST(
       }
     }
 
+    const comm = await bookingPartyDisplayLabels(booking)
+
     try {
       await sendBookingStatusEmail({
         to: booking.userEmail,
-        userName: booking.userName,
-        takumiName: booking.expertName,
+        userName: comm.shugyoLabel,
+        takumiName: comm.takumiLabel,
         date: booking.date,
         startTime: booking.startTime,
         endTime: booking.endTime,
@@ -153,8 +158,8 @@ export async function POST(
       const title = action === "confirmed" ? "Buchung bestätigt" : "Buchung abgelehnt"
       const body =
         action === "confirmed"
-          ? `${booking.expertName} hat deine Buchung am ${booking.date} (${booking.startTime}–${booking.endTime}) bestätigt.`
-          : `${booking.expertName} hat deine Buchungsanfrage am ${booking.date} leider abgelehnt.`
+          ? `${comm.takumiLabel} hat deine Buchung am ${booking.date} (${booking.startTime}–${booking.endTime}) bestätigt.`
+          : `${comm.takumiLabel} hat deine Buchungsanfrage am ${booking.date} leider abgelehnt.`
       await prisma.notification.create({
         data: {
           userId: booking.userId,
@@ -186,6 +191,7 @@ export async function POST(
       return NextResponse.json({ error: "Nachricht darf nicht leer sein." }, { status: 400 })
     }
 
+    const comm = await bookingPartyDisplayLabels(booking)
     const respondUrl = `${baseUrl}/booking/respond/${id}?token=${effectiveToken}&action=confirmed`
 
     try {
@@ -193,7 +199,7 @@ export async function POST(
         from: smtpFrom,
         to: booking.userEmail,
         replyTo: booking.expertEmail,
-        subject: `diAiway – Rückfrage von ${booking.expertName} zu deiner Buchung`,
+        subject: `diAiway – Rückfrage von ${comm.takumiLabel} zu deiner Buchung`,
         html: `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"/></head>
 <body style="margin:0;padding:0;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;background:#fafaf9;"><tr><td align="center">
@@ -203,9 +209,9 @@ export async function POST(
 </td></tr>
 <tr><td style="padding:32px 40px;">
   <h1 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#1c1917;">Rückfrage zu deiner Buchungsanfrage</h1>
-  <p style="margin:0 0 8px;font-size:14px;color:#78716c;">Hallo <strong style="color:#1c1917;">${escapeHtml(booking.userName)}</strong>,</p>
+  <p style="margin:0 0 8px;font-size:14px;color:#78716c;">Hallo <strong style="color:#1c1917;">${escapeHtml(comm.shugyoLabel)}</strong>,</p>
   <p style="margin:0 0 20px;font-size:14px;color:#78716c;">
-    <strong style="color:#1c1917;">${escapeHtml(booking.expertName)}</strong> hat eine Rückfrage zu deiner Buchung am
+    <strong style="color:#1c1917;">${escapeHtml(comm.takumiLabel)}</strong> hat eine Rückfrage zu deiner Buchung am
     <strong style="color:#1c1917;">${escapeHtml(booking.date)}</strong> (${escapeHtml(booking.startTime)}–${escapeHtml(booking.endTime)} Uhr):
   </p>
   <table width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:24px;"><tr><td style="padding:16px 20px;">
@@ -233,7 +239,7 @@ export async function POST(
 
     // Notification für Shugyo (zeitgleich mit E-Mail)
     try {
-      const notifBody = `${booking.expertName} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
+      const notifBody = `${comm.takumiLabel} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
       await prisma.notification.create({
         data: {
           userId: booking.userId,

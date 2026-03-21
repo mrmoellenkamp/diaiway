@@ -157,6 +157,8 @@ const de = {
   "register.subtitle": "Wähle deine Rolle und starte deine Reise",
   "register.name": "Name",
   "register.namePlaceholder": "Dein Name",
+  "register.nameHint":
+    "Wird für offizielle Dokumente (Rechnungen, Gutschriften) und die Übernahme in deine Rechnungsdaten verwendet – nicht als öffentlicher Anzeigename.",
   "register.email": "E-Mail",
   "register.emailPlaceholder": "deine@email.de",
   "register.password": "Passwort",
@@ -184,8 +186,9 @@ const de = {
   "register.errorNetwork": "Verbindungsfehler. Bitte versuche es erneut.",
   "register.success": "Konto erstellt! Willkommen bei diAiway.",
   "register.username": "Benutzername",
-  "register.usernamePlaceholder": "z. B. max_mustermann",
-  "register.usernameHint": "3–50 Zeichen. Buchstaben (alle Sprachen), Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche oder unsichtbaren Zeichen.",
+  "register.usernamePlaceholder": "Öffentlicher Benutzername",
+  "register.usernameHint":
+    "Öffentlich sichtbar in Profil, Suche, Chat und System-E-Mails. 3–50 Zeichen: Buchstaben (alle Sprachen), Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche oder unsichtbaren Zeichen. Beispiel: Name, Firmenname, Pseudonym.",
   "register.usernameRequired": "Bitte wähle einen Benutzernamen.",
   "register.usernameWaitCheck": "Bitte warte, bis der Benutzername geprüft wurde.",
   "register.usernameChecking": "Wird geprüft…",
@@ -360,7 +363,8 @@ const de = {
   "profile.favorites": "Favoriten",
   "profile.favoriteTakumis": "Favoriten-Takumis",
   "profile.username": "Benutzername",
-  "profile.usernameHint": "Optional. 3–50 Zeichen: Buchstaben, Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche oder unsichtbaren Zeichen.",
+  "profile.usernameHint":
+    "Öffentlich sichtbar in Profil, Suche, Chat und System-E-Mails. Optional. 3–50 Zeichen: Buchstaben, Ziffern, Leerzeichen, Sonderzeichen; Emojis möglich. Keine Zeilenumbrüche. Beispiel: Name, Firmenname, Pseudonym.",
   "profile.languages": "Sprachen",
   "profile.languagesDesc": "Welche Sprachen sprichst du?",
   "profile.languagesSaved": "Sprachen gespeichert.",

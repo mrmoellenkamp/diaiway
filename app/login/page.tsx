@@ -25,6 +25,7 @@ import {
   saveStayLoggedIn,
 } from "@/hooks/use-native-bridge"
 import { shouldUseHardNavigationAfterLogin, webkitCookieSettleDelayMs } from "@/lib/browser-auth-nav"
+import { communicationUsername } from "@/lib/communication-display"
 
 // ─── Biometric icon helper ────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ function LoginContent() {
 
       const sessionRes = await fetch("/api/auth/session", { credentials: "include" })
       const sessionData = await sessionRes.json()
-      const userName = sessionData?.user?.username ?? sessionData?.user?.name ?? loginEmail
+      const userName = communicationUsername(sessionData?.user?.username, loginEmail)
       const role = sessionData?.user?.role ?? "user"
       const appRole = sessionData?.user?.appRole ?? "shugyo"
 

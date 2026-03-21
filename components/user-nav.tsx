@@ -16,6 +16,7 @@ import { User, Settings, LogOut, LogIn, ChevronDown, CalendarClock } from "lucid
 import { VerifiedBadge } from "@/components/verified-badge"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { communicationUsername } from "@/lib/communication-display"
 
 export function UserNav({ variant = "default" }: { variant?: "default" | "landing" | "mobile" }) {
   const { data: session, status } = useSession()
@@ -69,7 +70,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
     )
   }
 
-  const userName = (session.user as { username?: string | null }).username ?? session.user.name ?? t("common.profile")
+  const userName = communicationUsername((session.user as { username?: string | null }).username, t("common.profile"))
   const userRole = (session.user as { role?: string }).role
   const appRole = (session.user as { appRole?: string }).appRole
   const isVerified = (session.user as { isVerified?: boolean }).isVerified ?? false

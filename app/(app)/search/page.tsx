@@ -24,7 +24,7 @@ function SearchContent() {
     ? takumis.filter((tk) => {
         const hay =
           tk.taxonomySearchText ??
-          `${tk.name} ${tk.categoryName} ${tk.subcategory} ${tk.bio} ${(tk.allSpecialties ?? []).join(" ")}`.toLowerCase()
+          `${tk.name} ${tk.username ?? ""} ${tk.categoryName} ${tk.subcategory} ${tk.bio} ${(tk.allSpecialties ?? []).join(" ")}`.toLowerCase()
         return hay.includes(qLower)
       })
     : []

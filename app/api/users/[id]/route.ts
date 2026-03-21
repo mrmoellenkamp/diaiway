@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { communicationUsername } from "@/lib/communication-display"
 
 /**
  * GET /api/users/[id]
@@ -30,7 +31,7 @@ export async function GET(
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
-    const displayName = (user as { username?: string | null }).username ?? user.name
+    const displayName = communicationUsername(user.username, "Nutzer")
     const base = {
       name: displayName,
       image: user.image || "",

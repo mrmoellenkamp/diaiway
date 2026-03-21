@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ImageUpload } from "@/components/image-upload"
 import { Switch } from "@/components/ui/switch"
 import { useApp } from "@/lib/app-context"
+import { communicationUsername } from "@/lib/communication-display"
 import { useSWRConfig } from "swr"
 import { ProfileFavoritesSection } from "@/components/profile-favorites-section"
 
@@ -231,8 +232,11 @@ export default function ProfilePage() {
     }
   }, [session?.user, status, profileData, appProfileLoading, isTakumi])
 
-  // Prefer username as profile name, then name
-  const userName = (dbUsername ?? dbName) || ((session?.user as { username?: string | null })?.username ?? session?.user?.name) || t("profile.userFallback")
+  // Anzeige wie in der Kommunikation: nur Benutzername
+  const userName = communicationUsername(
+    dbUsername ?? (session?.user as { username?: string | null })?.username,
+    t("profile.userFallback"),
+  )
   const userEmail = dbEmail || session?.user?.email || ""
   const userImage = dbImage || session?.user?.image || ""
   const userInitials = userName

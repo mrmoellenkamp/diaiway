@@ -156,6 +156,8 @@ const es = {
   "register.subtitle": "Elige tu rol y comienza tu camino",
   "register.name": "Nombre",
   "register.namePlaceholder": "Tu nombre",
+  "register.nameHint":
+    "Se utiliza en documentos oficiales (facturas, abonos) y para tus datos de facturación; no es el nombre público en la plataforma.",
   "register.email": "Correo",
   "register.emailPlaceholder": "tu@correo.com",
   "register.password": "Contraseña",
@@ -177,8 +179,9 @@ const es = {
   "register.errorNetwork": "Error de conexión. Inténtalo de nuevo.",
   "register.success": "¡Cuenta creada! Bienvenido a diAiway.",
   "register.username": "Nombre de usuario",
-  "register.usernamePlaceholder": "p. ej. max_mustermann",
-  "register.usernameHint": "3–50 caracteres. Letras (cualquier idioma), dígitos, espacios, signos; emojis permitidos. Sin saltos de línea ni caracteres invisibles.",
+  "register.usernamePlaceholder": "Nombre de usuario público",
+  "register.usernameHint":
+    "Visible públicamente en perfil, búsqueda, chat y correos del sistema. 3–50 caracteres: letras (cualquier idioma), dígitos, espacios, signos; emojis permitidos. Sin saltos de línea ni caracteres invisibles. Ejemplos: nombre, empresa, seudónimo.",
   "register.usernameRequired": "Elige un nombre de usuario.",
   "register.usernameWaitCheck": "Espera a que se verifique el nombre de usuario.",
   "register.usernameChecking": "Verificando…",
@@ -358,7 +361,8 @@ const es = {
   "profile.favorites": "Favoritos",
   "profile.favoriteTakumis": "Takumis favoritos",
   "profile.username": "Nombre de usuario",
-  "profile.usernameHint": "Opcional. 3–50 caracteres: letras, dígitos, espacios, signos; emojis permitidos. Sin saltos de línea ni caracteres invisibles.",
+  "profile.usernameHint":
+    "Visible públicamente en perfil, búsqueda, chat y correos del sistema. Opcional. 3–50 caracteres: letras, dígitos, espacios, signos; emojis permitidos. Sin saltos de línea. Ejemplos: nombre, empresa, seudónimo.",
   "profile.languages": "Idiomas",
   "profile.languagesDesc": "¿Qué idiomas hablas?",
   "profile.languagesSaved": "Idiomas guardados.",

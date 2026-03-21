@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { corsPreflightResponse, withApiCors } from "@/lib/api-cors"
+import { communicationUsername } from "@/lib/communication-display"
 
 /**
  * GET /api/expert/instant-requests
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
       userName: true,
       statusToken: true,
       createdAt: true,
+      user: { select: { username: true } },
     },
   })
 
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
     NextResponse.json({
       requests: requests.map((r) => ({
         id: r.id,
-        userName: r.userName,
+        userName: communicationUsername(r.user?.username, "Shugyo"),
         statusToken: r.statusToken,
         createdAt: r.createdAt.toISOString(),
       })),

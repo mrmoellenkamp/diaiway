@@ -11,8 +11,10 @@ import { VerifiedBadge } from "@/components/verified-badge"
 import { FavoriteButton } from "@/components/favorite-button"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import type { Takumi } from "@/lib/types"
+import { takumiPublicLabel } from "@/lib/communication-display"
 
 export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: boolean }) {
+  const publicName = takumiPublicLabel(takumi)
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
       <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
@@ -24,7 +26,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
                 <span className="relative block size-full">
                   <Image
                     src={takumi.imageUrl}
-                    alt={takumi.name}
+                    alt={publicName}
                     fill
                     className="object-cover"
                     sizes="56px"
@@ -53,7 +55,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
           <div className="flex min-w-0 flex-1 flex-col gap-1 pr-6">
             <div className="flex items-center gap-1.5">
               <span className="truncate font-semibold text-foreground">
-                {takumi.name}
+                {publicName}
               </span>
               {takumi.verified && <VerifiedBadge size="sm" className="shrink-0" />}
               {takumi.isPro && (
@@ -96,6 +98,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
 
 export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priority?: boolean }) {
   const offersInstant = takumi.liveStatus === "available"
+  const publicName = takumiPublicLabel(takumi)
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
       <div className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-3 transition-shadow hover:shadow-md">
@@ -106,7 +109,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
               <span className="relative block size-full">
                 <Image
                   src={takumi.imageUrl}
-                  alt={takumi.name}
+                  alt={publicName}
                   fill
                   className="object-cover"
                   sizes="64px"
@@ -127,7 +130,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
         </div>
         <div className="flex flex-col items-center gap-0.5 text-center">
           <span className="text-xs font-semibold text-foreground truncate w-full">
-            {takumi.name}
+            {publicName}
           </span>
           <span className="text-[10px] text-muted-foreground truncate w-full">
             {takumi.subcategory}

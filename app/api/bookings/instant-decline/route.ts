@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendBookingStatusEmail } from "@/lib/email"
+import { bookingPartyDisplayLabels } from "@/lib/booking-party-labels"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
@@ -59,10 +60,11 @@ export async function POST(req: Request) {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
   if (booking) {
     try {
+      const labels = await bookingPartyDisplayLabels(booking)
       await sendBookingStatusEmail({
         to: booking.userEmail,
-        userName: booking.userName,
-        takumiName: booking.expertName,
+        userName: labels.shugyoLabel,
+        takumiName: labels.takumiLabel,
         date: booking.date,
         startTime: booking.startTime,
         endTime: booking.endTime,

@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useRef, useEffect, useCallback, ty
 import { useSession } from "next-auth/react"
 import type { UIMessage } from "ai"
 import type { UserRole } from "./types"
+import { communicationUsername } from "@/lib/communication-display"
 
 export interface ProfileData {
   name: string
@@ -176,7 +177,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         setRole,
-        userName: profileData?.username || profileData?.name || (session?.user as { username?: string | null })?.username || session?.user?.name || "Nutzer",
+        userName: communicationUsername(
+          profileData?.username ?? (session?.user as { username?: string | null })?.username,
+          "Nutzer",
+        ),
         userAvatar: profileData?.image || session?.user?.image || "",
         isLoggedIn,
         profileData,

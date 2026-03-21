@@ -122,7 +122,7 @@ export async function POST(req: Request) {
     })
 
     const verifyUrl = `${baseUrl}/api/auth/verify-email/${token}`
-    sendVerificationEmail({ to: normalizedEmail, name: name.trim(), verifyUrl }).catch((err) =>
+    sendVerificationEmail({ to: normalizedEmail, name: username, verifyUrl }).catch((err) =>
       console.error("[register] Verification email failed:", err)
     )
     sendWelcomeWaymail(user.id).catch(() => {})

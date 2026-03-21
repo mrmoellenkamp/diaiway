@@ -10,6 +10,7 @@ import { ReviewStars } from "@/components/review-stars"
 import { useTakumis } from "@/hooks/use-takumis"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
+import { takumiPublicLabel } from "@/lib/communication-display"
 import {
   Mic,
   MicOff,
@@ -68,6 +69,7 @@ export default function SessionDetailPage() {
   }
 
   const takumi = takumiFromParams
+  const takumiDisplay = takumiPublicLabel(takumi)
 
   const handleStartTrial = () => {
     setPhase("trial")
@@ -102,7 +104,7 @@ export default function SessionDetailPage() {
           </Avatar>
 
           <div className="flex flex-col items-center gap-1 text-center">
-            <h2 className="text-xl font-bold text-foreground">{takumi.name}</h2>
+            <h2 className="text-xl font-bold text-foreground">{takumiDisplay}</h2>
             <p className="text-sm text-muted-foreground">{takumi.categoryName}</p>
             <div className="mt-1 flex items-center gap-1">
               <ReviewStars rating={takumi.rating} />
@@ -159,7 +161,7 @@ export default function SessionDetailPage() {
         </Avatar>
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">Session beendet</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Wie war deine Erfahrung mit {takumi.name}?</p>
+          <p className="mt-1 text-sm text-muted-foreground">Wie war deine Erfahrung mit {takumiDisplay}?</p>
         </div>
 
         <ReviewStars rating={rating} size="lg" interactive onRate={setRating} />
@@ -207,7 +209,7 @@ export default function SessionDetailPage() {
                 {takumi.avatar}
               </AvatarFallback>
             </Avatar>
-            <p className="text-lg font-semibold text-white">{takumi.name}</p>
+            <p className="text-lg font-semibold text-white">{takumiDisplay}</p>
             <Badge
               className={
                 phase === "trial"

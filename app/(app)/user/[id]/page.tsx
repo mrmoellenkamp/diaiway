@@ -39,7 +39,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   }, [id])
 
   const initials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    ? user.name.trim().includes(" ")
+      ? user.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2)
+      : user.name.slice(0, 2).toUpperCase()
     : "?"
 
   const memberSince = user?.createdAt

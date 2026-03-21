@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { communicationUsername, waymailSenderLabel } from "@/lib/communication-display"
 
 const ROLE_LABELS: Record<string, Record<string, string>> = {
   de: { takumi: "Takumi", shugyo: "Shugyo" },
@@ -22,7 +23,7 @@ export interface TemplateVariables {
 
 /**
  * Rendert ein Template mit Variablen-Ersetzung.
- * Zieht Klarnamen und Rollen aus User-Objekten für rollen-agnostische Personalisierung.
+ * Kommunikationsnamen nur per Username; Rollen-Labels für Personalisierung.
  */
 export async function getRenderedTemplate(
   slug: string,
@@ -47,12 +48,12 @@ export async function getRenderedTemplate(
     opts.senderUserId
       ? prisma.user.findUnique({
           where: { id: opts.senderUserId },
-          select: { name: true, appRole: true },
+          select: { username: true, appRole: true },
         })
       : null,
     prisma.user.findUnique({
       where: { id: opts.recipientUserId },
-      select: { name: true, appRole: true },
+      select: { username: true, appRole: true },
     }),
   ])
 
@@ -60,8 +61,13 @@ export async function getRenderedTemplate(
   if (!translation) return null
 
   const labels = ROLE_LABELS[language] ?? ROLE_LABELS.de
-  const senderName = opts.senderDisplayName ?? sender?.name ?? "Unbekannt"
-  const recipientName = recipient?.name ?? "Unbekannt"
+  const senderName = waymailSenderLabel(
+    opts.senderUserId ?? null,
+    opts.senderDisplayName,
+    sender?.username,
+    "Unbekannt",
+  )
+  const recipientName = communicationUsername(recipient?.username, "Unbekannt")
   const senderRole = labels[(sender?.appRole as string) ?? "shugyo"] ?? "Shugyo"
   const recipientRole = labels[(recipient?.appRole as string) ?? "shugyo"] ?? "Shugyo"
 

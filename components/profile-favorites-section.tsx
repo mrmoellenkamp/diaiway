@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Heart, Loader2 } from "lucide-react"
+import { takumiPublicLabel } from "@/lib/communication-display"
 
 interface ProfileFavoritesSectionProps {
   favoriteIds: string[]
@@ -44,7 +45,7 @@ export function ProfileFavoritesSection({ favoriteIds }: ProfileFavoritesSection
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col">
-                  <span className="text-sm font-semibold text-foreground">{takumi.name}</span>
+                  <span className="text-sm font-semibold text-foreground">{takumiPublicLabel(takumi)}</span>
                   <span className="text-[11px] text-muted-foreground">{takumi.subcategory}</span>
                 </div>
                 <span className="text-[10px] text-muted-foreground">{takumi.rating} / 5</span>

@@ -24,6 +24,7 @@ import { MessageComposeModal } from "@/components/message-compose-modal"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 import { UserChatBox } from "@/components/user-chat-box"
 import { VerifiedBadge } from "@/components/verified-badge"
+import { takumiPublicLabel } from "@/lib/communication-display"
 import {
   Drawer,
   DrawerContent,
@@ -149,7 +150,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
     )
   }
 
-  const firstName = takumi.name.split(" ")[0] ?? ""
+  const commLabel = takumiPublicLabel(takumi)
 
   async function handleStartChat() {
     if (!takumi) return
@@ -161,7 +162,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       if (res.ok && data.userId) {
         setChatPartner({
           userId: data.userId,
-          partnerName: data.partnerName ?? takumi.name,
+          partnerName: data.partnerName ?? commLabel,
           partnerAvatar: data.partnerAvatar ?? takumi.avatar,
           partnerImageUrl: data.partnerImageUrl,
           expertId: takumi.id,
@@ -194,7 +195,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             type="button"
             onClick={async () => {
               const url = `https://diaiway.com/takumi/${takumi.id}`
-              const ok = await shareNative({ title: takumi.name, text: takumi.bio?.slice(0, 120), url })
+              const ok = await shareNative({ title: commLabel, text: takumi.bio?.slice(0, 120), url })
               if (!ok) toast.info(t("toast.shareAppOnly"))
             }}
             className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
@@ -216,7 +217,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             </Avatar>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-foreground">{takumi.name}</h1>
+                <h1 className="text-xl font-bold text-foreground">{commLabel}</h1>
                 {takumi.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
               <div className="flex items-center gap-2">
@@ -282,13 +283,13 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                 ) : (
                   <MessageCircle className="size-4" />
                 )}
-                {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", firstName)}
+                {chatLoading ? t("takumiPage.preparingChat") : t("takumiPage.chatNow").replace("{name}", commLabel)}
                 <span className="ml-1.5 flex size-2 rounded-full bg-green-400" aria-hidden />
               </Button>
             ) : (
               <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                 <p>
-                  {t("takumiPage.offlineWaymailPrefix").replace("{name}", takumi.name)}{" "}
+                  {t("takumiPage.offlineWaymailPrefix").replace("{name}", commLabel)}{" "}
                   <button
                     type="button"
                     onClick={() => setComposeOpen(true)}
@@ -333,7 +334,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           <MessageComposeModal
             open={composeOpen}
             onOpenChange={setComposeOpen}
-            recipientName={takumi.name}
+            recipientName={commLabel}
             recipientExpertId={takumi.id}
             onSent={() => toast.success(t("takumiPage.messageSent"))}
           />

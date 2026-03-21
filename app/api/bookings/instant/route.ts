@@ -6,6 +6,7 @@ import { ensureCustomerNumber } from "@/lib/billing"
 import { isWithinInstantSlots } from "@/lib/availability-utils"
 import { sendPushToUser } from "@/lib/push"
 import type { WeeklySlots } from "@/lib/availability-utils"
+import { communicationUsername } from "@/lib/communication-display"
 
 /**
  * POST /api/bookings/instant
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
         expertName: expert.name,
         expertEmail: expert.email ?? "",
         userId: session.user.id,
-        userName: (user as { username?: string | null }).username ?? user.name ?? "Shugyo",
+        userName: communicationUsername((user as { username?: string | null }).username, "Shugyo"),
         userEmail: user.email ?? "",
         bookingMode: "instant",
         callType,
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
     if (takumiUserId) {
     sendPushToUser(takumiUserId, {
       title: "Instant-Anfrage",
-      body: `${(user as { username?: string | null }).username ?? user.name ?? "Ein Nutzer"} möchte mit dir verbinden.`,
+      body: `${communicationUsername((user as { username?: string | null }).username, "Ein Nutzer")} möchte mit dir verbinden.`,
       url: `/session/${booking.id}`,
       tag: `instant-${booking.id}`,
       data: {

@@ -11,6 +11,7 @@ import { emailForName } from "@/lib/email-utils"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
 import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
+import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
 
@@ -51,7 +52,16 @@ export const GET = apiHandler(async (req) => {
 
   const bookings = await prisma.booking.findMany({
     where: whereClause,
-    include: { expert: { select: { avatar: true, subcategory: true } } },
+    include: {
+      expert: {
+        select: {
+          avatar: true,
+          subcategory: true,
+          user: { select: { username: true } },
+        },
+      },
+      user: { select: { username: true } },
+    },
     orderBy: [{ date: "asc" }, { startTime: "asc" }, { createdAt: "desc" }],
   })
 
@@ -62,12 +72,12 @@ export const GET = apiHandler(async (req) => {
       expertName: b.expertName,
       expertEmail: b.expertEmail,
       takumiId: b.expertId,
-      takumiName: b.expertName,
+      takumiName: communicationUsername(b.expert?.user?.username, "Takumi"),
       takumiEmail: b.expertEmail,
       takumiAvatar: b.expert?.avatar || "",
       takumiSubcategory: b.expert?.subcategory || "",
       userId: b.userId,
-      userName: b.userName,
+      userName: communicationUsername(b.user?.username, "Shugyo"),
       userEmail: b.userEmail,
       date: b.date,
       startTime: b.startTime,
@@ -148,6 +158,8 @@ export const POST = apiHandler(async (req) => {
     where: { id: takumiId },
     include: { user: { select: { username: true } } },
   })
+  const takumiCommName = communicationUsername(expert?.user?.username, "Takumi")
+  const shugyoCommName = communicationUsername((session.user as { username?: string | null }).username, "Shugyo")
   if (!expert) {
     return NextResponse.json({ error: "Experte nicht gefunden." }, { status: 404 })
   }
@@ -199,7 +211,7 @@ export const POST = apiHandler(async (req) => {
           expertName: expert.name,
           expertEmail,
           userId: session.user.id,
-          userName: ((session.user as { username?: string | null }).username ?? session.user.name) || "Nutzer",
+          userName: shugyoCommName,
           userEmail: session.user.email || "",
           date,
           startTime,
@@ -227,8 +239,8 @@ export const POST = apiHandler(async (req) => {
       const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}`
       await sendBookingRequestEmail({
         to: expertEmail,
-        takumiName: expert.user?.username ?? expert.name,  // Kommunikation: Username bevorzugt
-        userName: ((session.user as { username?: string | null }).username ?? session.user.name) || "Nutzer",
+        takumiName: takumiCommName,
+        userName: shugyoCommName,
         userEmail: session.user.email || "",
         date,
         startTime,
@@ -252,19 +264,18 @@ export const POST = apiHandler(async (req) => {
             type: "booking_request",
             bookingId: booking.id,
             title: "Neue Buchungsanfrage",
-            body: `${((session.user as { username?: string | null }).username ?? session.user.name) || "Ein Nutzer"} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+            body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           },
         })
-        const displayName = ((session.user as { username?: string | null }).username ?? session.user.name) || "Ein Nutzer"
         const waymail = await createSystemWaymail({
           recipientId: expert.userId,
           subject: "Neue Buchungsanfrage",
-          body: `${displayName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
         }).catch(() => null)
         const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(expert.userId, {
           title: "Neue Buchungsanfrage",
-          body: `${displayName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
           url: waymailUrl,
         }).catch(() => {})
       } catch { /* notification errors must not block */ }

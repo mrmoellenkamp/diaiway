@@ -10,6 +10,7 @@ import {
   refundTransactionForBooking,
   setTransactionOnHoldForBooking,
 } from "@/lib/wallet-service"
+import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
 
@@ -33,8 +34,8 @@ export async function GET(
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: {
-        expert: true,
-        user: { select: { skillLevel: true, image: true } },
+        expert: { include: { user: { select: { username: true } } } },
+        user: { select: { skillLevel: true, image: true, username: true } },
       },
     })
     if (!booking) return NextResponse.json({ error: "Buchung nicht gefunden." }, { status: 404 })
@@ -107,13 +108,13 @@ export async function GET(
         expertName: booking.expertName,
         expertEmail: booking.expertEmail,
         takumiId: booking.expertId,
-        takumiName: booking.expertName,
+        takumiName: communicationUsername(booking.expert?.user?.username, "Takumi"),
         takumiEmail: booking.expertEmail,
         takumiAvatar: booking.expert?.avatar || "",
         takumiSubcategory: booking.expert?.subcategory || "",
         takumiImageUrl: booking.expert?.imageUrl || "",
         userId: booking.userId,
-        userName: booking.userName,
+        userName: communicationUsername(booking.user?.username, "Shugyo"),
         userEmail: booking.userEmail,
         userImageUrl: booking.user?.image || "",
         date: booking.date,

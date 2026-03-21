@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
 import { ArrowRight, Video, Shield, CheckCircle, Star } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { takumiPublicLabel } from "@/lib/communication-display"
 
 /** Verzögert Takumis-Fetch: Erst nach Hero-Render, damit LCP nicht blockiert */
 function LiveTakumisSection() {
@@ -44,7 +45,7 @@ function LiveTakumisSection() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-sm font-semibold text-foreground">{tk.name}</span>
+                <span className="text-sm font-semibold text-foreground">{takumiPublicLabel(tk)}</span>
                 <span className="text-xs text-muted-foreground">{tk.subcategory}</span>
               </div>
               <Button asChild size="sm" className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">

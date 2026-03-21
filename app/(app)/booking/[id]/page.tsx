@@ -23,6 +23,7 @@ import { BookingCheckout } from "@/components/booking-checkout"
 import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { cn } from "@/lib/utils"
 import type { SlotSelectMeta } from "@/components/booking-calendar"
+import { takumiPublicLabel } from "@/lib/communication-display"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -94,6 +95,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
     )
   }
 
+  const takumiPublicName = takumiPublicLabel(takumi)
   const priceVideo15 = takumi.priceVideo15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
   const priceVoice15 = takumi.priceVoice15Min ?? (takumi.pricePerSession ? takumi.pricePerSession / 2 : 0)
   const pricePer15 = callType === "VOICE" ? priceVoice15 : priceVideo15
@@ -262,7 +264,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         {step === "checkout" && bookingIdForPayment ? (
           <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
             <p className="text-sm text-muted-foreground">
-              {t("handshake.minutesWith", { duration: String(durationMin), name: takumi.name })}
+              {t("handshake.minutesWith", { duration: String(durationMin), name: takumiPublicName })}
             </p>
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
               <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
@@ -272,7 +274,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             </div>
             <BookingCheckout
               bookingId={bookingIdForPayment}
-              takumiName={takumi.name}
+              takumiName={takumiPublicName}
               priceInCents={Math.round(totalPrice * 100)}
               walletBalanceCents={walletBalanceCents}
               onSuccess={() => {
@@ -303,7 +305,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           </Avatar>
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-foreground">{takumi.name}</span>
+              <span className="font-semibold text-foreground">{takumiPublicName}</span>
               {takumi.verified && <CheckCircle className="size-3.5 text-accent" />}
             </div>
             <span className="text-xs text-muted-foreground">{takumi.subcategory}</span>

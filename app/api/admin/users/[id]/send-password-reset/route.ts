@@ -3,6 +3,7 @@ import crypto from "crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { emailSalutationFromUser } from "@/lib/communication-display"
 
 async function requireAdmin() {
   const session = await auth()
@@ -54,7 +55,11 @@ export async function POST(
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
-    await sendPasswordResetEmail(user.email, user.username ?? user.name, `${baseUrl}/reset-password/${rawToken}`)
+    await sendPasswordResetEmail(
+      user.email,
+      emailSalutationFromUser({ username: user.username, email: user.email }),
+      `${baseUrl}/reset-password/${rawToken}`,
+    )
 
     return NextResponse.json({
       success: true,

@@ -2,7 +2,7 @@ import type { Expert, TaxonomyCategory, TaxonomySpecialty } from "@prisma/client
 import type { CancelPolicy, Takumi } from "@/lib/types"
 
 type ExpertWithTaxonomy = Expert & {
-  user: { appRole: string; isVerified: boolean } | null
+  user: { appRole: string; isVerified: boolean; username: string | null } | null
   categoryAssignments: { category: Pick<TaxonomyCategory, "slug" | "name"> }[]
   specialtyAssignments: { specialty: Pick<TaxonomySpecialty, "name"> }[]
   primaryCategory: Pick<TaxonomyCategory, "slug" | "name"> | null
@@ -25,8 +25,10 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
 
   const specNames = e.specialtyAssignments.map((a) => a.specialty.name)
   const allSpecialties = [...new Set([subcategory, ...specNames].filter(Boolean))]
+  const u = e.user?.username?.trim()
   const taxonomySearchText = [
     e.name,
+    u ?? "",
     categoryName,
     subcategory,
     ...specNames,
@@ -39,6 +41,7 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
   return {
     id: e.id,
     name: e.name,
+    username: e.user?.username ?? null,
     email: e.email ?? undefined,
     avatar: e.avatar,
     categorySlug,
@@ -71,7 +74,7 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
 }
 
 export const expertTaxonomyInclude = {
-  user: { select: { appRole: true, isVerified: true } },
+  user: { select: { appRole: true, isVerified: true, username: true } },
   categoryAssignments: {
     include: { category: { select: { slug: true, name: true } } },
   },

@@ -5,6 +5,7 @@ import { sendPushToUser } from "@/lib/push"
 import { z } from "zod"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
+import { communicationUsername, waymailSenderLabel } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
 
@@ -80,9 +81,9 @@ export const GET = apiHandler(async (req: NextRequest) => {
     const rn = wm.recipient as { name?: string; username?: string | null } | null
     return NextResponse.json({
       id: wm.id,
-      senderName: wm.senderDisplayName ?? (sn?.username ?? sn?.name) ?? "Unbekannt",
+      senderName: waymailSenderLabel(wm.senderId, wm.senderDisplayName, sn?.username, "Unbekannt"),
       senderImageUrl: wm.sender?.image && wm.sender.image.length > 0 ? wm.sender.image : null,
-      recipientName: (rn?.username ?? rn?.name) ?? "Unbekannt",
+      recipientName: communicationUsername(rn?.username, "Unbekannt"),
       recipientImageUrl: wm.recipient?.image && wm.recipient.image.length > 0 ? wm.recipient.image : null,
       isFromMe,
       subject: wm.subject,
@@ -111,7 +112,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
       return {
         id: m.id,
         folder: "inbox" as const,
-        senderName: m.senderDisplayName ?? (sn?.username ?? sn?.name) ?? "Unbekannt",
+        senderName: waymailSenderLabel(m.senderId, m.senderDisplayName, sn?.username, "Unbekannt"),
         senderImageUrl: m.sender?.image && m.sender.image.length > 0 ? m.sender.image : null,
         subject: m.subject ?? "(ohne Betreff)",
         textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
@@ -138,7 +139,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
       return {
         id: m.id,
         folder: "sent" as const,
-        recipientName: (rn?.username ?? rn?.name) ?? "Unbekannt",
+        recipientName: communicationUsername(rn?.username, "Unbekannt"),
         recipientImageUrl: m.recipient?.image && m.recipient.image.length > 0 ? m.recipient.image : null,
         subject: m.subject ?? "(ohne Betreff)",
         textPreview: m.text.slice(0, 100) + (m.text.length > 100 ? "…" : ""),
@@ -178,7 +179,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
           id: m.id,
           text: m.text,
           sender: m.senderId === session.user.id ? "user" : "partner",
-          senderName: (sn?.username ?? sn?.name) ?? undefined,
+          senderName: communicationUsername(sn?.username, "") || undefined,
         timestamp: m.createdAt.getTime(),
         read: m.read,
         attachmentUrl: m.attachmentUrl,
@@ -261,7 +262,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
     const expert = expertMap.get(partnerId)
     const lastMsg = lastMsgByPartner.get(partnerId)
     const unread = unreadByPartner.get(partnerId) ?? 0
-    const displayName = (user as { username?: string | null })?.username ?? user?.name ?? "Nutzer"
+    const displayName = communicationUsername((user as { username?: string | null })?.username, "Nutzer")
     const avatar = expert?.avatar ?? (displayName.slice(0, 2).toUpperCase() || "?")
     const subcategory = expert?.subcategory ?? ""
     const partnerImageUrl = expert?.imageUrl || (user?.image && user.image.length > 0 ? user.image : null)
@@ -326,7 +327,7 @@ export const POST = apiHandler(async (req) => {
     where: { id: recipientId },
     select: { name: true, username: true, email: true },
   })
-  const senderName = (session.user as { username?: string | null }).username ?? session.user.name ?? "Jemand"
+  const senderName = communicationUsername((session.user as { username?: string | null }).username, "Jemand")
 
   if (body.communicationType === "CHAT") {
     try {
@@ -369,7 +370,7 @@ export const POST = apiHandler(async (req) => {
     if (recipient?.email) {
       sendWaymailNotificationEmail({
         to: recipient.email,
-        recipientName: (recipient as { username?: string | null }).username ?? recipient.name ?? "Nutzer",
+        recipientName: communicationUsername((recipient as { username?: string | null }).username, "Nutzer"),
         senderName,
         subject: message.subject ?? "(ohne Betreff)",
         waymailUrl,

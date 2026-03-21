@@ -1957,7 +1957,7 @@ export default function AdminPage() {
 
             <TabsContent value="system" className="mt-4">
               <div className="flex flex-col gap-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col gap-3">
                   <div className="rounded-xl border border-border/50 bg-card p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">

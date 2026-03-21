@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { communicationUsername } from "@/lib/communication-display"
 
 /**
  * GET /api/user/profile-preview
@@ -65,7 +66,7 @@ export async function GET() {
       projects: shugyoProjects,
     }
 
-    const userDisplayName = (user as { username?: string | null }).username ?? user.name
+    const userDisplayName = communicationUsername(user.username, "Nutzer")
     const takumi = expert
       ? {
           id: expert.id,

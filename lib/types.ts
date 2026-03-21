@@ -28,6 +28,8 @@ export interface User {
 export interface Takumi {
   id: string
   name: string
+  /** Öffentlicher Kommunikationsname (nur Username) */
+  username?: string | null
   email?: string
   avatar: string
   /** Primäre Kategorie (Anzeige, Legacy-kompatibel) */

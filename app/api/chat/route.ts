@@ -7,6 +7,7 @@ import {
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -76,11 +77,9 @@ export async function POST(req: Request) {
 
     const langInstruction = LANGUAGE_INSTRUCTIONS[locale] ?? LANGUAGE_INSTRUCTIONS.de
 
-    let userContext = ""
-    if (session?.user?.name) {
-        const userCtxFn = USER_CONTEXT[locale] ?? USER_CONTEXT.de
-        userContext = `\n\n${userCtxFn((session.user as { username?: string | null }).username ?? session.user.name ?? "")}`
-    }
+    const userCtxFn = USER_CONTEXT[locale] ?? USER_CONTEXT.de
+    const commName = communicationUsername((session.user as { username?: string | null }).username, "Nutzer")
+    const userContext = `\n\n${userCtxFn(commName)}`
 
     let expertContext = ""
     try {

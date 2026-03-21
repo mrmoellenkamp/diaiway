@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       avatar: true,
       imageUrl: true,
       subcategory: true,
-      user: { select: { image: true } },
+      user: { select: { image: true, username: true } },
     },
   })
   if (!expert?.userId) {
@@ -33,10 +34,11 @@ export async function GET(req: NextRequest) {
 
   const imageUrl = expert.imageUrl || (expert.user?.image && expert.user.image.length > 0 ? expert.user.image : null)
 
+  const partnerLabel = communicationUsername(expert.user?.username, "Takumi")
   return NextResponse.json({
     userId: expert.userId,
-    partnerName: expert.name ?? "Takumi",
-    partnerAvatar: expert.avatar ?? (expert.name?.slice(0, 2).toUpperCase() || "?"),
+    partnerName: partnerLabel,
+    partnerAvatar: expert.avatar ?? (partnerLabel.slice(0, 2).toUpperCase() || "?"),
     partnerImageUrl: imageUrl || null,
     expertId,
     subcategory: expert.subcategory ?? "",

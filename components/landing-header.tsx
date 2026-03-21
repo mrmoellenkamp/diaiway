@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useI18n } from "@/lib/i18n"
+import { communicationUsername } from "@/lib/communication-display"
 
 export function LandingHeader() {
   const { data: session } = useSession()
@@ -17,7 +18,7 @@ export function LandingHeader() {
   const { t } = useI18n()
 
   const userName = session?.user
-    ? ((session.user as { username?: string | null }).username ?? session.user.name ?? t("common.profile"))
+    ? communicationUsername((session.user as { username?: string | null }).username, t("common.profile"))
     : ""
   const initials = userName
     .replace(/[^a-zA-Z0-9]/g, " ")

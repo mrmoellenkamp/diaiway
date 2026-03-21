@@ -6,6 +6,7 @@ import { ReviewStars } from "@/components/review-stars"
 import { Video, Clock, Calendar } from "lucide-react"
 import { formatDateBerlin, formatTimeBerlin } from "@/lib/date-utils"
 import type { Session } from "@/lib/types"
+import { takumiPublicLabel } from "@/lib/communication-display"
 
 const statusConfig = {
   active: { label: "Aktiv", className: "bg-accent/15 text-accent border-accent/30" },
@@ -17,6 +18,7 @@ const statusConfig = {
 export function SessionCard({ session }: { session: Session }) {
   const status = statusConfig[session.status]
   const date = new Date(session.scheduledAt)
+  const takumiLabel = takumiPublicLabel(session.takumi)
 
   return (
     <Link href={`/sessions/${session.id}`}>
@@ -30,7 +32,7 @@ export function SessionCard({ session }: { session: Session }) {
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate font-semibold text-foreground">
-                {session.takumi.name}
+                {takumiLabel}
               </span>
               <Badge variant="outline" className={`shrink-0 text-[10px] ${status.className}`}>
                 {status.label}

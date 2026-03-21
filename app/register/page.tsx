@@ -256,9 +256,10 @@ function RegisterForm() {
             autoComplete="name"
             required
           />
+          <p className="text-[11px] text-muted-foreground">{t("register.nameHint")}</p>
         </div>
 
-        {/* Username (optional) */}
+        {/* Benutzername (Pflicht) */}
         <div className="flex flex-col gap-2">
           <Label htmlFor="reg-username">{t("register.username")}</Label>
           <div className="relative">

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { rateLimit } from "@/lib/rate-limit"
 import { sendVerificationEmail } from "@/lib/email"
+import { communicationUsername } from "@/lib/communication-display"
 import crypto from "crypto"
 
 export const runtime = "nodejs"
@@ -69,7 +70,7 @@ export async function POST() {
 
     const result = await sendVerificationEmail({
       to: user.email,
-      name: user.username ?? user.name,
+      name: communicationUsername(user.username, user.email.split("@")[0] || "Nutzer"),
       verifyUrl,
     })
 
