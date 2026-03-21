@@ -47,6 +47,7 @@ export default authMiddleware((req) => {
     "/ai-guide",
     "/help",
     "/booking/respond",
+    "/beta",
   ]
   const isAllowedWithoutVerification =
     allowedWithoutVerification.some((p) => pathname === p || pathname.startsWith(p + "/")) ||

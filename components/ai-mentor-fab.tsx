@@ -25,6 +25,7 @@ export function AiMentorFab() {
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/onboarding" ||
+    pathname.startsWith("/beta") ||
     hasEmbeddedAiBox
 
   useEffect(() => {

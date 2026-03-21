@@ -9,7 +9,8 @@ import { useI18n } from "@/lib/i18n"
 
 /** Footer mit Icons + Links auf jeder Seite außer Landing */
 function shouldShowFooter(pathname: string): boolean {
-  return pathname !== "/"
+  if (pathname === "/" || pathname.startsWith("/beta")) return false
+  return true
 }
 
 function titleForPath(pathname: string, t: (key: string, params?: Record<string, string | number>) => string) {
@@ -48,6 +49,11 @@ export function GlobalNavigation() {
 
   if (pathname === "/") {
     return <LandingHeader />
+  }
+
+  // Beta-Landing: fokussiert ohne App-Header (Sprachwahl nur auf der Seite)
+  if (pathname?.startsWith("/beta")) {
+    return null
   }
 
   // Pay-Seiten: kein Header, kein Footer — nur Stripe

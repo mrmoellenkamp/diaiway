@@ -62,16 +62,20 @@ export function HomeNewsFeed({ className }: { className?: string }) {
         <h2 className="text-sm font-bold text-foreground">{t("home.newsTitle")}</h2>
       </div>
       <ul className="divide-y divide-border/40">
-        {items.map((item) => (
-          <li key={item.id} className="px-4 py-3">
+        {items.map((item) => {
+          const href = item.linkUrl ?? ""
+          const isInternalPath = href.startsWith("/") && !href.startsWith("//")
+          return (
+            <li key={item.id} className="px-4 py-3">
             <p className="text-sm font-semibold text-foreground">{item.title}</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">{item.body}</p>
             {item.linkUrl && (
               <Link
                 href={item.linkUrl}
                 className="mt-2 inline-block text-xs font-medium text-primary underline-offset-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...(isInternalPath
+                  ? {}
+                  : { target: "_blank" as const, rel: "noopener noreferrer" })}
               >
                 {item.linkLabel || t("home.newsReadMore")}
               </Link>
@@ -85,8 +89,9 @@ export function HomeNewsFeed({ className }: { className?: string }) {
                 })}
               </p>
             )}
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
