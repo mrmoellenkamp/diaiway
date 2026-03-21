@@ -5,7 +5,7 @@
  */
 
 import { prisma } from "@/lib/db"
-import { sendBookingRequestEmail } from "@/lib/email"
+import { sendBookingRequestEmail, sendBookingCancelledEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { getRenderedTemplate } from "@/lib/template-service"
@@ -149,3 +149,72 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
 
 /** @deprecated Use notifyAfterPayment. Alias für Abwärtskompatibilität. */
 export const notifyTakumiAfterPayment = notifyAfterPayment
+
+/**
+ * Benachrichtigt die ANDERE Partei wenn eine Buchung storniert wird.
+ * cancelledBy: "expert" → Shugyo wird benachrichtigt; "user" → Takumi wird benachrichtigt.
+ */
+export async function notifyAfterCancellation(opts: {
+  bookingId: string
+  cancelledBy: "expert" | "user"
+  expertUserId: string | null
+  expertEmail: string
+  expertName: string
+  userId: string
+  userEmail: string
+  userName: string
+  date: string
+  startTime: string
+  endTime: string
+  refundAmount?: number
+}): Promise<void> {
+  const baseUrl =
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+
+  const notifyExpert = opts.cancelledBy === "user"
+  const recipientUserId = notifyExpert ? opts.expertUserId : opts.userId
+  const recipientEmail = notifyExpert ? opts.expertEmail : opts.userEmail
+  const recipientName = notifyExpert ? opts.expertName : opts.userName
+  const cancelledByName = notifyExpert ? opts.userName : opts.expertName
+  const cancelledByRole = opts.cancelledBy === "user" ? "shugyo" : "takumi"
+
+  // Email
+  try {
+    await sendBookingCancelledEmail({
+      to: recipientEmail,
+      recipientName,
+      cancelledByName,
+      cancelledByRole,
+      date: opts.date,
+      startTime: opts.startTime,
+      endTime: opts.endTime,
+      refundAmount: opts.refundAmount,
+    })
+  } catch (err) {
+    console.error("[notification-service] Cancel email failed:", err)
+  }
+
+  if (!recipientUserId) return
+
+  const title = "Buchung storniert"
+  const body = `Deine Buchung am ${opts.date} um ${opts.startTime} Uhr wurde von ${cancelledByName} storniert.`
+
+  // In-App Notification
+  try {
+    await prisma.notification.create({
+      data: { userId: recipientUserId, type: "booking_cancelled", bookingId: opts.bookingId, title, body },
+    })
+  } catch (err) {
+    console.error("[notification-service] Cancel notification DB failed:", err)
+  }
+
+  // Waymail
+  try {
+    const waymail = await createSystemWaymail({ recipientId: recipientUserId, subject: title, body })
+    const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/sessions`
+    sendPushToUser(recipientUserId, { title, body, url: waymailUrl }).catch(() => {})
+  } catch (err) {
+    console.error("[notification-service] Cancel waymail/push failed:", err)
+  }
+}

@@ -21,7 +21,9 @@ type TabId = "active" | "upcoming" | "completed"
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 function bookingStartKey(booking: Pick<BookingRecord, "date" | "startTime">): string {
-  return `${booking.date}T${booking.startTime || "00:00"}`
+  const date = booking.date || "9999-12-31"
+  const time = booking.startTime || "00:00"
+  return `${date}T${time}`
 }
 
 function bookingEndAt(booking: Pick<BookingRecord, "date" | "endTime" | "startTime">): Date {

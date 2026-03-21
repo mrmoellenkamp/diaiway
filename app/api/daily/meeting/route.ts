@@ -77,13 +77,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "userRole stimmt nicht mit deiner Rolle in dieser Buchung überein." }, { status: 403 })
   }
 
-  const endAt = parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00")
   const nowDate = new Date()
+  const endAt = parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00")
+
+  // Abgelaufen: kein Raum mehr erstellen
   if (["pending", "confirmed"].includes(booking.status) && endAt <= nowDate) {
     return NextResponse.json(
       { error: "Diese Buchung ist abgelaufen und kann nicht mehr gestartet werden." },
       { status: 409 }
     )
+  }
+
+  // 5-Min-Regel: bei geplanten Buchungen frühestens 5 Min vor Start
+  if (booking.bookingMode !== "instant" && booking.status !== "active") {
+    const startAt = parseBerlinDateTime(booking.date, booking.startTime || "00:00")
+    const earliestJoin = new Date(startAt.getTime() - 5 * 60 * 1000)
+    if (nowDate < earliestJoin) {
+      const minutesLeft = Math.ceil((earliestJoin.getTime() - nowDate.getTime()) / 60000)
+      return NextResponse.json(
+        { error: `Der Raum öffnet 5 Minuten vor dem Termin. Noch ${minutesLeft} Minute(n).` },
+        { status: 425 }
+      )
+    }
   }
 
   const headers: Record<string, string> = {

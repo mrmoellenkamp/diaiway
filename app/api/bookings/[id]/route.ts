@@ -11,6 +11,7 @@ import {
   setTransactionOnHoldForBooking,
 } from "@/lib/wallet-service"
 import { communicationUsername } from "@/lib/communication-display"
+import { notifyAfterCancellation } from "@/lib/notification-service"
 
 export const runtime = "nodejs"
 
@@ -672,6 +673,22 @@ export async function PATCH(
         ...(booking.status === "active" ? { sessionEndedAt: now, sessionDuration: duration } : {}),
       },
     })
+
+    // Benachrichtigung an die ANDERE Partei (fire-and-forget)
+    notifyAfterCancellation({
+      bookingId: id,
+      cancelledBy,
+      expertUserId: booking.expert?.userId ?? null,
+      expertEmail: booking.expertEmail,
+      expertName: booking.expertName,
+      userId: booking.userId,
+      userEmail: booking.userEmail,
+      userName: booking.userName,
+      date: booking.date,
+      startTime: booking.startTime || "",
+      endTime: booking.endTime || "",
+      refundAmount: refundResult.refunded ? refundAmount : undefined,
+    }).catch((err) => console.error("[Booking Cancel] notifyAfterCancellation:", err))
 
     const cancelResponse = NextResponse.json({
       success: true,

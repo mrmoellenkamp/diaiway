@@ -563,4 +563,30 @@ Details: [docs/ENV.md](./ENV.md)
 
 ---
 
+## 16. Buchungs-Benachrichtigungsfluss
+
+### Ablauf (vollständig)
+
+| Ereignis | Empfänger | Kanal |
+|---|---|---|
+| Buchung bezahlt | Takumi | E-Mail (Accept/Decline-Links) + In-App + Push |
+| Takumi bestätigt | Shugyo | E-Mail + In-App + Push |
+| Takumi lehnt ab | Shugyo | E-Mail + In-App + Push |
+| Takumi stellt Rückfrage | Shugyo | E-Mail + In-App + Push |
+| Buchung storniert (von Shugyo) | Takumi | E-Mail + In-App + Push |
+| Buchung storniert (von Takumi) | Shugyo | E-Mail + In-App + Push |
+| 30 Min vor Session | Shugyo + Takumi | Lokale Geräteerinnerung (Capacitor, nur Native-App) |
+
+### Implementierung
+
+- **`lib/notification-service.ts`**: `notifyAfterPayment()` (Buchung bezahlt → Takumi), `notifyAfterCancellation()` (Stornierung → andere Partei)
+- **`app/api/booking-respond/[id]/route.ts`**: Bestätigung/Ablehnung/Rückfrage → Shugyo-Benachrichtigung
+- **`app/(app)/sessions/page.tsx`**: Lokale Erinnerungen via Capacitor Local Notifications
+
+### Wichtig: `deferNotification`
+
+Der Buchungsflow setzt immer `deferNotification: true` — Takumi-Benachrichtigungen werden erst **nach erfolgreicher Zahlung** via `POST /api/bookings/[id]/notify-takumi` ausgelöst. Ohne Zahlung: kein Spam beim Takumi.
+
+---
+
 *Letzte Aktualisierung: März 2026*

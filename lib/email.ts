@@ -255,6 +255,45 @@ export async function sendBookingRequestEmail(opts: {
   })
 }
 
+/* ----- Booking cancelled email (to the other party) ----- */
+export async function sendBookingCancelledEmail(opts: {
+  to: string
+  recipientName: string
+  cancelledByName: string
+  cancelledByRole: "shugyo" | "takumi"
+  date: string
+  startTime: string
+  endTime: string
+  refundAmount?: number
+}) {
+  const byLabel = opts.cancelledByRole === "takumi" ? "Dein Takumi" : "Du / der Shugyo"
+  const refundLine =
+    opts.refundAmount !== undefined && opts.refundAmount > 0
+      ? `<p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Erstattung:</strong> ${(opts.refundAmount / 100).toFixed(2)} €</p>`
+      : ""
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.recipientName}</strong>,<br/>
+      leider wurde deine Buchung mit <strong style="color:#1c1917;">${opts.cancelledByName}</strong> storniert.
+    </p>
+    <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:16px;">
+      <tr><td style="padding:16px 20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Storniert von:</strong> ${byLabel}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Datum:</strong> ${opts.date}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Zeit:</strong> ${opts.startTime} – ${opts.endTime}</p>
+        ${refundLine}
+        <p style="margin:8px 0 0;font-size:13px;"><span style="display:inline-block;padding:2px 10px;border-radius:6px;background-color:#dc2626;color:#fff;font-size:12px;font-weight:600;">Storniert</span></p>
+      </td></tr>
+    </table>`
+  await transporter.sendMail({
+    from: smtpFrom,
+    to: opts.to,
+    subject: "diAiway – Buchung storniert",
+    html: emailWrapper("Buchung storniert", body),
+  })
+}
+
 /* ----- Booking status email to User ----- */
 export async function sendBookingStatusEmail(opts: {
   to: string
