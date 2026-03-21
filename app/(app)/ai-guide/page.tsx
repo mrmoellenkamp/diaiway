@@ -10,6 +10,7 @@ export default function AiGuidePage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-4">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">{t("aiGuide.pageHeading")}</h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t("aiGuide.introText")}
         </p>

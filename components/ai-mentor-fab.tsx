@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,17 +11,27 @@ import { useI18n } from "@/lib/i18n"
 export function AiMentorFab() {
   const { isMentorOpen: isOpen, setMentorOpen: setIsOpen } = useApp()
   const { t } = useI18n()
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ""
 
-  // Hide on landing page (embedded chat), auth pages, and onboarding
-  if (
+  /** Seiten mit eingebetteter AI-Box — kein doppelter Assistent per FAB */
+  const hasEmbeddedAiBox =
+    pathname === "/ai-guide" ||
+    pathname.startsWith("/ai-guide/") ||
+    pathname === "/categories" ||
+    pathname.startsWith("/categories/")
+
+  const hideFab =
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
-    pathname === "/onboarding"
-  ) {
-    return null
-  }
+    pathname === "/onboarding" ||
+    hasEmbeddedAiBox
+
+  useEffect(() => {
+    if (hasEmbeddedAiBox) setIsOpen(false)
+  }, [hasEmbeddedAiBox, setIsOpen])
+
+  if (hideFab) return null
 
   return (
     <>
@@ -46,7 +57,7 @@ export function AiMentorFab() {
       {isOpen && (
         <div
           className={cn(
-            "fixed right-3 z-[100] flex w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-2xl pointer-events-auto",
+            "fixed right-3 z-[100] flex w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-2xl pointer-events-auto",
             "animate-in fade-in slide-in-from-bottom-4 duration-300",
             "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-h-[min(75vh,600px)]"
           )}

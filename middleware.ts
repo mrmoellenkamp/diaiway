@@ -2,6 +2,19 @@ import { NextResponse } from "next/server"
 import { authMiddleware } from "@/lib/auth-edge"
 import { INACTIVITY_TIMEOUT_SEC, LAST_ACTIVITY_COOKIE } from "@/lib/session-activity"
 
+/** Kein HSTS auf localhost / LAN — sonst können Browser oder Auth-Callbacks „hängen“ oder zu HTTPS wechseln. */
+function isLocalDevHost(hostname: string): boolean {
+  const h = hostname.toLowerCase()
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "[::1]" ||
+    h.endsWith(".local") ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(h) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)
+  )
+}
+
 export default authMiddleware((req) => {
   // CORS: OPTIONS (Preflight) darf nicht mit 307 redirected werden – sonst Fehler "Preflight response is not successful"
   if (req.method === "OPTIONS") {
@@ -154,10 +167,14 @@ export default authMiddleware((req) => {
     "Permissions-Policy",
     "camera=(self), microphone=(self), geolocation=(), payment=(self)"
   )
-  response.headers.set(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
-  )
+  // HSTS nur unter echtem HTTPS und nicht auf Dev-Hosts (nie auf http://localhost senden)
+  const host = req.nextUrl.hostname
+  if (req.nextUrl.protocol === "https:" && !isLocalDevHost(host)) {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains; preload"
+    )
+  }
 
   return response
 })

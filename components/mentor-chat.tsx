@@ -65,9 +65,11 @@ async function convertFilesToDataURLs(
 interface MentorChatProps {
   variant: "embedded" | "floating" | "fullpage"
   className?: string
+  /** Kein eigener Header (z. B. in CollapsibleAiBox, Oberzeile ist der Header) */
+  hideHeader?: boolean
 }
 
-export function MentorChat({ variant, className }: MentorChatProps) {
+export function MentorChat({ variant, className, hideHeader = false }: MentorChatProps) {
   const {
     storedMessages,
     setStoredMessages,
@@ -218,35 +220,37 @@ export function MentorChat({ variant, className }: MentorChatProps) {
       className={cn(
         "flex flex-col overflow-hidden font-sans",
         isEmbedded
-          ? "rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl"
+          ? "rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10"
           : isFullpage
-            ? "h-[calc(100vh-6rem)] rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl"
-            : "h-full bg-emerald-50/50 backdrop-blur-md",
+            ? "h-[calc(100vh-6rem)] rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10"
+            : "h-full rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10",
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-primary/8 bg-primary/[0.04] px-4 py-3">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-          <Sparkles className="size-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
-            <DiAiwayBrand />
-            <span className="font-jp text-[10px] font-normal text-primary/40">{"導師"}</span>
-          </p>
-          <p className="text-[10px] text-muted-foreground truncate">
-            {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
-          </p>
-        </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-semibold text-accent">
-          <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
+      {/* Header — einheitlich dunkelgrün (wie CollapsibleAiBox / Marketing) */}
+      {!hideHeader && (
+        <div className="flex items-center gap-3 border-b border-white/10 bg-gradient-to-br from-primary via-primary to-primary/95 px-4 py-3 shadow-[0_4px_20px_rgba(6,78,59,0.25)]">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/10">
+            <Sparkles className="size-4 text-accent" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-sm font-bold text-primary-foreground">
+              <DiAiwayBrand lightOnDark />
+              <span className="font-jp text-[10px] font-normal text-primary-foreground/50">{"導師"}</span>
+            </p>
+            <p className="truncate text-[10px] text-primary-foreground/65">
+              {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
+            </p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-accent">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
+            </span>
+            {t("mentor.online")}
           </span>
-          {t("mentor.online")}
-        </span>
-      </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div

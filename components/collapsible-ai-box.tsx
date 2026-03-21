@@ -5,6 +5,24 @@ import { MentorChat } from "@/components/mentor-chat"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+
+function OnlinePill({ className }: { className?: string }) {
+  const { t } = useI18n()
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-accent",
+        className
+      )}
+    >
+      <span className="relative flex size-1.5">
+        <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent" />
+        <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
+      </span>
+      {t("mentor.online")}
+    </span>
+  )
+}
 import { cn } from "@/lib/utils"
 
 interface CollapsibleAiBoxProps {
@@ -42,8 +60,10 @@ export function CollapsibleAiBox({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl shadow-xl transition-shadow hover:shadow-md",
-        isPrimary ? "border border-primary/10 bg-primary" : "border border-border bg-card",
+        "flex flex-col overflow-hidden rounded-3xl shadow-lg transition-shadow hover:shadow-xl",
+        isPrimary
+          ? "border border-primary/20 bg-gradient-to-br from-primary via-primary to-primary/95 shadow-[0_8px_30px_rgba(6,78,59,0.22)]"
+          : "border border-border bg-card shadow-md",
         className
       )}
     >
@@ -53,40 +73,55 @@ export function CollapsibleAiBox({
         className={cn(
           "flex w-full items-center gap-3 p-4 text-left transition-colors",
           compact ? "py-3" : "py-4",
-          isPrimary ? "hover:opacity-95" : "hover:bg-muted/50"
+          isPrimary ? "hover:bg-white/5" : "hover:bg-muted/50"
         )}
       >
-        <div className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-lg",
-          isPrimary ? "bg-accent/20" : "bg-primary/10"
-        )}>
+        <div
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-xl",
+            isPrimary ? "bg-white/15 ring-1 ring-white/10" : "bg-primary/10"
+          )}
+        >
           <Sparkles className={cn("size-5", isPrimary ? "text-accent" : "text-primary")} />
         </div>
-        <div className="flex-1 min-w-0 text-left">
-          <span className={cn(
-            "text-sm font-semibold",
-            isPrimary ? "text-primary-foreground" : "text-foreground"
-          )}>
-            {useBrand ? <DiAiwayBrand /> : title}
+        <div className="min-w-0 flex-1 text-left">
+          <span
+            className={cn(
+              "block text-sm font-bold",
+              isPrimary ? "text-primary-foreground" : "text-foreground"
+            )}
+          >
+            {useBrand ? <DiAiwayBrand lightOnDark={isPrimary} /> : title}
           </span>
-          <span className={cn(
-            "ml-1.5 block text-xs",
-            isPrimary ? "text-primary-foreground/70" : "text-muted-foreground"
-          )}>
+          <span
+            className={cn(
+              "mt-0.5 block text-xs leading-snug",
+              isPrimary ? "text-primary-foreground/65" : "text-muted-foreground"
+            )}
+          >
             {displayDesc}
           </span>
         </div>
+        {isPrimary && <OnlinePill className="hidden sm:flex" />}
         {expanded ? (
-          <ChevronUp className={cn("size-4 shrink-0", isPrimary ? "text-primary-foreground/50" : "text-muted-foreground")} />
+          <ChevronUp
+            className={cn("size-5 shrink-0", isPrimary ? "text-primary-foreground/80" : "text-muted-foreground")}
+          />
         ) : (
-          <ChevronDown className={cn("size-4 shrink-0", isPrimary ? "text-primary-foreground/50" : "text-muted-foreground")} />
+          <ChevronDown
+            className={cn("size-5 shrink-0", isPrimary ? "text-primary-foreground/80" : "text-muted-foreground")}
+          />
         )}
       </button>
       {expanded && (
-        <div className="border-t border-primary/10">
+        <div className="border-t border-white/10 bg-emerald-50/40">
           <MentorChat
             variant={chatVariant}
-            className={chatVariant === "fullpage" ? "min-h-[320px]" : undefined}
+            hideHeader
+            className={cn(
+              "rounded-none border-0 shadow-none",
+              chatVariant === "fullpage" ? "min-h-[320px]" : undefined
+            )}
           />
         </div>
       )}

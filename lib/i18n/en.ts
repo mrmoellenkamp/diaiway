@@ -735,6 +735,7 @@ const en = {
   "takumiPage.dmGreeting": "Hi {name}, I saw your profile and would love to talk with you about my project.",
 
   // AI Guide
+  "aiGuide.pageHeading": "diAiway - Intelligence",
   "aiGuide.introText": "Describe your project, upload photos and get a thorough analysis from our AI, or browse categories to find a suitable contact.",
   "aiGuide.welcome": "Konichiwa! I'm your diAiway Guide. Describe your problem or upload a photo — I'll find the right expert for you!",
   "aiGuide.foundExperts": "I found {count} matching experts for you:",

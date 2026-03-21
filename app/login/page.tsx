@@ -26,6 +26,7 @@ import {
 } from "@/hooks/use-native-bridge"
 import { shouldUseHardNavigationAfterLogin, webkitCookieSettleDelayMs } from "@/lib/browser-auth-nav"
 import { communicationUsername } from "@/lib/communication-display"
+import { normalizePostLoginTarget, nextAuthCallbackPath } from "@/lib/safe-callback-url"
 
 // ─── Biometric icon helper ────────────────────────────────────────────────────
 
@@ -127,34 +128,22 @@ function LoginContent() {
     async (navUrl?: string) => {
       const useHardNav = !isNative && shouldUseHardNavigationAfterLogin()
       const settleMs = webkitCookieSettleDelayMs()
+      const origin = window.location.origin
+      const resolve = (u?: string | null) => normalizePostLoginTarget(u ?? null, origin)
+
       const hardGo = async (absoluteUrl: string) => {
         if (settleMs > 0) await new Promise((r) => setTimeout(r, settleMs))
         window.location.assign(absoluteUrl)
       }
 
-      const target = navUrl || explicitCallback
-      if (target && target !== "/") {
-        // In Capacitor use client-side routing for in-app paths to avoid
-        // hard WebView reloads that can look like an app close on Android.
-        if (target.startsWith("/")) {
-          if (useHardNav) {
-            await hardGo(`${window.location.origin}${target}`)
-            return
-          }
-          router.replace(target)
-          router.refresh()
-        } else if (target.startsWith(window.location.origin)) {
-          const path = target.slice(window.location.origin.length) || "/"
-          const normalized = path.startsWith("/") ? path : `/${path}`
-          if (useHardNav) {
-            await hardGo(`${window.location.origin}${normalized}`)
-            return
-          }
-          router.replace(path)
-          router.refresh()
-        } else {
-          window.location.href = target
+      const targetPath = resolve(navUrl) ?? resolve(explicitCallback)
+      if (targetPath && targetPath !== "/") {
+        if (useHardNav) {
+          await hardGo(`${origin}${targetPath}`)
+          return
         }
+        router.replace(targetPath)
+        router.refresh()
         return
       }
       const r = await fetch("/api/auth/session", { credentials: "include" })
@@ -164,7 +153,7 @@ function LoginContent() {
       const path =
         role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
       if (useHardNav) {
-        await hardGo(`${window.location.origin}${path}`)
+        await hardGo(`${origin}${path}`)
         return
       }
       router.replace(path)
@@ -179,7 +168,8 @@ function LoginContent() {
       loginEmail: string,
       loginPassword: string
     ): Promise<{ ok: boolean; navUrl?: string; name?: string; rawError?: string }> => {
-      const callbackUrl = explicitCallback || "/categories"
+      const origin = window.location.origin
+      const callbackUrl = nextAuthCallbackPath(explicitCallback, origin, "/categories")
 
       // Offizieller Client-Flow (nicht roher fetch) — bessere CSRF/Cookie-Abstimmung, v. a. WebKit/Safari.
       const result = await signIn("credentials", {
@@ -204,15 +194,16 @@ function LoginContent() {
 
       const rolePath =
         role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
-      let navUrl = explicitCallback && explicitCallback !== "/" ? explicitCallback : rolePath
+      let navUrl =
+        normalizePostLoginTarget(
+          explicitCallback && explicitCallback !== "/" ? explicitCallback : null,
+          origin
+        ) ?? rolePath
+
       const signInUrl = (result as { url?: string | null } | undefined)?.url
-      if (
-        signInUrl &&
-        signInUrl.startsWith(window.location.origin) &&
-        !signInUrl.includes("/api/auth/")
-      ) {
-        const p = signInUrl.slice(window.location.origin.length) || "/"
-        navUrl = p.startsWith("/") ? p : `/${p}`
+      if (signInUrl && !signInUrl.includes("/api/auth/")) {
+        const fromAuth = normalizePostLoginTarget(signInUrl, origin)
+        if (fromAuth) navUrl = fromAuth
       }
 
       return { ok: true, navUrl, name: userName }

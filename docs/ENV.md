@@ -8,7 +8,7 @@ Alle für diAIway benötigten Umgebungsvariablen.
 |----------|--------------|----------|
 | `DATABASE_URL` | PostgreSQL-Verbindungsstring | `postgresql://user:pass@host:5432/db?sslmode=require` |
 | `NEXTAUTH_SECRET` | Geheimer Schlüssel für JWT (min. 32 Zeichen) | Zufälliger String |
-| `NEXTAUTH_URL` | Basis-URL der App | `http://localhost:3000` lokal; **Production:** kanonische URL (z. B. `https://diaiway.com`) — siehe [DEPLOYMENT-AUTH.md](./DEPLOYMENT-AUTH.md) |
+| `NEXTAUTH_URL` | Basis-URL der App | `http://localhost:3001` lokal (wie `npm run dev`); **Production:** kanonische URL (z. B. `https://diaiway.com`) — siehe [DEPLOYMENT-AUTH.md](./DEPLOYMENT-AUTH.md) |
 
 ## E-Mail (SMTP)
 
