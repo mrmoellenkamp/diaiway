@@ -25,7 +25,9 @@ import {
   Scan,
   Tags,
   Newspaper,
+  LineChart,
 } from "lucide-react"
+import { AdminAnalyticsTab } from "@/components/admin/admin-analytics-tab"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
 import { VisionScannerTab } from "@/components/admin/vision-scanner-tab"
@@ -1862,6 +1864,7 @@ export default function AdminPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
               <TabsTrigger value="overview"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
+              <TabsTrigger value="analytics" className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><LineChart className="size-3.5 mr-1" /><span className="hidden sm:inline">Traffic</span><span className="sm:hidden">Web</span></TabsTrigger>
               <TabsTrigger value="users"     className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
               <TabsTrigger value="bookings"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
               <TabsTrigger value="takumis"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>
@@ -1880,6 +1883,10 @@ export default function AdminPage() {
                   <Button size="sm" onClick={loadStats}>Erneut versuchen</Button>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-4">
+              <AdminAnalyticsTab />
             </TabsContent>
 
             <TabsContent value="users" className="mt-4">

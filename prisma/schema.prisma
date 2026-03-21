@@ -171,6 +171,7 @@ model User {
   takumiPortfolio     TakumiPortfolioProject[]
   sentMessages        DirectMessage[]  @relation("SentMessages")
   receivedMessages    DirectMessage[]   @relation("ReceivedMessages")
+  siteAnalyticsSessions SiteAnalyticsSession[]
 }
 
 // Wallet-Bewegungen (Aufladung, Buchung, Rückerstattung) für Instant-Connect & Buchhaltung
@@ -632,6 +633,40 @@ model HomeNewsTranslation {
   @@unique([newsItemId, locale])
   @@index([newsItemId])
   @@index([locale])
+}
+
+/// Anonyme Browser-Sitzungen (visitorId = LocalStorage-UUID, kein PII)
+model SiteAnalyticsSession {
+  id             String   @id @default(cuid())
+  visitorId      String
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  startedAt      DateTime @default(now())
+  lastSeenAt     DateTime @default(now())
+  /// Kumulierte Sekunden mit sichtbarem Tab (Heartbeats)
+  engagedSeconds Int      @default(0)
+  entryPath      String   @db.VarChar(512)
+  referrer       String?  @db.VarChar(512)
+  userAgent      String?  @db.VarChar(400)
+
+  pageViews SiteAnalyticsPageView[]
+
+  @@index([visitorId, startedAt])
+  @@index([startedAt])
+  @@index([userId])
+}
+
+model SiteAnalyticsPageView {
+  id              String               @id @default(cuid())
+  sessionId       String
+  session         SiteAnalyticsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  path            String               @db.VarChar(512)
+  enteredAt       DateTime             @default(now())
+  durationSeconds Int                  @default(0)
+
+  @@index([sessionId])
+  @@index([path])
+  @@index([enteredAt])
 }
 
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)

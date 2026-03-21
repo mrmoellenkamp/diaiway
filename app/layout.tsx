@@ -20,6 +20,7 @@ import { PullToRefresh } from '@/components/pull-to-refresh'
 import { SplashScreenHider } from '@/components/splash-screen-hider'
 import { DeepLinkHandler } from '@/components/deep-link-handler'
 import { LogoutBackGuard } from '@/components/logout-back-guard'
+import { SiteAnalyticsTracker } from '@/components/site-analytics-tracker'
 import { Footer } from '@/components/footer'
 import './globals.css'
 
@@ -70,6 +71,7 @@ export default function RootLayout({
       <body className="font-sans antialiased app-bottom-space">
         <ErrorBoundary>
           <SessionProvider>
+            <SiteAnalyticsTracker />
             <SessionActivityProvider>
               <I18nProvider>
                 <AppProvider>

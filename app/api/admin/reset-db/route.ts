@@ -20,7 +20,8 @@ export async function POST() {
   }
   try {
     // Order matters: delete children before parents
-    const [reviews, bookings, availability, experts, users] = await prisma.$transaction([
+    const [analyticsSessions, reviews, bookings, availability, experts, users] = await prisma.$transaction([
+      prisma.siteAnalyticsSession.deleteMany(),
       prisma.review.deleteMany(),
       prisma.booking.deleteMany(),
       prisma.availability.deleteMany(),
@@ -31,6 +32,7 @@ export async function POST() {
     return NextResponse.json({
       message: "Datenbank komplett zurueckgesetzt.",
       deleted: {
+        siteAnalyticsSessions: analyticsSessions.count,
         reviews: reviews.count,
         bookings: bookings.count,
         availability: availability.count,
