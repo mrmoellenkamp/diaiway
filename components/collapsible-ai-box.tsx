@@ -24,7 +24,6 @@ function OnlinePill({ className }: { className?: string }) {
     </span>
   )
 }
-import { cn } from "@/lib/utils"
 
 interface CollapsibleAiBoxProps {
   /** Start expanded (categories: false, home: false) */
