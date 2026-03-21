@@ -66,9 +66,12 @@ function LiveTakumisSection() {
 export default function LandingPage() {
   const { data: session, status } = useSession()
   const isLoggedIn = !!session?.user
+  /** Erst nach mount: vermeidet React #418 (SSR kennt Session oft nicht, Client schon). */
+  const [ctaHydrationSafe, setCtaHydrationSafe] = useState(false)
   const [showTakumis, setShowTakumis] = useState(false)
   const categories = useCategories()
   const { t, locale } = useI18n()
+  const showLoggedInCta = ctaHydrationSafe && isLoggedIn
 
   // Native: "stay yes" → redirect to profile; "stay no" → sign out and show login; null → normal landing
   useEffect(() => {
@@ -90,6 +93,7 @@ export default function LandingPage() {
   }, [status, session?.user])
 
   useEffect(() => {
+    setCtaHydrationSafe(true)
     const id = setTimeout(() => setShowTakumis(true), 400)
     return () => clearTimeout(id)
   }, [])
@@ -249,18 +253,18 @@ export default function LandingPage() {
         <div className="rounded-2xl bg-primary p-8 text-center">
           <p className="font-jp text-3xl text-accent/70 mb-3">道</p>
           <h2 className="text-xl font-bold text-primary-foreground mb-2">
-            {isLoggedIn ? t("landing.ctaTitleLoggedIn") : t("landing.ctaTitleLoggedOut")}
+            {showLoggedInCta ? t("landing.ctaTitleLoggedIn") : t("landing.ctaTitleLoggedOut")}
           </h2>
           <p className="text-sm text-primary-foreground/70 mb-6">
-            {isLoggedIn ? t("landing.ctaDescLoggedIn") : t("landing.ctaDescLoggedOut")}
+            {showLoggedInCta ? t("landing.ctaDescLoggedIn") : t("landing.ctaDescLoggedOut")}
           </p>
           <Button
             asChild
             size="lg"
             className="h-12 w-full rounded-xl bg-accent font-bold text-accent-foreground hover:bg-accent/90"
           >
-            <Link href={isLoggedIn ? "/categories" : "/register"}>
-              {isLoggedIn ? t("landing.discoverCategories") : t("landing.getStarted")}
+            <Link href={showLoggedInCta ? "/categories" : "/register"}>
+              {showLoggedInCta ? t("landing.discoverCategories") : t("landing.getStarted")}
             </Link>
           </Button>
         </div>

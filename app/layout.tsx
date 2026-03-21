@@ -67,8 +67,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de" className={`${(_geist as { variable?: string }).variable ?? ""} ${(_geistMono as { variable?: string }).variable ?? ""} ${(_notoJP as { variable?: string }).variable ?? ""}`.trim()}>
-      <body className="font-sans antialiased app-bottom-space">
+    <html
+      lang="de"
+      suppressHydrationWarning
+      className={`${(_geist as { variable?: string }).variable ?? ""} ${(_geistMono as { variable?: string }).variable ?? ""} ${(_notoJP as { variable?: string }).variable ?? ""}`.trim()}
+    >
+      <body className="font-sans antialiased app-bottom-space" suppressHydrationWarning>
         <ErrorBoundary>
           <SessionProvider>
             <SiteAnalyticsTracker />
