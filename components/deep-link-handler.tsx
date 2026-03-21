@@ -26,8 +26,12 @@ export function DeepLinkHandler() {
       try {
         // booking-confirmed Deep Link vom In-App-Browser
         if (url.startsWith("diaiway://booking-confirmed")) {
-          const { Browser } = await import("@capacitor/browser")
-          await Browser.close()
+          try {
+            const { Browser } = await import("@capacitor/browser")
+            await Browser.close()
+          } catch {
+            /* Android: Zahlung lief in der Haupt-WebView, kein Browser-Plugin offen */
+          }
           import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
           toast.success(t("toast.paymentSuccessSecure"))
           router.push("/sessions?tab=upcoming")
@@ -36,8 +40,12 @@ export function DeepLinkHandler() {
 
         // wallet-topup-confirmed Deep Link vom In-App-Browser
         if (url.startsWith("diaiway://wallet-topup-confirmed")) {
-          const { Browser } = await import("@capacitor/browser")
-          await Browser.close()
+          try {
+            const { Browser } = await import("@capacitor/browser")
+            await Browser.close()
+          } catch {
+            /* Android: Aufladung in WebView, kein separates Browser-Fenster */
+          }
           import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
           toast.success(t("toast.walletLoaded"))
           router.push("/profile/finances")

@@ -203,10 +203,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
             const tokenRes = await fetch(`/api/bookings/${newBookingId}/pay-token`, { method: "POST" })
             const tokenData = await tokenRes.json()
             if (tokenData.token) {
-              const payUrl = `https://diaiway.com/pay/${newBookingId}?token=${encodeURIComponent(tokenData.token)}`
-              const { Browser } = await import("@capacitor/browser")
-              await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
-              // App wartet auf Deep Link diaiway://booking-confirmed — DeepLinkHandler übernimmt
+              const { openNativeStripePayUrl } = await import("@/lib/native-pay-navigation")
+              const payPath = `/pay/${newBookingId}?token=${encodeURIComponent(tokenData.token)}`
+              await openNativeStripePayUrl(payPath)
+              // Nach Erfolg: Deep Link diaiway://booking-confirmed — DeepLinkHandler (Android: Zahlung in WebView)
             } else {
               // Fallback: normaler Checkout in der App
               setStep("checkout")

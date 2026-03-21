@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Loader2, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
+import { openNativeStripePayUrl } from "@/lib/native-pay-navigation"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 const MIN_EUR = 20
@@ -132,10 +133,9 @@ export function WalletTopupModal({
         const tokenData = await tokenRes.json()
         if (tokenData.token) {
           onOpenChange(false)
-          const payUrl = `https://diaiway.com/pay/wallet?token=${encodeURIComponent(tokenData.token)}`
-          const { Browser } = await import("@capacitor/browser")
-          await Browser.open({ url: payUrl, presentationStyle: "fullscreen" })
-          // DeepLinkHandler fängt diaiway://wallet-topup-confirmed ab
+          const payPath = `/pay/wallet?token=${encodeURIComponent(tokenData.token)}`
+          await openNativeStripePayUrl(payPath)
+          // Nach Erfolg: pay/wallet → diaiway://wallet-topup-confirmed (DeepLinkHandler)
         } else {
           setError(tokenData.error || t("wallet.checkoutError"))
         }

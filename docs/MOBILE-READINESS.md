@@ -122,6 +122,12 @@ Bei jedem neuen Feature prüfen:
 
 ---
 
+## Wallet-/Buchungszahlung (Android)
+
+`@capacitor/browser` (`Browser.open`) öffnet auf Android oft **Chrome Custom Tabs** oder den **Systembrowser**. Die Rückkehr per **`diaiway://…`** ist dort unzuverlässig; Cookies können vom Haupt-WebView abweichen → Zahlung bricht ab.
+
+**Lösung im Code (`lib/native-pay-navigation.ts`):** **`Browser.open` nur auf iOS.** Auf **allen anderen nativen Plattformen** (v. a. Android) wird **`window.location.assign(/pay/…)`** in der **Haupt-WebView** genutzt – auch dann, wenn `Capacitor.getPlatform()` in manchen Setups (z. B. Remote `server.url`) nicht zuverlässig `"android"` liefert und früher fälschlich der Browser-Pfad lief. `DeepLinkHandler` schließt `Browser.close()` nur noch in einem `try/catch`, falls kein Browser-Fenster offen war.
+
 ## Weißer Bildschirm (Capacitor / WebView)
 
 1. **Logcat**: Filter `Capacitor/Console` und `chromium` – oft steht dort ein JS-Fehler oder `net::ERR_…`.
