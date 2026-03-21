@@ -207,7 +207,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.emailConfirmedAt = dbUser.emailConfirmedAt ? dbUser.emailConfirmedAt.getTime() : null
           token.dbSyncedAt = now
         } catch (err) {
-          // Transiente DB-Ausfälle: kurze Warnung statt vollem Stack (sonst Log-Spam bei P1001 / db.prisma.io)
+          // Transiente DB-Ausfälle: kurze Warnung statt vollem Stack (sonst Log-Spam bei P1001 / Neon-Pooler)
           if (isTransientDbError(err)) {
             console.warn("[auth] DB-Sync übersprungen (Datenbank vorübergehend nicht erreichbar)")
           } else {

@@ -928,13 +928,13 @@ function DatabaseTab({
               <p>
                 <strong className="text-foreground">Typische Ursachen:</strong> falsche oder veraltete{" "}
                 <code className="rounded bg-muted px-1">DATABASE_URL</code> /{" "}
-                <code className="rounded bg-muted px-1">DIRECT_URL</code> in Vercel, DB pausiert im Prisma-Dashboard,
+                <code className="rounded bg-muted px-1">DIRECT_URL</code> in Vercel (Neon-URLs prüfen),
                 nach Env-Änderung kein Redeploy.
               </p>
               <p>
                 Schritt-für-Schritt: Datei{" "}
                 <code className="rounded bg-muted px-1">docs/TROUBLESHOOTING-DATABASE.md</code> im Projekt — dort
-                Checkliste für Prisma Postgres (<code className="rounded bg-muted px-1">db.prisma.io</code>, P1001).
+                Checkliste für Neon (P1001, Pooler-URL, DIRECT_URL).
               </p>
             </div>
           )}

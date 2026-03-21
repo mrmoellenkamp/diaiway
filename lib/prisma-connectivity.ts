@@ -13,7 +13,6 @@ export function isPrismaConnectivityError(err: unknown): boolean {
     const m = err.message
     return (
       m.includes("Can't reach database server") ||
-      m.includes("db.prisma.io") ||
       m.includes("PrismaClientInitializationError") ||
       m.includes("Server has closed the connection") ||
       m.includes("Connection refused") ||
@@ -79,8 +78,8 @@ export function withTimeout<T>(
 /** Admin/UI: kein Rohtext aus Prisma an Endnutzer */
 export function getDatabaseUnavailableDegradedMessage(_err: unknown): string {
   return (
-    "Datenbank nicht erreichbar. Auf Vercel DATABASE_URL und DIRECT_URL prüfen (exakt aus der Prisma Console kopieren), " +
-    "sicherstellen dass die DB aktiv ist, danach Redeploy. Anleitung: docs/TROUBLESHOOTING-DATABASE.md"
+    "Datenbank nicht erreichbar. Auf Vercel DATABASE_URL (Neon Pooler) und DIRECT_URL (Neon Direct) prüfen, " +
+    "danach Redeploy auslösen. Anleitung: docs/TROUBLESHOOTING-DATABASE.md"
   )
 }
 

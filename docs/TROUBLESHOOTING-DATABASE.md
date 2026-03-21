@@ -1,52 +1,48 @@
-# Datenbank: Verbindungsfehler (`db.prisma.io`, P1001)
+# Datenbank: Verbindungsfehler (Neon, P1001)
 
 ## Symptome in den Logs
 
-- `PrismaClientInitializationError` / `Can't reach database server at **db.prisma.io:5432**`
+- `PrismaClientInitializationError` / `Can't reach database server at *.neon.tech:5432`
 - `PrismaClientKnownRequestError` mit Code **`P1001`**
-- API-Routen liefern **500** (`/api/user/profile`, `/api/notifications`, …)
-- **`POST /api/analytics/beacon` mit 200**, daneben trotzdem **`[auth] DB-Sync-Error`**: Der Beacon kann OK sein, während andere Requests die DB brauchen und fehlschlagen; der JWT-Callback versucht alle ~5 Min. einen DB-Sync — schlägt die DB fehl, wird das geloggt (Session bleibt aus dem Token nutzbar, bis der Sync wieder klappt).
+- API-Routen liefern **500** oder **503** (`DATABASE_UNAVAILABLE`)
+- **`POST /api/analytics/beacon` mit 200**, daneben trotzdem **`[auth] DB-Sync-Error`**: Der Beacon kann OK sein, während andere Requests die DB brauchen; der JWT-Callback versucht alle ~5 Min. einen DB-Sync — schlägt die DB fehl, bleibt die Session aus dem Token nutzbar.
 
-## Was `db.prisma.io` bedeutet
+## Setup (Neon)
 
-Die Hostname **`db.prisma.io`** steht typischerweise in der **`DATABASE_URL`**, wenn du **Prisma Postgres** (oder einen verwandten Prisma-Datenbankdienst) aus dem **Prisma Data Platform** nutzt. Erreichbarkeit hängt dann von:
+Die App nutzt **[Neon](https://neon.tech)** als PostgreSQL-Provider (Region: `eu-central-1`, Frankfurt).
 
-1. **Projekt / DB aktiv** im Prisma Cloud Dashboard  
-2. **Korrekte URL** in Vercel (kein Tippfehler, kein abgelaufenes Secret in der URL)  
-3. **Netzwerk**: selten blockieren Corporate-Firewalls; bei **Vercel** sollte der Outbound-Zugriff normalerweise funktionieren.
+Prisma braucht **zwei** Umgebungsvariablen:
 
-## Checkliste (Vercel + Prisma)
+| Variable | Wert | Zweck |
+|---|---|---|
+| `DATABASE_URL` | Neon **Pooler**-URL (`*-pooler.*.neon.tech`) | Runtime / Serverless |
+| `DIRECT_URL` | Neon **Direct**-URL (`*.neon.tech`, ohne `-pooler`) | Migrationen |
 
-1. **Vercel** → Project → **Settings → Environment Variables**  
-   - `DATABASE_URL` und **`DIRECT_URL`** (siehe `prisma/schema.prisma`: `directUrl` ist Pflicht)  
-   - Werte mit dem aktuellen String aus dem **Prisma Console** / deinem Provider abgleichen.
+Beide URLs findest du im [Neon Dashboard](https://console.neon.tech) → Connection Details.
 
-2. **Prisma Postgres**  
-   - In [Prisma Data Platform](https://console.prisma.io) prüfen: Datenbank läuft, keine Pause/Limit.  
-   - Connection String **neu kopieren** und in Vercel einsetzen, **Redeploy**.
+## Checkliste bei Verbindungsproblemen
 
-3. **Statt Prisma-Host: eigener Postgres (Neon, Supabase, Railway, …)**  
-   - `DATABASE_URL` = **Pooler-URL** (für Serverless), z. B. mit `?pgbouncer=true&connection_limit=1` wo nötig.  
-   - `DIRECT_URL` = **direkte** Postgres-URL (ohne Transaction-Pooler), für Migrationen.  
-   - Siehe Kommentare in **`.env.example`**.
+1. **Vercel** → Project → **Settings → Environment Variables**
+   - `DATABASE_URL` = Neon Pooler-URL (mit `-pooler` im Hostnamen, `sslmode=require`)
+   - `DIRECT_URL` = Neon Direct-URL (ohne `-pooler`, `sslmode=require`)
+   - Nach Änderung: **Redeploy** auslösen (Vercel baut Serverless-Funktionen mit neuen Werten)
 
-4. **Prisma Accelerate** (falls verwendet)  
-   - Accelerate nutzt andere URL-Schemata; bitte der **aktuellen Prisma-Doku** folgen. Eine falsche Kombination aus Accelerate-URL und normalem `PrismaClient` führt zu seltsamen Verbindungsfehlern.
+2. **Neon Dashboard** prüfen
+   - Projekt **aktiv** (kein Suspend/Pause auf Free Tier)
+   - Branch `main` → Compute **Running**
 
-5. **Nach Änderung der Env-Vars** immer **neu deployen** (Vercel baut die Serverless-Funktionen mit den neuen Werten).
+3. **Migration fehlgeschlagen?**
+   - Vercel-Build-Log auf `P3009` oder `P3018` prüfen
+   - Im Neon SQL Editor: `SELECT * FROM "_prisma_migrations" ORDER BY started_at;`
+   - Fehlgeschlagene Migration löschen: `DELETE FROM "_prisma_migrations" WHERE migration_name = '<name>';`
+   - Dann neu deployen
 
-6. **Richtigen Connection-Typ wählen (häufigster Fehler)**  
-   In der Prisma Console gibt es oft **mehrere** Strings (z. B. für Serverless vs. Migrationen):  
-   - **`DATABASE_URL` (Vercel / Runtime):** den Eintrag, den Prisma für **„Serverless“ / „Edge“ / Pooling** ausweist — **nicht** blind den ersten „Direct“-String nehmen, wenn die Doku etwas anderes empfiehlt.  
-   - **`DIRECT_URL`:** der **direkte** Postgres-Endpunkt für `prisma migrate` (ohne denselben Pooler wie die Runtime-URL, falls unterschiedlich).  
-   Wenn Runtime-URL und Direct vertauscht sind, kann `db.prisma.io` von Vercel aus **nicht** erreichbar sein oder Migrationen brechen.
+4. **Selbsttest (Admin)**
+   Als Admin eingeloggt: **`GET /api/admin/db-health`** — zeigt Host und ob `SELECT 1` klappt (`dbOk`). Probe hat **Timeout ~8 s**; bei hängender Verbindung erscheint `dbError` statt endlosem Warten.
 
-7. **Selbsttest (Admin)**  
-   Als Admin eingeloggt: **`GET /api/admin/db-health`** — zeigt anonymisiert Host/Port der konfigurierten URLs und ob `SELECT 1` klappt (`dbOk`). Die Probe hat ein **Timeout (~8 s)**; bei hängender Verbindung erscheint `dbError` mit Timeout statt endlos zu warten.
-
-8. **Liveness ohne „falsches“ 500**  
-   **`GET /api/health`** antwortet **immer mit HTTP 200**, sobald die App läuft. `database.connected: false` bedeutet nur: Postgres nicht erreichbar — nützlich für Monitoring (App up vs. DB down). Früher lieferte dieser Endpunkt bei DB-Ausfall **500** und wirkte wie ein kaputter Deploy.
+5. **Liveness-Check**
+   **`GET /api/health`** antwortet **immer mit HTTP 200**, sobald die App läuft. `database.connected: false` bedeutet nur: Postgres nicht erreichbar — nützlich für Monitoring.
 
 ## Kurzfassung
 
-Der Fehler ist **kein Bug in der App-Logik**, sondern **keine oder keine erreichbare Datenbank** für die konfigurierte `DATABASE_URL`. Sobald Postgres wieder erreichbar ist und die URLs stimmen, verschwinden P1001 / `db.prisma.io`-Fehler und die 500er auf den API-Routen.
+Der Fehler ist **kein Bug in der App-Logik**, sondern eine nicht erreichbare Datenbank. Sobald Neon erreichbar ist und die URLs in Vercel stimmen, verschwinden die Fehler.
