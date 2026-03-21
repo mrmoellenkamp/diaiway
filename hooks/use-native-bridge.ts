@@ -83,6 +83,21 @@ export async function takePhoto(options: TakePhotoOptions = {}): Promise<string 
  */
 export async function registerPushAndGetToken(): Promise<string | null> {
   requireNative()
+  /**
+   * Android: `PushNotifications.register()` ruft FirebaseMessaging auf. Ohne
+   * `android/app/google-services.json` + Google Services Plugin ist Firebase
+   * nicht initialisiert → native IllegalStateException auf dem CapacitorPlugins-
+   * Thread → **ganzer Prozess stirbt** (SIGKILL). Ein JS-.catch() fängt das nicht.
+   * iOS nutzt APNs über dasselbe Plugin, ohne diesen Firebase-Pfad.
+   */
+  if (Capacitor.getPlatform() === "android") {
+    if (process.env.NEXT_PUBLIC_ANDROID_FCM_ENABLED !== "true") {
+      console.warn(
+        "[Push] Android FCM übersprungen: NEXT_PUBLIC_ANDROID_FCM_ENABLED=true setzen, sobald google-services.json liegt (docs/ENV.md)."
+      )
+      return null
+    }
+  }
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications")
     const perm = await PushNotifications.requestPermissions()

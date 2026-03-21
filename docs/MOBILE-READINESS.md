@@ -85,6 +85,13 @@ Die App nutzt **Capacitor 8**. Alle Plugins sind in Produktion:
 | `@capacitor/splash-screen` | ^8.0.1 | Splash-Screen |
 | `@capgo/capacitor-native-biometric` | ^8.4.2 | Biometrische Authentifizierung (optional) |
 
+### Android FCM / Firebase (Pflicht für `PushNotifications.register`)
+
+Ohne **`android/app/google-services.json`** (Firebase Android-App) ist **Firebase im nativen Prozess nicht initialisiert**. Dann führt ein Login → `PushNotificationProvider` → `register()` zu **`Default FirebaseApp is not initialized`** und die App wird beendet.
+
+- **Lokal / ohne Firebase:** nichts tun — `registerPushAndGetToken()` überspringt Android, solange **`NEXT_PUBLIC_ANDROID_FCM_ENABLED` nicht `true`** ist (siehe `docs/ENV.md`).
+- **Mit Push in Produktion:** `google-services.json` ins Android-Modul legen, Release bauen, und im **Web-Build** (Vercel), aus dem die App lädt, **`NEXT_PUBLIC_ANDROID_FCM_ENABLED=true`** setzen.
+
 ### Quick Action Push (Instant Connect)
 - **Native**: `lib/quick-action-push-handler.ts` – `pushNotificationActionPerformed`; ACCEPT/DECLINE navigieren zu Session bzw. Decline-API
 - **Web**: `public/sw.js` – `notificationclick` mit actions; Redirect zu `/api/bookings/[id]/instant-accept|instant-decline?token=`

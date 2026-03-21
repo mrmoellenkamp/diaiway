@@ -80,8 +80,11 @@ Werden für Admin-Scanner und als **Fallback für Safety** genutzt, wenn `GOOGLE
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Service Account JSON (als String) für FCM |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Service Account JSON (als String) für FCM **serverseitig** (Versand) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Alternativ: Pfad zur Service-Account-JSON-Datei |
+| `NEXT_PUBLIC_ANDROID_FCM_ENABLED` | **`true`** setzen, sobald die **Android-App** `android/app/google-services.json` hat und Firebase im Client läuft. **Ohne** diese Datei/Initialisierung darf auf Android **nicht** `PushNotifications.register()` aufgerufen werden — sonst stürzt die App mit `Default FirebaseApp is not initialized` ab (z. B. direkt nach Login). Standard: Variable weglassen → Android überspringt FCM-Registrierung, App bleibt stabil. |
+
+**Android-Client:** In der Firebase Console Android-App anlegen, `google-services.json` nach `android/app/` legen (nicht committen, falls gewünscht: nur in CI kopieren). `android/app/build.gradle` wendet das Google-Services-Plugin nur an, wenn die Datei existiert. **Zusätzlich** beim Web-Build (Vercel/lokal), aus dem die App lädt, `NEXT_PUBLIC_ANDROID_FCM_ENABLED=true` setzen, damit der Client `register()` aufruft.
 
 VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+v.publicKey);console.log('VAPID_PRIVATE_KEY='+v.privateKey);console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY='+v.publicKey);"`
 
