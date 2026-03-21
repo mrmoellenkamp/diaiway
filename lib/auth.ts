@@ -207,7 +207,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.emailConfirmedAt = dbUser.emailConfirmedAt ? dbUser.emailConfirmedAt.getTime() : null
           token.dbSyncedAt = now
         } catch (err) {
-          console.error("[auth] DB-Sync-Error:", err)
+          // Transiente DB-Ausfälle: kurze Warnung statt vollem Stack (sonst Log-Spam bei P1001 / db.prisma.io)
+          if (isTransientDbError(err)) {
+            console.warn("[auth] DB-Sync übersprungen (Datenbank vorübergehend nicht erreichbar)")
+          } else {
+            console.error("[auth] DB-Sync-Error:", err)
+          }
           // Bei DB-Fehler: bestehende Token-Daten beibehalten, kein sync-Timestamp setzen
           // → nächster Request versucht es erneut
         }
