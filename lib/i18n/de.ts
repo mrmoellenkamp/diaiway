@@ -474,6 +474,7 @@ const de = {
   "finances.refundTx": "Rückerstattung",
   "finances.deductionTx": "Belastung",
   "finances.topupSuccess": "Zahlung erfolgreich! Dein Guthaben wurde gutgeschrieben.",
+  "finances.cancelPolicySaved": "Stornierungsrichtlinie gespeichert.",
 
   // Invoice Data (Rechnungsdaten)
   "invoice.title": "Meine Rechnungsdaten",

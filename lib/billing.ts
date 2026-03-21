@@ -5,14 +5,21 @@ import { prisma } from "@/lib/db"
 export type DocType = "RE" | "GS" | "SR" | "SG" | "KD"
 
 const INITIAL_VALUES: Record<DocType, number> = {
-  KD: 9999,   // first = 10000
+  /**
+   * Erste Kundennummer im UI: KD-00001 (Formatierung mit padStart im Code).
+   * In `InvoiceCounter` steht nur eine **ganze Zahl** (1, 2, 3 …), keine Zeichenkette "00001".
+   * Nächste Vergabe = KD-00001 erzwingen (bestehende Zeile): `UPDATE "InvoiceCounter" SET value = 0 WHERE type = 'KD';`
+   * (0 = „noch keine vergeben“; beim nächsten Aufruf wird hochgezählt auf 1.)
+   * Siehe auch `docs/kundennummer-zaehler.md`.
+   */
+  KD: 1,
   RE: 100000, // first = 100001
   GS: 100000,
   SR: 100000,
   SG: 100000,
 }
 
-/** Atomare Vergabe der nächsten Belegnummer (RE-100001, GS-100001, KD-10000, etc.) */
+/** Atomare Vergabe der nächsten Belegnummer (RE-100001, GS-100001, KD-00001, …) */
 export async function getNextDocumentNumber(type: DocType): Promise<string> {
   const result = await prisma.$transaction(async (tx) => {
     const row = await tx.invoiceCounter.upsert({
@@ -22,6 +29,9 @@ export async function getNextDocumentNumber(type: DocType): Promise<string> {
     })
     return row.value
   })
+  if (type === "KD") {
+    return `KD-${String(result).padStart(5, "0")}`
+  }
   return `${type}-${result}`
 }
 

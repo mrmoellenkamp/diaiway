@@ -2,10 +2,11 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { HOME_NEWS_LOCALES } from "@/lib/home-news-locales"
+import { serializeAdminHomeNewsItem } from "@/lib/home-news-admin-serialize"
 
 export const runtime = "nodejs"
 
-/** Kein `ReturnType<typeof auth>` — in manchen Next/NextAuth-Kombinationen fälschlich `NextMiddleware`. */
 function assertAdmin(session: { user?: unknown } | null) {
   const u = session?.user as { id?: string; role?: string } | undefined
   if (!u?.id || u.role !== "admin") {
@@ -21,9 +22,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const { id } = await ctx.params
   try {
     const body = await req.json()
-    const data: {
-      title?: string
-      body?: string
+    const itemData: {
       linkUrl?: string | null
       linkLabel?: string | null
       published?: boolean
@@ -31,39 +30,63 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       publishedAt?: Date | null
     } = {}
 
-    if (typeof body.title === "string") data.title = body.title.trim()
-    if (typeof body.body === "string") data.body = body.body.trim()
-    if (body.linkUrl === null) data.linkUrl = null
-    else if (typeof body.linkUrl === "string") data.linkUrl = body.linkUrl.trim() || null
-    if (body.linkLabel === null) data.linkLabel = null
-    else if (typeof body.linkLabel === "string") data.linkLabel = body.linkLabel.trim() || null
-    if (typeof body.sortOrder === "number") data.sortOrder = body.sortOrder
+    if (body.linkUrl === null) itemData.linkUrl = null
+    else if (typeof body.linkUrl === "string") itemData.linkUrl = body.linkUrl.trim() || null
+    if (body.linkLabel === null) itemData.linkLabel = null
+    else if (typeof body.linkLabel === "string") itemData.linkLabel = body.linkLabel.trim() || null
+    if (typeof body.sortOrder === "number") itemData.sortOrder = body.sortOrder
     if (typeof body.published === "boolean") {
-      data.published = body.published
+      itemData.published = body.published
       if (body.published) {
         const existing = await prisma.homeNewsItem.findUnique({ where: { id }, select: { publishedAt: true } })
-        if (!existing?.publishedAt) data.publishedAt = new Date()
+        if (!existing?.publishedAt) itemData.publishedAt = new Date()
       }
     }
 
-    if (Object.keys(data).length === 0) {
+    const rawTranslations =
+      body.translations && typeof body.translations === "object"
+        ? (body.translations as Record<string, unknown>)
+        : null
+
+    let touchedTranslations = false
+    if (rawTranslations) {
+      for (const loc of HOME_NEWS_LOCALES) {
+        const block = rawTranslations[loc]
+        if (block === undefined) continue
+        if (typeof block !== "object" || block === null) continue
+        touchedTranslations = true
+        const title = typeof (block as { title?: unknown }).title === "string" ? (block as { title: string }).title.trim() : ""
+        const bodyText =
+          typeof (block as { body?: unknown }).body === "string" ? (block as { body: string }).body.trim() : ""
+
+        if (title && bodyText) {
+          await prisma.homeNewsTranslation.upsert({
+            where: { newsItemId_locale: { newsItemId: id, locale: loc } },
+            create: { newsItemId: id, locale: loc, title, body: bodyText },
+            update: { title, body: bodyText },
+          })
+        } else if (title === "" && bodyText === "") {
+          await prisma.homeNewsTranslation.deleteMany({ where: { newsItemId: id, locale: loc } })
+        }
+      }
+    }
+
+    if (Object.keys(itemData).length === 0 && !touchedTranslations) {
       return NextResponse.json({ error: "Keine Felder zum Aktualisieren." }, { status: 400 })
     }
 
-    const item = await prisma.homeNewsItem.update({
+    if (Object.keys(itemData).length > 0) {
+      await prisma.homeNewsItem.update({ where: { id }, data: itemData })
+    }
+
+    const item = await prisma.homeNewsItem.findUniqueOrThrow({
       where: { id },
-      data,
+      include: { translations: true },
     })
+
     revalidatePath("/home")
     revalidatePath("/")
-    return NextResponse.json({
-      item: {
-        ...item,
-        publishedAt: item.publishedAt?.toISOString() ?? null,
-        createdAt: item.createdAt.toISOString(),
-        updatedAt: item.updatedAt.toISOString(),
-      },
-    })
+    return NextResponse.json({ item: serializeAdminHomeNewsItem(item) })
   } catch {
     return NextResponse.json({ error: "Update fehlgeschlagen." }, { status: 500 })
   }

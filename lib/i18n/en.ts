@@ -469,6 +469,7 @@ const en = {
   "finances.refundTx": "Refund",
   "finances.deductionTx": "Deduction",
   "finances.topupSuccess": "Payment successful! Your balance has been credited.",
+  "finances.cancelPolicySaved": "Cancellation policy saved.",
 
   // Invoice Data
   "invoice.title": "My billing details",

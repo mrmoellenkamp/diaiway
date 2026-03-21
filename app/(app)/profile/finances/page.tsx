@@ -50,6 +50,7 @@ export default function FinancesPage() {
   const [cancelFreeHours, setCancelFreeHours] = useState(24)
   const [cancelFeePercent, setCancelFeePercent] = useState(0)
   const [savingCancelPolicy, setSavingCancelPolicy] = useState(false)
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -67,6 +68,11 @@ export default function FinancesPage() {
           setRefundPreference(profileData.refundPreference === "wallet" ? "wallet" : "payout")
         }
         if (profileData?.appRole) setAppRole(profileData.appRole)
+        if (typeof profileData?.customerNumber === "string" && profileData.customerNumber.trim()) {
+          setCustomerNumber(profileData.customerNumber.trim())
+        } else {
+          setCustomerNumber(null)
+        }
         if (takumiData?.exists && takumiData?.cancelPolicy) {
           const cp = takumiData.cancelPolicy as { freeHours?: number; feePercent?: number }
           setCancelFreeHours(typeof cp.freeHours === "number" ? cp.freeHours : 24)
@@ -113,7 +119,20 @@ export default function FinancesPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
-        <AppSubpageHeader title={t("finances.title")} subtitle={t("finances.transactions")} />
+        <AppSubpageHeader
+          title={t("finances.title")}
+          subtitle={t("finances.transactions")}
+          trailing={
+            customerNumber ? (
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("invoice.customerNumberLabel")}
+                </span>
+                <span className="font-mono text-xs font-semibold tabular-nums text-foreground">{customerNumber}</span>
+              </div>
+            ) : null
+          }
+        />
 
         {loading ? (
           <div className="flex justify-center py-12">
@@ -238,7 +257,7 @@ export default function FinancesPage() {
                           }),
                         })
                         if (res.ok) {
-                          toast.success(t("editProfile.saved"))
+                          toast.success(t("finances.cancelPolicySaved"))
                         } else {
                           const data = await res.json()
                           toast.error(data.error || t("profile.error"))
@@ -255,7 +274,7 @@ export default function FinancesPage() {
                     {savingCancelPolicy ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
-                      t("editProfile.save")
+                      t("common.save")
                     )}
                   </Button>
                 </CardContent>

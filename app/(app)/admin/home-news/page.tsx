@@ -10,13 +10,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { ChevronLeft, Loader2, Plus, Trash2 } from "lucide-react"
+import { HOME_NEWS_LOCALES, type HomeNewsLocale } from "@/lib/home-news-locales"
+import { localeNames } from "@/lib/i18n"
+
+type TranslationsMap = Partial<Record<HomeNewsLocale, { title: string; body: string }>>
 
 type Item = {
   id: string
-  title: string
-  body: string
   linkUrl: string | null
   linkLabel: string | null
   published: boolean
@@ -24,6 +27,78 @@ type Item = {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  translations: TranslationsMap
+}
+
+const emptyTranslations = (): Record<HomeNewsLocale, { title: string; body: string }> => ({
+  de: { title: "", body: "" },
+  en: { title: "", body: "" },
+  es: { title: "", body: "" },
+})
+
+function hasAtLeastOneTranslation(tr: Record<HomeNewsLocale, { title: string; body: string }>) {
+  return HOME_NEWS_LOCALES.some((loc) => tr[loc].title.trim() && tr[loc].body.trim())
+}
+
+function NewsLocaleFields({
+  itemId,
+  locale,
+  initialTitle,
+  initialBody,
+  itemUpdatedAt,
+  disabled,
+  onSave,
+}: {
+  itemId: string
+  locale: HomeNewsLocale
+  initialTitle: string
+  initialBody: string
+  itemUpdatedAt: string
+  disabled: boolean
+  onSave: (loc: HomeNewsLocale, title: string, body: string) => void
+}) {
+  const titleId = `hm-title-${itemId}-${locale}`
+  const bodyId = `hm-body-${itemId}-${locale}`
+
+  const trySave = () => {
+    const titleEl = document.getElementById(titleId) as HTMLInputElement | null
+    const bodyEl = document.getElementById(bodyId) as HTMLTextAreaElement | null
+    const title = titleEl?.value.trim() ?? ""
+    const body = bodyEl?.value.trim() ?? ""
+    if (title === initialTitle.trim() && body === initialBody.trim()) return
+    onSave(locale, title, body)
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      <div>
+        <Label className="text-xs">Titel ({localeNames[locale]})</Label>
+        <Input
+          id={titleId}
+          className="mt-1 h-9"
+          defaultValue={initialTitle}
+          key={`t-${itemId}-${locale}-${itemUpdatedAt}`}
+          disabled={disabled}
+          onBlur={trySave}
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Text</Label>
+        <textarea
+          id={bodyId}
+          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          rows={3}
+          defaultValue={initialBody}
+          key={`b-${itemId}-${locale}-${itemUpdatedAt}`}
+          disabled={disabled}
+          onBlur={trySave}
+        />
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        Leer speichern (Titel + Text entfernen) löscht diese Sprachfassung.
+      </p>
+    </div>
+  )
 }
 
 export default function AdminHomeNewsPage() {
@@ -33,9 +108,8 @@ export default function AdminHomeNewsPage() {
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
 
+  const [formTr, setFormTr] = useState(emptyTranslations)
   const [form, setForm] = useState({
-    title: "",
-    body: "",
     linkUrl: "",
     linkLabel: "",
     published: false,
@@ -73,18 +147,23 @@ export default function AdminHomeNewsPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.title.trim() || !form.body.trim()) {
-      toast.error("Titel und Text ausfüllen.")
+    if (!hasAtLeastOneTranslation(formTr)) {
+      toast.error("Mindestens eine Sprache mit Titel und Text ausfüllen.")
       return
     }
     setCreating(true)
     try {
+      const translations: Record<string, { title: string; body: string }> = {}
+      for (const loc of HOME_NEWS_LOCALES) {
+        const title = formTr[loc].title.trim()
+        const body = formTr[loc].body.trim()
+        if (title && body) translations[loc] = { title, body }
+      }
       const res = await fetch("/api/admin/home-news", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: form.title.trim(),
-          body: form.body.trim(),
+          translations,
           linkUrl: form.linkUrl.trim() || undefined,
           linkLabel: form.linkLabel.trim() || undefined,
           published: form.published,
@@ -97,7 +176,8 @@ export default function AdminHomeNewsPage() {
         return
       }
       toast.success("News angelegt.")
-      setForm({ title: "", body: "", linkUrl: "", linkLabel: "", published: false, sortOrder: 0 })
+      setFormTr(emptyTranslations())
+      setForm({ linkUrl: "", linkLabel: "", published: false, sortOrder: 0 })
       void load()
     } finally {
       setCreating(false)
@@ -155,7 +235,8 @@ export default function AdminHomeNewsPage() {
           <div>
             <h1 className="text-lg font-bold text-foreground">Startseiten-News</h1>
             <p className="text-xs text-muted-foreground">
-              Redaktionelle Meldungen für den Newsfeed auf der Home-Seite (nur veröffentlichte Einträge sind sichtbar).
+              Redaktionelle Meldungen pro Sprache (DE / EN / ES). Im Feed sieht jede UI-Sprache die passende Fassung,
+              sonst Fallback (z. B. Deutsch).
             </p>
           </div>
         </div>
@@ -166,25 +247,42 @@ export default function AdminHomeNewsPage() {
               <Plus className="size-4" /> Neuer Eintrag
             </h2>
             <form onSubmit={handleCreate} className="space-y-3">
-              <div>
-                <Label className="text-xs">Titel</Label>
-                <Input
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 h-9"
-                  placeholder="Kurze Überschrift"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Text</Label>
-                <textarea
-                  value={form.body}
-                  onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-                  rows={4}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Inhalt (mehrzeilig möglich)"
-                />
-              </div>
+              <Tabs defaultValue="de" className="w-full">
+                <TabsList className="w-full justify-start">
+                  {HOME_NEWS_LOCALES.map((loc) => (
+                    <TabsTrigger key={loc} value={loc} className="text-xs">
+                      {localeNames[loc]}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {HOME_NEWS_LOCALES.map((loc) => (
+                  <TabsContent key={loc} value={loc} className="space-y-2">
+                    <div>
+                      <Label className="text-xs">Titel</Label>
+                      <Input
+                        className="mt-1 h-9"
+                        value={formTr[loc].title}
+                        onChange={(e) =>
+                          setFormTr((prev) => ({ ...prev, [loc]: { ...prev[loc], title: e.target.value } }))
+                        }
+                        placeholder="Überschrift"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Text</Label>
+                      <textarea
+                        value={formTr[loc].body}
+                        onChange={(e) =>
+                          setFormTr((prev) => ({ ...prev, [loc]: { ...prev[loc], body: e.target.value } }))
+                        }
+                        rows={4}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="Inhalt"
+                      />
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Link (optional)</Label>
@@ -251,29 +349,30 @@ export default function AdminHomeNewsPage() {
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
-                <div>
-                  <Label className="text-xs">Titel</Label>
-                  <Input
-                    className="mt-1 h-9"
-                    defaultValue={item.title}
-                    key={`t-${item.id}-${item.updatedAt}`}
-                    onBlur={(e) => {
-                      if (e.target.value !== item.title) patchItem(item.id, { title: e.target.value })
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Text</Label>
-                  <textarea
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    rows={3}
-                    defaultValue={item.body}
-                    key={`b-${item.id}-${item.updatedAt}`}
-                    onBlur={(e) => {
-                      if (e.target.value !== item.body) patchItem(item.id, { body: e.target.value })
-                    }}
-                  />
-                </div>
+                <Tabs defaultValue="de" className="w-full">
+                  <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
+                    {HOME_NEWS_LOCALES.map((loc) => (
+                      <TabsTrigger key={loc} value={loc} className="text-xs">
+                        {localeNames[loc]}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {HOME_NEWS_LOCALES.map((loc) => (
+                    <TabsContent key={loc} value={loc}>
+                      <NewsLocaleFields
+                        itemId={item.id}
+                        locale={loc}
+                        initialTitle={item.translations[loc]?.title ?? ""}
+                        initialBody={item.translations[loc]?.body ?? ""}
+                        itemUpdatedAt={item.updatedAt}
+                        disabled={savingId === item.id}
+                        onSave={(l, title, body) => {
+                          patchItem(item.id, { translations: { [l]: { title, body } } })
+                        }}
+                      />
+                    </TabsContent>
+                  ))}
+                </Tabs>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Link</Label>
@@ -281,6 +380,7 @@ export default function AdminHomeNewsPage() {
                       className="mt-1 h-9"
                       defaultValue={item.linkUrl ?? ""}
                       key={`u-${item.id}-${item.updatedAt}`}
+                      disabled={savingId === item.id}
                       onBlur={(e) => {
                         const v = e.target.value.trim()
                         const next = v || null
@@ -294,6 +394,7 @@ export default function AdminHomeNewsPage() {
                       className="mt-1 h-9"
                       defaultValue={item.linkLabel ?? ""}
                       key={`l-${item.id}-${item.updatedAt}`}
+                      disabled={savingId === item.id}
                       onBlur={(e) => {
                         const v = e.target.value.trim()
                         const next = v || null
@@ -310,6 +411,7 @@ export default function AdminHomeNewsPage() {
                       className="h-8 w-20"
                       defaultValue={item.sortOrder}
                       key={`s-${item.id}-${item.updatedAt}`}
+                      disabled={savingId === item.id}
                       onBlur={(e) => {
                         const n = Number(e.target.value)
                         if (!Number.isNaN(n) && n !== item.sortOrder) patchItem(item.id, { sortOrder: n })

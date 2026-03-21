@@ -13,18 +13,22 @@ export type HomeNewsItemDto = {
   linkUrl: string | null
   linkLabel: string | null
   publishedAt: string | null
+  /** Welche Sprachfassung geliefert wurde (bei Fallback ggf. ≠ UI-Locale) */
+  localeUsed?: string
 }
 
 export function HomeNewsFeed({ className }: { className?: string }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [items, setItems] = useState<HomeNewsItemDto[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      setLoading(true)
       try {
-        const res = await fetch("/api/home-news")
+        const q = new URLSearchParams({ locale })
+        const res = await fetch(`/api/home-news?${q}`)
         const data = await res.json()
         if (!cancelled && Array.isArray(data.items)) setItems(data.items)
       } catch {
@@ -36,7 +40,7 @@ export function HomeNewsFeed({ className }: { className?: string }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale])
 
   if (loading) {
     return (

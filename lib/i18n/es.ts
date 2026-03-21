@@ -469,6 +469,7 @@ const es = {
   "finances.refundTx": "Reembolso",
   "finances.deductionTx": "Deducción",
   "finances.topupSuccess": "¡Pago exitoso! Tu saldo ha sido acreditado.",
+  "finances.cancelPolicySaved": "Política de cancelación guardada.",
 
   // Invoice Data
   "invoice.title": "Mis datos de facturación",

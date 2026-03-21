@@ -605,8 +605,6 @@ model DailyParticipantLeft {
 // Startseiten-Newsfeed (redaktionelle Pflege im Admin)
 model HomeNewsItem {
   id          String    @id @default(cuid())
-  title       String
-  body        String    @db.Text
   linkUrl     String?
   linkLabel   String?
   published   Boolean   @default(false)
@@ -615,7 +613,22 @@ model HomeNewsItem {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  translations HomeNewsTranslation[]
+
   @@index([published, sortOrder])
+}
+
+model HomeNewsTranslation {
+  id         String       @id @default(cuid())
+  newsItemId String
+  newsItem   HomeNewsItem @relation(fields: [newsItemId], references: [id], onDelete: Cascade)
+  locale     String
+  title      String
+  body       String       @db.Text
+
+  @@unique([newsItemId, locale])
+  @@index([newsItemId])
+  @@index([locale])
 }
 
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)

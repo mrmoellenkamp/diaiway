@@ -214,9 +214,15 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
     if (pendingImageParts.length === 0 || isStreaming) return
     const caption = imageCaption.trim()
     const textPart = caption || t("mentor.imageNoCaptionBody")
+    // AI SDK 5: Anhänge über `files` (FileUIPart[]), nicht über manuelles `parts` + `role`
     sendMessage({
-      role: "user",
-      parts: [{ type: "text", text: textPart }, ...pendingImageParts],
+      text: textPart,
+      files: pendingImageParts.map((p, i) => ({
+        type: "file" as const,
+        mediaType: p.mediaType,
+        url: p.url,
+        filename: p.mediaType.startsWith("image/") ? `image-${i + 1}` : `file-${i + 1}`,
+      })),
     })
     setImageDialogOpen(false)
     setPendingImageParts([])
@@ -371,14 +377,34 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                       : "rounded-tr-md bg-primary/10 text-foreground"
                   )}
                 >
-                  {msg.parts.map((part, idx) => {
-                    if (part.type === "text") {
-                      const cleaned = cleanText(part.text)
-                      if (!cleaned) return null
-                      return <span key={idx} className="whitespace-pre-wrap">{cleaned}</span>
-                    }
-                    return null
-                  })}
+                  <div className="flex flex-col gap-2">
+                    {msg.parts.map((part, idx) => {
+                      if (part.type === "text") {
+                        const cleaned = cleanText(part.text)
+                        if (!cleaned) return null
+                        return (
+                          <span key={idx} className="whitespace-pre-wrap">
+                            {cleaned}
+                          </span>
+                        )
+                      }
+                      if (
+                        part.type === "file" &&
+                        part.mediaType?.startsWith("image/")
+                      ) {
+                        return (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={idx}
+                            src={part.url}
+                            alt={part.filename ?? t("mentor.attachPhoto")}
+                            className="max-h-40 max-w-full rounded-lg border border-border/40 object-contain"
+                          />
+                        )
+                      }
+                      return null
+                    })}
+                  </div>
                 </div>
               </div>
 
