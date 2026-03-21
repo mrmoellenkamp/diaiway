@@ -14,6 +14,16 @@ const prisma = new PrismaClient()
 
 const BETA_ITEM_IDS = ["homebeta_de", "homebeta_en", "homebeta_es"] as const
 
+function isHomeNewsTitleRequiredError(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false
+  const x = e as { code?: string; meta?: { constraint?: string[] } }
+  return (
+    x.code === "P2011" &&
+    Array.isArray(x.meta?.constraint) &&
+    x.meta!.constraint.includes("title")
+  )
+}
+
 const ROWS = [
   {
     id: "homebeta_de" as const,
@@ -61,26 +71,58 @@ async function main() {
   const publishedAt = new Date()
 
   for (const row of ROWS) {
-    await prisma.homeNewsItem.create({
-      data: {
-        id: row.id,
-        linkUrl: row.linkUrl,
-        linkLabel: row.linkLabel,
-        published: true,
-        sortOrder: -10,
-        publishedAt,
-        translations: {
-          create: {
+    try {
+      await prisma.homeNewsItem.create({
+        data: {
+          id: row.id,
+          linkUrl: row.linkUrl,
+          linkLabel: row.linkLabel,
+          published: true,
+          sortOrder: -10,
+          publishedAt,
+          translations: {
+            create: {
+              locale: row.locale,
+              title: row.title,
+              body: row.body,
+            },
+          },
+        },
+      })
+    } catch (e) {
+      // DB noch mit alter Migration: "HomeNewsItem"."title"/"body" NOT NULL (Spalten noch nicht entfernt)
+      if (!isHomeNewsTitleRequiredError(e)) throw e
+      const now = new Date()
+      await prisma.$executeRaw`
+        INSERT INTO "HomeNewsItem" ("id", "title", "body", "linkUrl", "linkLabel", "published", "sortOrder", "publishedAt", "createdAt", "updatedAt")
+        VALUES (${row.id}, ${row.title}, ${row.body}, ${row.linkUrl}, ${row.linkLabel}, ${true}, ${-10}, ${publishedAt}, ${now}, ${now})
+      `
+      try {
+        await prisma.homeNewsTranslation.create({
+          data: {
+            newsItemId: row.id,
             locale: row.locale,
             title: row.title,
             body: row.body,
           },
-        },
-      },
-    })
+        })
+      } catch (transErr) {
+        console.error(
+          [
+            "Hinweis: HomeNewsItem wurde angelegt, HomeNewsTranslation aber nicht.",
+            "Die Tabelle fehlt oder die Migration ist unvollständig. Bitte ausführen:",
+            "  npm run db:migrate:deploy",
+          ].join("\n"),
+        )
+        throw transErr
+      }
+    }
   }
 
   console.log(`OK: ${ROWS.length} Home-News-Einträge für Beta (DE / EN / ES) angelegt, sortOrder=-10, veröffentlicht.`)
+  console.log(
+    "Tipp: Sobald die Migration „home_news_translations“ auf der DB liegt, kannst du title/body aus HomeNewsItem entfernen (nur Übersetzungen).",
+  )
 }
 
 main()
