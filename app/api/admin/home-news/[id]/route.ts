@@ -5,8 +5,10 @@ import { prisma } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-function assertAdmin(session: Awaited<ReturnType<typeof auth>>) {
-  if (!session?.user?.id || (session.user as { role?: string }).role !== "admin") {
+/** Kein `ReturnType<typeof auth>` — in manchen Next/NextAuth-Kombinationen fälschlich `NextMiddleware`. */
+function assertAdmin(session: { user?: unknown } | null) {
+  const u = session?.user as { id?: string; role?: string } | undefined
+  if (!u?.id || u.role !== "admin") {
     return NextResponse.json({ error: "Nicht berechtigt." }, { status: 403 })
   }
   return null
