@@ -5,7 +5,7 @@
   "description": "diAIway – Live-Beratung (Shugyo & Takumi), Hybrid Web + Capacitor",
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "node scripts/prisma-runner.mjs generate && next build",
+    "build": "node scripts/prisma-runner.mjs migrate deploy && node scripts/prisma-runner.mjs generate && next build",
     "build:capacitor": "NEXT_PUBLIC_ASSET_PREFIX=./ node scripts/prisma-runner.mjs generate && next build",
     "mobile:sync": "node scripts/prepare-mobile-webdir.mjs && npx cap sync",
     "mobile:build": "npm run build && npm run mobile:sync",

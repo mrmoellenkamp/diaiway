@@ -291,8 +291,8 @@ npx prisma studio
 ### Vercel (Git)
 
 1. Projekt mit GitHub verbinden
-2. Umgebungsvariablen setzen (inkl. `CRON_SECRET` für Cron-Routes)
-3. Build: `prisma generate && next build`
+2. Umgebungsvariablen setzen (inkl. `DATABASE_URL` / `DIRECT_URL`, `CRON_SECRET` für Cron-Routes)
+3. Build: Standard ist `npm run build` – dabei laufen **`prisma migrate deploy`** (offene Migrationen auf die DB) **und** `prisma generate` vor `next build`. Vercel muss dafür **Production** (und ggf. Preview) mit derselben DB-URL versorgen.
 4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`
 5. Cron-Jobs: `vercel.json` definiert `release-wallet`, `experts-offline`, `instant-request-cleanup`; alle benötigen `Authorization: Bearer <CRON_SECRET>`
 
@@ -308,7 +308,8 @@ vercel --prod
 
 ### Nach dem ersten Deploy
 
-- `npx prisma migrate deploy` mit Production-DATABASE_URL
+- Migrationen: laufen automatisch beim Build, sobald `DATABASE_URL` in Vercel gesetzt ist. Optional einmal lokal: `npm run db:migrate:deploy` mit Production-URL.
+- **Home-News Beta seed** (optional): einmalig mit Production-`DATABASE_URL`: `npm run seed:home-news-beta`
 - E-Mail-SMTP konfigurieren
 
 ---
