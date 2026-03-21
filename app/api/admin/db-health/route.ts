@@ -1,3 +1,4 @@
+import type { Session } from "next-auth"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
@@ -22,7 +23,7 @@ function summarizePostgresUrl(url?: string) {
 }
 
 export async function GET() {
-  let session: Awaited<ReturnType<typeof auth>>
+  let session: Session | null
   try {
     session = await auth()
   } catch (e: unknown) {
