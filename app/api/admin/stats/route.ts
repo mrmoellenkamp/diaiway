@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
+import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 
 export const maxDuration = 60
 
@@ -140,7 +140,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  void expireStaleScheduledBookings().catch(() => {})
+  void runBookingListHousekeeping().catch(() => {})
 
   await syncTakumiExpertsWithUsers()
 

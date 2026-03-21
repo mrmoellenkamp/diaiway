@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort, parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
+import { isScheduledAwaitingStripeCompletion } from "@/lib/booking-display"
 
 const STATUS_KEYS: Record<string, string> = {
   pending: "booking.statusPending",
@@ -32,6 +33,8 @@ const STATUS_KEYS: Record<string, string> = {
   declined: "booking.statusDeclined",
   cancelled: "booking.statusCancelled",
 }
+/** Shugyo: Stripe gestartet, Zahlung noch nicht abgeschlossen */
+const STATUS_AWAITING_PAYMENT_KEY = "booking.statusAwaitingPayment"
 const statusClassNames: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
   confirmed: "bg-primary/10 text-primary border-primary/30",
@@ -77,11 +80,24 @@ export function BookingCard({
   const [isExpertCancelling, setIsExpertCancelling] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const statusKey = STATUS_KEYS[booking.status] || STATUS_KEYS.pending
+  const currentUserId = session?.user?.id
+  const isExpertView = booking.userId !== currentUserId
+  const mode = booking.bookingMode ?? "scheduled"
+  const statusKey =
+    !isExpertView && isScheduledAwaitingStripeCompletion(booking)
+      ? STATUS_AWAITING_PAYMENT_KEY
+      : STATUS_KEYS[booking.status] || STATUS_KEYS.pending
   const status = {
     label: t(statusKey),
-    className: statusClassNames[booking.status] || statusClassNames.pending,
+    className:
+      statusKey === STATUS_AWAITING_PAYMENT_KEY
+        ? "bg-sky-500/15 text-sky-800 border-sky-500/30 dark:text-sky-300"
+        : statusClassNames[booking.status] || statusClassNames.pending,
   }
+  const expertCanRespondToPending =
+    isExpertView &&
+    booking.status === "pending" &&
+    (mode === "instant" || booking.paymentStatus === "paid")
   const isExpiredConfirmed = booking.status === "confirmed" &&
     parseBerlinDateTime(booking.date, booking.endTime || booking.startTime || "00:00") <= new Date()
   const isLive = booking.status === "active"
@@ -133,10 +149,6 @@ export function BookingCard({
       setDialogOpen(false)
     }
   }
-
-  // Determine the current user role in this booking
-  const currentUserId = session?.user?.id
-  const isExpertView = booking.userId !== currentUserId
 
   return (
     <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
@@ -215,7 +227,7 @@ export function BookingCard({
           {/* Action buttons */}
           <div className="mt-2 flex flex-wrap gap-2">
             {/* Takumi: pending → Annehmen / Ablehnen / Nachfrage */}
-            {isExpertView && booking.status === "pending" && (
+            {expertCanRespondToPending && (
               <Link href={`/booking/respond/${bookingId}`} className="flex-1 min-w-[140px]">
                 <Button
                   size="sm"

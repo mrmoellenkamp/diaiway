@@ -10,7 +10,7 @@ import { validateBookingDateWindow } from "@/lib/booking-date-validation"
 import { emailForName } from "@/lib/email-utils"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
-import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
+import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
@@ -24,7 +24,7 @@ export const GET = apiHandler(async (req) => {
   if (authResult.response) return authResult.response
   const { session } = authResult
 
-  void expireStaleScheduledBookings().catch(() => {})
+  void runBookingListHousekeeping().catch(() => {})
 
   const { searchParams } = new URL(req.url)
   const view = searchParams.get("view")
@@ -91,6 +91,7 @@ export const GET = apiHandler(async (req) => {
       sessionEndedAt: b.sessionEndedAt,
       sessionDuration: b.sessionDuration,
       trialUsed: b.trialUsed,
+      bookingMode: b.bookingMode,
       paymentStatus: b.paymentStatus,
       statusToken: b.statusToken,
       stripeSessionId: b.stripeSessionId,

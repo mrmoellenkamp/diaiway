@@ -95,6 +95,8 @@ export interface BookingRecord {
   startTime: string
   endTime: string
   status: BookingStatus
+  /** scheduled = normaler Termin; instant = Sofort-Anruf */
+  bookingMode?: "scheduled" | "instant"
   callType?: CallType
   totalPrice?: number
   price?: number

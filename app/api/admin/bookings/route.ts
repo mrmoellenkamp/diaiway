@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
+import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  void expireStaleScheduledBookings().catch(() => {})
+  void runBookingListHousekeeping().catch(() => {})
 
   const { searchParams } = req.nextUrl
   const q = searchParams.get("q") || ""

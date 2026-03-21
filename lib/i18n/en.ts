@@ -845,6 +845,7 @@ const en = {
   "booking.cancelPolicyFull": "Free cancellation up to {h} hours before the session. After that, {percent}% of the booking fee is retained.",
   "booking.respondToRequest": "Confirm, decline & ask",
   "booking.statusPending": "Pending",
+  "booking.statusAwaitingPayment": "Payment pending",
   "booking.statusConfirmed": "Confirmed",
   "booking.statusActive": "Live",
   "booking.statusCompleted": "Completed",

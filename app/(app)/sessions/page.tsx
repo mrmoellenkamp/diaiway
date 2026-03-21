@@ -14,6 +14,7 @@ import { useI18n } from "@/lib/i18n"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
+import { isScheduledCheckoutShell } from "@/lib/booking-display"
 
 type TabId = "active" | "upcoming" | "completed"
 
@@ -92,7 +93,9 @@ function SessionsContent() {
   const [autoSwitched, setAutoSwitched] = useState(false)
   const [cachedBookings, setCachedBookingsState] = useState<BookingRecord[] | null>(null)
   useEffect(() => {
-    getCachedBookings().then((b) => b && setCachedBookingsState(b))
+    getCachedBookings().then((b) => {
+      if (b?.length) setCachedBookingsState(b.filter((x) => !isScheduledCheckoutShell(x)))
+    })
   }, [])
 
   const { data, isLoading, mutate } = useSWR<{ bookings: BookingRecord[] }>(
@@ -104,7 +107,9 @@ function SessionsContent() {
     }
   )
   useEffect(() => {
-    if (data?.bookings?.length) setCachedBookings(data.bookings)
+    if (data?.bookings?.length) {
+      setCachedBookings(data.bookings.filter((b) => !isScheduledCheckoutShell(b)))
+    }
   }, [data?.bookings])
 
   // Auto-switch from "active" to "upcoming" if no active sessions exist (only once, when data first loads)
@@ -118,7 +123,9 @@ function SessionsContent() {
     setAutoSwitched(true)
   }, [data?.bookings, autoSwitched, tabParam, activeTab])
 
-  const displayBookings = data?.bookings ?? cachedBookings ?? []
+  const rawBookings = data?.bookings ?? cachedBookings ?? []
+  /** Keine „Anfragen“ aus nur angelegtem Checkout ohne Zahlungsstart (pending + unpaid) */
+  const displayBookings = rawBookings.filter((b) => !isScheduledCheckoutShell(b))
 
   // Callback to refresh list after cancellation
   const handleCancelled = () => mutate()

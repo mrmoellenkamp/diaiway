@@ -56,3 +56,41 @@ export async function expireStaleScheduledBookings(now = new Date()): Promise<nu
 
   return result.count
 }
+
+const ABANDONED_CHECKOUT_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 h
+
+/**
+ * Storniert geplante Buchungen, bei denen nie eine Zahlung gestartet wurde (`unpaid`).
+ * Gibt den Slot frei und verhindert dauerhaft sichtbare „Geister“-Datensätze in Auswertungen.
+ * (Laufzeit zusammen mit expireStaleScheduledBookings gedrosselt.)
+ */
+export async function cancelAbandonedUnpaidScheduledBookings(now = new Date()): Promise<number> {
+  const minIntervalMs = 60 * 60 * 1000
+  const lastKey = "__bookingAbandonedCheckoutLastRunAtMs"
+  const g = globalThis as unknown as Record<string, number | undefined>
+  const lastRunAt = g[lastKey] ?? 0
+  if (Date.now() - lastRunAt < minIntervalMs) return 0
+  g[lastKey] = Date.now()
+
+  const cutoff = new Date(now.getTime() - ABANDONED_CHECKOUT_MAX_AGE_MS)
+  const result = await prisma.booking.updateMany({
+    where: {
+      bookingMode: "scheduled",
+      status: "pending",
+      paymentStatus: "unpaid",
+      createdAt: { lt: cutoff },
+    },
+    data: {
+      status: "cancelled",
+      cancelledAt: now,
+      cancelledBy: null,
+    },
+  })
+  return result.count
+}
+
+/** Ein Aufruf für Listen-Endpunkte: veraltete Termine + verwaiste Checkouts */
+export async function runBookingListHousekeeping(): Promise<void> {
+  await expireStaleScheduledBookings().catch(() => {})
+  await cancelAbandonedUnpaidScheduledBookings().catch(() => {})
+}

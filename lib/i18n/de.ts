@@ -853,6 +853,7 @@ const de = {
   // Cancel actions in BookingCard
   "booking.respondToRequest": "Annehmen, Ablehnen & Nachfrage",
   "booking.statusPending": "Ausstehend",
+  "booking.statusAwaitingPayment": "Zahlung ausstehend",
   "booking.statusConfirmed": "Bestätigt",
   "booking.statusActive": "Live",
   "booking.statusCompleted": "Abgeschlossen",

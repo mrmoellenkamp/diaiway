@@ -845,6 +845,7 @@ const es = {
   "booking.cancelPolicyFull": "Cancelación gratuita hasta {h} horas antes de la sesión. Después se retiene el {percent}% de la tarifa.",
   "booking.respondToRequest": "Confirmar, rechazar y preguntar",
   "booking.statusPending": "Pendiente",
+  "booking.statusAwaitingPayment": "Pago pendiente",
   "booking.statusConfirmed": "Confirmado",
   "booking.statusActive": "En vivo",
   "booking.statusCompleted": "Completado",
