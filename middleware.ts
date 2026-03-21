@@ -91,12 +91,13 @@ export default authMiddleware((req) => {
     return NextResponse.redirect(new URL("/paused", req.url))
   }
 
-  // Admin pages — only role: "admin"
+  // Admin: nur Login-Pflicht hier. Rollen-Check NICHT im JWT/Middleware — Edge-Auth hat keinen DB-Sync;
+  // sonst Admins mit frischem Token aus DB, aber altem JWT (z. B. Rolle kürzlich geändert) → Redirect /home.
+  // `app/(app)/admin/layout.tsx` prüft role gegen DB via `auth()` + Prisma.
   if (pathname.startsWith("/admin")) {
-    if (!isLoggedIn)
+    if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login?callbackUrl=/admin", req.url))
-    if (role !== "admin")
-      return NextResponse.redirect(new URL("/home", req.url))
+    }
   }
 
   // Verfügbarkeit — only takumi (appRole) and admin (role)

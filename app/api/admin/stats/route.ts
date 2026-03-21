@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { expireStaleScheduledBookings } from "@/lib/booking-housekeeping"
 
+export const maxDuration = 60
+
 const ADMIN_STATS_BOOKING_SELECT = {
   id: true,
   userId: true,
@@ -122,7 +124,19 @@ async function syncTakumiExpertsWithUsers(): Promise<void> {
 
 export async function GET() {
   const session = await auth()
-  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
+  const userId = session?.user?.id
+  if (!userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+  // JWT kann kurz hinter der DB liegen — primär Rolle aus DB; bei DB-Ausfall JWT (wie Admin-Layout Cold Start)
+  let isAdmin = false
+  try {
+    const row = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
+    isAdmin = row?.role === "admin"
+  } catch {
+    isAdmin = (session.user as { role?: string }).role === "admin"
+  }
+  if (!isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -223,10 +237,12 @@ export async function GET() {
   } catch (err: unknown) {
     console.error("[admin/stats] Aggregation fehlgeschlagen:", err)
     const msg = err instanceof Error ? err.message : String(err)
-    const hint =
-      /does not exist|relation|column/i.test(msg)
-        ? "Datenbank-Schema passt nicht zum Code — bitte auf dem Server `npx prisma migrate deploy` ausführen (u. a. Taxonomie-Migration 20260320120000_taxonomy_categories)."
-        : "Statistik-Abfragen sind fehlgeschlagen. Server-Logs prüfen."
+    const short = msg.length > 220 ? `${msg.slice(0, 220)}…` : msg
+    const isSchema =
+      /does not exist|relation|Unknown column|column|migration|P20[0-9]{2}/i.test(msg)
+    const hint = isSchema
+      ? `Datenbank-Schema passt nicht zum Code (${short}). Auf dem Server \`npm run db:migrate:deploy\` ausführen.`
+      : `Statistik-Abfragen fehlgeschlagen: ${short}`
     return NextResponse.json(emptyStatsPayload(hint))
   }
 
