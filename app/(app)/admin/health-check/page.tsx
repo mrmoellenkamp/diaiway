@@ -38,6 +38,8 @@ import {
 } from "lucide-react"
 
 type HealthData = {
+  degraded?: boolean
+  degradedReason?: string
   visionConfig?: { configured: boolean; method: "api_key" | "service_account" | null }
   cronMonitor: { "release-wallet": string | null; "experts-offline": string | null }
   stripeEscrow: Array<{
@@ -166,6 +168,12 @@ export default function AdminHealthCheckPage() {
 
           {data && (
             <>
+              {data.degraded && data.degradedReason && (
+                <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+                  <span className="font-semibold">Datenbank nicht erreichbar. </span>
+                  {data.degradedReason}
+                </div>
+              )}
               {/* Vision API (Bildprüfung) */}
               {data.visionConfig !== undefined && (
                 <Card>

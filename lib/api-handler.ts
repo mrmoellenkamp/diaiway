@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ZodError } from "zod"
 import { sanitizeErrorForClient } from "@/lib/security"
+import { isDbConnectionError } from "@/lib/is-db-connection-error"
 
 /** Next.js App Router: context ist immer vorhanden (params als Promise). */
 export type RouteContext = { params: Promise<Record<string, string | string[]>> }
@@ -76,6 +77,19 @@ export function translateError(err: unknown): NextResponse {
         { status: 500 }
       )
     }
+  }
+
+  // Postgres / Pooler nicht erreichbar (P1001, PrismaClientInitializationError, …)
+  if (isDbConnectionError(err)) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn("[api] Database unavailable:", msg.slice(0, 160))
+    return NextResponse.json(
+      {
+        error: "Datenbank vorübergehend nicht erreichbar.",
+        code: "DATABASE_UNAVAILABLE" as const,
+      },
+      { status: 503 }
+    )
   }
 
   // Slot-Konflikt (Buchung)

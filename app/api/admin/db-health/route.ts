@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { DB_PROBE_TIMEOUT_MS, withTimeout } from "@/lib/prisma-connectivity"
 
 export const runtime = "nodejs"
 
@@ -21,7 +22,23 @@ function summarizePostgresUrl(url?: string) {
 }
 
 export async function GET() {
-  const session = await auth()
+  let session: Awaited<ReturnType<typeof auth>>
+  try {
+    session = await auth()
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Auth failed"
+    console.warn("[db-health] auth() error:", message)
+    return NextResponse.json(
+      {
+        error: "Auth failed",
+        hint: "Session/Auth could not be resolved (e.g. DB used during sign-in). Try again or check logs.",
+        dbOk: false,
+        dbError: { message },
+      },
+      { status: 503 }
+    )
+  }
+
   if (!session?.user || (session.user as { role?: string }).role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
@@ -32,8 +49,12 @@ export async function GET() {
   let dbOk = false
   let dbError: { code?: string; message: string } | null = null
   try {
-    // Lightweight connectivity test.
-    await prisma.$queryRaw`SELECT 1 as ok`
+    // Lightweight connectivity test (bounded wait — avoids Vercel hang).
+    await withTimeout(
+      prisma.$queryRaw`SELECT 1 as ok`,
+      DB_PROBE_TIMEOUT_MS,
+      "Database probe"
+    )
     dbOk = true
   } catch (e: unknown) {
     const code =

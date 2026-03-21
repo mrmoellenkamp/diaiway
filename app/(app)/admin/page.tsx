@@ -758,12 +758,43 @@ function TakumisTab({ refreshKey }: { refreshKey?: number }) {
   )
 }
 
+type DbHealthPayload = {
+  dbOk?: boolean
+  dbError?: { code?: string; message: string } | null
+  databaseUrl?: { host?: string; port?: string } | null
+  directUrl?: { host?: string; port?: string } | null
+  error?: string
+  hint?: string
+}
+
 function DatabaseTab({
   categories,
 }: {
   categories: ReturnType<typeof useCategories>
 }) {
   const { t } = useI18n()
+  const [dbHealth, setDbHealth] = useState<DbHealthPayload | null>(null)
+  const [dbHealthLoading, setDbHealthLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setDbHealthLoading(true)
+      try {
+        const res = await fetch("/api/admin/db-health")
+        const json = (await res.json()) as DbHealthPayload
+        if (!cancelled) setDbHealth(json)
+      } catch {
+        if (!cancelled) setDbHealth({ dbOk: false, dbError: { message: "Anfrage fehlgeschlagen (Netzwerk)." } })
+      } finally {
+        if (!cancelled) setDbHealthLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const [isSeeding, setIsSeeding] = useState(false)
   const [seedResult, setSeedResult] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
@@ -825,6 +856,91 @@ function DatabaseTab({
 
   return (
     <div className="flex flex-col gap-5">
+      <Card
+        className={
+          dbHealthLoading
+            ? "border-border/60"
+            : dbHealth?.dbOk
+              ? "border-green-500/40 bg-green-500/5"
+              : "border-destructive/40 bg-destructive/5"
+        }
+      >
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-sm">
+            <Database className="size-4 shrink-0 text-primary" />
+            Datenbank-Verbindung
+            {dbHealthLoading ? (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            ) : dbHealth?.dbOk ? (
+              <Badge variant="outline" className="border-green-600/50 bg-green-500/10 text-green-700 dark:text-green-400">
+                <CheckCircle2 className="size-3 mr-1" />
+                OK
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive">
+                <XCircle className="size-3 mr-1" />
+                Fehler
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 space-y-2 text-xs text-muted-foreground leading-relaxed">
+          {dbHealthLoading && <p>Prüfe Erreichbarkeit von PostgreSQL (SELECT 1)…</p>}
+          {!dbHealthLoading && dbHealth?.error === "Forbidden" && (
+            <p className="text-amber-800 dark:text-amber-200">Kein Zugriff — nur für Admins.</p>
+          )}
+          {!dbHealthLoading && dbHealth?.error === "Auth failed" && (
+            <div className="space-y-2 text-amber-900 dark:text-amber-100">
+              <p className="font-medium">Session/Auth ließ sich nicht auflösen (z. B. DB während Auth nötig).</p>
+              {dbHealth.hint && <p>{dbHealth.hint}</p>}
+              {dbHealth.dbError?.message && (
+                <p className="font-mono text-[10px] break-words opacity-90">{dbHealth.dbError.message}</p>
+              )}
+            </div>
+          )}
+          {!dbHealthLoading && dbHealth?.dbOk && (
+            <p className="text-green-800 dark:text-green-200">
+              Die App kann die konfigurierte Datenbank erreichen.
+              {dbHealth.databaseUrl?.host && (
+                <span className="block mt-1 font-mono text-[10px] opacity-90">
+                  Runtime-Host: {dbHealth.databaseUrl.host}
+                  {dbHealth.databaseUrl.port ? `:${dbHealth.databaseUrl.port}` : ""}
+                </span>
+              )}
+            </p>
+          )}
+          {!dbHealthLoading &&
+            !dbHealth?.dbOk &&
+            dbHealth?.error !== "Forbidden" &&
+            dbHealth?.error !== "Auth failed" && (
+            <div className="space-y-2 text-destructive/95 dark:text-destructive">
+              <p className="font-medium text-foreground">
+                PostgreSQL ist von diesem Server aus nicht erreichbar oder die Verbindung bricht ab.
+              </p>
+              {dbHealth?.dbError?.code && (
+                <p className="font-mono text-[11px]">Code: {dbHealth.dbError.code}</p>
+              )}
+              {dbHealth?.dbError?.message && (
+                <p className="rounded-md bg-background/80 border border-border/60 p-2 font-mono text-[10px] break-words text-foreground">
+                  {dbHealth.dbError.message}
+                </p>
+              )}
+              <p>
+                <strong className="text-foreground">Typische Ursachen:</strong> falsche oder veraltete{" "}
+                <code className="rounded bg-muted px-1">DATABASE_URL</code> /{" "}
+                <code className="rounded bg-muted px-1">DIRECT_URL</code> in Vercel, DB pausiert im Prisma-Dashboard,
+                nach Env-Änderung kein Redeploy.
+              </p>
+              <p>
+                Schritt-für-Schritt: Datei{" "}
+                <code className="rounded bg-muted px-1">docs/TROUBLESHOOTING-DATABASE.md</code> im Projekt — dort
+                Checkliste für Prisma Postgres (<code className="rounded bg-muted px-1">db.prisma.io</code>, P1001).
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="flex items-center gap-2 text-sm">

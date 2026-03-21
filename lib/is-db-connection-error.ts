@@ -9,7 +9,8 @@ export function isDbConnectionError(err: unknown): boolean {
   const code = (err as { code?: string }).code
   return (
     name === "PrismaClientInitializationError" ||
-    (name === "PrismaClientKnownRequestError" && code === "P1001") ||
+    (name === "PrismaClientKnownRequestError" &&
+      (code === "P1001" || code === "P1002" || code === "P2024")) ||
     msg.includes("Can't reach database") ||
     msg.includes("ECONNREFUSED") ||
     msg.includes("connect ETIMEDOUT")

@@ -290,7 +290,7 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 ### Sonstige
 | Route | Methode | Beschreibung |
 |-------|---------|--------------|
-| `/api/health` | GET | Health-Check |
+| `/api/health` | GET | Liveness: immer 200; `database.connected` + optional Timeout/Fehlercode |
 | `/api/test/*` | - | E2E/Dev-Endpoints |
 
 ---

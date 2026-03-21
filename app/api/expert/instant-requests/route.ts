@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { corsPreflightResponse, withApiCors } from "@/lib/api-cors"
 import { communicationUsername } from "@/lib/communication-display"
 import { translateError } from "@/lib/api-handler"
+import { isDbConnectionError } from "@/lib/is-db-connection-error"
 
 /**
  * GET /api/expert/instant-requests
@@ -62,7 +63,9 @@ export async function GET(request: Request) {
       }),
     )
   } catch (err) {
-    console.error("[api/expert/instant-requests]", err)
+    if (!isDbConnectionError(err)) {
+      console.error("[api/expert/instant-requests]", err)
+    }
     return withApiCors(request, translateError(err))
   }
 }

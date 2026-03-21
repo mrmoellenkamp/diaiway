@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { getVisionConfigStatus } from "@/lib/vision-safety"
+import { isDbConnectionError } from "@/lib/is-db-connection-error"
+import { getDatabaseUnavailableDegradedMessage } from "@/lib/prisma-connectivity"
 
 export const dynamic = "force-dynamic"
 
@@ -119,6 +121,26 @@ export async function GET() {
       },
     })
   } catch (err) {
+    if (isDbConnectionError(err)) {
+      console.warn("[admin/health-check] DB unavailable — liefere eingeschränkte Antwort (200)")
+      const visionConfig = getVisionConfigStatus()
+      return NextResponse.json({
+        degraded: true,
+        degradedReason: getDatabaseUnavailableDegradedMessage(err),
+        visionConfig,
+        cronMonitor: {
+          "release-wallet": null,
+          "experts-offline": null,
+        },
+        stripeEscrow: [],
+        walletIntegrity: [],
+        pushReachability: {
+          availableTakumis: 0,
+          availableWithoutPush: 0,
+          percentWithoutPush: 0,
+        },
+      })
+    }
     console.error("[admin/health-check] Error:", err)
     return NextResponse.json(
       { error: (err as Error).message ?? "Health-Check fehlgeschlagen." },

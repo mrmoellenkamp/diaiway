@@ -42,7 +42,10 @@ Die Hostname **`db.prisma.io`** steht typischerweise in der **`DATABASE_URL`**, 
    Wenn Runtime-URL und Direct vertauscht sind, kann `db.prisma.io` von Vercel aus **nicht** erreichbar sein oder Migrationen brechen.
 
 7. **Selbsttest (Admin)**  
-   Als Admin eingeloggt: **`GET /api/admin/db-health`** — zeigt anonymisiert Host/Port der konfigurierten URLs und ob `SELECT 1` klappt (`dbOk`).
+   Als Admin eingeloggt: **`GET /api/admin/db-health`** — zeigt anonymisiert Host/Port der konfigurierten URLs und ob `SELECT 1` klappt (`dbOk`). Die Probe hat ein **Timeout (~8 s)**; bei hängender Verbindung erscheint `dbError` mit Timeout statt endlos zu warten.
+
+8. **Liveness ohne „falsches“ 500**  
+   **`GET /api/health`** antwortet **immer mit HTTP 200**, sobald die App läuft. `database.connected: false` bedeutet nur: Postgres nicht erreichbar — nützlich für Monitoring (App up vs. DB down). Früher lieferte dieser Endpunkt bei DB-Ausfall **500** und wirkte wie ein kaputter Deploy.
 
 ## Kurzfassung
 

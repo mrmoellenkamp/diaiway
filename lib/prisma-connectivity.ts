@@ -44,6 +44,38 @@ export async function withPrismaConnectivityRetries<T>(
   throw last
 }
 
+/** Default für Health-/Diagnose-Endpunkte (Vercel-Timeout vermeiden). */
+export const DB_PROBE_TIMEOUT_MS = 8_000
+
+/**
+ * Bricht ab, wenn die Promise länger als `ms` braucht (z. B. hängende TCP-Verbindung).
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label = "Operation"
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => {
+      reject(
+        Object.assign(new Error(`${label} timed out after ${ms}ms`), {
+          code: "TIMEOUT",
+        })
+      )
+    }, ms)
+    promise.then(
+      (v) => {
+        clearTimeout(id)
+        resolve(v)
+      },
+      (e) => {
+        clearTimeout(id)
+        reject(e)
+      }
+    )
+  })
+}
+
 /** Admin/UI: kein Rohtext aus Prisma an Endnutzer */
 export function getDatabaseUnavailableDegradedMessage(_err: unknown): string {
   return (
