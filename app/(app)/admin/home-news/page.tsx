@@ -22,6 +22,8 @@ type Item = {
   published: boolean
   sortOrder: number
   publishedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export default function AdminHomeNewsPage() {
