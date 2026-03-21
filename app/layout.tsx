@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import dynamic from 'next/dynamic'
 import { Geist, Geist_Mono, Noto_Sans_JP } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { AppProvider } from '@/lib/app-context'
 import { I18nProvider } from '@/lib/i18n'
@@ -23,6 +23,12 @@ import { LogoutBackGuard } from '@/components/logout-back-guard'
 import { SiteAnalyticsTracker } from '@/components/site-analytics-tracker'
 import { Footer } from '@/components/footer'
 import './globals.css'
+
+/** WebView (Capacitor): kein SSR – vermeidet Hydration-/Skript-Konflikte mit älteren Android-WebViews */
+const Analytics = dynamic(
+  () => import('@vercel/analytics/next').then((m) => m.Analytics),
+  { ssr: false }
+)
 
 const _geist = Geist({ subsets: ["latin"], display: "swap" })
 const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
@@ -72,7 +78,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${(_geist as { variable?: string }).variable ?? ""} ${(_geistMono as { variable?: string }).variable ?? ""} ${(_notoJP as { variable?: string }).variable ?? ""}`.trim()}
     >
-      <body className="font-sans antialiased app-bottom-space" suppressHydrationWarning>
+      {/*
+        suppressHydrationWarning nur auf <html> (next-themes / lang). Auf <body> kann es in React 19
+        zu leerem/weißem ersten Paint in manchen WebViews führen.
+        Inline-Hintergrund: erster Paint auch wenn CSS-Chunks verzögern (Capacitor-Emulator).
+      */}
+      <body
+        className="font-sans antialiased app-bottom-space"
+        style={{ backgroundColor: "#fafaf9", minHeight: "100dvh" }}
+      >
         <ErrorBoundary>
           <SessionProvider>
             <SiteAnalyticsTracker />

@@ -122,6 +122,13 @@ Bei jedem neuen Feature prüfen:
 
 ---
 
+## Weißer Bildschirm (Capacitor / WebView)
+
+1. **Logcat**: Filter `Capacitor/Console` und `chromium` – oft steht dort ein JS-Fehler oder `net::ERR_…`.
+2. **Emulator-Netzwerk**: Muss `https://diaiway.com` (bzw. `server.url`) erreichen können.
+3. **Chrome Remote Debugging** (Debug-APK): Am Desktop Chrome → `chrome://inspect#devices` → WebView öffnen → Console/Network. Im Projekt ist `WebView.setWebContentsDebuggingEnabled(true)` für **Debug-Builds** in `MainActivity` gesetzt.
+4. **Erster Paint**: Root-`app/loading.tsx` und inline `body`-Hintergrund im Layout reduzieren „reines Weiß“, wenn RSC/CSS verzögern.
+
 ## Zu vermeiden
 
 | Vermeiden | Grund |
