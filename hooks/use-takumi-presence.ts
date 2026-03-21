@@ -6,8 +6,9 @@ import { useSession } from "next-auth/react"
 const HEARTBEAT_INTERVAL_MS = 20 * 1000 // 20 Sekunden (unter 30s Timeout) → stabiler Online-Status
 
 /**
- * Sendet Präsenz-Heartbeat nur wenn liveStatus === 'available'.
- * Aktualisiert lastSeenAt → Anzeige "online" nur wenn tatsächlich aktiv.
+ * Sendet Präsenz-Heartbeat für jeden Takumi mit Expert-Datensatz (alle ~20s).
+ * Aktualisiert lastSeenAt → grüner Online-Punkt / Karten (expert-to-takumi).
+ * Instant-Connect „verfügbar“ bleibt separat über liveStatus.
  * Bei Tab-Schließung: setzt liveStatus auf offline (sendBeacon).
  */
 export function useTakumiPresence() {
@@ -28,7 +29,7 @@ export function useTakumiPresence() {
       try {
         const res = await fetch("/api/expert/me", { credentials: "include" })
         const data = await res.json()
-        if (data?.expert?.liveStatus === "available") {
+        if (data?.expert?.id) {
           await fetch("/api/expert/heartbeat", { method: "POST", credentials: "include" })
         }
       } catch {

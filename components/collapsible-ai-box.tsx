@@ -5,6 +5,7 @@ import { MentorChat } from "@/components/mentor-chat"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
 
 function OnlinePill({ className }: { className?: string }) {
   const { t } = useI18n()
@@ -87,11 +88,32 @@ export function CollapsibleAiBox({
         <div className="min-w-0 flex-1 text-left">
           <span
             className={cn(
-              "block text-sm font-bold",
+              "block text-sm font-bold leading-tight",
               isPrimary ? "text-primary-foreground" : "text-foreground"
             )}
           >
-            {useBrand ? <DiAiwayBrand lightOnDark={isPrimary} /> : title}
+            {useBrand ? (
+              <span className="flex flex-wrap items-baseline gap-x-1 gap-y-0">
+                <span className="font-semibold">{t("mentor.hishoName")}</span>
+                <span className={cn("opacity-70", isPrimary ? "text-primary-foreground" : "text-muted-foreground")}>
+                  –
+                </span>
+                <DiAiwayBrand lightOnDark={isPrimary} />
+                <span className={cn("opacity-70", isPrimary ? "text-primary-foreground" : "text-muted-foreground")}>
+                  –
+                </span>
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold tracking-tight",
+                    isPrimary ? "text-primary-foreground/95" : "text-foreground/90"
+                  )}
+                >
+                  {t("mentor.intelligenceSuffix")}
+                </span>
+              </span>
+            ) : (
+              title
+            )}
           </span>
           <span
             className={cn(

@@ -1,6 +1,9 @@
 import type { Expert, TaxonomyCategory, TaxonomySpecialty } from "@prisma/client"
 import type { CancelPolicy, Takumi } from "@/lib/types"
 
+/** Fenster für „in der App / online“ (muss zu Heartbeat-Intervall passen, s. useTakumiPresence). */
+export const TAKUMI_ONLINE_PRESENCE_MS = 30 * 1000
+
 type ExpertWithTaxonomy = Expert & {
   user: { appRole: string; isVerified: boolean; username: string | null } | null
   categoryAssignments: { category: Pick<TaxonomyCategory, "slug" | "name"> }[]
@@ -11,9 +14,8 @@ type ExpertWithTaxonomy = Expert & {
 
 export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
   const now = Date.now()
-  const ONLINE_MS = 30 * 1000
   const lastSeen = e.lastSeenAt?.getTime()
-  const isActuallyOnline = lastSeen != null && now - lastSeen < ONLINE_MS
+  const isActuallyOnline = lastSeen != null && now - lastSeen < TAKUMI_ONLINE_PRESENCE_MS
   const isLive = isActuallyOnline && !(e.hideOnlineStatus ?? false)
 
   const assignSlugs = e.categoryAssignments.map((a) => a.category.slug)

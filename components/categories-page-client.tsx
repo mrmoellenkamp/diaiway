@@ -33,6 +33,7 @@ export function CategoriesPageClient({ takumis, categories }: CategoriesPageClie
             chatVariant="embedded"
             compact
             variant="primary"
+            description={t("categories.collapsibleDesc")}
           />
         </section>
 

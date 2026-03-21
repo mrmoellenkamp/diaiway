@@ -24,6 +24,7 @@ import {
   Mail, Building2, User as UserIcon, ExternalLink, CheckCircle2, XCircle, FolderOpen, Send,
   Scan,
   Tags,
+  Newspaper,
 } from "lucide-react"
 import { ImageUpload } from "@/components/image-upload"
 import { AdminUserProfileSheet } from "@/components/admin-user-profile-sheet"
@@ -1982,6 +1983,22 @@ export default function AdminPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">CRON-Monitor, Stripe Escrow, Wallet-Integrität, Push-Erreichbarkeit</p>
                         <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
                           <Link href="/admin/health-check"><ExternalLink className="size-3" />Öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/10">
+                        <Newspaper className="size-5 text-teal-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Startseiten-News</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Redaktioneller Newsfeed auf der Home-Seite (Titel, Text, optionaler Link)
+                        </p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/home-news"><ExternalLink className="size-3" />News bearbeiten</Link>
                         </Button>
                       </div>
                     </div>

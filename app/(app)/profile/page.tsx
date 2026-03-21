@@ -99,6 +99,9 @@ export default function ProfilePage() {
   const { t } = useI18n()
   const { mutate } = useSWRConfig()
   const [hideOnlineStatus, setHideOnlineStatus] = useState(false)
+  /** Wie andere dich auf Karten sehen (lastSeen + hideOnlineStatus), nicht DB-isLive */
+  const [appearsOnlineToOthers, setAppearsOnlineToOthers] = useState<boolean | null>(null)
+  const [takumiLiveStatus, setTakumiLiveStatus] = useState<string | null>(null)
   const isTakumi = role === "takumi"
 
   // Profile data from DB
@@ -217,7 +220,14 @@ export default function ProfilePage() {
         }
         if (isTakumi && takumiOrProjectsRes?.ok) {
           const tp = await takumiOrProjectsRes.json()
-          if (tp.exists && typeof tp.hideOnlineStatus === "boolean") setHideOnlineStatus(tp.hideOnlineStatus)
+          if (tp.exists) {
+            if (typeof tp.hideOnlineStatus === "boolean") setHideOnlineStatus(tp.hideOnlineStatus)
+            if (typeof tp.appearsOnlineToOthers === "boolean") setAppearsOnlineToOthers(tp.appearsOnlineToOthers)
+            setTakumiLiveStatus(typeof tp.liveStatus === "string" ? tp.liveStatus : null)
+          } else {
+            setAppearsOnlineToOthers(null)
+            setTakumiLiveStatus(null)
+          }
         }
       } catch {
         /* fallback */
@@ -231,6 +241,55 @@ export default function ProfilePage() {
       setProfileLoading(false)
     }
   }, [session?.user, status, profileData, appProfileLoading, isTakumi])
+
+  useEffect(() => {
+    if (!isTakumi) {
+      setAppearsOnlineToOthers(null)
+      setTakumiLiveStatus(null)
+    }
+  }, [isTakumi])
+
+  /** Takumi-Online-Infos sofort laden (nicht auf AppProvider-Profil warten) */
+  useEffect(() => {
+    if (!isTakumi || status !== "authenticated" || !session?.user) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch("/api/user/takumi-profile")
+        if (!res.ok || cancelled) return
+        const tp = await res.json()
+        if (cancelled || !tp.exists) return
+        if (typeof tp.hideOnlineStatus === "boolean") setHideOnlineStatus(tp.hideOnlineStatus)
+        if (typeof tp.appearsOnlineToOthers === "boolean") setAppearsOnlineToOthers(tp.appearsOnlineToOthers)
+        setTakumiLiveStatus(typeof tp.liveStatus === "string" ? tp.liveStatus : null)
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isTakumi, status, session?.user])
+
+  /** Online-Anzeige aktuell halten (Heartbeat läuft global in useTakumiPresence) */
+  useEffect(() => {
+    if (!isTakumi || !session?.user) return
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/user/takumi-profile")
+        if (!res.ok) return
+        const tp = await res.json()
+        if (!tp.exists) return
+        if (typeof tp.appearsOnlineToOthers === "boolean") setAppearsOnlineToOthers(tp.appearsOnlineToOthers)
+        setTakumiLiveStatus(typeof tp.liveStatus === "string" ? tp.liveStatus : null)
+        if (typeof tp.hideOnlineStatus === "boolean") setHideOnlineStatus(tp.hideOnlineStatus)
+      } catch {
+        /* ignore */
+      }
+    }
+    const id = setInterval(tick, 25 * 1000)
+    return () => clearInterval(id)
+  }, [isTakumi, session?.user])
 
   // Anzeige wie in der Kommunikation: nur Benutzername
   const userName = communicationUsername(
@@ -386,19 +445,16 @@ export default function ProfilePage() {
           </div>
         ) : (
         <>
-        {/* User header */}
-        <div className="relative flex flex-col items-center gap-3 pt-2">
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="absolute right-0 top-0 gap-1.5 text-xs"
-          >
-            <Link href="/profile/preview">
-              <Eye className="size-3.5" />
-              {t("profile.previewTitle")}
-            </Link>
-          </Button>
+        {/* User header — Vorschau in voller Breite rechts (kein absolute: sonst abgeschnitten/überdeckt) */}
+        <div className="flex w-full flex-col items-center gap-3 pt-2">
+          <div className="flex w-full justify-end">
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs shrink-0">
+              <Link href="/profile/preview">
+                <Eye className="size-3.5" />
+                {t("profile.previewTitle")}
+              </Link>
+            </Button>
+          </div>
             {isEditingImage ? (
               <div className="flex flex-col items-center gap-2 w-full max-w-xs">
                 <ImageUpload
@@ -691,38 +747,81 @@ export default function ProfilePage() {
           {isTakumi && (
             <>
             <Card className="border-border/60 gap-0 py-0">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-semibold text-foreground">
-                    {hideOnlineStatus ? t("profile.statusHidden") : t("profile.activateToBeInvisible")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {t("profile.hideOnlineStatusDesc")}
-                  </span>
-                </div>
-                <Switch
-                  checked={hideOnlineStatus}
-                  onCheckedChange={async (v) => {
-                    try {
-                      const res = await fetch("/api/user/takumi-profile", {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ hideOnlineStatus: v }),
-                      })
-                      if (res.ok) {
-                        setHideOnlineStatus(v)
-                        mutate("/api/takumis")
-                        mutate("/api/messages")
-                        toast.success(v ? t("profile.nowHidden") : t("profile.nowVisible"))
-                      } else {
-                        const data = await res.json()
-                        toast.error(data.error || t("profile.error"))
+              <CardContent className="flex flex-col gap-0 p-0">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-foreground">
+                      {hideOnlineStatus ? t("profile.statusHidden") : t("profile.activateToBeInvisible")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("profile.hideOnlineStatusDesc")}
+                    </span>
+                  </div>
+                  <Switch
+                    checked={hideOnlineStatus}
+                    onCheckedChange={async (v) => {
+                      try {
+                        const res = await fetch("/api/user/takumi-profile", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ hideOnlineStatus: v }),
+                        })
+                        if (res.ok) {
+                          setHideOnlineStatus(v)
+                          if (v) {
+                            setAppearsOnlineToOthers(false)
+                          } else {
+                            try {
+                              const r2 = await fetch("/api/user/takumi-profile")
+                              const tp2 = await r2.json()
+                              if (typeof tp2.appearsOnlineToOthers === "boolean") {
+                                setAppearsOnlineToOthers(tp2.appearsOnlineToOthers)
+                              }
+                            } catch {
+                              /* ignore */
+                            }
+                          }
+                          mutate("/api/takumis")
+                          mutate("/api/messages")
+                          toast.success(v ? t("profile.nowHidden") : t("profile.nowVisible"))
+                        } else {
+                          const data = await res.json()
+                          toast.error(data.error || t("profile.error"))
+                        }
+                      } catch {
+                        toast.error(t("common.networkError"))
                       }
-                    } catch {
-                      toast.error(t("common.networkError"))
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
+                {appearsOnlineToOthers !== null && (
+                  <div className="border-t border-border/50 px-4 py-3">
+                    <div className="flex gap-2">
+                      <span
+                        className={`mt-1 size-2 shrink-0 rounded-full ${
+                          hideOnlineStatus
+                            ? "bg-muted-foreground/40"
+                            : appearsOnlineToOthers
+                              ? "bg-emerald-500"
+                              : "bg-muted-foreground/50"
+                        }`}
+                        aria-hidden
+                      />
+                      <div className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+                        <p className="text-foreground">
+                          {hideOnlineStatus
+                            ? t("profile.onlineHiddenByYou")
+                            : appearsOnlineToOthers
+                              ? t("profile.onlineVisibleToOthers")
+                              : t("profile.onlineLooksOffline")}
+                        </p>
+                        {takumiLiveStatus === "available" && (
+                          <p className="text-accent">{t("profile.onlineInstantNote")}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             <TakumiStatusCard />

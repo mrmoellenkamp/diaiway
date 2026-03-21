@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { ensureTaxonomySeeded, isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
+import { TAKUMI_ONLINE_PRESENCE_MS } from "@/lib/expert-to-takumi"
 
 type ExpertWithTaxonomyAssignments = Prisma.ExpertGetPayload<{
   include: {
@@ -40,6 +41,12 @@ export async function GET() {
         })
     if (!expert) return NextResponse.json({ exists: false })
 
+    const now = Date.now()
+    const lastSeenMs = expert.lastSeenAt?.getTime()
+    const recentPresence =
+      lastSeenMs != null && now - lastSeenMs < TAKUMI_ONLINE_PRESENCE_MS
+    const appearsOnlineToOthers = recentPresence && !(expert.hideOnlineStatus ?? false)
+
     const categoryIds = taxonomyReady
       ? (expert as ExpertWithTaxonomyAssignments).categoryAssignments.map((a) => a.categoryId)
       : []
@@ -67,6 +74,9 @@ export async function GET() {
       pricePerSession: expert.pricePerSession,
       responseTime: expert.responseTime,
       isLive: expert.isLive,
+      lastSeenAt: expert.lastSeenAt?.toISOString() ?? null,
+      liveStatus: expert.liveStatus ?? "offline",
+      appearsOnlineToOthers,
       hideOnlineStatus: expert.hideOnlineStatus ?? false,
       isPro: expert.isPro,
       verified: expert.verified,

@@ -126,10 +126,10 @@ export default function LandingPage() {
               <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
                 <span className="font-medium">1.</span> {t("landing.heroWay1")}
               </p>
-              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
-                <Link href="/ai-guide">
-                  {t("landing.heroWay1Button")}
-                  <ArrowRight className="ml-1 size-4" />
+              <Button asChild size="lg" className="h-auto min-h-12 w-full rounded-xl bg-accent py-3 pr-11 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
+                <Link href="/ai-guide" className="relative block text-center">
+                  <span className="whitespace-pre-line leading-snug">{t("landing.heroWay1Button")}</span>
+                  <ArrowRight className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2" aria-hidden />
                 </Link>
               </Button>
             </div>

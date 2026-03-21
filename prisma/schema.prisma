@@ -601,6 +601,22 @@ model DailyParticipantLeft {
   @@index([leftAt])
 }
 
+// Startseiten-Newsfeed (redaktionelle Pflege im Admin)
+model HomeNewsItem {
+  id          String    @id @default(cuid())
+  title       String
+  body        String    @db.Text
+  linkUrl     String?
+  linkLabel   String?
+  published   Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
 model InvoiceCounter {
   id    String   @id @default(cuid())

@@ -66,7 +66,7 @@ const es = {
   "landing.heroIntro": "Soporte en vivo para tu proyecto. Da igual si tienes mano verde o manos manchadas de aceite – diAiway te lleva más lejos.",
   "landing.heroWaysTitle": "¡2 formas de llegar a tu solución! Así se hace...",
   "landing.heroWay1": "AI - check. Respuestas instantáneas a tus preguntas DIY. Con nuestra diAiway Intelligence especializada.",
-  "landing.heroWay1Button": "AI intelligence",
+  "landing.heroWay1Button": "Hisho (秘書),\ntu IA – Intelligence",
   "landing.heroWay2": "Ayuda individual de personas reales con experiencia real y la intuición necesaria. Videollamada o llamada.",
   "landing.heroWay2Button": "Encuentra tu Takumi (experto)",
   "landing.heroTakumiCta": "¿Eres experto y quieres compartir tu conocimiento? Conviértete ahora en Takumi – maestro de tu oficio.",
@@ -227,7 +227,12 @@ const es = {
   // Home
   "home.greeting": "Hola,",
   "home.searchPlaceholder": "Buscar expertos, categorías...",
-  "home.aiGuideDesc": "Describe tu proyecto y obtén un análisis fundamentado",
+  "home.introLong":
+    "Esta es tu página de inicio. Aquí verás novedades de diAiway y quién está en línea. Explora categorías o chatea con Hisho (秘書), nuestra IA que te ayuda con tu proyecto o encuentra al Takumi (experto) adecuado.",
+  "home.newsTitle": "Novedades",
+  "home.newsLoading": "Cargando noticias…",
+  "home.newsReadMore": "Saber más",
+  "home.aiGuideDesc": "Chatea con Hisho (秘書): revisión de proyecto, planificación, expertos",
   "home.nowLive": "En vivo ahora",
   "home.online": "en línea",
   "home.noExpertsOnline": "No hay expertos en línea ahora.",
@@ -254,6 +259,12 @@ const es = {
   "messages.tabNotifications": "Notificaciones",
   "messages.tabChats": "Chats",
   "messages.tabWaymails": "Waymails",
+  "messages.tabNotificationsDesc":
+    "Aquí recibes novedades sobre tu perfil.",
+  "messages.tabChatsDesc":
+    "Aquí puedes chatear directamente con usuarios en línea.",
+  "messages.tabWaymailsDesc":
+    "Aquí puedes ver tu correo interno (Waymails).",
   "messages.empty": "Aún no hay mensajes",
   "messages.emptyDesc": "Inicia una conversación con un experto.",
   "messages.discoverCategories": "Descubrir categorías",
@@ -309,8 +320,10 @@ const es = {
   "categories.title": "Categorías",
   "categories.count": "{count} categorías",
   "categories.areas": "áreas",
-  "categories.mentorTitle": "Categoría y áreas temáticas",
-  "categories.mentorDesc": "Describe tu proyecto, sube fotos y recibe un análisis fundamentado de nuestra IA o busca en las categorías un contacto adecuado.",
+  "categories.mentorTitle": "Hisho (秘書) – Intelligence y categorías",
+  "categories.mentorDesc":
+    "Usa Hisho (秘書) para dudas, fotos y planificación; más abajo, en las categorías, encuentra Takumi (expertos) para tu tema.",
+  "categories.collapsibleDesc": "Chat con Hisho (秘書): revisión de proyecto, planificación, buscar expertos.",
 
   // Category Detail
   "categoryDetail.expertsFound": "{count} expertos encontrados",
@@ -409,6 +422,13 @@ const es = {
   "profile.hideOnlineStatusDesc": "Otros te ven como desconectado aunque estés conectado",
   "profile.nowHidden": "Estado oculto",
   "profile.nowVisible": "Estado visible",
+  "profile.onlineVisibleToOthers":
+    "Otros te ven en línea (app activa en los últimos ~30 segundos).",
+  "profile.onlineLooksOffline":
+    "Otros te ven desconectado (sin actividad reciente o pestaña en segundo plano).",
+  "profile.onlineHiddenByYou":
+    "“Ocultar estado en línea” está activo: otros te ven desconectado.",
+  "profile.onlineInstantNote": "Instant Connect: estás disponible para solicitudes.",
   "profile.earnings": "Ingresos",
   "profile.total": "Total",
   "profile.adminDashboard": "Panel de administración",
@@ -492,20 +512,37 @@ const es = {
   "aria.showPassword": "Mostrar contraseña",
   "aria.hidePassword": "Ocultar contraseña",
 
-  // Mentor / AI FAB (diAiway AI Intelligence)
-  "mentor.open": "Abrir diAiway AI Intelligence",
+  // Mentor / Hisho (秘書) — diAiway Intelligence
+  "mentor.hishoName": "Hisho (秘書)",
+  "mentor.intelligenceSuffix": "Intelligence",
+  "mentor.open": "Abrir Hisho (秘書)",
   "mentor.close": "Cerrar chat",
-  "mentor.chat": "diAiway AI Intelligence",
+  "mentor.chat": "Hisho (秘書)",
   "mentor.retryError": "Por favor, inténtalo de nuevo.",
   "mentor.attachPhoto": "Adjuntar foto",
-  "mentor.headerTitleEmbedded": "diAiway",
-  "mentor.headerTitleFloating": "diAiway",
+  "mentor.headerTitleEmbedded": "Hisho (秘書)",
+  "mentor.headerTitleFloating": "Hisho (秘書)",
   "mentor.headerDescEmbedded": "Revisión de proyecto — Analiza, planifica, encuentra expertos",
-  "mentor.headerDescFloating": "Tu asesor personal",
+  "mentor.headerDescFloating": "Tu asistente IA en diAiway",
   "mentor.online": "En línea",
-  "mentor.welcome": "¡Bienvenido! Describe tu proyecto o sube una foto.",
+  "mentor.welcome":
+    "Hola, soy Hisho (秘書), tu IA en diAiway. Describe tu proyecto o sube una foto: te ayudo o busco al Takumi adecuado.",
   "mentor.photoUploadMessage": "He subido una foto de mi problema. Por favor analízala y dame una valoración.",
-  "mentor.declineSearch": "No gracias, prefiero seguir con la IA.",
+  "mentor.imageAttachTitle": "Enviar imagen",
+  "mentor.imageCaptionHint":
+    "Añade una nota sobre la imagen: Hisho responderá con contexto y no hará un análisis largo sin sentido.",
+  "mentor.imageCaptionLabel": "Tu descripción / pregunta (opcional)",
+  "mentor.imageCaptionPlaceholder": "p. ej.: «Este es mi cuadro eléctrico — ¿en qué orden reviso?»",
+  "mentor.imageNoCaptionBody":
+    "He adjuntado una imagen. Por favor pregúntame primero en qué necesito ayuda — aún no hagas un análisis detallado.",
+  "mentor.sendWithImage": "Enviar con imagen",
+  "mentor.cancelAttach": "Cancelar",
+  "mentor.thinking": "Hisho está pensando…",
+  "mentor.declineSearch": "No gracias, prefiero seguir con Hisho.",
+  "mentor.proactiveSearchQuestion":
+    "¿Busco un Takumi adecuado que pueda ayudarte en vivo por vídeo?",
+  "mentor.proactiveSearchYes": "Sí, buscar expertos",
+  "mentor.proactiveSearchNo": "No, seguir con Hisho",
   "mentor.placeholderEmbedded": "Describe tu proyecto...",
   "mentor.placeholderFloating": "Escribe tu pregunta...",
 
@@ -735,9 +772,11 @@ const es = {
   "takumiPage.dmGreeting": "Hola {name}, vi tu perfil y me gustaría hablar contigo sobre mi proyecto.",
 
   // AI Guide
-  "aiGuide.pageHeading": "diAiway - Intelligence",
-  "aiGuide.introText": "Describe tu proyecto, sube fotos y obtén un análisis detallado de nuestra IA, o busca en las categorías un interlocutor adecuado.",
-  "aiGuide.welcome": "¡Konichiwa! Soy tu Guía diAiway. Describe tu problema o sube una foto — ¡encontraré al experto adecuado para ti!",
+  "aiGuide.pageHeading": "Hisho (秘書) – diAiway – Intelligence",
+  "aiGuide.introText":
+    "Hisho (秘書) es tu asistente IA: revisión de proyecto, fotos con contexto y ayuda para encontrar un Takumi. Describe tu caso o usa el inicio para novedades y expertos en vivo.",
+  "aiGuide.welcome":
+    "¡Konichiwa! Soy Hisho (秘書), tu IA en diAiway. Describe tu problema o sube una foto — ¡encontraré al experto adecuado para ti!",
   "aiGuide.foundExperts": "Encontré {count} expertos para ti:",
   "aiGuide.noExpertsYet": "Aún no hay expertos registrados. ¡Vuelve pronto!",
   "aiGuide.noExactMatch": "No pude encontrar una coincidencia exacta, pero aquí están nuestros mejores expertos:",

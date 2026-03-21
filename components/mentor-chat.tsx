@@ -17,6 +17,14 @@ import {
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
@@ -100,6 +108,11 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
   const pendingHandled = useRef(false)
   const proactiveShown = useRef(false)
   const [showProactivePrompt, setShowProactivePrompt] = useState(false)
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const [pendingImageParts, setPendingImageParts] = useState<Array<{ type: "file"; mediaType: string; url: string }>>(
+    []
+  )
+  const [imageCaption, setImageCaption] = useState("")
   const router = useRouter()
   const isEmbedded = variant === "embedded"
   const isFullpage = variant === "fullpage"
@@ -189,16 +202,31 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
     if (isStreaming) return
     try {
       const fileParts = await convertFilesToDataURLs(files)
-      sendMessage({
-        role: "user",
-        parts: [
-          { type: "text", text: t("mentor.photoUploadMessage") },
-          ...fileParts,
-        ],
-      })
+      setPendingImageParts(fileParts)
+      setImageCaption("")
+      setImageDialogOpen(true)
     } finally {
       e.target.value = ""
     }
+  }
+
+  function sendPendingImages() {
+    if (pendingImageParts.length === 0 || isStreaming) return
+    const caption = imageCaption.trim()
+    const textPart = caption || t("mentor.imageNoCaptionBody")
+    sendMessage({
+      role: "user",
+      parts: [{ type: "text", text: textPart }, ...pendingImageParts],
+    })
+    setImageDialogOpen(false)
+    setPendingImageParts([])
+    setImageCaption("")
+  }
+
+  function cancelPendingImages() {
+    setImageDialogOpen(false)
+    setPendingImageParts([])
+    setImageCaption("")
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -216,6 +244,50 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
     : []
 
   return (
+    <>
+    <Dialog open={imageDialogOpen} onOpenChange={(o) => !o && cancelPendingImages()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("mentor.imageAttachTitle")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">{t("mentor.imageCaptionHint")}</p>
+        <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto">
+          {pendingImageParts.map((p, i) =>
+            p.mediaType.startsWith("image/") ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={p.url}
+                alt=""
+                className="h-20 w-20 rounded-lg border border-border object-cover"
+              />
+            ) : null
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="mentor-image-caption" className="text-xs">
+            {t("mentor.imageCaptionLabel")}
+          </Label>
+          <textarea
+            id="mentor-image-caption"
+            value={imageCaption}
+            onChange={(e) => setImageCaption(e.target.value)}
+            placeholder={t("mentor.imageCaptionPlaceholder")}
+            rows={3}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={cancelPendingImages}>
+            {t("mentor.cancelAttach")}
+          </Button>
+          <Button type="button" onClick={sendPendingImages} disabled={isStreaming}>
+            {t("mentor.sendWithImage")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     <div
       className={cn(
         "flex flex-col overflow-hidden font-sans",
@@ -234,9 +306,14 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             <Sparkles className="size-4 text-accent" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 text-sm font-bold text-primary-foreground">
+            <p className="flex flex-wrap items-baseline gap-x-1 text-sm font-bold text-primary-foreground leading-tight">
+              <span className="font-semibold">{t("mentor.hishoName")}</span>
+              <span className="text-primary-foreground/60">–</span>
               <DiAiwayBrand lightOnDark />
-              <span className="font-jp text-[10px] font-normal text-primary-foreground/50">{"導師"}</span>
+              <span className="text-primary-foreground/60">–</span>
+              <span className="text-[11px] font-semibold text-primary-foreground/90">
+                {t("mentor.intelligenceSuffix")}
+              </span>
             </p>
             <p className="truncate text-[10px] text-primary-foreground/65">
               {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
@@ -267,8 +344,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
               <Bot className="size-3.5 text-primary" />
             </div>
             <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border/30 bg-white/80 px-3 py-2.5 text-[13px] leading-relaxed text-foreground shadow-sm">
-              {t("mentor.welcome")}{" "}
-              <span className="font-jp text-primary/30">{"匠"}</span>
+              {t("mentor.welcome")}
             </div>
           </div>
         )}
@@ -362,9 +438,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
               <Sparkles className="size-3.5 text-primary" />
             </div>
             <div className="max-w-[90%] flex flex-col gap-2.5 rounded-2xl rounded-tl-md border border-primary/15 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-sm">
-              <p className="text-[13px] leading-relaxed text-foreground">
-                Soll ich fur dich nach einem passenden Takumi suchen, der dich direkt per Video unterstutzen kann?
-              </p>
+              <p className="text-[13px] leading-relaxed text-foreground">{t("mentor.proactiveSearchQuestion")}</p>
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleSearchExperts}
@@ -372,7 +446,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   className="h-8 gap-1.5 rounded-lg bg-primary text-[11px] font-bold text-primary-foreground hover:bg-primary/90"
                 >
                   <Sparkles className="size-3" />
-                  Ja, Experten suchen
+                  {t("mentor.proactiveSearchYes")}
                 </Button>
                 <Button
                   onClick={handleDeclineSearch}
@@ -380,7 +454,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   variant="outline"
                   className="h-8 rounded-lg text-[11px] border-border/50"
                 >
-                  Nein, weiter mit KI
+                  {t("mentor.proactiveSearchNo")}
                 </Button>
               </div>
             </div>
@@ -479,7 +553,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                 <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-2" />
                 <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-3" />
               </div>
-              <span className="text-[10px] text-muted-foreground">AI analysiert...</span>
+              <span className="text-[10px] text-muted-foreground">{t("mentor.thinking")}</span>
             </div>
           </div>
         )}
@@ -557,5 +631,6 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         </p>
       </div>
     </div>
+    </>
   )
 }

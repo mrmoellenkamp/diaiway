@@ -320,50 +320,57 @@ function MessagesPageContent() {
   return (
     <PageContainer>
       {/* Tabs: Benachrichtigungen | Chats | Waymails */}
-      <div className="mb-4 flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab("notifications")}
-          className={cn(
-            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            activeTab === "notifications"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("messages.tabNotifications")}
-          {unreadNotifications.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">
-              {unreadNotifications.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("chats")}
-          className={cn(
-            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            activeTab === "chats"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("messages.tabChats")}
-        </button>
-        <button
-          onClick={() => {
-            // Manueller Klick → Auswahl immer zurücksetzen (zeigt Listenansicht)
-            setSelectedWaymailId(null)
-            setWaymailDetail(null)
-            setActiveTab("waymails")
-          }}
-          className={cn(
-            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            activeTab === "waymails"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("messages.tabWaymails")}
-        </button>
+      <div className="mb-4 space-y-2">
+        <div className="flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("notifications")}
+            className={cn(
+              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              activeTab === "notifications"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("messages.tabNotifications")}
+            {unreadNotifications.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">
+                {unreadNotifications.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("chats")}
+            className={cn(
+              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              activeTab === "chats"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("messages.tabChats")}
+          </button>
+          <button
+            onClick={() => {
+              // Manueller Klick → Auswahl immer zurücksetzen (zeigt Listenansicht)
+              setSelectedWaymailId(null)
+              setWaymailDetail(null)
+              setActiveTab("waymails")
+            }}
+            className={cn(
+              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              activeTab === "waymails"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("messages.tabWaymails")}
+          </button>
+        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground px-0.5">
+          {activeTab === "notifications" && t("messages.tabNotificationsDesc")}
+          {activeTab === "chats" && t("messages.tabChatsDesc")}
+          {activeTab === "waymails" && t("messages.tabWaymailsDesc")}
+        </p>
       </div>
 
       {/* Benachrichtigungen — E-Mail-ähnliche Liste */}

@@ -12,6 +12,7 @@ import { useTakumis } from "@/hooks/use-takumis"
 import { useApp } from "@/lib/app-context"
 import { Search, ArrowRight } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { HomeNewsFeed } from "@/components/home-news-feed"
 
 export default function HomePage() {
   const { userName } = useApp()
@@ -42,9 +43,14 @@ export default function HomePage() {
               autoCorrect="off"
             />
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t("home.introLong")}</p>
         </div>
 
-        {/* diAiway Intelligence — collapsible */}
+        <div className="px-4">
+          <HomeNewsFeed />
+        </div>
+
+        {/* Hisho / KI — collapsible */}
         <div className="px-4">
           <CollapsibleAiBox
             defaultExpanded={false}
