@@ -3,6 +3,10 @@ import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
+import {
+  getAdminStatsDegradedMessage,
+  withPrismaConnectivityRetries,
+} from "@/lib/prisma-connectivity"
 
 export const maxDuration = 60
 
@@ -190,7 +194,8 @@ export async function GET() {
       recentBookings,
       recentUsers,
       topExperts,
-    ] = await Promise.all([
+    ] = await withPrismaConnectivityRetries(() =>
+      Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { appRole: "shugyo" } }),
     prisma.user.count({ where: { appRole: "takumi" } }),
@@ -234,16 +239,10 @@ export async function GET() {
       select: ADMIN_STATS_EXPERT_SELECT,
     }),
     ])
+    )
   } catch (err: unknown) {
     console.error("[admin/stats] Aggregation fehlgeschlagen:", err)
-    const msg = err instanceof Error ? err.message : String(err)
-    const short = msg.length > 220 ? `${msg.slice(0, 220)}…` : msg
-    const isSchema =
-      /does not exist|relation|Unknown column|column|migration|P20[0-9]{2}/i.test(msg)
-    const hint = isSchema
-      ? `Datenbank-Schema passt nicht zum Code (${short}). Auf dem Server \`npm run db:migrate:deploy\` ausführen.`
-      : `Statistik-Abfragen fehlgeschlagen: ${short}`
-    return NextResponse.json(emptyStatsPayload(hint))
+    return NextResponse.json(emptyStatsPayload(getAdminStatsDegradedMessage(err)))
   }
 
   const statusMap: Record<string, number> = {}

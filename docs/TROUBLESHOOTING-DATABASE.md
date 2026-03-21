@@ -35,6 +35,15 @@ Die Hostname **`db.prisma.io`** steht typischerweise in der **`DATABASE_URL`**, 
 
 5. **Nach Änderung der Env-Vars** immer **neu deployen** (Vercel baut die Serverless-Funktionen mit den neuen Werten).
 
+6. **Richtigen Connection-Typ wählen (häufigster Fehler)**  
+   In der Prisma Console gibt es oft **mehrere** Strings (z. B. für Serverless vs. Migrationen):  
+   - **`DATABASE_URL` (Vercel / Runtime):** den Eintrag, den Prisma für **„Serverless“ / „Edge“ / Pooling** ausweist — **nicht** blind den ersten „Direct“-String nehmen, wenn die Doku etwas anderes empfiehlt.  
+   - **`DIRECT_URL`:** der **direkte** Postgres-Endpunkt für `prisma migrate` (ohne denselben Pooler wie die Runtime-URL, falls unterschiedlich).  
+   Wenn Runtime-URL und Direct vertauscht sind, kann `db.prisma.io` von Vercel aus **nicht** erreichbar sein oder Migrationen brechen.
+
+7. **Selbsttest (Admin)**  
+   Als Admin eingeloggt: **`GET /api/admin/db-health`** — zeigt anonymisiert Host/Port der konfigurierten URLs und ob `SELECT 1` klappt (`dbOk`).
+
 ## Kurzfassung
 
 Der Fehler ist **kein Bug in der App-Logik**, sondern **keine oder keine erreichbare Datenbank** für die konfigurierte `DATABASE_URL`. Sobald Postgres wieder erreichbar ist und die URLs stimmen, verschwinden P1001 / `db.prisma.io`-Fehler und die 500er auf den API-Routen.
