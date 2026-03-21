@@ -174,7 +174,7 @@ function slugify(input: string): string {
 }
 
 export async function generateUniqueCategorySlug(base: string): Promise<string> {
-  let s = slugify(base)
+  const s = slugify(base)
   let n = 0
   while (true) {
     const candidate = n === 0 ? s : `${s}-${n}`

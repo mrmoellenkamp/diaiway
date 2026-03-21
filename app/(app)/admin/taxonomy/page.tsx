@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
@@ -539,8 +540,14 @@ export default function AdminTaxonomyPage() {
                 <Label>Eigenes Icon (Bild)</Label>
                 {formEdit.iconImageUrl ? (
                   <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={formEdit.iconImageUrl} alt="" className="size-12 rounded object-contain border" />
+                    <Image
+                      src={formEdit.iconImageUrl}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="size-12 rounded border object-contain"
+                      unoptimized
+                    />
                     <Button type="button" variant="outline" size="sm" onClick={() => setFormEdit({ ...formEdit, iconImageUrl: null })}>
                       Bibliotheks-Icon nutzen
                     </Button>

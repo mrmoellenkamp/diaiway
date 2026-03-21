@@ -4,7 +4,7 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
-import { assertInvoiceCompleteForPayment } from "@/lib/payment-invoice-guard"
+import { getInvoiceGateResult } from "@/lib/payment-invoice-guard"
 import { getRequestLocale } from "@/lib/server-locale"
 import { markVerified } from "@/lib/verification-service"
 
@@ -21,27 +21,59 @@ export interface BookingCheckoutParams {
   priceInCents: number
 }
 
+/** Erwartbare Fehler als 200 + Payload — vermeidet Next-500 / RSC-Digest bei fehlenden Rechnungsdaten. */
+export type StripeEmbeddedCheckoutResult =
+  | { ok: true; clientSecret: string | null; sessionId: string }
+  | {
+      ok: false
+      error: string
+      code?:
+        | "INVOICE_INCOMPLETE"
+        | "UNAUTHORIZED"
+        | "VALIDATION"
+        | "NOT_FOUND"
+        | "FORBIDDEN"
+        | "ALREADY_PAID"
+      missingFieldKeys?: string[]
+    }
+
 /** Create a Stripe Checkout Session for booking payment (Vorauszahlung).
  * Uses Hold & Capture (manual) with traceability metadata.
  */
-export async function startBookingCheckout(params: BookingCheckoutParams) {
+export async function startBookingCheckout(
+  params: BookingCheckoutParams
+): Promise<StripeEmbeddedCheckoutResult> {
   const { bookingId, takumiName, priceInCents } = params
 
   if (!bookingId || !priceInCents) {
-    throw new Error("Missing required parameters for checkout")
+    return { ok: false, error: "Missing required parameters for checkout", code: "VALIDATION" }
   }
 
   const session = await auth()
-  if (!session?.user?.id) throw new Error("Nicht angemeldet")
+  if (!session?.user?.id) {
+    return { ok: false, error: "Nicht angemeldet", code: "UNAUTHORIZED" }
+  }
   const shugyoId = session.user.id
 
   const locale = await getRequestLocale()
-  await assertInvoiceCompleteForPayment(shugyoId, locale)
+  const invoiceGate = await getInvoiceGateResult(shugyoId, locale)
+  if (!invoiceGate.ok) {
+    return {
+      ok: false,
+      error: invoiceGate.message,
+      code: "INVOICE_INCOMPLETE",
+      missingFieldKeys: invoiceGate.missingFieldKeys,
+    }
+  }
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
-  if (!booking) throw new Error("Booking not found")
-  if (booking.paymentStatus === "paid") throw new Error("Buchung bereits bezahlt")
-  if (booking.userId !== shugyoId) throw new Error("Keine Berechtigung für diese Buchung")
+  if (!booking) return { ok: false, error: "Booking not found", code: "NOT_FOUND" }
+  if (booking.paymentStatus === "paid") {
+    return { ok: false, error: "Buchung bereits bezahlt", code: "ALREADY_PAID" }
+  }
+  if (booking.userId !== shugyoId) {
+    return { ok: false, error: "Keine Berechtigung für diese Buchung", code: "FORBIDDEN" }
+  }
 
   const serviceLabel = "Expertensitzung"
   const durationMin = (() => {
@@ -96,28 +128,44 @@ export async function startBookingCheckout(params: BookingCheckoutParams) {
     },
   })
 
-  return { clientSecret: sessionData.client_secret, sessionId: sessionData.id }
+  return { ok: true, clientSecret: sessionData.client_secret, sessionId: sessionData.id }
 }
 
 /** Create a Stripe Checkout Session for a video session payment (während des Calls). */
-export async function startSessionCheckout(params: SessionCheckoutParams) {
+export async function startSessionCheckout(
+  params: SessionCheckoutParams
+): Promise<StripeEmbeddedCheckoutResult> {
   const { bookingId, takumiName, duration, priceInCents } = params
 
   if (!bookingId || !priceInCents) {
-    throw new Error("Missing required parameters for checkout")
+    return { ok: false, error: "Missing required parameters for checkout", code: "VALIDATION" }
   }
 
   const session = await auth()
-  if (!session?.user?.id) throw new Error("Nicht angemeldet")
+  if (!session?.user?.id) {
+    return { ok: false, error: "Nicht angemeldet", code: "UNAUTHORIZED" }
+  }
   const shugyoId = session.user.id
 
   const locale = await getRequestLocale()
-  await assertInvoiceCompleteForPayment(shugyoId, locale)
+  const invoiceGate = await getInvoiceGateResult(shugyoId, locale)
+  if (!invoiceGate.ok) {
+    return {
+      ok: false,
+      error: invoiceGate.message,
+      code: "INVOICE_INCOMPLETE",
+      missingFieldKeys: invoiceGate.missingFieldKeys,
+    }
+  }
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
-  if (!booking) throw new Error("Booking not found")
-  if (booking.paymentStatus === "paid") throw new Error("Session already paid")
-  if (booking.userId !== shugyoId) throw new Error("Keine Berechtigung")
+  if (!booking) return { ok: false, error: "Booking not found", code: "NOT_FOUND" }
+  if (booking.paymentStatus === "paid") {
+    return { ok: false, error: "Session already paid", code: "ALREADY_PAID" }
+  }
+  if (booking.userId !== shugyoId) {
+    return { ok: false, error: "Keine Berechtigung", code: "FORBIDDEN" }
+  }
 
   const serviceLabel = "Expertensitzung"
 
@@ -160,7 +208,7 @@ export async function startSessionCheckout(params: SessionCheckoutParams) {
     },
   })
 
-  return { clientSecret: sessionData.client_secret, sessionId: sessionData.id }
+  return { ok: true, clientSecret: sessionData.client_secret, sessionId: sessionData.id }
 }
 
 /** Verify payment status for a booking (client-side polling).

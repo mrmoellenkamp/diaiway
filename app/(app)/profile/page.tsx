@@ -106,7 +106,7 @@ export default function ProfilePage() {
 
   // Profile data from DB
   const [profileLoading, setProfileLoading] = useState(true)
-  const [dbName, setDbName] = useState("")
+  const [, setDbName] = useState("")
   const [dbUsername, setDbUsername] = useState<string | null>(null)
   const [dbEmail, setDbEmail] = useState("")
   const [dbImage, setDbImage] = useState("")

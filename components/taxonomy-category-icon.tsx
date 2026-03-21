@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import * as LucideIcons from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -19,14 +20,14 @@ export function TaxonomyCategoryIcon({
   size?: number
 }) {
   if (iconImageUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
-      <img
+      <Image
         src={iconImageUrl}
         alt=""
         width={size}
         height={size}
         className={cn("object-contain", className)}
+        unoptimized
       />
     )
   }

@@ -74,7 +74,7 @@ async function syncTakumiExpertsWithUsers(): Promise<void> {
       select: { id: true, name: true, email: true },
     })
     for (const u of takumiUsersToSync) {
-      let existing = await prisma.expert.findUnique({ where: { userId: u.id } })
+      const existing = await prisma.expert.findUnique({ where: { userId: u.id } })
       if (!existing) {
         const expertByEmail = u.email
           ? await prisma.expert.findFirst({

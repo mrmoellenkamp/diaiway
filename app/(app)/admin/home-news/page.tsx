@@ -91,7 +91,7 @@ function AdminHomeNewsExistingCard({
     setFallbackLabel(item.linkLabel ?? "")
     setSortOrder(item.sortOrder)
     setPublished(item.published)
-  }, [item.id, item.updatedAt])
+  }, [item])
 
   async function handleSave() {
     const translations: Record<

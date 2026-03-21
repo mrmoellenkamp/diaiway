@@ -94,7 +94,7 @@ async function applyTaxonomyFromLegacy(
   expertId: string,
   categorySlug: string,
   subcategory: string,
-  categoryName: string,
+  _categoryName: string,
 ) {
   const cat = await prisma.taxonomyCategory.findUnique({ where: { slug: categorySlug } })
   if (!cat) return

@@ -94,6 +94,11 @@ export function SessionCheckout({
 
     startSessionCheckout(params)
       .then((result) => {
+        if (!result.ok) {
+          onError(result.error)
+          setLoading(false)
+          return
+        }
         setClientSecret(result.clientSecret)
         setLoading(false)
         setPolling(true)

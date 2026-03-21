@@ -103,6 +103,11 @@ export function BookingCheckout({
     setLoading(true)
     startBookingCheckout({ bookingId, takumiName, priceInCents })
       .then((result) => {
+        if (!result.ok) {
+          onError(result.error)
+          setLoading(false)
+          return
+        }
         setClientSecret(result.clientSecret)
         setLoading(false)
         setPolling(true)
