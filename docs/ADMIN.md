@@ -11,7 +11,7 @@
 ```
 app/(app)/admin/
 ├── layout.tsx          # Auth-Guard (kein Sidebar)
-├── page.tsx            # Haupt-Dashboard mit 8 Tabs
+├── page.tsx            # Haupt-Dashboard mit 9 Tabs (+ Banner Website-Statistik)
 ├── health-check/       # Live-Checks (Cron, Stripe, Wallet, Push)
 ├── finance/
 ├── safety/
@@ -36,21 +36,25 @@ app/(app)/admin/
 - `middleware.ts`: Prüft `/admin/*` vor dem Layout
 - Gleicher Check: nicht eingeloggt → Login; `role !== "admin"` → `/home`
 
-### Dashboard-Tabs (8 Tabs, mobile-optimiert)
+### Dashboard-Tabs (9 Tabs, mobile-optimiert)
 
 | Tab | Inhalt |
 |-----|--------|
-| **Übersicht** | KPI-Stats, Buchungsübersicht, Revenue, Top-Takumis, Aktivität |
+| **Übersicht** | KPI-Stats (`GET /api/admin/stats`); bei DB-Fehler: `degraded: true` + Hinweistext, weiterhin HTTP 200 |
+| **Statistik** | Website-Traffic: Besuche, Unique Visitor, Verweildauer, Bounce, Top-Pfade (`GET /api/admin/analytics?days=…`); benötigt Migration `SiteAnalyticsSession` / `SiteAnalyticsPageView` |
 | **Nutzer** | Paginierte Nutzerliste, Search, Filter, Rollen, Anonymisierung |
 | **Buchungen** | Paginierte Buchungsliste, Status-Filter |
 | **Takumis** | Expertenliste, Live/Offline-Toggle |
-| **Finanzen** | FinanceTab + Link zu Finance Monitoring |
+| **Finanzen** | FinanceTab + Link zu Finance Monitoring (`/admin/finance`) |
 | **Sicherheit** | Safety Reports, KI-Incidents; Links zu `/admin/safety`, `/admin/safety/incidents` |
 | **Scanner** | Vision-Scanner (Google Cloud Vision); Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web |
-| **System** | Health-Check, Waymail-Templates, DB-Tools |
+| **System** | Verweise: Taxonomie (`/admin/taxonomy`), Startseiten-News (`/admin/home-news`), Health-Check, Waymail-Templates, DB-Tools |
 
-- **Tab-Leiste**: `flex-wrap` – umbricht auf Mobile in 2 Zeilen; keine horizontale Scrollbar
-- **Quick-KPI-Bar**: Nutzer, Takumis, Buchungen, Umsatz – klickbar für Tab-Wechsel
+- **Tab-Leiste**: `flex-wrap` – umbricht auf Mobile
+- **Quick-KPI-Bar**: Nutzer, Takumis, Buchungen, Umsatz – klickbar für Tab-Wechsel (setzt URL-Query `?tab=…`)
+- **Direktlink**: Banner „Website-Statistik“ unter der KPI-Leiste
+- **Deep-Link**: `/admin?tab=analytics` öffnet den Statistik-Tab nach Laden
+- **Öffentliches Tracking**: `components/site-analytics-tracker.tsx` + `POST /api/analytics/beacon` — **kein** Tracking für Pfade unter `/admin` oder `/api`
 
 ### Vision-Scanner (Tab)
 
@@ -210,10 +214,27 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 
 ---
 
-## 6. API-Routen (Admin, ergänzend)
+## 7. Weitere Admin-Seiten (außer Dashboard)
+
+| Pfad | Zweck |
+|------|--------|
+| `/admin/taxonomy` | Kategorien & Fachbereiche, Icons, Takumi-Zuordnung |
+| `/admin/home-news` | Startseiten-News (DE/EN/ES), Links pro Sprache + Fallback |
+| `/admin/finance` | Escrow, Force Capture, Manual Release, Exporte |
+| `/admin/health-check` | Cron-Monitor, Stripe-Risiko, Wallet-Check, Push |
+| `/admin/templates` | Waymail-Vorlagen |
+| `/admin/safety` | Safety Reports |
+| `/admin/safety/incidents` | KI-Incidents (Vision) |
+| `/admin/scanner` | Redirect → `/admin` (Scanner nur als Tab) |
+
+---
+
+## 8. API-Routen (Admin, ergänzend)
 
 | Route | Methode | Beschreibung |
 |-------|---------|--------------|
+| `/api/admin/stats` | GET | KPI-Aggregationen (kann `degraded` liefern) |
+| `/api/admin/analytics` | GET | Website-Statistik (Query `days`) |
 | `/api/admin/health-check` | GET | Cron, Stripe-Escrow, Wallet-Integrität, Push-Reachability |
 | `/api/admin/users/[id]` | DELETE | Anonymisierung (nicht Admin), Blob-Delete |
 | `/api/user/account` | PATCH | Pause/Resume (inkl. liveStatus offline) |
@@ -221,7 +242,7 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 
 ---
 
-## 7. Cron & Vercel Hobby-Limit
+## 9. Cron & Vercel Hobby-Limit
 
 ### vercel.json
 

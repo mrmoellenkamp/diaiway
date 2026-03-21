@@ -50,19 +50,25 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 
 ### Für Admins
 - **Admin-Layout** (`app/(app)/admin/layout.tsx`): Dedizierter Guard – NextAuth + Prisma-Rolle; **kein Sidebar**, Tab-Navigation
-- **Admin-Dashboard** (`/admin`): **8 Tabs** – Übersicht, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System; mobile-optimiert (Tabs umbrechen)
+- **Admin-Dashboard** (`/admin`): **9 Tabs** – Übersicht, **Statistik** (Website-Traffic), Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System; mobile-optimiert (`flex-wrap`); Direktlink-Banner „Website-Statistik“; Deep-Link **`/admin?tab=analytics`**
+- **Statistik-Tab**: Besuche, Unique Visitor, Verweildauer (aktive Zeit), Bounce, Top-Pfade; Daten aus `SiteAnalyticsSession` / `SiteAnalyticsPageView` (Migration erforderlich); öffentlicher Beacon `POST /api/analytics/beacon` (kein Tracking von `/admin`)
 - **Vision-Scanner** (Tab): Google Cloud Vision – Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web; Bild-Upload oder Kamera; Ergebnisse direkt unter dem Analyse-Button
 - **Sicherheit-Tab**: Safety Reports, KI-Incidents; Links zu `/admin/safety` und `/admin/safety/incidents`
-- **System-Tab**: Health-Check, Waymail-Templates, DB-Tools
+- **System-Tab**: Links zu **Taxonomie** (`/admin/taxonomy`), **Startseiten-News** (`/admin/home-news`), Health-Check, Waymail-Templates, DB-Tools
+- **Eigene Seiten** (zusätzlich zum Dashboard): `/admin/health-check`, `/admin/finance`, `/admin/templates`, `/admin/taxonomy`, `/admin/home-news`, `/admin/safety`, `/admin/safety/incidents`; `/admin/scanner` → Redirect ins Dashboard (Scanner-Tab)
 - **Health-Check** (`/admin/health-check`): Live-Monitoring – Cron-Laufzeiten, Stripe-Escrow-Risiken (6+ Tage), Wallet-Integrität, Push-Reachability; Force-Capture pro Buchung
 - **Finance Monitoring** (`/admin/finance`): Escrow-Holds, Stripe-Expiry (7 Tage), Shugyo-Wallet-Liability; Force Capture, Manual Release mit Doppelbestätigung
 - **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen; alle Finanz-Ops in `prisma.$transaction`
 - **CSV-Export**: Financial CSV (DATEV-ready), ZIP (PDFs), DATEV-CSV
 - **Safety Incidents**: Alert-Bilder unter `/admin/safety/incidents`
 - **AdminActionLog**: Alle Admin-Aktionen (force_capture, manual_release, refund)
+- **Taxonomie-Admin**: Kategorien & Fachbereiche, Icons (Lucide oder Upload), Takumi-Zuordnung, Backfill von Legacy-Feldern
+- **Startseiten-News**: Mehrsprachige Meldungen (DE/EN/ES), optional Links pro Sprache + Fallback-Link (`HomeNewsItem` / `HomeNewsTranslation`)
 
 ### Technisch
 - **i18n**: Deutsch (Master), Englisch, Spanisch; Sprachenauswahl im Header (Länderkürzel: DE, EN, ES)
+- **Beta-Landing**: `/beta` → Redirect `/beta/de`; statische Seiten `/beta/de`, `/beta/en`, `/beta/es` (Founder-Karte, CTA, Hero-Visuals)
+- **Vercel Analytics**: `@vercel/analytics` im Root-Layout (anbieterseitige Metriken); **eigene** Statistik zusätzlich in Admin-Tab (siehe oben)
 - **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard; 7-Tage-Stripe-Hold-Fenster
 - **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
 - **Safety**: Google Vision API (Pre-Check + Live-Monitoring); bei Verstoß **sofortige Verbindungstrennung**; Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
@@ -102,7 +108,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 ```
 ├── app/
 │   ├── (app)/              # Geschützte App-Routen
-│   │   ├── admin/          # Admin (layout.tsx Guard), Dashboard mit 8 Tabs, Health-Check, Finance, Safety, Templates, Scanner (redirect)
+│   │   ├── admin/          # Admin (layout Guard): Dashboard 9 Tabs + Seiten taxonomy, home-news, finance, health-check, safety, templates, scanner→redirect
 │   │   ├── ai-guide/
 │   │   ├── booking/[id]/
 │   │   ├── session/[id]/   # Session-Seite (Daily.co)
@@ -152,7 +158,7 @@ npx prisma db push   # oder: npx prisma migrate deploy
 npm run dev
 ```
 
-App: [http://localhost:3000](http://localhost:3000)
+App: [http://localhost:3001](http://localhost:3001) (Port laut `package.json` → `next dev -p 3001`)
 
 ### Qualität (Lint & Typen)
 
@@ -163,7 +169,11 @@ npm run typecheck   # TypeScript ohne Build
 npm run check       # lint + typecheck (empfohlen vor Commit/CI)
 ```
 
-**GitHub Actions:** `.github/workflows/ci.yml` führt bei Push/PR auf `main`/`master` ebenfalls `npm run check` aus (parallel zu `docs-check.yml` für Doku/i18n).
+**GitHub Actions:**
+- `.github/workflows/ci.yml` — bei Push/PR auf `main`/`master`: `npm run check` (Lint + Typecheck)
+- `.github/workflows/docs-check.yml` — bei Änderungen an `docs/**`, `README.md`, `lib/i18n/**`: `npm run docs:check`
+
+Details: [docs/GITHUB.md](docs/GITHUB.md)
 
 ---
 
@@ -227,8 +237,11 @@ Details: [docs/ENV.md](docs/ENV.md)
 - **Transaction**: status (AUTHORIZED, CAPTURED, CANCELED, REFUNDED)
 - **WalletTransaction**: amountCents (positiv = Credit, negativ = Debit); type (topup, booking_payment, refund)
 - **PushSubscription**: endpoint, p256dh, auth für Web Push
-- **CronRunLog**: cronName, lastRunAt (Health-Check; release-wallet, experts-offline)
+- **CronRunLog**: cronName, lastRunAt (Health-Check; release-wallet, experts-offline, cleanup-safety-data, …)
 - **AdminActionLog**: Admin-Aktionen (force_capture, manual_release, refund)
+- **HomeNewsItem** / **HomeNewsTranslation**: Startseiten-Newsfeed (mehrsprachig, optionale Links pro Locale)
+- **TaxonomyCategory** / **TaxonomySpecialty** / Junctions: Kategorien-System für Takumis (siehe `docs/ARCHITECTURE.md`)
+- **SiteAnalyticsSession** / **SiteAnalyticsPageView**: anonyme Website-Statistik (optional; Migration `site_analytics`)
 
 ```bash
 npx prisma generate
@@ -271,9 +284,10 @@ npx prisma studio
 | Datei | Inhalt |
 |-------|--------|
 | [docs/INDEX.md](docs/INDEX.md) | **Dokumentations-Index** – alle Docs auf einen Blick |
+| [docs/GITHUB.md](docs/GITHUB.md) | **GitHub**: Workflows, Secrets vs. Repo, PR-Checkliste, was nicht committen |
 | [README.md](README.md) | Übersicht, Setup, Features |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API-Übersicht |
-| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Funktionsweisen: Idempotenz, Session Revocation, Optimistic UI, RBAC, Caching, Instant-Abrechnung, Session Activity, LogoutBackGuard |
+| [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Mechaniken: Idempotenz, Revocation, Optimistic UI, RBAC, Admin-Stats „degraded“ (HTTP 200), Site-Analytics-Beacon, Capacitor-`out/`, Session Activity, LogoutBackGuard, … |
 | [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/DEPLOYMENT-AUTH.md](docs/DEPLOYMENT-AUTH.md) | **Production-Login:** `NEXTAUTH_URL`, www→apex, Safari/WebKit |
@@ -283,6 +297,8 @@ npx prisma studio
 | [docs/SECURE-FILE-EXCHANGE.md](docs/SECURE-FILE-EXCHANGE.md) | Sichere Datei-Übertragung |
 | [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance |
 | [docs/IOS-APP-STORE-COMPLIANCE.md](docs/IOS-APP-STORE-COMPLIANCE.md) | iOS App Store Compliance |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | i18n, Code-Stil, Verweis auf GitHub/CI |
+| [docs/UPDATE.md](docs/UPDATE.md) | Matrix: welche Doku bei welcher Änderung anfassen |
 
 ---
 

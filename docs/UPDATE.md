@@ -1,44 +1,50 @@
 # Dokumentation aktualisieren
 
-Diese Anleitung hilft, die GitHub-Dokumentation aktuell zu halten.
+Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 
 ## Wann aktualisieren?
 
-- Neue Features oder API-Routen
-- Änderungen an Umgebungsvariablen
-- Neue Abhängigkeiten
-- Änderungen an der Projektstruktur
-- Deployment-Anpassungen
+- Neue Features, Routen oder Admin-Tabs
+- Änderungen an Umgebungsvariablen oder `.env.example`
+- Neue Prisma-Modelle / Migrationen
+- CI-Workflows (`.github/workflows`)
+- Deployment (Vercel, Cron, Capacitor)
 
-## Zu aktualisierende Dateien
+## Zu aktualisierende Dateien (Matrix)
 
 | Änderung | Datei(en) |
 |----------|-----------|
-| Neue Features, Tech-Stack | `README.md` |
+| Features, Tech-Stack, Schnellstart, Ports | `README.md` |
+| GitHub Actions, Secrets, .gitignore-Politik | `docs/GITHUB.md` |
 | Neue Env-Variablen | `docs/ENV.md`, `.env.example` |
-| Neue API-Routen, Abläufe | `docs/ARCHITECTURE.md` |
-| Admin, Kontoverwaltung, Tabs, Scanner | `docs/ADMIN.md` |
-| Safety, E2EE, Verborgene Mechaniken | `docs/ARCHITECTURE.md`, `docs/HIDDEN-MECHANICS.md` |
+| API-Routen, Datenflüsse, Taxonomie, News, Analytics | `docs/ARCHITECTURE.md` |
+| Admin-UI, Tabs, Unterseiten, Statistik | `docs/ADMIN.md` |
+| Unsichtbare Logik (degraded Responses, Beacon, …) | `docs/HIDDEN-MECHANICS.md` |
 | i18n-Regeln | `docs/CONTRIBUTING.md` |
-| Projektstruktur | `README.md` (Projektstruktur) |
+| Capacitor / Android Signing | `docs/MOBILE-BUILD.md` |
 | Dokumentations-Index | `docs/INDEX.md` |
+| Diese Checkliste selbst | `docs/UPDATE.md` |
 
 ## Automatisierte Prüfung
 
 | Komponente | Beschreibung |
 |------------|--------------|
-| `npm run docs:check` | Lokales Skript: i18n-Sync (de→en, es), README-Sektionen |
-| `.github/workflows/docs-check.yml` | GitHub Action: läuft bei Push/PR auf `lib/i18n/**`, `README.md`, `docs/**` |
+| `npm run docs:check` | i18n-Sync (de→en, es), README-Sektionen |
+| `.github/workflows/docs-check.yml` | wie oben, bei Push/PR auf definierten Pfaden |
+| `.github/workflows/ci.yml` | `npm run check` (Lint + Typecheck) |
 
-Bei fehlenden i18n-Keys in `en.ts` oder `es.ts` schlägt der Check fehl.
+## Checkliste vor Release / größerem Merge
 
-## Checkliste vor Release
+- [ ] `README.md`: Admin-Tabs, Beta, Analytics, lokaler Port **3001**, neue Modelle
+- [ ] `docs/INDEX.md` + `docs/GITHUB.md`: neue Docs verlinkt
+- [ ] `docs/ENV.md` + `.env.example`: vollständig
+- [ ] `docs/ARCHITECTURE.md`: neue öffentliche/admin APIs
+- [ ] `docs/ADMIN.md`: Tab-Anzahl, Deep-Links (`?tab=analytics`), Unterseiten
+- [ ] `docs/HIDDEN-MECHANICS.md`: neue „verborgene“ Verhaltensweisen
+- [ ] `docs/MOBILE-BUILD.md`: falls native Konfiguration geändert
+- [ ] `npm run docs:check` und `npm run check` lokal grün
+- [ ] „Letzte Aktualisierung“ in stark geänderten Docs anpassen
 
-- [ ] README: Features (Voice-only, Handshake, Kategorien, E2EE, Admin-Tabs, Vision-Scanner), Tech-Stack, Schnellstart prüfen
-- [ ] docs/ENV.md: Alle genutzten Variablen (inkl. Vision-Scanner: GOOGLE_VISION_*), Stripe Webhook-Events dokumentiert
-- [ ] .env.example: Aktuell und ohne echte Secrets
-- [ ] docs/ARCHITECTURE.md: API-Routen (pre-check, snapshot), E2EE, Safety-Terminierung, CallType, Abläufe aktuell
-- [ ] docs/ADMIN.md: Tab-Layout, Vision-Scanner, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik aktuell
-- [ ] docs/HIDDEN-MECHANICS.md: Safety-Incident-Terminierung, neue Mechaniken
-- [ ] docs/INDEX.md: Neue Docs eintragen
-- [ ] "Letzte Aktualisierung" in README und docs anpassen
+---
+
+*Letzte Aktualisierung: März 2026*

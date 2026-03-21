@@ -32,6 +32,24 @@ diAIway ist eine **Hybrid-App**:
 - **Takumi-Profil:** `PUT /api/user/takumi-profile` mit `categoryIds`, `specialtyIds`, `primaryCategoryId`, `primarySpecialtyId`; UI: `components/takumi-taxonomy-editor.tsx`.
 - **Listen:** `lib/expert-to-takumi.ts` — `categorySlugs[]`, `taxonomySearchText`, `allSpecialties[]` für Filter/Suche.
 
+### Startseiten-Newsfeed (Home)
+
+- **Modelle:** `HomeNewsItem` (Fallback-`linkUrl`/`linkLabel`, `sortOrder`, `published`), `HomeNewsTranslation` (pro Locale: `title`, `body`, optionale eigene `linkUrl`/`linkLabel`).
+- **Öffentlich:** `GET /api/home-news` — nur veröffentlichte Einträge, Übersetzung passend zur Locale mit Fallback.
+- **Admin:** `/admin/home-news` — Pflege aller Sprachen; PATCH/POST schreiben `translations` inkl. Links pro Sprache.
+- **Revalidate:** nach Änderungen `revalidatePath` für `/` und `/home` (siehe API-Routen).
+
+### Beta-Landing (Marketing)
+
+- **Routen:** `/beta` → Redirect auf `/beta/de`; feste Seiten `/beta/de`, `/beta/en`, `/beta/es` (`components/beta/beta-*-landing.tsx`).
+- **Capacitor `allowNavigation`** enthält Hosts für Blob/Preview — siehe `capacitor.config.ts`.
+
+### Website-Analytics (eigenes Tracking)
+
+- **Öffentlich:** `POST /api/analytics/beacon` — `init` | `page` | `pulse` (siehe [HIDDEN-MECHANICS.md](./HIDDEN-MECHANICS.md) Abschnitt Site-Analytics).
+- **Admin:** `GET /api/admin/analytics` — nur `role: admin`.
+- **Parallel:** `@vercel/analytics` im Root-Layout (Anbieter-Metriken, unabhängig von Prisma-Tabellen).
+
 ---
 
 ## Datenfluss

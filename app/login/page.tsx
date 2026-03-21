@@ -126,7 +126,8 @@ function LoginContent() {
   // Never go to "/" on native – root page signs out when stayLoggedIn=false, causing a loop
   const navigateAfterLogin = useCallback(
     async (navUrl?: string) => {
-      const useHardNav = !isNative && shouldUseHardNavigationAfterLogin()
+      // Native: immer harter Reload (lib/browser-auth-nav); Web: Safari/iOS UA → hard nav
+      const useHardNav = shouldUseHardNavigationAfterLogin()
       const settleMs = webkitCookieSettleDelayMs()
       const origin = window.location.origin
       const resolve = (u?: string | null) => normalizePostLoginTarget(u ?? null, origin)
@@ -159,7 +160,7 @@ function LoginContent() {
       router.replace(path)
       router.refresh()
     },
-    [explicitCallback, router, isNative]
+    [explicitCallback, router]
   )
 
   // ── Core login action (shared by form + biometric replay)

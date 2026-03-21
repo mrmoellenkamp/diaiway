@@ -16,13 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release-Signing: KEINE Passwörter im Git. Entweder android/keystore.properties (lokal, gitignored)
+    // oder Umgebungsvariablen ANDROID_KEYSTORE_PATH, ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS (CI).
     signingConfigs {
         release {
-            def keystoreFile = System.getenv("ANDROID_KEYSTORE_PATH") ?: file("release.keystore")
-            storeFile keystoreFile instanceof String ? file(keystoreFile) : keystoreFile
-            storePassword System.getenv("ANDROID_STORE_PASSWORD") ?: "diaiway2026"
-            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "diaiway"
-            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: "diaiway2026"
+            def keystorePropertiesFile = rootProject.file("keystore.properties")
+            def keystoreProperties = new Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystorePropertiesFile.withInputStream { stream -> keystoreProperties.load(stream) }
+            }
+            def storePath = keystoreProperties.getProperty("storeFile")
+                ?: System.getenv("ANDROID_KEYSTORE_PATH")
+                ?: "release.keystore"
+            storeFile file(storePath)
+            storePassword keystoreProperties.getProperty("storePassword") ?: System.getenv("ANDROID_STORE_PASSWORD") ?: ""
+            keyAlias keystoreProperties.getProperty("keyAlias") ?: System.getenv("ANDROID_KEY_ALIAS") ?: "diaiway"
+            keyPassword keystoreProperties.getProperty("keyPassword") ?: System.getenv("ANDROID_KEY_PASSWORD") ?: ""
         }
     }
     buildTypes {

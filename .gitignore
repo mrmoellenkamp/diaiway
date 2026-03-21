@@ -22,6 +22,10 @@ android/build/
 android/.gradle/
 android/app/build/
 android/.idea/
+# Android Release-Signing (niemals committen)
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore
 ios/App/Pods/
 ios/App/build/
 ios/DerivedData/

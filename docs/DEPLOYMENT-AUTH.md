@@ -30,7 +30,8 @@ Nach Änderungen: **Production neu deployen**.
 - **`trustHost: true`** in `lib/auth.ts` und `lib/auth-edge.ts` — korrekte Host-Erkennung hinter Vercel (Proxy-Header).
 - Login über **`signIn("credentials", …)`** (next-auth/react), nicht roher `fetch` — bessere CSRF-/Cookie-Koordination (wichtig für WebKit).
 - Danach **`getSession()`** + Session-Fetch für Nav-Ziel.
-- Safari / iOS-Browser (nicht native Capacitor-Shell): **harter Seitenwechsel** (`window.location.assign`) und **~280 ms Pause** vor dem Redirect, damit Safari das Session-Cookie zuverlässig speichert (`lib/browser-auth-nav.ts`).
+- **Capacitor (iOS/Android):** nach Login **harter Seitenwechsel** (`window.location.assign`) + **~280 ms Pause**, damit das WebView Session-Cookies zuverlässig mitschickt (Android ohne diesen Schritt oft instabil).
+- Safari / iOS-Browser (nicht App): ebenfalls **harter Seitenwechsel** und **~280 ms Pause** (`lib/browser-auth-nav.ts`).
 
 ## 4. Was Nutzer nicht tun müssen
 
@@ -45,7 +46,7 @@ Keine Safari-Einstellungen ändern. Wenn es nach 1–2 dennoch hakt, liegt es fa
 
 ## 6. Mobile App (Capacitor)
 
-`capacitor.config.ts`: `server.url` ist auf **`https://diaiway.com`** gesetzt; `www` bleibt in `allowNavigation`, damit alte Links funktionieren. Native Shell ist **kein** Safari-Tab — bei Problemen dort separat WebView/Cookies prüfen.
+`capacitor.config.ts`: `server.url` ist auf **`https://diaiway.com`** gesetzt; `www` bleibt in `allowNavigation`, damit alte Links funktionieren. Login nutzt **vollen Reload** zur Zielseite (siehe oben), damit die Android-System-WebView die Auth-Session nicht „verliert“.
 
 ---
 

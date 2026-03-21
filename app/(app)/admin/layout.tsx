@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { isDbConnectionError } from "@/lib/is-db-connection-error"
 
 /**
  * Admin-Layout: Strikte Zugriffskontrolle für alle /admin/* Routen.
@@ -31,18 +32,9 @@ export default async function AdminLayout({
       redirect("/home")
     }
   } catch (err: unknown) {
+    if (!isDbConnectionError(err)) throw err
     const name = err instanceof Error ? err.constructor.name : ""
-    const msg  = err instanceof Error ? err.message : ""
-
-    const isConnectionError =
-      name === "PrismaClientInitializationError" ||
-      (name === "PrismaClientKnownRequestError" && (err as { code?: string }).code === "P1001") ||
-      msg.includes("Can't reach database") ||
-      msg.includes("ECONNREFUSED") ||
-      msg.includes("connect ETIMEDOUT")
-
-    if (!isConnectionError) throw err
-
+    const msg = err instanceof Error ? err.message : ""
     console.warn("[AdminLayout] DB-Check übersprungen (Cold Start):", name, msg.slice(0, 120))
   }
 

@@ -1783,6 +1783,23 @@ function FinanceTab() {
   )
 }
 
+const ADMIN_TAB_IDS = [
+  "overview",
+  "analytics",
+  "users",
+  "bookings",
+  "takumis",
+  "finance",
+  "safety",
+  "scanner",
+  "system",
+] as const
+type AdminTabId = (typeof ADMIN_TAB_IDS)[number]
+
+function isAdminTabId(v: string): v is AdminTabId {
+  return (ADMIN_TAB_IDS as readonly string[]).includes(v)
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -1792,8 +1809,25 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState<AdminTabId>("overview")
   const [dataRefreshKey, setDataRefreshKey] = useState(0)
+
+  /** Tab aus URL (?tab=analytics) beim Öffnen — z. B. /admin?tab=analytics */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const raw = params.get("tab")
+    if (raw && isAdminTabId(raw)) setActiveTab(raw)
+  }, [])
+
+  function handleTabChange(v: string) {
+    if (!isAdminTabId(v)) return
+    setActiveTab(v)
+    if (typeof window !== "undefined") {
+      const u = new URL(window.location.href)
+      u.searchParams.set("tab", v)
+      window.history.replaceState(null, "", u.pathname + u.search)
+    }
+  }
 
   async function loadStats() {
     setStatsLoading(true)
@@ -1849,7 +1883,7 @@ export default function AdminPage() {
                 <button
                   key={label}
                   type="button"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => handleTabChange(tab)}
                   className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center transition-colors hover:bg-muted/50 active:scale-[0.98]"
                 >
                   <Icon className={`size-4 ${color} mb-1`} />
@@ -1860,11 +1894,24 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* Direkteinstieg Website-Statistik (Tab sonst leicht übersehen) */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("analytics")}
+            className="flex w-full items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2.5 text-left text-xs transition-colors hover:bg-primary/10"
+          >
+            <LineChart className="size-4 shrink-0 text-primary" />
+            <span>
+              <span className="font-semibold text-foreground">Website-Statistik</span>
+              <span className="text-muted-foreground"> — Besucher, Verweildauer, beliebte Seiten</span>
+            </span>
+          </button>
+
           {/* Tabs — horizontal scrollbar auf Mobile */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
               <TabsTrigger value="overview"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
-              <TabsTrigger value="analytics" className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><LineChart className="size-3.5 mr-1" /><span className="hidden sm:inline">Traffic</span><span className="sm:hidden">Web</span></TabsTrigger>
+              <TabsTrigger value="analytics" className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><LineChart className="size-3.5 mr-1 shrink-0" />Statistik</TabsTrigger>
               <TabsTrigger value="users"     className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
               <TabsTrigger value="bookings"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
               <TabsTrigger value="takumis"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>

@@ -93,7 +93,8 @@ export function SiteAnalyticsTracker() {
       }
 
       if (lastTrackedPath.current === null) {
-        await postBeacon({ action: "page", sessionId: sid, path: pathname })
+        const visitorId = ensureVisitorId()
+        await postBeacon({ action: "page", sessionId: sid, visitorId, path: pathname })
         if (cancelled) return
         lastTrackedPath.current = pathname
         pathEnteredAt.current = Date.now()
@@ -104,9 +105,11 @@ export function SiteAnalyticsTracker() {
 
       const prev = lastTrackedPath.current
       const dur = Math.round((Date.now() - pathEnteredAt.current) / 1000)
+      const visitorId = ensureVisitorId()
       await postBeacon({
         action: "page",
         sessionId: sid,
+        visitorId,
         path: pathname,
         previousPath: prev,
         previousDurationSec: dur,
@@ -128,7 +131,8 @@ export function SiteAnalyticsTracker() {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return
       const sid = sessionStorage.getItem(ANALYTICS_SESSION_STORAGE_KEY)
       if (!sid) return
-      void postBeacon({ action: "pulse", sessionId: sid, seconds: 20 })
+      const visitorId = ensureVisitorId()
+      void postBeacon({ action: "pulse", sessionId: sid, visitorId, seconds: 20 })
     }
 
     const id = window.setInterval(tick, 20_000)

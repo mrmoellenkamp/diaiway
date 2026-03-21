@@ -480,10 +480,74 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | Video-Safety Incident-Terminierung | `DailyCallContainer.tsx` – bei `incidentCreated` → `performCleanup()`, `onCallEnded()`, Toast, Redirect |
 | DSGVO Cleanup (Safety-Blobs) | `app/api/cron/cleanup-safety-data/route.ts` |
 | WalletTransaction-Anonymisierung | `lib/anonymize-user.ts` (referenceId → null, metadata → null) |
+| Admin-Stats degraded (200) | `app/api/admin/stats/route.ts` → `emptyStatsPayload` |
+| Site-Analytics Beacon | `app/api/analytics/beacon/route.ts`, `components/site-analytics-tracker.tsx` |
+| Mobile `out/` Redirect | `scripts/prepare-mobile-webdir.mjs` |
 
 ---
 
-## 12. Umgebungsvariablen (Platzhalter)
+## 12. Admin-Statistik-API: HTTP 200 bei Fehler („degraded“)
+
+### Verhalten
+
+`GET /api/admin/stats` führt viele Prisma-Aggregationen aus. Schlägt die Datenbank fehl (z. B. P1001 „Can’t reach database“) oder ein anderes technisches Problem auf, wird **kein** HTTP 5xx zurückgegeben, sondern:
+
+- **Status 200**
+- JSON mit `degraded: true` und `degradedReason` (nutzerlesbare Kurzmeldung)
+
+### Warum
+
+- Die Admin-UI bleibt **bedienbar** (leere KPIs statt kompletter Fehlerseite).
+- **Nachteil fürs Monitoring:** Reine HTTP-Status-Checks sehen „alles grün“, obwohl keine echten Daten geladen wurden — Logs oder Response-Body prüfen (`[admin/stats] Aggregation fehlgeschlagen` in Server-Logs).
+
+### Verwandt
+
+- `GET /api/admin/analytics` liefert bei fehlenden Tabellen ebenfalls ein **degraded**-Payload mit Hinweis auf Migration.
+
+---
+
+## 13. Site-Analytics (eigene Verkehrsstatistik)
+
+### Zweck
+
+Erfassung **anonymer** Nutzung: Sitzungen, Pfade, ungefähre Verweildauer (Tab sichtbar), **ohne** IP-Speicherung in diesen Tabellen.
+
+### Ablauf
+
+1. **`SiteAnalyticsTracker`** (`components/site-analytics-tracker.tsx`) im Root-`layout.tsx` — läuft nur im Client.
+2. **Kein Tracking** für Pfade, die mit `/admin` oder `/api` beginnen (`shouldTrackPath`).
+3. **`POST /api/analytics/beacon`**: Aktionen `init` (neue Session + erste PageView), `page` (Navigation + Dauer der vorherigen Seite), `pulse` (alle ~20 s bei sichtbarem Tab, erhöht `engagedSeconds`).
+4. **Besucher-ID**: UUID in `localStorage` (`diaiway_analytics_vid`); Sitzungs-ID in `sessionStorage` (`diaiway_analytics_sid`).
+5. **Eingeloggte Nutzer**: Server kann `userId` an die Session hängen (für Anteil „Sitzungen mit Login“).
+6. **Bots**: grobe Filterung per User-Agent in `lib/site-analytics.ts`.
+
+### Datenmodell
+
+- `SiteAnalyticsSession`, `SiteAnalyticsPageView` (Prisma) — Migration `20260321140000_site_analytics`.
+
+### Admin
+
+- Tab **Statistik** / Query `GET /api/admin/analytics?days=7|14|30|90`.
+
+---
+
+## 14. Capacitor: minimales `out/` + `server.url`
+
+### Problem
+
+Capacitor verlangt ein `webDir` mit Dateien; die App lädt aber die **Live-URL** (`capacitor.config.ts` → `server.url: https://diaiway.com`).
+
+### Lösung
+
+`scripts/prepare-mobile-webdir.mjs` erzeugt ein minimales `out/index.html` (Redirect zur Live-URL) und `out/error.html`. `npm run mobile:sync` ruft das vor `cap sync` auf.
+
+### Basis-URL für Redirect
+
+Priorität: `NEXTAUTH_URL` → `VERCEL_URL` → Fallback `https://diaiway.com` — damit lokale/staging-Builds nicht versehentlich immer Produktion laden, wenn die Env gesetzt ist.
+
+---
+
+## 15. Umgebungsvariablen (Platzhalter) — Kurz
 
 Keine echten Keys in dieser Dokumentation. Relevante Platzhalter:
 

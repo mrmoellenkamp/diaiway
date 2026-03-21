@@ -1,5 +1,10 @@
 # Beitragen
 
+## GitHub & CI
+
+- **Workflows:** [docs/GITHUB.md](./GITHUB.md) — was bei Push/PR automatisch läuft, was **nicht** ins Repo gehört (`.env`, Keystores).
+- Vor einem PR lokal: `npm run check` (entspricht grob der CI).
+
 ## i18n (Übersetzungen)
 
 - **Master-Sprache**: Deutsch (`lib/i18n/de.ts`)

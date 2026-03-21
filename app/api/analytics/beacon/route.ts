@@ -20,6 +20,20 @@ type Body = {
   referrer?: string
 }
 
+/** page/pulse: nur mit passender visitorId (wie bei init), sonst keine Fremdsession-Updates */
+function assertVisitorMatchesSession(
+  bodyVisitorId: unknown,
+  sessionVisitorId: string
+): NextResponse | null {
+  if (!isValidAnalyticsVisitorId(bodyVisitorId)) {
+    return NextResponse.json({ error: "visitorId" }, { status: 400 })
+  }
+  if (bodyVisitorId !== sessionVisitorId) {
+    return NextResponse.json({ error: "unknown session" }, { status: 404 })
+  }
+  return null
+}
+
 async function resolveUserId(): Promise<string | null> {
   const s = await auth()
   const id = s?.user?.id
@@ -147,6 +161,8 @@ export async function POST(req: Request) {
       if (!session) {
         return NextResponse.json({ error: "unknown session" }, { status: 404 })
       }
+      const vidErr = assertVisitorMatchesSession(body.visitorId, session.visitorId)
+      if (vidErr) return vidErr
 
       await prisma.siteAnalyticsSession.update({
         where: { id: sessionId },
