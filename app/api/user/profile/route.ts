@@ -32,6 +32,8 @@ async function getProfile(_req: Request, _context: RouteContext) {
       createdAt: true,
       isPaymentVerified: true,
       acceptedAgbVersion: true,
+      phase2BillingConsentAt: true,
+      phase2WithdrawalWaiverAt: true,
     },
   })
   if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
@@ -53,6 +55,8 @@ async function getProfile(_req: Request, _context: RouteContext) {
     createdAt: user.createdAt,
     isPaymentVerified: user.isPaymentVerified ?? false,
     acceptedAgbVersion: user.acceptedAgbVersion ?? null,
+    phase2BillingConsentAt: user.phase2BillingConsentAt?.toISOString() ?? null,
+    phase2WithdrawalWaiverAt: user.phase2WithdrawalWaiverAt?.toISOString() ?? null,
   })
 }
 

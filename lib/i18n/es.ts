@@ -530,6 +530,18 @@ const es = {
   "invoice.kleinunternehmer": "Pequeño empresario (§ 19 UStG)",
   "invoice.kleinunternehmerDesc": "Sin IVA en facturas",
   "invoice.saved": "Datos guardados.",
+  "invoice.phase2Title": "Consentimientos para pago y sesiones",
+  "invoice.phase2Intro":
+    "Estos consentimientos son independientes del registro y cubren el procesamiento de pagos y servicios digitales.",
+  "invoice.phase2PendingTitle": "Consentimientos pendientes",
+  "invoice.phase2PendingBody":
+    "Sin ambas confirmaciones no puedes guardar datos de facturación (Shugyo) ni iniciar sesiones de pago. Los das en el diálogo, con marca de tiempo guardada.",
+  "invoice.phase2Cta": "Dar consentimientos",
+  "invoice.phase2DoneTitle": "Consentimientos registrados",
+  "invoice.phase2BillingLine": "Datos de facturación y pago al proveedor de pagos: {date}",
+  "invoice.phase2WaiverLine": "Renuncia al desistimiento (ejecución anticipada, servicio digital): {date}",
+  "invoice.phase2DoneGeneric":
+    "Tu cuenta está habilitada para pagos y sesiones. Las fechas aparecerán aquí tras el próximo consentimiento si faltan.",
 
   // Favorites
   "favorites.loginRequired": "Inicia sesión para guardar favoritos.",

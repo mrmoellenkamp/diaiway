@@ -530,6 +530,18 @@ const en = {
   "invoice.kleinunternehmer": "Small business (§ 19 German VAT Act)",
   "invoice.kleinunternehmerDesc": "No VAT on invoices",
   "invoice.saved": "Invoice data saved.",
+  "invoice.phase2Title": "Consents for payment & sessions",
+  "invoice.phase2Intro":
+    "These consents are separate from registration and cover payment processing and digital services.",
+  "invoice.phase2PendingTitle": "Consents still required",
+  "invoice.phase2PendingBody":
+    "Without both confirmations you cannot save billing details (Shugyo) or start paid sessions. You give them in the dialog — with a stored timestamp.",
+  "invoice.phase2Cta": "Provide consents",
+  "invoice.phase2DoneTitle": "Consents recorded",
+  "invoice.phase2BillingLine": "Billing & payment data to payment provider: {date}",
+  "invoice.phase2WaiverLine": "Withdrawal waiver (early performance, digital service): {date}",
+  "invoice.phase2DoneGeneric":
+    "Your account is cleared for payments and sessions. Timestamps will appear here after the next consent if missing.",
 
   // Favorites
   "favorites.loginRequired": "Please sign in to save favorites.",

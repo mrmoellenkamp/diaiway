@@ -536,6 +536,19 @@ const de = {
   "invoice.kleinunternehmer": "Kleinunternehmer (§ 19 UStG)",
   "invoice.kleinunternehmerDesc": "Keine Umsatzsteuer auf Rechnungen",
   "invoice.saved": "Rechnungsdaten gespeichert.",
+  "invoice.phase2Title": "Einwilligungen für Zahlung & Sessions",
+  "invoice.phase2Intro":
+    "Diese Zustimmungen sind von der Registrierung getrennt und gelten für Zahlungsabwicklung sowie digitale Dienstleistungen.",
+  "invoice.phase2PendingTitle": "Einwilligungen noch offen",
+  "invoice.phase2PendingBody":
+    "Ohne diese beiden Bestätigungen kannst du keine Rechnungsdaten speichern (Shugyo) und keine bezahlten Sessions starten. Du erklärst sie im Dialog – mit gespeichertem Zeitpunkt.",
+  "invoice.phase2Cta": "Jetzt einwilligen",
+  "invoice.phase2DoneTitle": "Einwilligungen erteilt",
+  "invoice.phase2BillingLine":
+    "Rechnungs- & Zahlungsdaten an Zahlungsdienstleister: {date}",
+  "invoice.phase2WaiverLine": "Widerrufsverzicht (vorzeitige Ausführung, digitale Leistung): {date}",
+  "invoice.phase2DoneGeneric":
+    "Dein Konto ist für Zahlungen und Sessions freigeschaltet. Zeitstempel werden nach der nächsten Einwilligung hier angezeigt.",
 
   // Favorites
   "favorites.loginRequired": "Bitte melde dich an, um Favoriten zu speichern.",

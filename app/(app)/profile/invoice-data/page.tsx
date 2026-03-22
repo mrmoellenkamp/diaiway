@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Loader2, FileText, Info, CheckCircle2, AlertCircle } from "lucide-react"
+import { Loader2, FileText, Info, CheckCircle2, AlertCircle, Shield } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
@@ -42,14 +42,26 @@ const defaultPrivate: InvoiceData = {
   email: "",
 }
 
+function formatPhase2Instant(iso: string | null | undefined, locale: "de" | "en" | "es"): string {
+  if (!iso) return ""
+  try {
+    const tag = locale === "de" ? "de-DE" : locale === "es" ? "es-ES" : "en-US"
+    return new Date(iso).toLocaleString(tag, { dateStyle: "medium", timeStyle: "short" })
+  } catch {
+    return iso
+  }
+}
+
 export default function InvoiceDataPage() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [data, setData] = useState<InvoiceData>(defaultPrivate)
   const [customerNumber, setCustomerNumber] = useState<string | null>(null)
   const [appRole, setAppRole] = useState<"shugyo" | "takumi" | null>(null)
   const [isPaymentVerified, setIsPaymentVerified] = useState<boolean | null>(null)
+  const [phase2BillingAt, setPhase2BillingAt] = useState<string | null>(null)
+  const [phase2WaiverAt, setPhase2WaiverAt] = useState<string | null>(null)
   const [paymentOnboardingOpen, setPaymentOnboardingOpen] = useState(false)
 
   function applyProfilePayload(res: {
@@ -57,6 +69,8 @@ export default function InvoiceDataPage() {
     customerNumber?: string | null
     appRole?: string
     isPaymentVerified?: boolean
+    phase2BillingConsentAt?: string | null
+    phase2WithdrawalWaiverAt?: string | null
   }) {
     if (res.invoiceData && typeof res.invoiceData === "object") {
       setData({ ...defaultPrivate, ...res.invoiceData } as InvoiceData)
@@ -74,6 +88,16 @@ export default function InvoiceDataPage() {
     if (typeof res.isPaymentVerified === "boolean") {
       setIsPaymentVerified(res.isPaymentVerified)
     }
+    setPhase2BillingAt(
+      typeof res.phase2BillingConsentAt === "string" && res.phase2BillingConsentAt
+        ? res.phase2BillingConsentAt
+        : null,
+    )
+    setPhase2WaiverAt(
+      typeof res.phase2WithdrawalWaiverAt === "string" && res.phase2WithdrawalWaiverAt
+        ? res.phase2WithdrawalWaiverAt
+        : null,
+    )
   }
 
   useEffect(() => {
@@ -128,6 +152,20 @@ export default function InvoiceDataPage() {
     await performSave()
   }
 
+  async function handlePaymentOnboardingSuccess() {
+    try {
+      const refreshed = await fetch("/api/user/profile").then((r) => r.json())
+      applyProfilePayload(refreshed)
+    } catch {
+      /* Profil-Refresh optional; Modal aktualisiert App-Kontext */
+    }
+    await performSave()
+  }
+
+  const billingConsentLabel = formatPhase2Instant(phase2BillingAt, locale)
+  const waiverConsentLabel = formatPhase2Instant(phase2WaiverAt, locale)
+  const showPhase2Timestamps = Boolean(billingConsentLabel && waiverConsentLabel)
+
   return (
     <PageContainer>
       <div className="flex flex-col gap-6">
@@ -162,6 +200,51 @@ export default function InvoiceDataPage() {
                 <p>{t("invoice.contextPayment")}</p>
               </AlertDescription>
             </Alert>
+
+            {appRole === "shugyo" ? (
+              <Card className="border-primary/20 bg-primary/[0.03]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Shield className="size-4 text-primary" />
+                    {t("invoice.phase2Title")}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">{t("invoice.phase2Intro")}</p>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  {isPaymentVerified === true ? (
+                    showPhase2Timestamps ? (
+                      <Alert className="border-emerald-500/30 bg-emerald-500/5">
+                        <CheckCircle2 className="text-emerald-600" />
+                        <AlertTitle>{t("invoice.phase2DoneTitle")}</AlertTitle>
+                        <AlertDescription className="text-foreground/90">
+                          <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
+                            <li>{t("invoice.phase2BillingLine", { date: billingConsentLabel })}</li>
+                            <li>{t("invoice.phase2WaiverLine", { date: waiverConsentLabel })}</li>
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert className="border-emerald-500/30 bg-emerald-500/5">
+                        <CheckCircle2 className="text-emerald-600" />
+                        <AlertTitle>{t("invoice.phase2DoneTitle")}</AlertTitle>
+                        <AlertDescription>{t("invoice.phase2DoneGeneric")}</AlertDescription>
+                      </Alert>
+                    )
+                  ) : (
+                    <>
+                      <Alert className="border-amber-500/35 bg-amber-500/5">
+                        <AlertCircle className="text-amber-600" />
+                        <AlertTitle>{t("invoice.phase2PendingTitle")}</AlertTitle>
+                        <AlertDescription>{t("invoice.phase2PendingBody")}</AlertDescription>
+                      </Alert>
+                      <Button type="button" variant="secondary" onClick={() => setPaymentOnboardingOpen(true)}>
+                        {t("invoice.phase2Cta")}
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : null}
 
             {paymentCheck.ok ? (
               <Alert className="border-emerald-500/30 bg-emerald-500/5">
@@ -366,7 +449,7 @@ export default function InvoiceDataPage() {
       <PaymentOnboardingModal
         open={paymentOnboardingOpen}
         onOpenChange={setPaymentOnboardingOpen}
-        onSuccess={() => void performSave()}
+        onSuccess={() => void handlePaymentOnboardingSuccess()}
       />
     </PageContainer>
   )
