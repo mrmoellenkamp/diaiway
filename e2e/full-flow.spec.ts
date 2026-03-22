@@ -31,11 +31,16 @@ test.describe("diaiway Vollständiger Flow", () => {
     // 2. Registrierung
     await page.goto("/register")
     await page.getByLabel(/Name/i).fill(E2E_NAME)
+    await page.getByLabel(/Benutzername|Username/i).fill(`e2e_user_${ts}`)
+    await page.waitForTimeout(900)
     await page.getByLabel(/E-Mail|Email/i).fill(E2E_EMAIL)
     await page.getByLabel(/Passwort|Password/i).first().fill(E2E_PASSWORD)
     await page.getByLabel(/Passwort bestätigen|confirm/i).fill(E2E_PASSWORD)
     await page.getByRole("button", { name: /Shugyo/i }).click()
-    await page.getByRole("button", { name: /Registrieren|Anmelden|submit/i }).click()
+    await page.getByTestId("consent-agb-privacy").click()
+    await page.getByTestId("consent-early-performance").click()
+    await page.getByTestId("consent-payment").click()
+    await page.getByRole("button", { name: /Konto erstellen|Create account|Registrieren/i }).click()
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 })
 
     // 3. Wallet-Guthaben hinzufügen (vom Page-Kontext, Cookies werden mitgesendet)

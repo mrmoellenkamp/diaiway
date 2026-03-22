@@ -15,7 +15,24 @@ async function getProfile(_req: Request, _context: RouteContext) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, username: true, email: true, image: true, role: true, appRole: true, favorites: true, refundPreference: true, invoiceData: true, customerNumber: true, skillLevel: true, languages: true, isVerified: true, createdAt: true },
+    select: {
+      name: true,
+      username: true,
+      email: true,
+      image: true,
+      role: true,
+      appRole: true,
+      favorites: true,
+      refundPreference: true,
+      invoiceData: true,
+      customerNumber: true,
+      skillLevel: true,
+      languages: true,
+      isVerified: true,
+      createdAt: true,
+      isPaymentVerified: true,
+      acceptedAgbVersion: true,
+    },
   })
   if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
@@ -34,6 +51,8 @@ async function getProfile(_req: Request, _context: RouteContext) {
     languages: user.languages ?? [],
     isVerified: user.isVerified ?? false,
     createdAt: user.createdAt,
+    isPaymentVerified: user.isPaymentVerified ?? false,
+    acceptedAgbVersion: user.acceptedAgbVersion ?? null,
   })
 }
 

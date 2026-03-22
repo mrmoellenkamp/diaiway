@@ -12,6 +12,7 @@ import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
 import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 import { communicationUsername } from "@/lib/communication-display"
+import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
 
 export const runtime = "nodejs"
 
@@ -112,6 +113,12 @@ export const POST = apiHandler(async (req) => {
   const authResult = await requireAuth()
   if (authResult.response) return authResult.response
   const { session } = authResult
+
+  const appRole = (session.user as { appRole?: string }).appRole
+  if (appRole === "shugyo") {
+    const gate = await assertBookerPaymentVerified(session.user.id)
+    if (gate) return gate
+  }
 
   const idempotencyKey = req.headers.get("X-Idempotency-Key")
   if (idempotencyKey) {

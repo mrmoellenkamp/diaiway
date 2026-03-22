@@ -193,6 +193,31 @@ const en = {
   "register.usernameTaken": "Already taken",
   "register.usernameInvalid": "Invalid username",
 
+  "register.consent.sectionTitle": "Legal (sign-up)",
+  "register.consent.phase1Hint":
+    "Only what’s required to create your account. Payment and session terms follow when you book or add billing details.",
+  "register.consent.agbPrivacyPrefix": "I accept the",
+  "register.consent.linkAgb": "Terms",
+  "register.consent.agbPrivacyMiddleShort": "and the",
+  "register.consent.linkPrivacy": "Privacy Policy",
+  "register.consent.agbPrivacySuffixShort": ".",
+  "register.consent.newsletterShort": "I’d like DIY tips and news (optional; double opt-in).",
+  "register.consent.phase1Footer":
+    "We store the document version, consent time, and a hash of your IP (no plain IP). Marketing is never pre-selected.",
+  "register.consent.paymentProviderName": "Stripe",
+  "register.errorConsents": "Please accept the Terms and Privacy Policy.",
+
+  "paymentOnboarding.title": "Payment & session",
+  "paymentOnboarding.intro": "Before you start a paid session, we need these two confirmations.",
+  "paymentOnboarding.billingBody":
+    "I consent to my billing details (name, address) and payment information being shared with our payment service provider {provider} for processing. Charges apply only after the free 5-minute handshake per session ends.",
+  "paymentOnboarding.waiverBody":
+    "I expressly request that diAIway begins performance before the withdrawal period ends. I understand that I lose my right of withdrawal once the contract has been fully performed.",
+  "paymentOnboarding.dataRoutingHint":
+    "You submit billing data to diAIway over TLS. Our servers validate it and pass payment instructions to the provider when you use wallet or checkout — see",
+  "paymentOnboarding.confirm": "Agree and continue",
+  "paymentOnboarding.success": "Saved. You can book now.",
+
   "invoice.error.incomplete": "Please complete your billing details first ({fields}).",
   "invoice.field.type": "Customer type (private / business)",
   "invoice.field.fullName": "Full name",

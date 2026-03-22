@@ -14,6 +14,7 @@ import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { PaymentOnboardingModal } from "@/components/payment-onboarding-modal"
 
 type InvoiceData = {
   type?: "privat" | "unternehmen"
@@ -47,10 +48,15 @@ export default function InvoiceDataPage() {
   const [saving, setSaving] = useState(false)
   const [data, setData] = useState<InvoiceData>(defaultPrivate)
   const [customerNumber, setCustomerNumber] = useState<string | null>(null)
+  const [appRole, setAppRole] = useState<"shugyo" | "takumi" | null>(null)
+  const [isPaymentVerified, setIsPaymentVerified] = useState<boolean | null>(null)
+  const [paymentOnboardingOpen, setPaymentOnboardingOpen] = useState(false)
 
   function applyProfilePayload(res: {
     invoiceData?: unknown
     customerNumber?: string | null
+    appRole?: string
+    isPaymentVerified?: boolean
   }) {
     if (res.invoiceData && typeof res.invoiceData === "object") {
       setData({ ...defaultPrivate, ...res.invoiceData } as InvoiceData)
@@ -62,6 +68,12 @@ export default function InvoiceDataPage() {
         ? res.customerNumber.trim()
         : null,
     )
+    if (res.appRole === "shugyo" || res.appRole === "takumi") {
+      setAppRole(res.appRole)
+    }
+    if (typeof res.isPaymentVerified === "boolean") {
+      setIsPaymentVerified(res.isPaymentVerified)
+    }
   }
 
   useEffect(() => {
@@ -75,7 +87,13 @@ export default function InvoiceDataPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function handleSave() {
+  const isCompany = data.type === "unternehmen"
+  const paymentCheck = validateInvoiceDataForPayment(data)
+  const missingFieldLabels =
+    paymentCheck.ok ? [] : paymentCheck.missingFieldKeys.map((k) => t(`invoice.field.${k}`))
+  const missingFieldsText = missingFieldLabels.join(", ")
+
+  async function performSave() {
     setSaving(true)
     try {
       const res = await fetch("/api/user/profile", {
@@ -98,12 +116,17 @@ export default function InvoiceDataPage() {
     }
   }
 
-  const isCompany = data.type === "unternehmen"
-
-  const paymentCheck = validateInvoiceDataForPayment(data)
-  const missingFieldLabels =
-    paymentCheck.ok ? [] : paymentCheck.missingFieldKeys.map((k) => t(`invoice.field.${k}`))
-  const missingFieldsText = missingFieldLabels.join(", ")
+  async function handleSave() {
+    if (!paymentCheck.ok) {
+      toast.error(t("invoice.error.incomplete").replace("{fields}", missingFieldsText))
+      return
+    }
+    if (appRole === "shugyo" && isPaymentVerified === false) {
+      setPaymentOnboardingOpen(true)
+      return
+    }
+    await performSave()
+  }
 
   return (
     <PageContainer>
@@ -339,6 +362,12 @@ export default function InvoiceDataPage() {
           </div>
         )}
       </div>
+
+      <PaymentOnboardingModal
+        open={paymentOnboardingOpen}
+        onOpenChange={setPaymentOnboardingOpen}
+        onSuccess={() => void performSave()}
+      />
     </PageContainer>
   )
 }

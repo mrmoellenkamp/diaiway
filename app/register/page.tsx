@@ -15,6 +15,12 @@ import { Suspense } from "react"
 import { CheckCircle2, Eye, EyeOff, Loader2, UserPlus, XCircle } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { PageContainer } from "@/components/page-container"
+import {
+  RegistrationConsentBlock,
+  initialRegistrationConsents,
+  registrationConsentsComplete,
+  type RegistrationConsentState,
+} from "@/components/registration-consent-block"
 
 // ─── Password strength ──────────────────────────────────────────────────────
 
@@ -94,6 +100,7 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [consents, setConsents] = useState<RegistrationConsentState>(initialRegistrationConsents)
 
   // Username availability check
   type CheckState = "idle" | "checking" | "available" | "taken" | "invalid"
@@ -173,6 +180,12 @@ function RegisterForm() {
       return
     }
 
+    if (!registrationConsentsComplete(consents)) {
+      toast.error(t("register.errorConsents"))
+      setError(t("register.errorConsents"))
+      return
+    }
+
     setIsLoading(true)
     try {
       const res = await fetch("/api/auth/register", {
@@ -183,6 +196,14 @@ function RegisterForm() {
           email: email.toLowerCase().trim(),
           password,
           username: username.trim(),
+          appRole: selectedRole,
+          consents: {
+            agbAndPrivacy: consents.agbPrivacy,
+            earlyPerformanceWaiver: consents.earlyPerformance,
+            paymentProcessor: consents.paymentProcessor,
+            takumiExpertDeclaration: consents.takumiExpert,
+            marketing: consents.marketing,
+          },
           // Honeypot value — empty for real users
           _hp: honeypotRef.current?.value ?? "",
         }),
@@ -220,8 +241,20 @@ function RegisterForm() {
     }
   }
 
+  const consentsOk = registrationConsentsComplete(consents)
+  const canSubmit =
+    !!selectedRole &&
+    !!name.trim() &&
+    !!email.trim() &&
+    !!username.trim() &&
+    usernameCheck === "available" &&
+    password.length >= 8 &&
+    /[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password) &&
+    password === confirmPassword &&
+    consentsOk
+
   return (
-    <div className="w-full max-w-sm flex flex-col gap-8">
+    <div className="flex w-full max-w-md flex-col gap-8">
       <div className="flex flex-col items-center gap-3">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
           <span className="font-jp text-2xl font-bold text-primary">匠</span>
@@ -374,6 +407,8 @@ function RegisterForm() {
           )}
         </div>
 
+        <RegistrationConsentBlock value={consents} onChange={setConsents} disabled={isLoading} />
+
         {error && (
           <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
             {error}
@@ -382,7 +417,7 @@ function RegisterForm() {
 
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !canSubmit}
           className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
         >
           {isLoading ? (

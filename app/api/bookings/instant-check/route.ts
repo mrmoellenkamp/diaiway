@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       expertPromise,
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { balance: true },
+        select: { balance: true, isPaymentVerified: true },
       }),
       prisma.booking.findFirst({
         where: {
@@ -73,6 +73,8 @@ export async function GET(req: NextRequest) {
     const instantAvailableNow = expert.liveStatus === "available" &&
       (!hasInstantRestriction || isWithinInstantSlots(instantSlots, new Date()))
 
+    const requiresPaymentOnboarding = user?.isPaymentVerified !== true
+
     return NextResponse.json({
       hasPaidBefore,
       minBalanceCents,
@@ -80,6 +82,8 @@ export async function GET(req: NextRequest) {
       pricePerMinuteCents,
       hasSufficientBalance: userBalanceCents >= minBalanceCents,
       instantAvailableNow,
+      requiresPaymentOnboarding,
+      isPaymentVerified: user?.isPaymentVerified === true,
     })
   } catch {
     return NextResponse.json({ error: "Fehler beim Prüfen." }, { status: 500 })

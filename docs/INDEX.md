@@ -15,6 +15,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **Architektur & API** | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | **Verborgene Mechaniken** | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) |
 | **Beta: Registrierung & Onboarding** | [BETA-TESTER-ONBOARDING-FLOW.md](BETA-TESTER-ONBOARDING-FLOW.md) |
+| **Registrierung: Einwilligungen (DSGVO)** | [REGISTRATION-CONSENTS.md](REGISTRATION-CONSENTS.md) |
 | **Admin** | [ADMIN.md](ADMIN.md) |
 | **Umgebungsvariablen** | [ENV.md](ENV.md) |
 | **Production-Login / Safari** | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) |

@@ -24,6 +24,7 @@ import { InstantCallTrigger } from "@/components/instant-call-trigger"
 import { cn } from "@/lib/utils"
 import type { SlotSelectMeta } from "@/components/booking-calendar"
 import { takumiPublicLabel } from "@/lib/communication-display"
+import { PaymentOnboardingModal } from "@/components/payment-onboarding-modal"
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -45,6 +46,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [isBooking, setIsBooking] = useState(false)
   const [selectedInSprechzeit, setSelectedInSprechzeit] = useState(false)
   const [selectedSprechzeit, setSelectedSprechzeit] = useState<{ date: string; startTime: string } | null>(null)
+  const [paymentOnboardingOpen, setPaymentOnboardingOpen] = useState(false)
 
   useEffect(() => {
     if (step === "checkout" && session?.user) {
@@ -218,10 +220,15 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           setStep("checkout")
         }
       } else {
-        const errorMsg = data.error?.includes("validation")
-          ? t("booking.incompleteProfile")
-          : data.error || t("booking.networkError")
-        toast.error(errorMsg)
+        if (data.code === "PAYMENT_ONBOARDING_REQUIRED") {
+          setPaymentOnboardingOpen(true)
+          toast.error(data.error || t("register.errorConsents"))
+        } else {
+          const errorMsg = data.error?.includes("validation")
+            ? t("booking.incompleteProfile")
+            : data.error || t("booking.networkError")
+          toast.error(errorMsg)
+        }
       }
     } catch {
       toast.error(t("booking.networkError"))
@@ -556,6 +563,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           </>
         )}
       </div>
+
+      <PaymentOnboardingModal open={paymentOnboardingOpen} onOpenChange={setPaymentOnboardingOpen} />
     </PageContainer>
   )
 }

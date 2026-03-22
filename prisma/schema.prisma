@@ -155,6 +155,35 @@ model User {
   // Moderation: Bei SafeSearch-Verstoß (Adult/Violence) in Snapshot-Moderation gesetzt
   moderationViolationAt DateTime?
 
+  // Registrierung — Einwilligungen & Nachweis (DSGVO / Verbraucherschutz)
+  /** Version der AGB zum Zeitpunkt der Zustimmung (serverseitig gesetzt, z. B. LEGAL_CONSENT_VERSION) */
+  acceptedAgbVersion          String?
+  acceptedAgbAt               DateTime?
+  /** Datenschutzerklärung — Version & Zeitpunkt (bei kombinierter Checkbox identisch zu AGB möglich) */
+  acceptedPrivacyVersion      String?
+  acceptedPrivacyAt           DateTime?
+  /** Shugyo: vorzeitiger Beginn / Widerrufsfolgen (§ 312g BGB) — Ausführung vor Fristende */
+  earlyPerformanceWaiverAt    DateTime?
+  /** Einwilligung Weitergabe Zahlungsdaten an Zahlungsdienstleister (z. B. Stripe) */
+  paymentProcessorConsentAt   DateTime?
+  /** Takumi: gewerblich/freiberuflich + Identitätsprüfung für Auszahlungen */
+  takumiExpertDeclarationAt   DateTime?
+  /** Freiwilliges Marketing — nicht vorausgewählt; Versand ggf. erst nach separatem DOI */
+  marketingOptIn              Boolean    @default(false)
+  marketingOptInAt            DateTime?
+  marketingDoubleOptInAt      DateTime?
+  /** SHA-256(IP + Pepper) — keine Klartext-IP; Pepper in REGISTRATION_IP_PEPPER / NEXTAUTH_SECRET */
+  registrationIpHash          String?
+
+  /** Shugyo: Zahlungs-/Widerrufseinwilligung (Phase 2) abgeschlossen — Voraussetzung für Buchung & Session-Start */
+  isPaymentVerified           Boolean    @default(false)
+  /** Phase 2: Einwilligung Weitergabe Rechnungs- & Zahlungsdaten (Zeitpunkt + IP-Hash separat von Registrierung) */
+  phase2BillingConsentAt      DateTime?
+  phase2BillingConsentIpHash  String?
+  /** Phase 2: Widerrufsverzicht digitale Dienstleistung vor Fristende */
+  phase2WithdrawalWaiverAt    DateTime?
+  phase2WithdrawalWaiverIpHash String?
+
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 

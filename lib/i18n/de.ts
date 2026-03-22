@@ -200,6 +200,32 @@ const de = {
   "register.usernameTaken": "Bereits vergeben",
   "register.usernameInvalid": "Ungültiger Benutzername",
 
+  "register.consent.sectionTitle": "Rechtliches (Registrierung)",
+  "register.consent.phase1Hint":
+    "Nur das Nötigste für dein Konto. Zahlungs- und Session-Hinweise folgen, sobald du buchst oder Rechnungsdaten hinterlegst.",
+  "register.consent.agbPrivacyPrefix": "Ich akzeptiere die",
+  "register.consent.linkAgb": "AGB",
+  "register.consent.agbPrivacyMiddleShort": "und die",
+  "register.consent.linkPrivacy": "Datenschutzerklärung",
+  "register.consent.agbPrivacySuffixShort": ".",
+  "register.consent.newsletterShort": "Ich möchte DIY-Tipps und News erhalten (freiwillig; Double-Opt-In).",
+  "register.consent.phase1Footer":
+    "Wir speichern die Dokumentenversion und den Zeitpunkt sowie einen Hash deiner IP (keine Klartext-IP). Marketing nie vorausgewählt.",
+  "register.consent.paymentProviderName": "Stripe",
+  "register.errorConsents": "Bitte AGB und Datenschutz akzeptieren.",
+
+  "paymentOnboarding.title": "Zahlung & Session",
+  "paymentOnboarding.intro":
+    "Bevor du eine Session startest oder zahlungspflichtig wirst, benötigen wir diese beiden Bestätigungen.",
+  "paymentOnboarding.billingBody":
+    "Ich willige ein, dass meine Rechnungsdaten (Name, Anschrift) und Zahlungsinformationen zur Abwicklung an unseren Zahlungsdienstleister {provider} übermittelt werden. Die Belastung erfolgt erst nach Ende des kostenlosen 5-Minuten-Handshakes pro Session.",
+  "paymentOnboarding.waiverBody":
+    "Ich verlange ausdrücklich, dass diAIway vor Ende der Widerrufsfrist mit der Ausführung beginnt. Mir ist bekannt, dass ich mein Widerrufsrecht bei vollständiger Vertragserfüllung verliere.",
+  "paymentOnboarding.dataRoutingHint":
+    "Rechnungsdaten gibst du in diesem Schritt nur an diAIway weiter (verschlüsselte Verbindung). Unser Server prüft und leitet Zahlungen an den Anbieter weiter, sobald du z. B. Wallet oder Checkout nutzt — siehe",
+  "paymentOnboarding.confirm": "Zustimmen und fortfahren",
+  "paymentOnboarding.success": "Gespeichert. Du kannst jetzt buchen.",
+
   // Rechnungsdaten (Server + Client, Zahlungsfreigabe)
   "invoice.error.incomplete": "Bitte vervollständige zuerst deine Rechnungsdaten ({fields}).",
   "invoice.field.type": "Kundentyp (Privat/Unternehmen)",

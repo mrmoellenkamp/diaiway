@@ -3,12 +3,30 @@
 import { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -34,6 +52,7 @@ import {
   Upload,
   RefreshCw,
   Tags,
+  GripVertical,
 } from "lucide-react"
 
 type AdminSpecialty = { id: string; name: string; sortOrder: number; isActive: boolean }
@@ -49,6 +68,119 @@ type AdminCategory = {
   isActive: boolean
   expertCount: number
   specialties: AdminSpecialty[]
+}
+
+function SortableCategoryRow({
+  category: c,
+  isSelected,
+  onSelect,
+  onEdit,
+}: {
+  category: AdminCategory
+  isSelected: boolean
+  onSelect: () => void
+  onEdit: (e: React.MouseEvent) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-1 rounded-lg border p-2 text-sm transition-colors md:p-3",
+        isSelected ? "border-primary bg-primary/5" : "border-border/60",
+        isDragging && "z-10 bg-card shadow-lg ring-2 ring-primary/25",
+      )}
+    >
+      <button
+        type="button"
+        className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted active:cursor-grabbing"
+        aria-label="Kategorie verschieben"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 text-left transition-colors hover:bg-muted/40"
+      >
+        <div
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${c.color}18` }}
+        >
+          <TaxonomyCategoryIcon iconKey={c.iconKey} iconImageUrl={c.iconImageUrl} color={c.color} size={22} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium">{c.name}</div>
+          <div className="truncate text-[10px] text-muted-foreground">
+            {c.slug} · {c.expertCount} Takumis
+            {!c.isActive && " · inaktiv"}
+          </div>
+        </div>
+      </button>
+      <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={onEdit}>
+        <Pencil className="size-3.5" />
+      </Button>
+    </div>
+  )
+}
+
+function SortableSpecialtyRow({
+  specialty: s,
+  onNameChange,
+  onNameBlur,
+  onToggleActive,
+  onDelete,
+}: {
+  specialty: AdminSpecialty
+  onNameChange: (specialtyId: string, name: string) => void
+  onNameBlur: (specialtyId: string, name: string) => void
+  onToggleActive: (specialtyId: string, v: boolean) => void
+  onDelete: (specialtyId: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 rounded-md border border-border/50 px-2 py-2 text-sm md:px-3",
+        isDragging && "z-10 bg-card shadow-md ring-2 ring-primary/20",
+      )}
+    >
+      <button
+        type="button"
+        className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted active:cursor-grabbing"
+        aria-label="Fachbereich verschieben"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <Input
+        className="h-8 flex-1 text-sm"
+        value={s.name}
+        onChange={(e) => onNameChange(s.id, e.target.value)}
+        onBlur={(e) => onNameBlur(s.id, e.target.value.trim() || s.name)}
+      />
+      <div className="flex shrink-0 items-center gap-1">
+        <Switch checked={s.isActive} onCheckedChange={(v) => onToggleActive(s.id, v)} />
+        <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => onDelete(s.id)}>
+          <Trash2 className="size-3.5 text-destructive" />
+        </Button>
+      </div>
+    </li>
+  )
 }
 
 export default function AdminTaxonomyPage() {
@@ -104,6 +236,83 @@ export default function AdminTaxonomyPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const persistCategoryOrder = useCallback(
+    async (ids: string[]) => {
+      try {
+        const res = await fetch("/api/admin/taxonomy/categories/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : "Speichern fehlgeschlagen")
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Reihenfolge der Kategorien speichern fehlgeschlagen")
+        load()
+      }
+    },
+    [load],
+  )
+
+  const persistSpecialtyOrder = useCallback(
+    async (categoryId: string, ids: string[]) => {
+      try {
+        const res = await fetch("/api/admin/taxonomy/specialties/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ categoryId, ids }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : "Speichern fehlgeschlagen")
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Reihenfolge der Fachbereiche speichern fehlgeschlagen")
+        load()
+      }
+    },
+    [load],
+  )
+
+  const handleCategoryDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      const oldIndex = categories.findIndex((c) => c.id === active.id)
+      const newIndex = categories.findIndex((c) => c.id === over.id)
+      if (oldIndex < 0 || newIndex < 0) return
+      const next = arrayMove(categories, oldIndex, newIndex)
+      setCategories(next)
+      void persistCategoryOrder(next.map((c) => c.id))
+    },
+    [categories, persistCategoryOrder],
+  )
+
+  const handleSpecialtyDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id || !selectedId) return
+      const cat = categories.find((c) => c.id === selectedId)
+      if (!cat) return
+      const oldIndex = cat.specialties.findIndex((s) => s.id === active.id)
+      const newIndex = cat.specialties.findIndex((s) => s.id === over.id)
+      if (oldIndex < 0 || newIndex < 0) return
+      const newSpecs = arrayMove(cat.specialties, oldIndex, newIndex)
+      setCategories((prev) =>
+        prev.map((c) => (c.id === selectedId ? { ...c, specialties: newSpecs } : c)),
+      )
+      void persistSpecialtyOrder(selectedId, newSpecs.map((s) => s.id))
+    },
+    [categories, selectedId, persistSpecialtyOrder],
+  )
 
   const selected = categories.find((c) => c.id === selectedId) ?? null
 
@@ -307,6 +516,9 @@ export default function AdminTaxonomyPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Kategorien</CardTitle>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Reihenfolge per ⋮⋮-Griff ändern (wird sofort gespeichert).
+                </p>
               </CardHeader>
               <CardContent className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto">
                 {categories.length === 0 && !loading && (
@@ -316,43 +528,25 @@ export default function AdminTaxonomyPage() {
                       : "Noch keine Kategorien — „Neue Kategorie“ anlegen."}
                   </p>
                 )}
-                {categories.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setSelectedId(c.id)}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors ${
-                      selectedId === c.id ? "border-primary bg-primary/5" : "border-border/60 hover:bg-muted/40"
-                    }`}
-                  >
-                    <div
-                      className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: `${c.color}18` }}
-                    >
-                      <TaxonomyCategoryIcon iconKey={c.iconKey} iconImageUrl={c.iconImageUrl} color={c.color} size={22} />
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                  <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                    <div className="flex flex-col gap-1">
+                      {categories.map((c) => (
+                        <SortableCategoryRow
+                          key={c.id}
+                          category={c}
+                          isSelected={selectedId === c.id}
+                          onSelect={() => setSelectedId(c.id)}
+                          onEdit={(e) => {
+                            e.stopPropagation()
+                            setFormEdit({ ...c })
+                            setEditOpen(true)
+                          }}
+                        />
+                      ))}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {c.slug} · {c.expertCount} Takumis
-                        {!c.isActive && " · inaktiv"}
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 size-8"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setFormEdit({ ...c })
-                        setEditOpen(true)
-                      }}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                  </button>
-                ))}
+                  </SortableContext>
+                </DndContext>
               </CardContent>
             </Card>
 
@@ -361,6 +555,11 @@ export default function AdminTaxonomyPage() {
                 <CardTitle className="text-sm">
                   Fachbereiche {selected ? `— ${selected.name}` : ""}
                 </CardTitle>
+                {selected ? (
+                  <p className="text-xs font-normal text-muted-foreground">
+                    Reihenfolge per ⋮⋮-Griff ändern (wird sofort gespeichert).
+                  </p>
+                ) : null}
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 {!selected ? (
@@ -378,44 +577,43 @@ export default function AdminTaxonomyPage() {
                         Hinzufügen
                       </Button>
                     </div>
-                    <ul className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
-                      {selected.specialties.map((s) => (
-                        <li
-                          key={s.id}
-                          className="flex items-center gap-2 rounded-md border border-border/50 px-3 py-2 text-sm"
-                        >
-                          <Input
-                            className="h-8 flex-1 text-sm"
-                            value={s.name}
-                            onChange={(e) => {
-                              const v = e.target.value
-                              setCategories((prev) =>
-                                prev.map((c) =>
-                                  c.id !== selected.id
-                                    ? c
-                                    : {
-                                        ...c,
-                                        specialties: c.specialties.map((x) =>
-                                          x.id === s.id ? { ...x, name: v } : x,
-                                        ),
-                                      },
-                                ),
-                              )
-                            }}
-                            onBlur={(e) => void patchSpecialty(s.id, { name: e.target.value.trim() || s.name })}
-                          />
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Switch
-                              checked={s.isActive}
-                              onCheckedChange={(v) => patchSpecialty(s.id, { isActive: v })}
+                    <DndContext
+                      key={selected.id}
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleSpecialtyDragEnd}
+                    >
+                      <SortableContext
+                        items={selected.specialties.map((s) => s.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <ul className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
+                          {selected.specialties.map((s) => (
+                            <SortableSpecialtyRow
+                              key={s.id}
+                              specialty={s}
+                              onNameChange={(id, name) => {
+                                setCategories((prev) =>
+                                  prev.map((c) =>
+                                    c.id !== selected.id
+                                      ? c
+                                      : {
+                                          ...c,
+                                          specialties: c.specialties.map((x) =>
+                                            x.id === id ? { ...x, name } : x,
+                                          ),
+                                        },
+                                  ),
+                                )
+                              }}
+                              onNameBlur={(id, name) => void patchSpecialty(id, { name })}
+                              onToggleActive={(id, v) => void patchSpecialty(id, { isActive: v })}
+                              onDelete={deleteSpecialty}
                             />
-                            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => deleteSpecialty(s.id)}>
-                              <Trash2 className="size-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                          ))}
+                        </ul>
+                      </SortableContext>
+                    </DndContext>
                     <Button variant="outline" size="sm" className="text-destructive" onClick={() => selected && deleteCategory(selected.id)}>
                       Kategorie löschen / deaktivieren
                     </Button>

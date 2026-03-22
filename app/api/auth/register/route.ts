@@ -5,12 +5,13 @@ import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { sendVerificationEmail } from "@/lib/email"
 import { sendWelcomeWaymail } from "@/lib/onboarding"
+import { getLegalConsentVersion } from "@/lib/legal-consent-version"
+import { hashRegistrationIp } from "@/lib/registration-ip-hash"
 
 const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
 
 export const runtime = "nodejs"
 
-/** Minimum password requirements */
 function validatePassword(pw: string): string | null {
   if (pw.length < 8) return "Das Passwort muss mindestens 8 Zeichen lang sein."
   if (!/[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw))
@@ -18,13 +19,18 @@ function validatePassword(pw: string): string | null {
   return null
 }
 
+type AppRoleChoice = "shugyo" | "takumi"
+
+type ConsentBody = {
+  agbAndPrivacy?: boolean
+  marketing?: boolean
+}
+
 export async function POST(req: Request) {
   try {
     const ip = getClientIp(req)
     const body = await req.json()
 
-    // ── Honeypot ──────────────────────────────────────────────────────────────
-    // Any value in the hidden _hp field = bot → return fake success immediately
     if (body._hp) {
       return NextResponse.json(
         { success: true, message: "Konto erfolgreich erstellt." },
@@ -32,10 +38,8 @@ export async function POST(req: Request) {
       )
     }
 
-    const { name, email, password, username: rawUsername } = body
+    const { name, email, password, username: rawUsername, appRole: rawAppRole, consents: rawConsents } = body
 
-    // ── Rate limiting ─────────────────────────────────────────────────────────
-    // 5 registrations per IP per 15 min
     const rlIp = rateLimit(`register:ip:${ip}`, { limit: 5, windowSec: 900 })
     if (!rlIp.success) {
       return NextResponse.json(
@@ -43,7 +47,6 @@ export async function POST(req: Request) {
         { status: 429, headers: { "Retry-After": String(rlIp.retryAfterSec) } }
       )
     }
-    // 3 registrations per email per hour (prevents email flooding)
     const rlEmail = rateLimit(`register:email:${(email || "").toLowerCase()}`, { limit: 3, windowSec: 3600 })
     if (!rlEmail.success) {
       return NextResponse.json(
@@ -52,7 +55,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // ── Input validation ──────────────────────────────────────────────────────
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, E-Mail und Passwort sind erforderlich." },
@@ -76,10 +78,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "E-Mail-Adresse ist zu lang." }, { status: 400 })
     }
 
-    // ── Duplicate check ───────────────────────────────────────────────────────
+    const appRole: AppRoleChoice = rawAppRole === "takumi" ? "takumi" : "shugyo"
+    const consents: ConsentBody =
+      rawConsents && typeof rawConsents === "object" ? (rawConsents as ConsentBody) : {}
+    if (consents.agbAndPrivacy !== true) {
+      return NextResponse.json({ error: "AGB und Datenschutz müssen akzeptiert werden." }, { status: 400 })
+    }
+
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) {
-      // Add artificial delay to prevent timing-based email enumeration
       await new Promise((r) => setTimeout(r, 400 + Math.random() * 400))
       return NextResponse.json(
         { error: "Diese E-Mail-Adresse ist bereits registriert." },
@@ -87,7 +94,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // ── Create user ───────────────────────────────────────────────────────────
     const hashed = await bcrypt.hash(password, 12)
 
     const desiredUsername = typeof rawUsername === "string" ? rawUsername.trim() : ""
@@ -105,20 +111,71 @@ export async function POST(req: Request) {
     }
     const username = desiredUsername
     const token = crypto.randomBytes(32).toString("hex")
-    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-    const user = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        username,
-        email: normalizedEmail,
-        password: hashed,
-        role: "user",
-        appRole: "shugyo",
-        favorites: [],
-        emailVerificationToken: token,
-        emailVerificationExpiry: expiry,
-      },
+    const legalVersion = getLegalConsentVersion()
+    const now = new Date()
+    const ipHash = hashRegistrationIp(ip)
+
+    const marketingOn = consents.marketing === true
+    /** Takumi: keine Session-Sperre; Shugyo: Phase-2-Modal vor Buchung */
+    const isPaymentVerified = appRole === "takumi"
+
+    const user = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          name: name.trim(),
+          username,
+          email: normalizedEmail,
+          password: hashed,
+          role: "user",
+          appRole,
+          favorites: [],
+          emailVerificationToken: token,
+          emailVerificationExpiry: expiry,
+          acceptedAgbVersion: legalVersion,
+          acceptedAgbAt: now,
+          acceptedPrivacyVersion: legalVersion,
+          acceptedPrivacyAt: now,
+          earlyPerformanceWaiverAt: null,
+          paymentProcessorConsentAt: null,
+          takumiExpertDeclarationAt: null,
+          marketingOptIn: marketingOn,
+          marketingOptInAt: marketingOn ? now : null,
+          registrationIpHash: ipHash,
+          isPaymentVerified,
+        },
+      })
+
+      if (appRole === "takumi") {
+        const displayName = username
+        await tx.expert.create({
+          data: {
+            userId: u.id,
+            name: displayName,
+            avatar: (displayName && displayName.charAt(0).toUpperCase()) || "T",
+            email: u.email ?? "",
+            categorySlug: "dienstleistungen",
+            categoryName: "Dienstleistungen",
+            subcategory: "",
+            bio: "",
+            priceVideo15Min: 1,
+            priceVoice15Min: 1,
+            pricePerSession: 0,
+            rating: 0,
+            reviewCount: 0,
+            sessionCount: 0,
+            isLive: false,
+            isPro: false,
+            verified: false,
+            portfolio: [],
+            joinedDate: now.toISOString().slice(0, 10),
+            matchRate: 0,
+          },
+        })
+      }
+
+      return u
     })
 
     const verifyUrl = `${baseUrl}/api/auth/verify-email/${token}`

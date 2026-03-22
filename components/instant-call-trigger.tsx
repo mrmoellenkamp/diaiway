@@ -16,6 +16,7 @@ import { useWalletTopup } from "@/lib/wallet-topup-context"
 import type { Takumi } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
+import { PaymentOnboardingModal } from "@/components/payment-onboarding-modal"
 
 type CallTypeChoice = "VIDEO" | "VOICE"
 
@@ -43,7 +44,10 @@ export function InstantCallTrigger({
     hasPaidBefore?: boolean
     hasSufficientBalance?: boolean
     instantAvailableNow?: boolean
+    requiresPaymentOnboarding?: boolean
+    isPaymentVerified?: boolean
   } | null>(null)
+  const [paymentOnboardingOpen, setPaymentOnboardingOpen] = useState(false)
 
   useEffect(() => {
     if (takumi.liveStatus !== "available") return
@@ -75,6 +79,14 @@ export function InstantCallTrigger({
         { credentials: "include" }
       )
       const check = await checkRes.json()
+      setInstantCheck(check)
+
+      if (check.requiresPaymentOnboarding) {
+        setPaymentOnboardingOpen(true)
+        setChecking(false)
+        setLoading(false)
+        return
+      }
 
       if (!check.hasSufficientBalance) {
         openWalletTopup(() => {
@@ -112,11 +124,28 @@ export function InstantCallTrigger({
     }
   }
 
-  function handleClick(e: React.MouseEvent) {
+  async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
     if (loading || checking || !instantAvailableNow) return
-    setShowConfirmDialog(true)
+    setChecking(true)
+    try {
+      const checkRes = await fetch(
+        `/api/bookings/instant-check?expertId=${encodeURIComponent(takumi.id)}`,
+        { credentials: "include" }
+      )
+      const check = await checkRes.json()
+      setInstantCheck(check)
+      if (check.requiresPaymentOnboarding) {
+        setPaymentOnboardingOpen(true)
+        return
+      }
+      setShowConfirmDialog(true)
+    } catch {
+      setShowConfirmDialog(true)
+    } finally {
+      setChecking(false)
+    }
   }
 
   function handleConfirm(e: React.MouseEvent) {
@@ -153,6 +182,14 @@ export function InstantCallTrigger({
           )}
         </span>
       </Button>
+
+      <PaymentOnboardingModal
+        open={paymentOnboardingOpen}
+        onOpenChange={setPaymentOnboardingOpen}
+        onSuccess={() => {
+          setShowConfirmDialog(true)
+        }}
+      />
 
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="sm:max-w-md">

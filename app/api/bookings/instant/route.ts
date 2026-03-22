@@ -7,6 +7,7 @@ import { isWithinInstantSlots } from "@/lib/availability-utils"
 import { sendPushToUser } from "@/lib/push"
 import type { WeeklySlots } from "@/lib/availability-utils"
 import { communicationUsername } from "@/lib/communication-display"
+import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
 
 /**
  * POST /api/bookings/instant
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
   if (appRole !== "shugyo") {
     return NextResponse.json({ error: "Nur für Shugyo." }, { status: 403 })
   }
+
+  const payGate = await assertBookerPaymentVerified(session.user.id)
+  if (payGate) return payGate
 
   let body: { expertId?: string; callType?: "VIDEO" | "VOICE" }
   try {

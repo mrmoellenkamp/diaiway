@@ -10,6 +10,15 @@ Alle für diAIway benötigten Umgebungsvariablen.
 | `NEXTAUTH_SECRET` | Geheimer Schlüssel für JWT (min. 32 Zeichen) | Zufälliger String |
 | `NEXTAUTH_URL` | Basis-URL der App | `http://localhost:3001` lokal (wie `npm run dev`); **Production:** kanonische URL (z. B. `https://diaiway.com`) — siehe [DEPLOYMENT-AUTH.md](./DEPLOYMENT-AUTH.md) |
 
+## Registrierung / Nachweis Einwilligungen
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `LEGAL_CONSENT_VERSION` | Versionsstring für AGB/Datenschutz-Zustimmung (wird in der DB gespeichert). Bei Dokumenten-Update erhöhen. Standard: `1.0` |
+| `REGISTRATION_IP_PEPPER` | Optional: zusätzlicher Pepper für `registrationIpHash`; sonst `NEXTAUTH_SECRET` |
+
+Siehe [REGISTRATION-CONSENTS.md](./REGISTRATION-CONSENTS.md).
+
 ## E-Mail (SMTP)
 
 Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):

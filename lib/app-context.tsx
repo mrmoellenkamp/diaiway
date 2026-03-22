@@ -16,6 +16,8 @@ export interface ProfileData {
   languages: string[]
   skillLevel: string | null
   appRole: UserRole
+  /** Shugyo: Phase-2-Zahlungseinwilligung; nötig für Buchung/Session-Start */
+  isPaymentVerified: boolean
 }
 
 interface AppContextType {
@@ -77,6 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           languages: Array.isArray(data.languages) ? data.languages : [],
           skillLevel: data.skillLevel ?? null,
           appRole: (data.appRole as UserRole) || "shugyo",
+          isPaymentVerified: data.isPaymentVerified === true,
         })
       }
     } catch {

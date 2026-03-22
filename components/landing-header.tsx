@@ -94,7 +94,7 @@ export function LandingHeader() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <User className="size-4 text-muted-foreground" />
-                1. {t("common.profile")}
+                {t("common.profile")}
               </Link>
               <Link
                 href="/messages"
@@ -102,7 +102,7 @@ export function LandingHeader() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <Mail className="size-4 text-muted-foreground" />
-                2. {t("messages.title")}
+                {t("messages.title")}
               </Link>
               <Link
                 href="/categories"
@@ -110,7 +110,7 @@ export function LandingHeader() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <FolderOpen className="size-4 text-muted-foreground" />
-                3. {t("common.categories")}
+                {t("common.categories")}
               </Link>
               <Link
                 href="/home"
@@ -118,7 +118,7 @@ export function LandingHeader() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <span className="size-4 flex items-center justify-center text-muted-foreground font-bold text-xs">di</span>
-                4. {t("nav.menuDiAiway")}
+                {t("nav.menuDiAiway")}
               </Link>
               <button
                 onClick={async () => {

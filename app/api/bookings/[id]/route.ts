@@ -12,6 +12,7 @@ import {
 } from "@/lib/wallet-service"
 import { communicationUsername } from "@/lib/communication-display"
 import { notifyAfterCancellation } from "@/lib/notification-service"
+import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
 
 export const runtime = "nodejs"
 
@@ -336,6 +337,9 @@ export async function PATCH(
 
     // ── start-session ──────────────────────────────────────────────────────
     if (action === "start-session") {
+      const bookerGate = await assertBookerPaymentVerified(booking.userId)
+      if (bookerGate) return bookerGate
+
       if (booking.status !== "confirmed" && booking.status !== "active") {
         return NextResponse.json(
           { error: `Session kann nur aus Status "confirmed" oder "active" gestartet werden (aktuell: "${booking.status}").` },
