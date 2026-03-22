@@ -891,7 +891,7 @@ function DatabaseTab({
           )}
           {!dbHealthLoading && dbHealth?.error === "Auth failed" && (
             <div className="space-y-2 text-amber-900 dark:text-amber-100">
-              <p className="font-medium">Session/Auth ließ sich nicht auflösen (z. B. DB während Auth nötig).</p>
+              <p className="font-medium">Session/Auth ließ sich nicht auflösen (z. B. DB während Auth nötig).</p>
               {dbHealth.hint && <p>{dbHealth.hint}</p>}
               {dbHealth.dbError?.message && (
                 <p className="font-mono text-[10px] break-words opacity-90">{dbHealth.dbError.message}</p>
