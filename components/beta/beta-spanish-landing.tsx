@@ -31,28 +31,41 @@ export function BetaSpanishLanding() {
           Ronda beta
         </p>
         <h1 className="mt-3 text-balance text-2xl font-bold leading-tight text-stone-900 md:text-4xl">
-          La recta final de diAiway: ¡sé mi beta tester! 🚀
+          Recta final en{" "}
+          <span className="whitespace-nowrap">
+            di<span className="text-primary">Ai</span>way
+          </span>
+          : necesito tu ayuda 🚀
         </h1>
         <p className="mt-6 text-lg font-medium leading-relaxed text-stone-800 md:text-xl">¡Hola!</p>
         <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
-          Llevo años con esta idea en la cabeza: una plataforma donde pueda obtener{" "}
-          <strong>ayuda clara y directa para mis proyectos DIY</strong>. He tirado demasiado tiempo y energía en
-          búsquedas interminables y hilos de foro que no llevaban a nada.
+          Quien me conoce sabe que me encantan los proyectos DIY. Probar cosas nuevas, aprender, vivir experiencias
+          nuevas — y al final sentir orgullo por lo que uno ha hecho con sus manos.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          <strong>PERO:</strong> ¿Cuánto tiempo y esfuerzo tiré en búsquedas interminables y mensajes de foro que no
+          servían para nada? ¡De locos! Seguro que tú también lo has vivido.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Por eso llevo unos años dando vueltas a una idea: una plataforma donde consiga{" "}
+          <strong>ayuda concreta para mis proyectos</strong>. Sin buscar durante horas, sin que te manden a paseo, sin
+          estrés. Preguntar a alguien que de verdad sabe. Rápido, práctico, por teléfono o videollamada — ya sea para
+          montar un mueble o restaurar un clásico.
         </p>
 
         <div className="mt-8 rounded-2xl border border-primary/15 bg-primary/[0.06] p-5 md:p-6">
-          <p className="text-base font-semibold text-primary md:text-lg">Por fin ha llegado el momento</p>
-          <p className="mt-3 text-base leading-relaxed text-stone-700 md:text-[17px]">
-            Estoy a un <strong>95&nbsp;% listo para lanzar</strong>. La base de{" "}
+          <p className="text-base font-semibold leading-relaxed text-primary md:text-lg">
+            Y por fin ha llegado el momento: la plataforma se llama{" "}
             <span className="whitespace-nowrap font-semibold text-foreground">
               di<span className="text-primary">Ai</span>way
             </span>{" "}
-            está montada, el café se ha acabado y tengo muchísimas ganas de salir oficialmente.
+            y estoy a un <strong>95&nbsp;% listo para lanzar</strong>. La estructura está montada, el café casi se ha
+            acabado y tengo muchísimas ganas de salir oficialmente — en la web y en la app.
           </p>
         </div>
 
         <p className="mt-8 text-base font-medium text-stone-900 md:text-[17px]">
-          Pero antes de pulsar «lanzar», necesito <strong>a ti</strong>.
+          Antes de pulsar el botón de «lanzar», necesito <strong>tu ayuda</strong>.
         </p>
 
         <div className="mx-auto mt-8 flex w-full justify-center">
@@ -72,11 +85,16 @@ export function BetaSpanishLanding() {
           <strong>
             di<span className="text-primary">Ai</span>way
           </strong>{" "}
-          entre los primeros? Busco beta testers con curiosidad y personas que quieran usar la plataforma con buen
-          rollo, probarla a fondo y contarme qué tal va, para que el arranque salga lo más redondo posible.
+          entre los primeros? Busco gente con curiosidad y «friendly users» que pongan a prueba la plataforma y me den
+          feedback para que todo vaya sobre ruedas el día del lanzamiento.
         </p>
 
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <p className="mt-6 text-base font-semibold text-stone-900 md:text-[17px]">¿Te animas?</p>
+        <p className="mt-2 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Escríbeme un mensaje corto o regístrate aquí:
+        </p>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Button
             asChild
             size="lg"
@@ -99,10 +117,10 @@ export function BetaSpanishLanding() {
             </Link>
           </Button>
         </div>
-        <p className="mt-4 text-sm text-stone-600">
-          Escríbeme un mensaje corto — o entra en la página de inicio y regístrate allí. Te agradezco un montón tu
-          apoyo, <strong>de la forma que sea</strong>.
+        <p className="mt-6 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Me haría muchísima ilusión recibir tu feedback y tu apoyo, <strong>de la forma que sea</strong>.
         </p>
+        <p className="mt-4 text-sm font-medium text-stone-600">Jens de diAiway</p>
       </article>
 
       <footer className="border-t border-stone-200 bg-white py-8">

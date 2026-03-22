@@ -31,28 +31,41 @@ export function BetaGermanLanding() {
           Beta-Runde
         </p>
         <h1 className="mt-3 text-balance text-2xl font-bold leading-tight text-stone-900 md:text-4xl">
-          Endspurt bei diAiway: Werde mein Beta-Tester! 🚀
+          Endspurt bei{" "}
+          <span className="whitespace-nowrap">
+            di<span className="text-primary">Ai</span>way
+          </span>
+          : Ich brauche deine Hilfe 🚀
         </h1>
         <p className="mt-6 text-lg font-medium leading-relaxed text-stone-800 md:text-xl">Hey!</p>
         <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
-          Seit ein paar Jahren geistert mir schon diese Idee durch den Kopf: eine Plattform, auf der ich{" "}
-          <strong>zielgerichtet Hilfe für meine DIY-Projekte</strong> bekomme. Zu viel Zeit und Mühe habe ich bei
-          meinen Projekten mit endlosen Recherchen und unsinnigen Forenbeiträgen verschwendet.
+          Wer mich kennt, weiß: Ich liebe DIY-Projekte. Neues ausprobieren, Neues lernen, Neues erleben – und am Ende
+          stolz darauf sein, was man selbst geschaffen hat.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          <strong>ABER:</strong> Wie viel Zeit und Mühe musste ich dabei bitte mit endlosen Recherchen und unsinnigen
+          Forenbeiträgen verschwenden? Irre!!! Bestimmt hast du diese Erfahrung auch schon gemacht.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Seit ein paar Jahren geistert mir daher eine Idee durch den Kopf: Eine Plattform, auf der ich zielgerichtet
+          Hilfe für meine Projekte bekomme. Ohne stundenlange Suche, ohne abgewimmelt zu werden, ohne Stress. Einfach
+          jemanden fragen, der sich auskennt. Schnell, praktisch, per Telefon oder Video-Call. Egal, ob es nur darum
+          geht, ein Möbelstück zusammenzubauen oder einen Oldtimer zu restaurieren.
         </p>
 
         <div className="mt-8 rounded-2xl border border-primary/15 bg-primary/[0.06] p-5 md:p-6">
-          <p className="text-base font-semibold text-primary md:text-lg">Jetzt ist es endlich so weit</p>
-          <p className="mt-3 text-base leading-relaxed text-stone-700 md:text-[17px]">
-            Ich bin zu <strong>95&nbsp;% startklar</strong>. Das Grundgerüst von{" "}
+          <p className="text-base font-semibold leading-relaxed text-primary md:text-lg">
+            Und jetzt ist es endlich so weit: Die Plattform heißt{" "}
             <span className="whitespace-nowrap font-semibold text-foreground">
               di<span className="text-primary">Ai</span>way
             </span>{" "}
-            steht, der Kaffeevorrat ist leer und ich brenne darauf, bald offiziell live zu gehen.
+            und ich bin zu <strong>95&nbsp;% startklar</strong>. Das Grundgerüst steht, der Kaffeevorrat ist beinahe leer
+            und ich brenne darauf, bald offiziell live zu gehen – im Web und per App.
           </p>
         </div>
 
         <p className="mt-8 text-base font-medium text-stone-900 md:text-[17px]">
-          Aber bevor ich den „Launch“-Button drücke, brauche ich <strong>dich</strong>.
+          Bevor ich den „Launch“-Button drücke, brauche ich aber <strong>deine Hilfe</strong>.
         </p>
 
         {/* Beta-Tester-Aufruf: Key-Visual direkt nach „brauche ich dich“ */}
@@ -73,11 +86,16 @@ export function BetaGermanLanding() {
           <strong>
             di<span className="text-primary">Ai</span>way
           </strong>{" "}
-          als einer der Ersten auszuprobieren? Ich suche neugierige Beta-Tester und „friendly user“, die meine neue
-          Plattform auf Herz und Nieren prüfen und mir Feedback geben, damit zum Start alles perfekt flutscht.
+          als einer der Ersten auszuprobieren? Ich suche Neugierige und „Friendly User“, die die Plattform auf Herz und
+          Nieren prüfen und mir Feedback geben, damit zum Start alles perfekt flutscht.
         </p>
 
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <p className="mt-6 text-base font-semibold text-stone-900 md:text-[17px]">Bist du dabei?</p>
+        <p className="mt-2 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Schreib mir einfach kurz eine Nachricht oder melde dich hier an:
+        </p>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Button
             asChild
             size="lg"
@@ -100,10 +118,10 @@ export function BetaGermanLanding() {
             </Link>
           </Button>
         </div>
-        <p className="mt-4 text-sm text-stone-600">
-          Schreib mir einfach kurz eine Nachricht — oder geh zur Startseite und registriere dich dort. Ich freue mich
-          riesig auf deine Unterstützung <strong>jeder Art</strong>!
+        <p className="mt-6 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Ich freue mich riesig auf dein Feedback und deine Unterstützung <strong>jeder Art</strong>!
         </p>
+        <p className="mt-4 text-sm font-medium text-stone-600">Jens von diAIway</p>
       </article>
 
       <footer className="border-t border-stone-200 bg-white py-8">

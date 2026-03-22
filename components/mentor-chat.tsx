@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
@@ -88,6 +89,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
     setIsSearchingExperts,
     searchResults,
     setSearchResults,
+    userAvatar,
   } = useApp()
   const { takumis } = useTakumis()
   const { locale, t } = useI18n()
@@ -363,11 +365,24 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
               <div className={cn("flex gap-2.5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                 <div
                   className={cn(
-                    "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
+                    "mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full",
                     msg.role === "assistant" ? "bg-primary/10 ring-1 ring-primary/10" : "bg-accent/10 ring-1 ring-accent/10"
                   )}
                 >
-                  {msg.role === "assistant" ? <Bot className="size-3.5 text-primary" /> : <User className="size-3.5 text-accent" />}
+                  {msg.role === "assistant" ? (
+                    <Bot className="size-3.5 text-primary" />
+                  ) : userAvatar?.trim() ? (
+                    <Image
+                      src={userAvatar.trim()}
+                      alt=""
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <User className="size-3.5 text-accent" />
+                  )}
                 </div>
                 <div
                   className={cn(

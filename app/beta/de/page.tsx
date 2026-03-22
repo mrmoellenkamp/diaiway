@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { BetaGermanLanding } from "@/components/beta/beta-german-landing"
 
 export const metadata: Metadata = {
-  title: "Beta-Test | diAiway",
+  title: "Endspurt bei diAiway: Ich brauche deine Hilfe",
   description:
-    "Werde Beta-Tester:in bei diAiway — zielgerichtete Hilfe für DIY-Projekte. Jetzt Feedback geben und die Plattform mitgestalten.",
+    "DIY ohne endloses Suchen: diAiway ist fast startklar. Werde Friendly User, teste die Plattform und gib Feedback — vor dem Launch.",
   robots: { index: false, follow: false },
 }
 

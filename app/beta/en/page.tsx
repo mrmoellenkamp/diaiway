@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { BetaEnglishLanding } from "@/components/beta/beta-english-landing"
 
 export const metadata: Metadata = {
-  title: "Beta test | diAiway",
+  title: "Final stretch at diAiway: I need your help",
   description:
-    "Be among the first to try diAiway — focused help for DIY projects. Join our beta and share feedback before launch.",
+    "DIY without endless searching: diAiway is almost launch-ready. Be a friendly early user, try the platform, and share feedback before go-live.",
   robots: { index: false, follow: false },
 }
 

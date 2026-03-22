@@ -56,11 +56,12 @@ export const GET = apiHandler(async (req) => {
       expert: {
         select: {
           avatar: true,
+          imageUrl: true,
           subcategory: true,
           user: { select: { username: true } },
         },
       },
-      user: { select: { username: true } },
+      user: { select: { username: true, image: true } },
     },
     orderBy: [{ date: "asc" }, { startTime: "asc" }, { createdAt: "desc" }],
   })
@@ -75,10 +76,12 @@ export const GET = apiHandler(async (req) => {
       takumiName: communicationUsername(b.expert?.user?.username, "Takumi"),
       takumiEmail: b.expertEmail,
       takumiAvatar: b.expert?.avatar || "",
+      takumiImageUrl: b.expert?.imageUrl || "",
       takumiSubcategory: b.expert?.subcategory || "",
       userId: b.userId,
       userName: communicationUsername(b.user?.username, "Shugyo"),
       userEmail: b.userEmail,
+      userImageUrl: b.user?.image || "",
       date: b.date,
       startTime: b.startTime,
       endTime: b.endTime,

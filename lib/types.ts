@@ -91,6 +91,8 @@ export interface BookingRecord {
   userId: string
   userName: string
   userEmail: string
+  /** Profilfoto-URL des Shugyo (User.image) */
+  userImageUrl?: string
   date: string
   startTime: string
   endTime: string
@@ -115,6 +117,8 @@ export interface BookingRecord {
   updatedAt: string
   // Populated from Expert join
   takumiAvatar?: string
+  /** Profilfoto-URL des Takumi (Vercel Blob o. ä.) */
+  takumiImageUrl?: string
   takumiSubcategory?: string
   // Legacy aliases kept for backwards compatibility in booking-card
   takumiName: string

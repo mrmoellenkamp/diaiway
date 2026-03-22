@@ -10,8 +10,10 @@ import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useI18n } from "@/lib/i18n"
 import { communicationUsername } from "@/lib/communication-display"
+import { useApp } from "@/lib/app-context"
 
 export function LandingHeader() {
+  const { userAvatar } = useApp()
   const { data: session } = useSession()
   const isLoggedIn = !!session?.user
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -28,6 +30,8 @@ export function LandingHeader() {
     .join("")
     .slice(0, 2)
     .toUpperCase()
+
+  const mobileAvatarSrc = (userAvatar || session?.user?.image || "").trim()
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
@@ -62,9 +66,9 @@ export function LandingHeader() {
             <nav className="flex flex-col gap-0.5">
               <div className="flex items-center gap-3 px-3 py-2.5">
                 <Avatar className="size-10 border-2 border-primary/10">
-                  {session?.user?.image ? (
+                  {mobileAvatarSrc ? (
                     <Image
-                      src={session.user.image}
+                      src={mobileAvatarSrc}
                       alt={userName}
                       width={40}
                       height={40}

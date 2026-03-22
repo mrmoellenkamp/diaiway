@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { BetaSpanishLanding } from "@/components/beta/beta-spanish-landing"
 
 export const metadata: Metadata = {
-  title: "Beta | diAiway",
+  title: "Recta final en diAiway: necesito tu ayuda",
   description:
-    "Prueba diAiway entre los primeros: ayuda enfocada para tus proyectos DIY. Únete a la beta y cuéntanos qué tal.",
+    "DIY sin buscar eternamente: diAiway casi listo para lanzar. Sé friendly user, prueba la plataforma y danos feedback antes del arranque.",
   robots: { index: false, follow: false },
 }
 

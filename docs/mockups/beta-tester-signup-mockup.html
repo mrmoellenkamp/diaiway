@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>diAiway — Beta: Registrierung (Mockup)</title>
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --card: #fff;
+      --border: #e7e5e4;
+      --text: #1c1917;
+      --muted: #78716c;
+      --accent: #0f766e;
+      --beta: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.5rem;
+    }
+    .wrap { max-width: 28rem; margin: 0 auto; }
+    .banner {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #f59e0b;
+      color: var(--beta);
+      padding: 0.65rem 1rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+    .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.25rem 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .role-row { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .role {
+      flex: 1;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .role strong { display: block; color: var(--text); font-size: 0.85rem; margin-bottom: 0.15rem; }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      margin-top: 0.85rem;
+    }
+    label:first-of-type { margin-top: 0; }
+    .hint { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: #fafaf9;
+    }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .mock-checkbox {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      margin-top: 1rem; font-size: 0.75rem; color: var(--muted);
+    }
+    .actions {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border);
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: default;
+    }
+    .note {
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      border-left: 3px solid var(--border);
+      padding-left: 0.65rem;
+    }
+    .flow-box {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #f5f5f4;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .flow-box h2 { font-size: 0.8rem; color: var(--text); margin: 0 0 0.5rem; }
+    .flow-box ol { margin: 0; padding-left: 1.1rem; }
+    .flow-box li { margin: 0.25rem 0; }
+    .watermark {
+      position: fixed;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.65rem;
+      color: #a8a29e;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner">BETA-TEST — Nur Mockup, keine Daten werden gesendet</div>
+
+    <div class="card">
+      <h1>Konto erstellen</h1>
+      <p class="sub">Entspricht inhaltlich dem Registrierungsformular der App (vereinfacht dargestellt).</p>
+
+      <div class="role-row">
+        <div class="role"><strong>Shugyo</strong>Beratung suchen</div>
+        <div class="role"><strong>Takumi</strong>Wissen anbieten</div>
+      </div>
+
+      <form action="#" method="get" onsubmit="return false;">
+        <label for="m-name">Anzeigename</label>
+        <input id="m-name" type="text" placeholder="Max Mustermann" autocomplete="off" />
+
+        <label for="m-user">Benutzername</label>
+        <input id="m-user" type="text" placeholder="max_m" autocomplete="off" />
+        <p class="hint">Live-Prüfung in der App: frei / vergeben</p>
+
+        <label for="m-mail">E-Mail</label>
+        <input id="m-mail" type="email" placeholder="du@beispiel.de" autocomplete="off" />
+
+        <label for="m-pw">Passwort</label>
+        <input id="m-pw" type="password" placeholder="••••••••" autocomplete="off" />
+        <p class="hint">≥ 8 Zeichen, mind. eine Zahl oder ein Sonderzeichen</p>
+
+        <label for="m-pw2">Passwort wiederholen</label>
+        <input id="m-pw2" type="password" placeholder="••••••••" autocomplete="off" />
+
+        <div class="mock-checkbox">
+          <input type="checkbox" id="m-beta" />
+          <label for="m-beta" style="margin:0;font-weight:400;">Ich nehme am geschlossenen Beta-Test teil und erlaube Feedback per E-Mail.</label>
+        </div>
+
+        <div class="actions">
+          <button type="button">Registrieren (Mockup)</button>
+        </div>
+      </form>
+
+      <p class="note">
+        In der echten App: nach erfolgreicher Registrierung automatischer Login → Weiterleitung zu Profil;
+        ohne bestätigte E-Mail → Seite „E-Mail bestätigen“ mit Link aus der Post.
+      </p>
+    </div>
+
+    <div class="flow-box">
+      <h2>Beta-Tester: Kurz-Flow</h2>
+      <ol>
+        <li>Registrieren (Rolle wählen, Formular).</li>
+        <li>E-Mail öffnen → Bestätigungslink klicken.</li>
+        <li>Profil / Profil bearbeiten vervollständigen (Takumi: Preise &amp; Bio).</li>
+        <li>Optional: Onboarding-Wizard oder direkt Home nutzen.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="watermark">docs/mockups/beta-tester-signup-mockup.html</div>
+</body>
+</html>

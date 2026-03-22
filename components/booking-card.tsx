@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -105,6 +105,11 @@ export function BookingCard({
   const canCancel = ["pending", "active"].includes(booking.status) || (booking.status === "confirmed" && !isExpiredConfirmed)
   const bookingId = booking.id || booking._id || ""
 
+  /** Gegenüber im Termin: Shugyo sieht Takumi-Foto, Takumi sieht Shugyo-Foto */
+  const partnerProfileImage = (
+    isExpertView ? booking.userImageUrl : booking.takumiImageUrl
+  )?.trim()
+
   // When dialog opens, fetch real-time cancel fee preview
   useEffect(() => {
     if (!dialogOpen || !canCancel || !bookingId) return
@@ -154,6 +159,9 @@ export function BookingCard({
     <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
       <CardContent className="flex items-start gap-3 p-4">
         <Avatar className="size-12 shrink-0 border-2 border-primary/10">
+          {partnerProfileImage ? (
+            <AvatarImage src={partnerProfileImage} alt="" className="object-cover" />
+          ) : null}
           <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
             {getInitials(isExpertView ? booking.userName : booking.takumiName)}
           </AvatarFallback>

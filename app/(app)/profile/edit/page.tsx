@@ -46,6 +46,28 @@ interface Booking {
   statusToken: string
 }
 
+/** 15-Min-Preis fürs Formular: zuerst explizites Feld, sonst Legacy pricePerSession/2 */
+function price15MinToFormString(
+  price15: unknown,
+  pricePerSession: unknown
+): string {
+  const p15 =
+    price15 !== null && price15 !== undefined && price15 !== ""
+      ? Number(price15)
+      : NaN
+  if (!Number.isNaN(p15) && p15 >= 0) {
+    return p15 === 0 ? "0" : String(p15)
+  }
+  const pps =
+    pricePerSession !== null && pricePerSession !== undefined && pricePerSession !== ""
+      ? Number(pricePerSession)
+      : NaN
+  if (!Number.isNaN(pps) && pps > 0) {
+    return (pps / 2).toFixed(2)
+  }
+  return ""
+}
+
 export default function EditProfilePage() {
   const router = useRouter()
   const { data: session, update: updateSession } = useSession()
@@ -147,8 +169,8 @@ export default function EditProfilePage() {
               })
             }
             setBio(data.bio || "")
-            setPriceVideo15Min(String(data.priceVideo15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
-            setPriceVoice15Min(String(data.priceVoice15Min ?? data.pricePerSession ? (data.pricePerSession / 2).toFixed(2) : ""))
+            setPriceVideo15Min(price15MinToFormString(data.priceVideo15Min, data.pricePerSession))
+            setPriceVoice15Min(price15MinToFormString(data.priceVoice15Min, data.pricePerSession))
             setResponseTime(data.responseTime || "< 5 Min")
             setTakumiImageUrl(data.imageUrl || "")
             const sl = data.socialLinks || {}

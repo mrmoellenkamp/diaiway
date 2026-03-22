@@ -14,6 +14,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **GitHub, CI, Secrets** | [GITHUB.md](GITHUB.md) |
 | **Architektur & API** | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | **Verborgene Mechaniken** | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) |
+| **Beta: Registrierung & Onboarding** | [BETA-TESTER-ONBOARDING-FLOW.md](BETA-TESTER-ONBOARDING-FLOW.md) |
 | **Admin** | [ADMIN.md](ADMIN.md) |
 | **Umgebungsvariablen** | [ENV.md](ENV.md) |
 | **Production-Login / Safari** | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) |
@@ -50,6 +51,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | [GITHUB.md](GITHUB.md) | GitHub Actions, .gitignore-Semantik, Secrets, PR-Checkliste |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Datenflüsse, Taxonomie, API-Hinweise, Geschäftsregeln |
 | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) | Idempotenz, Revocation, UI, Safety, Admin-Stats 200/degraded, Site-Analytics |
+| [BETA-TESTER-ONBOARDING-FLOW.md](BETA-TESTER-ONBOARDING-FLOW.md) | Registrierung, E-Mail-Verify, Onboarding; Beta-Tester-Checkliste; Mockup-Link |
 | [ADMIN.md](ADMIN.md) | Tabs, Unterseiten, Health-Check, Finanzen, DSGVO, Cron |
 | [ENV.md](ENV.md) | Umgebungsvariablen |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | i18n, Lint, DB-Migrationen |

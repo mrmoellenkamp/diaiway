@@ -17,8 +17,10 @@ import { VerifiedBadge } from "@/components/verified-badge"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { communicationUsername } from "@/lib/communication-display"
+import { useApp } from "@/lib/app-context"
 
 export function UserNav({ variant = "default" }: { variant?: "default" | "landing" | "mobile" }) {
+  const { userAvatar } = useApp()
   const { data: session, status } = useSession()
   const { t } = useI18n()
   const isLoading = status === "loading"
@@ -83,14 +85,16 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
     .slice(0, 2)
     .toUpperCase()
 
+  const avatarSrc = (userAvatar || session.user.image || "").trim()
+
   if (variant === "mobile") {
     return (
       <div className="flex flex-col gap-1 pt-2 border-t border-border/40">
         <div className="flex items-center gap-3 px-3 py-2">
           <Avatar className="size-9 border-2 border-primary/10">
-            {session.user.image ? (
+            {avatarSrc ? (
               <Image
-                src={session.user.image}
+                src={avatarSrc}
                 alt={userName}
                 width={36}
                 height={36}
@@ -155,9 +159,9 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
       <DropdownMenuTrigger asChild>
         <button className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:min-w-0">
           <Avatar className="size-8 border-2 border-primary/10">
-            {session.user.image ? (
+            {avatarSrc ? (
               <Image
-                src={session.user.image}
+                src={avatarSrc}
                 alt={userName}
                 width={32}
                 height={32}

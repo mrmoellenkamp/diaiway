@@ -138,13 +138,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.isVerified       = (user as { isVerified?: boolean }).isVerified ?? false
         token.username        = (user as { username?: string | null }).username ?? null
         token.emailConfirmedAt = (user as { emailConfirmedAt?: number | null }).emailConfirmedAt ?? null
+        const img = (user as { image?: string | null }).image?.trim()
+        if (img) token.picture = img
       }
 
       // 2. Client-initiiertes Session-Update (updateSession)
       if (trigger === "update" && updateData) {
         if (updateData.name !== undefined)     token.name     = updateData.name
         if (updateData.username !== undefined) token.username = updateData.username
-        if (updateData.image)                  token.picture  = updateData.image
+        if (updateData.image !== undefined) {
+          const trimmed = typeof updateData.image === "string" ? updateData.image.trim() : ""
+          token.picture = trimmed || undefined
+        }
         if (updateData.status)     token.status     = updateData.status
         if (typeof updateData.isVerified === "boolean") token.isVerified = updateData.isVerified
         if (updateData.emailConfirmedAt !== undefined) token.emailConfirmedAt = updateData.emailConfirmedAt
@@ -183,7 +188,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const dbUser = await withDbRetry(() =>
             prisma.user.findUnique({
               where: { id: userId },
-              select: { role: true, appRole: true, status: true, tokenRevocationTime: true, emailConfirmedAt: true },
+              select: { role: true, appRole: true, status: true, tokenRevocationTime: true, emailConfirmedAt: true, image: true },
             })
           )
           if (!dbUser) {
@@ -205,6 +210,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.appRole = dbUser.appRole
           token.status = dbUser.status
           token.emailConfirmedAt = dbUser.emailConfirmedAt ? dbUser.emailConfirmedAt.getTime() : null
+          const syncedImg = dbUser.image?.trim()
+          token.picture = syncedImg || undefined
           token.dbSyncedAt = now
         } catch (err) {
           // Transiente DB-Ausfälle: kurze Warnung statt vollem Stack (sonst Log-Spam bei P1001 / Neon-Pooler)
@@ -232,8 +239,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ;(session.user as { isVerified?: boolean }).isVerified = token.isVerified as boolean ?? false
         ;(session.user as { username?: string | null }).username = (token.username as string | null) ?? null
         ;(session.user as { emailConfirmedAt?: number | null }).emailConfirmedAt = (token.emailConfirmedAt as number | null) ?? null
-        if (token.name)    session.user.name  = token.name    as string
-        if (token.picture) session.user.image = token.picture as string
+        if (token.name) session.user.name = token.name as string
+        ;(session.user as { image?: string | null }).image =
+          typeof token.picture === "string" && token.picture.trim() !== ""
+            ? token.picture
+            : ""
       }
       return session
     },

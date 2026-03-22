@@ -11,6 +11,7 @@ import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useSecureFileUpload } from "@/hooks/use-secure-file-upload"
 import { VerifiedBadge } from "@/components/verified-badge"
+import { useApp } from "@/lib/app-context"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -156,6 +157,8 @@ export function UserChatBox({
   onMessagesLoaded,
 }: UserChatBoxProps) {
   const { t } = useI18n()
+  const { userAvatar } = useApp()
+  const selfImageSrc = userAvatar?.trim() || ""
   const [messages, setMessages] = useState<MsgItem[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(true)
@@ -461,6 +464,15 @@ export function UserChatBox({
                   ) : (
                     partnerAvatar
                   )
+                ) : selfImageSrc ? (
+                  <Image
+                    src={selfImageSrc}
+                    alt=""
+                    width={28}
+                    height={28}
+                    unoptimized
+                    className="size-full object-cover"
+                  />
                 ) : (
                   <User className="size-3.5 text-accent" />
                 )}
