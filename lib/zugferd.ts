@@ -28,6 +28,8 @@ export function buildFacturXXml(opts: {
   sellerVatId?: string
   buyerName: string
   buyerEmail: string
+  /** z. B. Kundennummer (KD-…) im BuyerTradeParty */
+  buyerReference?: string
   lineItemDesc: string
   lineQuantity: number
   lineUnitPriceCents: number
@@ -47,6 +49,7 @@ export function buildFacturXXml(opts: {
     sellerVatId,
     buyerName,
     buyerEmail: _buyerEmail,
+    buyerReference,
     lineItemDesc,
     lineQuantity,
     lineUnitPriceCents: _lineUnitPriceCents,
@@ -113,6 +116,11 @@ export function buildFacturXXml(opts: {
       </SellerTradeParty>
       <BuyerTradeParty>
         <Name>${escapeXml(buyerName)}</Name>
+        ${
+          buyerReference
+            ? `<SpecifiedLegalOrganization><ID>${escapeXml(buyerReference)}</ID></SpecifiedLegalOrganization>`
+            : ""
+        }
       </BuyerTradeParty>
     </ApplicableHeaderTradeAgreement>
     <ApplicableHeaderTradeSettlement>

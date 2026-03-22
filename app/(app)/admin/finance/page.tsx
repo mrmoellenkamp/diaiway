@@ -204,10 +204,18 @@ export default function AdminFinancePage() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => { void loadSummary(); void loadAudit() }} disabled={loading} className="gap-1.5">
-              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-              {t("admin.refresh")}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/admin/invoice-branding">
+                  <FileText className="size-4" />
+                  Rechnungs-PDF
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { void loadSummary(); void loadAudit() }} disabled={loading} className="gap-1.5">
+                <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+                {t("admin.refresh")}
+              </Button>
+            </div>
           </div>
 
           {/* KPI Cards */}

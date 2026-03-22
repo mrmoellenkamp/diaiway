@@ -698,6 +698,19 @@ model SiteAnalyticsPageView {
   @@index([enteredAt])
 }
 
+/// Admin: PDF-Branding für alle Rechnungs-/Gutschrift-PDFs (jsPDF)
+model InvoiceBranding {
+  id                 String   @id @default("default")
+  logoUrl            String?
+  accentHex          String   @default("#064e3b")
+  footerText         String?  @db.Text
+  paymentNote        String?  @db.Text
+  closingLine        String?  @db.Text
+  /// Pro Belegtyp (re_session, re_wallet, gs, sr, sg): optionale Text-Overrides
+  documentTemplates  Json?
+  updatedAt          DateTime @updatedAt
+}
+
 // Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
 model InvoiceCounter {
   id    String   @id @default(cuid())

@@ -68,7 +68,7 @@ export async function creditWalletTopup(
       const [user, invoiceNumber] = await Promise.all([
         prisma.user.findUnique({
           where: { id: userId },
-          select: { name: true, email: true },
+          select: { name: true, email: true, customerNumber: true },
         }),
         getNextDocumentNumber("RE"),
       ])
@@ -78,6 +78,7 @@ export async function creditWalletTopup(
           invoiceNumber,
           recipientName: user.name,
           recipientEmail: user.email,
+          recipientCustomerNumber: user.customerNumber,
           amountCents,
           date: now,
         })
@@ -139,7 +140,7 @@ export async function creditWalletAdmin(
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, email: true, invoiceData: true },
+        select: { name: true, email: true, invoiceData: true, customerNumber: true },
       })
       if (user) {
         const invData = user.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
@@ -154,6 +155,7 @@ export async function creditWalletAdmin(
           invoiceNumber,
           recipientName,
           recipientEmail: user.email ?? "",
+          recipientCustomerNumber: user.customerNumber,
           amountCents,
           date: now,
         })
@@ -498,27 +500,31 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
       getNextDocumentNumber("SG"),
     ])
     const now = new Date()
-    const srBuf = generateStornoInvoicePdf({
-      stornoNumber: srNum,
-      originalInvoiceNumber: t.invoiceNumber,
-      recipientName: shugyoRealName,
-      recipientEmail: t.booking.userEmail,
-      bookingId: t.bookingId,
-      expertName: t.booking.expertName,
-      totalAmountCents: t.totalAmount,
-      date: now,
-    })
-    const sgBuf = generateStornoCreditNotePdf({
-      stornoNumber: sgNum,
-      originalCreditNoteNumber: t.creditNoteNumber,
-      recipientName: takumiRealName,
-      recipientEmail: t.expert?.email ?? "",
-      bookingId: t.bookingId,
-      netPayoutCents: t.netPayout,
-      platformFeeCents: t.platformFee,
-      totalAmountCents: t.totalAmount,
-      date: now,
-    })
+    const [srBuf, sgBuf] = await Promise.all([
+      generateStornoInvoicePdf({
+        stornoNumber: srNum,
+        originalInvoiceNumber: t.invoiceNumber,
+        recipientName: shugyoRealName,
+        recipientEmail: t.booking.userEmail,
+        recipientCustomerNumber: t.user?.customerNumber ?? null,
+        bookingId: t.bookingId,
+        expertName: t.booking.expertName,
+        totalAmountCents: t.totalAmount,
+        date: now,
+      }),
+      generateStornoCreditNotePdf({
+        stornoNumber: sgNum,
+        originalCreditNoteNumber: t.creditNoteNumber,
+        recipientName: takumiRealName,
+        recipientEmail: t.expert?.email ?? "",
+        recipientCustomerNumber: t.expert?.user?.customerNumber ?? null,
+        bookingId: t.bookingId,
+        netPayoutCents: t.netPayout,
+        platformFeeCents: t.platformFee,
+        totalAmountCents: t.totalAmount,
+        date: now,
+      }),
+    ])
     const [srBlob, sgBlob] = await Promise.all([
       put(`invoices/${t.id}-${srNum}.pdf`, Buffer.from(srBuf), { access: "public" }),
       put(`invoices/${t.id}-${sgNum}.pdf`, Buffer.from(sgBuf), { access: "public" }),
@@ -609,27 +615,31 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
       getNextDocumentNumber("SG"),
     ])
     const now = new Date()
-    const srBuf = generateStornoInvoicePdf({
-      stornoNumber: srNum,
-      originalInvoiceNumber: t.invoiceNumber,
-      recipientName: shugyoRealName,
-      recipientEmail: t.booking.userEmail,
-      bookingId: t.bookingId,
-      expertName: t.booking.expertName,
-      totalAmountCents: t.totalAmount,
-      date: now,
-    })
-    const sgBuf = generateStornoCreditNotePdf({
-      stornoNumber: sgNum,
-      originalCreditNoteNumber: t.creditNoteNumber,
-      recipientName: takumiRealName,
-      recipientEmail: t.expert?.email ?? "",
-      bookingId: t.bookingId,
-      netPayoutCents: t.netPayout,
-      platformFeeCents: t.platformFee,
-      totalAmountCents: t.totalAmount,
-      date: now,
-    })
+    const [srBuf, sgBuf] = await Promise.all([
+      generateStornoInvoicePdf({
+        stornoNumber: srNum,
+        originalInvoiceNumber: t.invoiceNumber,
+        recipientName: shugyoRealName,
+        recipientEmail: t.booking.userEmail,
+        recipientCustomerNumber: t.user?.customerNumber ?? null,
+        bookingId: t.bookingId,
+        expertName: t.booking.expertName,
+        totalAmountCents: t.totalAmount,
+        date: now,
+      }),
+      generateStornoCreditNotePdf({
+        stornoNumber: sgNum,
+        originalCreditNoteNumber: t.creditNoteNumber,
+        recipientName: takumiRealName,
+        recipientEmail: t.expert?.email ?? "",
+        recipientCustomerNumber: t.expert?.user?.customerNumber ?? null,
+        bookingId: t.bookingId,
+        netPayoutCents: t.netPayout,
+        platformFeeCents: t.platformFee,
+        totalAmountCents: t.totalAmount,
+        date: now,
+      }),
+    ])
     const [srBlob, sgBlob] = await Promise.all([
       put(`invoices/${t.id}-${srNum}.pdf`, Buffer.from(srBuf), { access: "public" }),
       put(`invoices/${t.id}-${sgNum}.pdf`, Buffer.from(sgBuf), { access: "public" }),

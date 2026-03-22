@@ -2078,6 +2078,17 @@ export default function AdminPage() {
                     </Button>
                   </div>
                 </div>
+                <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Rechnungs-PDF</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Logo, Farben, Texte für PDF-Belege</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
+                      <Link href="/admin/invoice-branding"><ExternalLink className="size-3.5" />Öffnen</Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 

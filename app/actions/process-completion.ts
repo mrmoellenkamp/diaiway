@@ -67,7 +67,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       }),
       prisma.user.findUnique({
         where: { id: expertUserId },
-        select: { invoiceData: true, name: true },
+        select: { customerNumber: true, invoiceData: true, name: true },
       }),
     ])
 
@@ -101,6 +101,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       invoiceNumber,
       recipientName: shugyoRealName,
       recipientEmail: booking.userEmail,
+      recipientCustomerNumber: shugyo?.customerNumber ?? null,
       bookingId,
       expertName: booking.expertName,
       totalAmountCents: tx.totalAmount,
@@ -112,6 +113,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       creditNumber: creditNoteNumber,
       recipientName: takumiRealName,
       recipientEmail: booking.expert!.email || "",
+      recipientCustomerNumber: takumiUser?.customerNumber ?? null,
       bookingId,
       netPayoutCents: tx.netPayout,
       platformFeeCents: tx.platformFee,

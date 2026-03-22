@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       invoiceNumber: "RE-999999",
       recipientName: "Max Mustermann GmbH",
       recipientEmail: "rechnung@mustermann.de",
+      recipientCustomerNumber: "KD-99999",
       bookingId: "bkl-example-001",
       expertName: "Maria Expertin",
       totalAmountCents: 5950,
