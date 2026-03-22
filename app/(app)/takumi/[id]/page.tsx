@@ -2,11 +2,12 @@
 
 import { use, useState, useEffect } from "react"
 import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LiveBadge } from "@/components/live-badge"
 import { ReviewStars } from "@/components/review-stars"
+import { ReviewCard } from "@/components/review-card"
 import { PageContainer } from "@/components/page-container"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
@@ -118,6 +119,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
     subcategory: string
   } | null>(null)
   const [portfolioProjects, setPortfolioProjects] = useState<TakumiPortfolioProject[]>([])
+  const [reviews, setReviews] = useState<{ id: string; rating: number; text: string; createdAt: string; reviewerName: string; reviewerImage?: string }[]>([])
 
   const takumiFromList = takumis.find((tk) => tk.id === id)
   const takumi = takumiFromList ?? cachedTakumi
@@ -138,6 +140,16 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.projects)) setPortfolioProjects(data.projects)
+      })
+      .catch(() => {})
+  }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    fetch(`/api/reviews?expertId=${encodeURIComponent(id)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.reviews)) setReviews(data.reviews)
       })
       .catch(() => {})
   }, [id])
@@ -211,6 +223,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           {/* Avatar + Name */}
           <div className="flex flex-col items-center gap-3 text-center">
             <Avatar className="size-24 border-4 border-card shadow-lg">
+              {takumi.imageUrl && <AvatarImage src={takumi.imageUrl} alt={commLabel} className="object-cover" />}
               <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xl">
                 {takumi.avatar}
               </AvatarFallback>
@@ -370,12 +383,28 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                 <span className="text-xs text-muted-foreground">{takumi.rating}</span>
               </div>
             </div>
-            <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-              <p className="font-jp text-2xl text-muted-foreground/30 mb-1">評</p>
-              <p className="text-xs text-muted-foreground">
-                {t("takumiPage.reviewsEmpty")}
-              </p>
-            </div>
+            {reviews.length === 0 ? (
+              <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
+                <p className="font-jp text-2xl text-muted-foreground/30 mb-1">評</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("takumiPage.reviewsEmpty")}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {reviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    rating={review.rating}
+                    text={review.text}
+                    createdAt={review.createdAt}
+                    reviewerName={review.reviewerName}
+                    reviewerImage={review.reviewerImage}
+                    reviewerRole="shugyo"
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </PageContainer>

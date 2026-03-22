@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Capacitor } from "@capacitor/core"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -306,6 +306,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         {/* Takumi Summary */}
         <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
           <Avatar className="size-14 border-2 border-primary/10">
+            {takumi.imageUrl && <AvatarImage src={takumi.imageUrl} alt={takumiPublicName} className="object-cover" />}
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
               {takumi.avatar}
             </AvatarFallback>

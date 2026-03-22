@@ -20,6 +20,8 @@ type SessionActivityContextValue = {
   showWarning: boolean
   secondsLeft: number
   resetActivity: () => void
+  /** Während Video-/Audio-Call: Inaktivitäts-Logout und Warn-Countdown aussetzen */
+  setCallActive: (active: boolean) => void
 }
 
 const SessionActivityContext = createContext<SessionActivityContextValue | null>(
@@ -34,6 +36,14 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
   const [secondsLeft, setSecondsLeft] = useState(INACTIVITY_TIMEOUT_SEC)
   const [showWarning, setShowWarning] = useState(false)
   const resetAtRef = useRef(Date.now())
+  const callActiveRef = useRef(false)
+
+  const setCallActive = useCallback((active: boolean) => {
+    callActiveRef.current = active
+    resetAtRef.current = Date.now()
+    setSecondsLeft(INACTIVITY_TIMEOUT_SEC)
+    setShowWarning(false)
+  }, [])
 
   const resetActivity = useCallback(() => {
     resetAtRef.current = Date.now()
@@ -56,6 +66,12 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
     if (status !== "authenticated") return
 
     const interval = setInterval(() => {
+      if (callActiveRef.current) {
+        setSecondsLeft(INACTIVITY_TIMEOUT_SEC)
+        setShowWarning(false)
+        return
+      }
+
       const elapsed = Math.floor((Date.now() - resetAtRef.current) / 1000)
       const remaining = Math.max(0, INACTIVITY_TIMEOUT_SEC - elapsed)
       setSecondsLeft(remaining)
@@ -83,6 +99,7 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
     showWarning,
     secondsLeft,
     resetActivity,
+    setCallActive,
   }
 
   return (

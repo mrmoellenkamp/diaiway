@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils"
 import { useApp } from "@/lib/app-context"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
 
 function getMessageText(msg: UIMessage): string {
@@ -436,6 +436,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   <div className="flex flex-col gap-2.5 p-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar className="size-9 ring-2 ring-accent/20">
+                        {liveTakumi.imageUrl && <AvatarImage src={liveTakumi.imageUrl} alt={liveTakumi.name} className="object-cover" />}
                         <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">{liveTakumi.avatar}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
@@ -541,6 +542,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   >
                     <div className="flex items-center gap-2.5">
                       <Avatar className="size-10 ring-2 ring-primary/10">
+                        {t.imageUrl && <AvatarImage src={t.imageUrl} alt={t.name} className="object-cover" />}
                         <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                           {t.avatar}
                         </AvatarFallback>

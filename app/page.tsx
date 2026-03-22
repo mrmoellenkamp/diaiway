@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { ArrowRight, Video, Shield, CheckCircle, Star, FlaskConical } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
@@ -40,6 +40,7 @@ function LiveTakumisSection() {
           {liveTakumis.slice(0, 3).map((tk) => (
             <div key={tk.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
               <Avatar className="size-10 border-2 border-accent/20">
+                {tk.imageUrl && <AvatarImage src={tk.imageUrl} alt={takumiPublicLabel(tk)} className="object-cover" />}
                 <AvatarFallback className="bg-accent/10 text-accent font-semibold text-xs">
                   {tk.avatar}
                 </AvatarFallback>

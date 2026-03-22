@@ -34,6 +34,11 @@ export function DeepLinkHandler() {
           }
           import("@/lib/native-utils").then(({ hapticSuccess }) => hapticSuccess())
           toast.success(t("toast.paymentSuccessSecure"))
+          // Takumi nach Zahlung benachrichtigen (idempotent — erstellt keine Duplikate)
+          const bookingId = url.split("/").pop()
+          if (bookingId) {
+            fetch(`/api/bookings/${bookingId}/notify-takumi`, { method: "POST" }).catch(() => {})
+          }
           router.push("/sessions?tab=upcoming")
           return
         }

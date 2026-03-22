@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReviewStars } from "@/components/review-stars"
@@ -25,6 +25,7 @@ export function SessionCard({ session }: { session: Session }) {
       <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
         <CardContent className="flex items-start gap-3 p-4">
           <Avatar className="size-12 shrink-0 border-2 border-primary/10">
+            {session.takumi.imageUrl && <AvatarImage src={session.takumi.imageUrl} alt={takumiLabel} className="object-cover" />}
             <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
               {session.takumi.avatar}
             </AvatarFallback>

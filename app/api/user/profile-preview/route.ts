@@ -31,7 +31,7 @@ export async function GET() {
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
 
-    const [shugyoProjects, expert, takumiPortfolio] = await Promise.all([
+    const [shugyoProjects, expert, takumiPortfolio, ratedBookings] = await Promise.all([
       prisma.shugyoProject.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
@@ -53,6 +53,12 @@ export async function GET() {
           responseTime: true,
           imageUrl: true,
           socialLinks: true,
+          rating: true,
+          reviewCount: true,
+          sessionCount: true,
+          isPro: true,
+          verified: true,
+          liveStatus: true,
         },
       }),
       prisma.takumiPortfolioProject.findMany({
@@ -60,11 +66,38 @@ export async function GET() {
         orderBy: [{ completionDate: "desc" }, { createdAt: "desc" }],
         select: { id: true, title: true, description: true, imageUrl: true, category: true, completionDate: true, createdAt: true },
       }),
+      prisma.booking.findMany({
+        where: { userId, expertRating: { not: null } },
+        orderBy: { updatedAt: "desc" },
+        take: 50,
+        select: {
+          expertRating: true,
+          expertReviewText: true,
+          updatedAt: true,
+          expert: { select: { name: true, avatar: true, user: { select: { username: true, image: true } } } },
+        },
+      }),
     ])
+
+    const expertReviews = ratedBookings.map((b) => ({
+      rating: b.expertRating!,
+      text: b.expertReviewText ?? "",
+      createdAt: b.updatedAt,
+      reviewerName: b.expert?.user?.username ?? b.expert?.name?.split(" ")[0] ?? "Takumi",
+      reviewerImage: b.expert?.user?.image ?? "",
+      reviewerAvatar: b.expert?.avatar ?? "",
+    }))
+    const avgRating =
+      expertReviews.length > 0
+        ? Math.round((expertReviews.reduce((s, r) => s + r.rating, 0) / expertReviews.length) * 10) / 10
+        : 0
 
     const shugyo = {
       skillLevel: user.skillLevel ?? null,
       projects: shugyoProjects,
+      avgRating,
+      reviewCount: expertReviews.length,
+      expertReviews,
     }
 
     const userDisplayName = communicationUsername(user.username, "Nutzer")
@@ -83,6 +116,12 @@ export async function GET() {
           imageUrl: expert.imageUrl,
           socialLinks: (expert.socialLinks as Record<string, string>) ?? {},
           portfolio: takumiPortfolio,
+          rating: Number(expert.rating ?? 0),
+          reviewCount: expert.reviewCount ?? 0,
+          sessionCount: expert.sessionCount ?? 0,
+          isPro: expert.isPro ?? false,
+          verified: expert.verified ?? false,
+          liveStatus: expert.liveStatus ?? "offline",
         }
       : null
 

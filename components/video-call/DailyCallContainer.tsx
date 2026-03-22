@@ -34,6 +34,8 @@ import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 import { useSafeSnapshot } from "@/hooks/use-safe-snapshot"
+import { useSessionActivity } from "@/components/session-activity-provider"
+import { useHeartbeat } from "@/hooks/use-heartbeat"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -112,6 +114,7 @@ export function DailyCallContainer({
   hasPaidBefore = false,
 }: DailyCallContainerProps) {
   const { t } = useI18n()
+  const { setCallActive } = useSessionActivity()
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
   const [isPiPActive, setIsPiPActive] = useState(false)
@@ -161,6 +164,14 @@ export function DailyCallContainer({
   useEffect(() => {
     if (safetyAcceptedAt) setSafetyAccepted(true)
   }, [safetyAcceptedAt])
+
+  // Kein Inaktivitäts-Logout während Verbindungsaufbau oder laufendem Call; Heartbeat hält Server-Cookie frisch
+  const isSessionCallPhase = phase === "JOINING" || phase === "IN_CALL"
+  useHeartbeat(isSessionCallPhase)
+  useEffect(() => {
+    setCallActive(isSessionCallPhase)
+    return () => setCallActive(false)
+  }, [isSessionCallPhase, setCallActive])
 
   // PRE_CHECK: Blitzlicht bei 0s (nur Video, nur wenn Safety bestätigt + localStream da)
   const preCheckRanRef = useRef(false)
@@ -1482,9 +1493,6 @@ export function DailyCallContainer({
       <div className="relative flex-1 bg-black">
         {callMode === "video" ? (
           <>
-            <div className="absolute left-2 top-14 z-20 rounded bg-black/80 px-2 py-1 font-mono text-xs text-white">
-              {remoteParticipant?.hasVideo ? "Video erkannt" : "Kein Video-Signal"} | sessionId: {remoteParticipant?.sessionId ?? "–"}
-            </div>
             <video
               ref={remoteVideoRef}
               autoPlay

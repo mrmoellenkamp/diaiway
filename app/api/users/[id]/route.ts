@@ -38,7 +38,34 @@ export async function GET(
       createdAt: user.createdAt,
     }
 
-    // Takumi sieht Shugyo-Kenntnisse und Projekte
+    // Bewertungen durch Takumis (expertRating an Bookings)
+    const ratedBookings = await prisma.booking.findMany({
+      where: { userId: id, expertRating: { not: null } },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+      select: {
+        expertRating: true,
+        expertReviewText: true,
+        updatedAt: true,
+        expert: { select: { name: true, avatar: true, user: { select: { username: true, image: true } } } },
+      },
+    })
+
+    const expertReviews = ratedBookings.map((b) => ({
+      rating: b.expertRating!,
+      text: b.expertReviewText ?? "",
+      createdAt: b.updatedAt,
+      reviewerName: b.expert?.user?.username ?? b.expert?.name?.split(" ")[0] ?? "Takumi",
+      reviewerImage: b.expert?.user?.image ?? "",
+      reviewerAvatar: b.expert?.avatar ?? "",
+    }))
+
+    const avgRating =
+      expertReviews.length > 0
+        ? Math.round((expertReviews.reduce((s, r) => s + r.rating, 0) / expertReviews.length) * 10) / 10
+        : 0
+
+    // Takumi sieht zusätzlich Kenntnisstufe + Shugyo-Projekte
     const isTakumi =
       session?.user?.id &&
       (await prisma.expert.findUnique({
@@ -47,7 +74,7 @@ export async function GET(
       }))
 
     if (!isTakumi) {
-      return NextResponse.json(base)
+      return NextResponse.json({ ...base, avgRating, reviewCount: expertReviews.length, expertReviews })
     }
 
     const projects = await prisma.shugyoProject.findMany({
@@ -60,6 +87,9 @@ export async function GET(
       ...base,
       skillLevel: user.skillLevel ?? null,
       projects,
+      avgRating,
+      reviewCount: expertReviews.length,
+      expertReviews,
     })
   } catch {
     return NextResponse.json({ error: "Fehler." }, { status: 500 })

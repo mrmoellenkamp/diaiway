@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useTakumis } from "@/hooks/use-takumis"
 import { useI18n } from "@/lib/i18n"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Loader2 } from "lucide-react"
 import { takumiPublicLabel } from "@/lib/communication-display"
 
@@ -40,6 +40,7 @@ export function ProfileFavoritesSection({ favoriteIds }: ProfileFavoritesSection
                 className="flex items-center gap-3 rounded-lg border border-border/40 p-3 transition-colors hover:bg-muted/50"
               >
                 <Avatar className="size-10 border-2 border-primary/10">
+                  {takumi.imageUrl && <AvatarImage src={takumi.imageUrl} alt={takumiPublicLabel(takumi)} className="object-cover" />}
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                     {takumi.avatar}
                   </AvatarFallback>

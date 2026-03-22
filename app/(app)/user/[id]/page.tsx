@@ -8,8 +8,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageContainer } from "@/components/page-container"
+import { ReviewCard } from "@/components/review-card"
+import { ReviewStars } from "@/components/review-stars"
 import { ArrowLeft, FolderOpen, ImageIcon, Loader2, User } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+
+type ExpertReview = {
+  rating: number
+  text: string
+  createdAt: string
+  reviewerName: string
+  reviewerImage: string
+  reviewerAvatar: string
+}
 
 type UserData = {
   name: string
@@ -17,6 +28,9 @@ type UserData = {
   createdAt: string
   skillLevel?: string | null
   projects?: { id: string; title: string; description: string; imageUrl: string }[]
+  avgRating?: number
+  reviewCount?: number
+  expertReviews?: ExpertReview[]
 }
 
 export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -182,6 +196,35 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Bewertungen durch Takumis */}
+        {(user.reviewCount ?? 0) > 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">
+                {t("takumiPage.reviews").replace("{count}", String(user.reviewCount ?? 0))}
+              </h2>
+              <div className="flex items-center gap-1">
+                <ReviewStars rating={user.avgRating ?? 0} />
+                <span className="text-xs text-muted-foreground">{user.avgRating}</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {user.expertReviews?.map((review, i) => (
+                <ReviewCard
+                  key={i}
+                  rating={review.rating}
+                  text={review.text}
+                  createdAt={review.createdAt}
+                  reviewerName={review.reviewerName}
+                  reviewerImage={review.reviewerImage}
+                  reviewerAvatar={review.reviewerAvatar}
+                  reviewerRole="takumi"
+                />
+              ))}
+            </div>
           </div>
         )}
 
