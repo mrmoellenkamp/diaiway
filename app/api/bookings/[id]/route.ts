@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { isBeforeScheduledJoinWindow, minutesUntilScheduledJoinOpens } from "@/lib/scheduled-call-window"
 import { processCompletion } from "@/app/actions/process-completion"
 import {
   chargeInstantCallToWallet,
@@ -354,12 +355,12 @@ export async function PATCH(
           sessionStartedAt: booking.sessionStartedAt,
         })
       }
-      // Bei Instant: Zeitprüfung überspringen. Bei geplanten Terminen: max 5 Min vor Start
+      // Bei Instant: Zeitprüfung überspringen. Geplant: frühestens wie in lib/scheduled-call-window
       if (booking.bookingMode !== "instant") {
-        const scheduledStart = parseBerlinDateTime(booking.date, booking.startTime)
-        const earliestJoin   = new Date(scheduledStart.getTime() - 5 * 60 * 1000)
-        if (new Date() < earliestJoin) {
-          const minutesLeft = Math.ceil((earliestJoin.getTime() - Date.now()) / 60000)
+        const now = new Date()
+        const timeStr = booking.startTime || "00:00"
+        if (isBeforeScheduledJoinWindow(now, booking.date, timeStr)) {
+          const minutesLeft = minutesUntilScheduledJoinOpens(now, booking.date, timeStr)
           return NextResponse.json(
             { error: `Der Raum öffnet 5 Minuten vor dem Termin. Noch ${minutesLeft} Minute(n).` },
             { status: 425 } // Too Early

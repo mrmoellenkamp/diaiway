@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Daily from "@daily-co/daily-js"
 import type { DailyCall } from "@daily-co/daily-js"
 
@@ -36,6 +36,7 @@ import { useWalletTopup } from "@/lib/wallet-topup-context"
 import { useSafeSnapshot } from "@/hooks/use-safe-snapshot"
 import { useSessionActivity } from "@/components/session-activity-provider"
 import { useHeartbeat } from "@/hooks/use-heartbeat"
+import { getScheduledEarliestJoin } from "@/lib/scheduled-call-window"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -58,6 +59,11 @@ interface DailyCallContainerProps {
   onCallEnded?: () => void
   /** Paket 3: Billing-Timer für Instant-Calls (Shugyo) */
   bookingMode?: "scheduled" | "instant"
+  /** Geplante Sessions: Slot (Europe/Berlin) — für 5-Min-vor-Start-Regel in der Lobby */
+  scheduledDate?: string
+  scheduledStartTime?: string
+  /** z. B. "confirmed" | "active" — bei active ist das Zeitfenster aufgehoben */
+  bookingStatus?: string
   sessionStartedAt?: string | null
   userBalanceCents?: number
   pricePerMinuteCents?: number
@@ -108,6 +114,9 @@ export function DailyCallContainer({
   onSessionStarted,
   onCallEnded,
   bookingMode,
+  scheduledDate,
+  scheduledStartTime,
+  bookingStatus,
   sessionStartedAt,
   userBalanceCents = 0,
   pricePerMinuteCents = 0,
@@ -157,9 +166,27 @@ export function DailyCallContainer({
   const [preCheckLoading, setPreCheckLoading] = useState(false)
   const [preCheckError, setPreCheckError] = useState<string | null>(null)
 
+  const [scheduleTick, setScheduleTick] = useState(0)
+  const secondsUntilScheduledJoin = useMemo(() => {
+    if (bookingMode === "instant") return 0
+    if (bookingStatus === "active") return 0
+    if (!scheduledDate || !scheduledStartTime) return 0
+    const earliest = getScheduledEarliestJoin(scheduledDate, scheduledStartTime)
+    return Math.max(0, Math.ceil((earliest.getTime() - Date.now()) / 1000))
+  }, [bookingMode, bookingStatus, scheduledDate, scheduledStartTime, scheduleTick])
+
+  const scheduleJoinBlocked = secondsUntilScheduledJoin > 0
+
+  useEffect(() => {
+    if (!scheduleJoinBlocked) return
+    const id = setInterval(() => setScheduleTick((x) => x + 1), 1000)
+    return () => clearInterval(id)
+  }, [scheduleJoinBlocked])
+
   const canJoin =
     (!needsSafetyModal || safetyAccepted) &&
-    (callMode !== "video" || preCheckPassed)
+    (callMode !== "video" || preCheckPassed) &&
+    !scheduleJoinBlocked
 
   useEffect(() => {
     if (safetyAcceptedAt) setSafetyAccepted(true)
@@ -546,7 +573,16 @@ export function DailyCallContainer({
         body: JSON.stringify({ bookingId, callMode, userRole }),
       })
       const data = (await res.json()) as { url?: string; token?: string; error?: string }
-      if (!res.ok) throw new Error(data.error ?? "API-Fehler")
+      if (!res.ok) {
+        if (res.status === 425) {
+          setPhase("LOBBY")
+          setError(data.error ?? "Der Raum öffnet erst 5 Minuten vor dem Termin.")
+          joinRetryCountRef.current = 0
+          setScheduleTick((x) => x + 1)
+          return
+        }
+        throw new Error(data.error ?? "API-Fehler")
+      }
       const { url, token } = data
       if (!url || !token) throw new Error("Keine URL oder Token erhalten.")
       joinCredentialsRef.current = { url, token }
@@ -1441,6 +1477,18 @@ export function DailyCallContainer({
             </div>
             {callMode === "video" && preCheckError && (
               <p className="text-sm text-destructive">{preCheckError}</p>
+            )}
+            {scheduleJoinBlocked && (
+              <div className="rounded-lg border border-amber-500/45 bg-amber-500/10 px-3 py-2.5 text-sm">
+                <p className="font-medium text-foreground">Noch zu früh für den Beitritt</p>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                  Der Raum steht frühestens 5 Minuten vor dem vereinbarten Start zur Verfügung (Zeitzone
+                  Europe/Berlin).
+                </p>
+                <p className="mt-2 font-mono text-lg tabular-nums text-foreground">
+                  {formatMmSs(secondsUntilScheduledJoin)}
+                </p>
+              </div>
             )}
             <Button
               onClick={() => handleJoin()}

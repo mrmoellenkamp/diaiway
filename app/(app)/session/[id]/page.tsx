@@ -537,6 +537,9 @@ function SessionCallContent() {
             fetchBooking()
           }}
           bookingMode={booking.bookingMode}
+          scheduledDate={booking.date}
+          scheduledStartTime={booking.startTime}
+          bookingStatus={booking.status}
           sessionStartedAt={booking.sessionStartedAt}
           userBalanceCents={booking.userBalanceCents}
           pricePerMinuteCents={booking.pricePerMinuteCents}
