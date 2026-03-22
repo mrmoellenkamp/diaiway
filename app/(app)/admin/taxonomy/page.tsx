@@ -91,7 +91,7 @@ function SortableCategoryRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-1 rounded-lg border p-2 text-sm transition-colors md:p-3",
+        "flex min-w-0 flex-wrap items-center gap-1 rounded-lg border p-2 text-sm transition-colors sm:flex-nowrap md:p-3",
         isSelected ? "border-primary bg-primary/5" : "border-border/60",
         isDragging && "z-10 bg-card shadow-lg ring-2 ring-primary/25",
       )}
@@ -154,26 +154,28 @@ function SortableSpecialtyRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-2 rounded-md border border-border/50 px-2 py-2 text-sm md:px-3",
+        "flex flex-col gap-2 rounded-md border border-border/50 p-2 text-sm sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:py-2",
         isDragging && "z-10 bg-card shadow-md ring-2 ring-primary/20",
       )}
     >
-      <button
-        type="button"
-        className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted active:cursor-grabbing"
-        aria-label="Fachbereich verschieben"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="size-4" />
-      </button>
-      <Input
-        className="h-8 flex-1 text-sm"
-        value={s.name}
-        onChange={(e) => onNameChange(s.id, e.target.value)}
-        onBlur={(e) => onNameBlur(s.id, e.target.value.trim() || s.name)}
-      />
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <button
+          type="button"
+          className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted active:cursor-grabbing"
+          aria-label="Fachbereich verschieben"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <Input
+          className="h-8 min-w-0 flex-1 text-sm"
+          value={s.name}
+          onChange={(e) => onNameChange(s.id, e.target.value)}
+          onBlur={(e) => onNameBlur(s.id, e.target.value.trim() || s.name)}
+        />
+      </div>
+      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/40 pt-2 sm:border-t-0 sm:pt-0">
         <Switch checked={s.isActive} onCheckedChange={(v) => onToggleActive(s.id, v)} />
         <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => onDelete(s.id)}>
           <Trash2 className="size-3.5 text-destructive" />
@@ -512,15 +514,16 @@ export default function AdminTaxonomyPage() {
             <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
+          <div className="flex min-w-0 flex-col gap-6">
+            <Card className="min-w-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Kategorien</CardTitle>
-                <p className="text-xs font-normal text-muted-foreground">
-                  Reihenfolge per ⋮⋮-Griff ändern (wird sofort gespeichert).
+                <CardTitle className="text-base">Kategorien</CardTitle>
+                <p className="text-xs font-normal text-muted-foreground leading-relaxed">
+                  Reihenfolge per ⋮⋮-Griff ändern (wird sofort gespeichert). Wähle eine Kategorie, um deren
+                  Fachbereiche darunter zu bearbeiten.
                 </p>
               </CardHeader>
-              <CardContent className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto">
+              <CardContent className="flex max-h-[min(55vh,28rem)] flex-col gap-1 overflow-y-auto pr-1">
                 {categories.length === 0 && !loading && (
                   <p className="text-sm text-muted-foreground py-6 text-center px-2">
                     {schemaBlockMessage
@@ -550,30 +553,48 @@ export default function AdminTaxonomyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="min-w-0 border-primary/15 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">
-                  Fachbereiche {selected ? `— ${selected.name}` : ""}
+                <CardTitle className="text-base">
+                  Fachbereiche{selected ? <span className="font-normal text-muted-foreground"> — {selected.name}</span> : null}
                 </CardTitle>
                 {selected ? (
-                  <p className="text-xs font-normal text-muted-foreground">
+                  <p className="text-xs font-normal text-muted-foreground leading-relaxed">
                     Reihenfolge per ⋮⋮-Griff ändern (wird sofort gespeichert).
                   </p>
-                ) : null}
+                ) : (
+                  <p className="text-xs font-normal text-muted-foreground">
+                    Wähle oben eine Kategorie aus der Liste.
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 {!selected ? (
-                  <p className="text-sm text-muted-foreground">Bitte links eine Kategorie wählen.</p>
+                  <p className="rounded-lg border border-dashed border-border/80 bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+                    Noch keine Kategorie gewählt — tippe auf eine Zeile unter „Kategorien“.
+                  </p>
                 ) : (
                   <>
-                    <div className="flex gap-2">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch">
                       <Input
                         placeholder="Neuer Fachbereich…"
                         value={newSpecName}
                         onChange={(e) => setNewSpecName(e.target.value)}
-                        className="h-9"
+                        className="h-9 min-w-0 flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            void addSpecialty()
+                          }
+                        }}
                       />
-                      <Button type="button" size="sm" className="shrink-0" onClick={addSpecialty} disabled={saving}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-9 w-full shrink-0 sm:w-auto sm:min-w-[7rem]"
+                        onClick={addSpecialty}
+                        disabled={saving}
+                      >
                         Hinzufügen
                       </Button>
                     </div>
@@ -587,7 +608,7 @@ export default function AdminTaxonomyPage() {
                         items={selected.specialties.map((s) => s.id)}
                         strategy={verticalListSortingStrategy}
                       >
-                        <ul className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
+                        <ul className="flex max-h-[min(45vh,24rem)] flex-col gap-2 overflow-y-auto pr-1">
                           {selected.specialties.map((s) => (
                             <SortableSpecialtyRow
                               key={s.id}

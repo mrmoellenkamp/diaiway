@@ -1030,17 +1030,17 @@ function DatabaseTab({
                 <Input type="email" inputMode="email" autoComplete="email" autoCapitalize="none" placeholder="expert@domain.de" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-3">
+              <div className="flex min-w-0 flex-col gap-1.5">
                 <Label className="text-xs">Kategorie *</Label>
                 <select value={form.categorySlug} onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                  className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm">
                   {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex min-w-0 flex-col gap-1.5">
                 <Label className="text-xs">Fachgebiet *</Label>
-                <Input placeholder="z.B. Smartphone-Reparatur" value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="h-9 text-sm" />
+                <Input placeholder="z.B. Smartphone-Reparatur" value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="h-9 w-full min-w-0 text-sm" />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
