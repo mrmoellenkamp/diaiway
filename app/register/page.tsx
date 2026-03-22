@@ -199,9 +199,6 @@ function RegisterForm() {
           appRole: selectedRole,
           consents: {
             agbAndPrivacy: consents.agbPrivacy,
-            earlyPerformanceWaiver: consents.earlyPerformance,
-            paymentProcessor: consents.paymentProcessor,
-            takumiExpertDeclaration: consents.takumiExpert,
             marketing: consents.marketing,
           },
           // Honeypot value — empty for real users
