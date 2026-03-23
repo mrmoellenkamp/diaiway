@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { useApp } from "@/lib/app-context"
 import { toast } from "sonner"
@@ -68,7 +68,16 @@ export function PaymentOnboardingModal({ open, onOpenChange, onSuccess }: Props)
         if (!submitting) onOpenChange(o)
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent showCloseButton={false} className="max-h-[90vh] overflow-y-auto pt-12 sm:max-w-lg">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          disabled={submitting}
+          className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          aria-label={t("common.close")}
+        >
+          <X className="size-5" />
+        </button>
         <DialogHeader>
           <DialogTitle>{t("paymentOnboarding.title")}</DialogTitle>
           <DialogDescription>{t("paymentOnboarding.intro")}</DialogDescription>

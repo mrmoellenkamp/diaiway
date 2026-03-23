@@ -5,7 +5,7 @@ import type { CancelPolicy, Takumi } from "@/lib/types"
 export const TAKUMI_ONLINE_PRESENCE_MS = 30 * 1000
 
 type ExpertWithTaxonomy = Expert & {
-  user: { appRole: string; isVerified: boolean; username: string | null } | null
+  user: { appRole: string; isVerified: boolean; username: string | null; image: string | null } | null
   categoryAssignments: { category: Pick<TaxonomyCategory, "slug" | "name"> }[]
   specialtyAssignments: { specialty: Pick<TaxonomySpecialty, "name"> }[]
   primaryCategory: Pick<TaxonomyCategory, "slug" | "name"> | null
@@ -69,14 +69,14 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
     verified: e.verified || (e.user?.isVerified ?? false),
     portfolio: e.portfolio,
     joinedDate: e.joinedDate,
-    imageUrl: e.imageUrl ?? undefined,
+    imageUrl: (e.imageUrl || e.user?.image || "").trim() || undefined,
     socialLinks: (e.socialLinks ?? {}) as Takumi["socialLinks"],
     cancelPolicy: (e.cancelPolicy as unknown as CancelPolicy) ?? { freeHours: 24, feePercent: 0 },
   }
 }
 
 export const expertTaxonomyInclude = {
-  user: { select: { appRole: true, isVerified: true, username: true } },
+  user: { select: { appRole: true, isVerified: true, username: true, image: true } },
   categoryAssignments: {
     include: { category: { select: { slug: true, name: true } } },
   },

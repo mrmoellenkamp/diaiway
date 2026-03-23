@@ -113,7 +113,7 @@ export async function GET() {
           priceVoice15Min: Number(expert.priceVoice15Min),
           pricePerSession: expert.pricePerSession,
           responseTime: expert.responseTime,
-          imageUrl: expert.imageUrl,
+          imageUrl: (expert.imageUrl || user.image || "").trim(),
           socialLinks: (expert.socialLinks as Record<string, string>) ?? {},
           portfolio: takumiPortfolio,
           rating: Number(expert.rating ?? 0),
