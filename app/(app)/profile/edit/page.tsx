@@ -18,6 +18,8 @@ import { TakumiTaxonomyEditor, type TakumiTaxonomyValue } from "@/components/tak
 import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
+import { compressImageFileForUpload, MAX_RAW_IMAGE_BYTES } from "@/lib/browser-image-compress"
+import { parseUploadResponseJson } from "@/lib/parse-upload-response"
 import {
   Loader2,
   Save,
@@ -226,7 +228,7 @@ export default function EditProfilePage() {
       .finally(() => setLoadingBookings(false))
   }, [session])
 
-  const maxProfileUploadMb = 25
+  const maxProfileUploadMb = Math.floor(MAX_RAW_IMAGE_BYTES / 1024 / 1024)
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -237,26 +239,27 @@ export default function EditProfilePage() {
       toast.error(t("editProfile.fileTypeError"))
       return
     }
-    if (file.size > maxProfileUploadMb * 1024 * 1024) {
+    if (file.size > MAX_RAW_IMAGE_BYTES) {
       toast.error(t("editProfile.fileSizeError", { mb: String(maxProfileUploadMb) }))
       return
     }
 
     setUploading(true)
     try {
+      const prepared = await compressImageFileForUpload(file)
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", prepared, prepared.name || "upload.jpg")
       formData.append("folder", "profiles")
       const res = await fetch("/api/upload", { method: "POST", body: formData })
-      const data = await res.json()
+      const data = await parseUploadResponseJson(res)
       if (res.ok && data.url) {
         setImage(data.url)
         toast.success(t("editProfile.uploadSuccess"))
       } else {
         toast.error(data.error || t("editProfile.uploadError"))
       }
-    } catch {
-      toast.error(t("editProfile.uploadNetworkError"))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("editProfile.uploadNetworkError"))
     } finally {
       setUploading(false)
     }
@@ -271,26 +274,27 @@ export default function EditProfilePage() {
       toast.error(t("editProfile.fileTypeError"))
       return
     }
-    if (file.size > maxProfileUploadMb * 1024 * 1024) {
+    if (file.size > MAX_RAW_IMAGE_BYTES) {
       toast.error(t("editProfile.fileSizeError", { mb: String(maxProfileUploadMb) }))
       return
     }
 
     setUploading(true)
     try {
+      const prepared = await compressImageFileForUpload(file)
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", prepared, prepared.name || "upload.jpg")
       formData.append("folder", "experts")
       const res = await fetch("/api/upload", { method: "POST", body: formData })
-      const data = await res.json()
+      const data = await parseUploadResponseJson(res)
       if (res.ok && data.url) {
         setTakumiImageUrl(data.url)
         toast.success(t("editProfile.expertUploadSuccess"))
       } else {
         toast.error(data.error || t("editProfile.uploadError"))
       }
-    } catch {
-      toast.error(t("editProfile.uploadNetworkError"))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("editProfile.uploadNetworkError"))
     } finally {
       setUploading(false)
     }

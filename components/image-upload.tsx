@@ -6,6 +6,8 @@ import { Camera, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
+import { compressImageFileForUpload, MAX_RAW_IMAGE_BYTES } from "@/lib/browser-image-compress"
+import { parseUploadResponseJson } from "@/lib/parse-upload-response"
 
 interface ImageUploadProps {
   /** Current image URL (controlled) */
@@ -23,7 +25,8 @@ interface ImageUploadProps {
 }
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
-const MAX_SIZE_MB = 25 // Server komprimiert automatisch auf 5 MB
+/** Rohfoto vom Gerät; vor dem Request wird im Browser verkleinert (Vercel ~4,5 MB Request-Limit). */
+const MAX_RAW_MB = Math.floor(MAX_RAW_IMAGE_BYTES / 1024 / 1024)
 
 export function ImageUpload({
   value,
@@ -43,28 +46,33 @@ export function ImageUpload({
       toast.error(t("imageUpload.fileTypeError"))
       return
     }
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(t("imageUpload.fileSizeError", { mb: String(MAX_SIZE_MB) }))
+    if (file.size > MAX_RAW_IMAGE_BYTES) {
+      toast.error(t("imageUpload.fileSizeError", { mb: String(MAX_RAW_MB) }))
       return
     }
 
     setIsUploading(true)
     try {
+      const prepared = await compressImageFileForUpload(file)
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", prepared, prepared.name || "upload.jpg")
       formData.append("folder", folder)
 
       const res = await fetch("/api/upload", { method: "POST", body: formData })
-      const data = await res.json()
+      const data = await parseUploadResponseJson(res)
 
       if (!res.ok) {
         toast.error(data.error || t("imageUpload.uploadError"))
         return
       }
+      if (!data.url) {
+        toast.error(t("imageUpload.uploadError"))
+        return
+      }
       onChange(data.url)
       toast.success(t("imageUpload.uploadSuccess"))
-    } catch {
-      toast.error(t("imageUpload.uploadNetworkError"))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("imageUpload.uploadNetworkError"))
     } finally {
       setIsUploading(false)
       if (inputRef.current) inputRef.current.value = ""

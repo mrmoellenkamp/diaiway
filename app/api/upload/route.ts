@@ -5,9 +5,11 @@ import { optimizeImageForUpload } from "@/lib/image-compress"
 
 export const runtime = "nodejs"
 
+/** Vercel Serverless: Request-Body hart begrenzt (~4,5 MB). Client komprimiert vorher. */
+export const maxDuration = 60
+
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
-const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB – Zielgröße nach Kompression
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024 // 25 MB – max. Roh-Upload (danach wird komprimiert)
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024 // 4 MiB – unter Vercel-Limit inkl. Multipart-Rand
 const ALLOWED_FOLDERS = ["profiles", "experts", "uploads", "shugyo-projects", "takumi-portfolio"]
 
 export async function POST(request: NextRequest) {

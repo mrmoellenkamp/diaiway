@@ -632,7 +632,7 @@ const de = {
   "imageUpload.ariaUpload": "Bild hochladen",
   "imageUpload.replaceImage": "Bild ersetzen",
   "imageUpload.removeImage": "Bild entfernen",
-  "imageUpload.formatHint": "JPG, PNG, WebP · max. 25 MB (wird bei Bedarf komprimiert)",
+  "imageUpload.formatHint": "JPG, PNG, WebP · max. 25 MB (wird im Browser vor dem Upload verkleinert)",
 
   // Reset Password
   "reset.success": "Passwort erfolgreich geändert!",
