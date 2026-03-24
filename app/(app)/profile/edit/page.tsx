@@ -226,6 +226,8 @@ export default function EditProfilePage() {
       .finally(() => setLoadingBookings(false))
   }, [session])
 
+  const maxProfileUploadMb = 25
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -235,8 +237,8 @@ export default function EditProfilePage() {
       toast.error(t("editProfile.fileTypeError"))
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("editProfile.fileSizeError"))
+    if (file.size > maxProfileUploadMb * 1024 * 1024) {
+      toast.error(t("editProfile.fileSizeError", { mb: String(maxProfileUploadMb) }))
       return
     }
 
@@ -269,8 +271,8 @@ export default function EditProfilePage() {
       toast.error(t("editProfile.fileTypeError"))
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("editProfile.fileSizeError"))
+    if (file.size > maxProfileUploadMb * 1024 * 1024) {
+      toast.error(t("editProfile.fileSizeError", { mb: String(maxProfileUploadMb) }))
       return
     }
 

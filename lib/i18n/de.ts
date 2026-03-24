@@ -696,7 +696,7 @@ const de = {
   // Edit Profile
   "editProfile.title": "Mein Profil bearbeiten",
   "editProfile.personalData": "Persönliche Daten",
-  "editProfile.uploadHint": "Klicke auf das Kamera-Symbol zum Hochladen (max. 5 MB)",
+  "editProfile.uploadHint": "Klicke auf das Kamera-Symbol zum Hochladen (max. 25 MB, wird automatisch verkleinert)",
   "editProfile.takumiMode": "Takumi-Modus",
   "editProfile.takumiModeDesc": "Aktivieren, um als Experte sichtbar zu sein",
   "editProfile.expertProfile": "Experten-Profil",
@@ -755,7 +755,7 @@ const de = {
   "editProfile.uploadError": "Upload fehlgeschlagen.",
   "editProfile.uploadNetworkError": "Netzwerkfehler beim Upload.",
   "editProfile.fileTypeError": "Nur JPG, PNG, WebP und GIF erlaubt.",
-  "editProfile.fileSizeError": "Maximale Dateigröße: 5 MB.",
+  "editProfile.fileSizeError": "Maximale Dateigröße: {mb} MB.",
   "editProfile.saveError": "Fehler beim Speichern.",
   "editProfile.expertSaveError": "Fehler beim Speichern des Experten-Profils.",
   "editProfile.saveSuccess": "Profil gespeichert!",

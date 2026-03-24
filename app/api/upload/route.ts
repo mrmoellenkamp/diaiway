@@ -1,7 +1,7 @@
 import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { compressImageToMaxSize } from "@/lib/image-compress"
+import { optimizeImageForUpload } from "@/lib/image-compress"
 
 export const runtime = "nodejs"
 
@@ -46,19 +46,20 @@ export async function POST(request: NextRequest) {
     let buffer = Buffer.from(arrayBuffer)
     let contentType = ALLOWED_TYPES.includes(file.type) ? file.type : "image/jpeg"
 
-    // Zu große Bilder automatisch komprimieren
-    if (buffer.length > MAX_SIZE_BYTES) {
-      try {
-        const compressed = await compressImageToMaxSize(buffer, MAX_SIZE_BYTES, contentType)
-        buffer = Buffer.from(compressed.buffer)
-        contentType = compressed.contentType
-      } catch (err) {
-        console.error("[diAiway] Kompression fehlgeschlagen:", err)
-        return NextResponse.json(
-          { error: "Bild konnte nicht komprimiert werden. Bitte kleinere Datei wählen." },
-          { status: 400 }
-        )
-      }
+    // Immer optimieren: EXIF, max. 2048px, JPEG; bei Bedarf weiter unter 5 MB komprimieren
+    try {
+      const optimized = await optimizeImageForUpload(buffer, contentType)
+      buffer = Buffer.from(optimized.buffer)
+      contentType = optimized.contentType
+    } catch (err) {
+      console.error("[diAiway] Bildoptimierung fehlgeschlagen:", err)
+      return NextResponse.json(
+        {
+          error:
+            "Bild konnte nicht verarbeitet werden. Bitte JPG, PNG, WebP oder GIF verwenden oder eine andere Datei wählen.",
+        },
+        { status: 400 }
+      )
     }
 
     const ext = contentType === "image/jpeg" ? "jpg" : (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")

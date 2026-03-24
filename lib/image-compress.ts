@@ -3,6 +3,41 @@ import sharp from "sharp"
 const MAX_DIMENSION_PX = 2048
 const MIN_QUALITY = 60
 
+const TARGET_MAX_BYTES = 5 * 1024 * 1024
+
+/**
+ * Profil-/Blob-Uploads: immer durch Sharp (EXIF-Rotation, max. Kantenlänge, JPEG).
+ * Danach ggf. zusätzliche Kompression bis unter TARGET_MAX_BYTES.
+ */
+export async function optimizeImageForUpload(
+  buffer: Buffer,
+  mime: string
+): Promise<{ buffer: Buffer; contentType: string }> {
+  if (!mime.startsWith("image/")) {
+    throw new Error("Nur Bilder können verarbeitet werden")
+  }
+
+  const meta = await sharp(buffer).rotate().metadata()
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
+
+  let pipeline = sharp(buffer).rotate()
+  if (width > MAX_DIMENSION_PX || height > MAX_DIMENSION_PX) {
+    pipeline = pipeline.resize(MAX_DIMENSION_PX, MAX_DIMENSION_PX, {
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+  }
+
+  let out = await pipeline.jpeg({ quality: 85, mozjpeg: true }).toBuffer()
+
+  if (out.length <= TARGET_MAX_BYTES) {
+    return { buffer: out, contentType: "image/jpeg" }
+  }
+
+  return compressImageToMaxSize(out, TARGET_MAX_BYTES, "image/jpeg")
+}
+
 /**
  * Komprimiert ein Bild so, dass es unter maxSizeBytes passt.
  * Reduziert Auflösung (max 2048px) und JPEG-Qualität iterativ.
