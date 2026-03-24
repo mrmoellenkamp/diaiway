@@ -546,6 +546,13 @@ export async function PATCH(
       if (!isBooker) {
         return NextResponse.json({ error: "Nur der Buchungsersteller kann den Experten bewerten." }, { status: 403 })
       }
+      const existingReview = await prisma.review.findUnique({
+        where: { bookingId: id },
+        select: { id: true },
+      })
+      if (existingReview) {
+        return NextResponse.json({ success: true, alreadySubmitted: true })
+      }
       const r = Math.min(5, Math.max(1, Number(rating) || 0))
       if (r < 1) {
         return NextResponse.json({ error: "Bitte wähle 1–5 Sterne." }, { status: 400 })
@@ -554,6 +561,7 @@ export async function PATCH(
         data: {
           expertId: booking.expertId,
           userId: booking.userId,
+          bookingId: id,
           rating: r,
           text: (reviewText || "").trim().slice(0, 2000),
         },
@@ -578,6 +586,9 @@ export async function PATCH(
       }
       if (!isExpert) {
         return NextResponse.json({ error: "Nur der Experte kann den Nutzer bewerten." }, { status: 403 })
+      }
+      if (booking.expertRating != null) {
+        return NextResponse.json({ success: true, alreadySubmitted: true })
       }
       const r = Math.min(5, Math.max(1, Number(rating) || 0))
       if (r < 1) {

@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q") || ""
   const appRole = searchParams.get("appRole") || undefined
   const page = Math.max(1, Number(searchParams.get("page") || "1"))
-  const limit = 20
+  const limitRaw = Number(searchParams.get("limit") || "20")
+  const limit = Math.min(50, Math.max(1, Number.isFinite(limitRaw) ? limitRaw : 20))
 
   const where = {
     ...(q

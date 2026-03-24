@@ -81,9 +81,9 @@ const AUDIO_LEVEL_SPEAKING_THRESHOLD = 0.02
 const MAX_JOIN_RETRIES = 3
 const JOIN_RETRY_DELAYS_MS = [2000, 2500, 3000] as const
 
-/** Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung. */
+/** Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung (Start = beide im Raum). */
 function calculateRemainingTime(
-  sessionStartMs: number,
+  effectiveStartMs: number,
   hasPaidBefore: boolean,
   userBalanceCents: number,
   pricePerMinuteCents: number,
@@ -91,7 +91,7 @@ function calculateRemainingTime(
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
   const freePeriodSec = hasPaidBefore ? 30 : 5 * 60 // 30 Sek Zweitkontakt, 5 Min Erstkontakt
-  const elapsedSec = (Date.now() - sessionStartMs - frozenDurationMs) / 1000
+  const elapsedSec = (Date.now() - effectiveStartMs - frozenDurationMs) / 1000
   const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
   const balanceMinutes = userBalanceCents / pricePerMinuteCents
   const remainingSec = Math.max(0, balanceMinutes * 60 - billingElapsedSec)
@@ -303,6 +303,9 @@ export function DailyCallContainer({
   const serverSessionStartMsRef = useRef<number | null>(null)
   const haptic4MinFiredRef = useRef(false)
   const haptic5MinFiredRef = useRef(false)
+  /** Erstcall-/Abrechnungs-Timer erst, wenn lokaler + Remote-Teilnehmer im Raum sind */
+  const timerLoopStartedRef = useRef(false)
+  const bothJoinedAtMsRef = useRef<number | null>(null)
   const appStateRemoveRef = useRef<(() => void) | null>(null)
   const joinRetryCountRef = useRef(0)
   const joinRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -360,6 +363,10 @@ export function DailyCallContainer({
       remoteAudioRef.current.pause()
     }
     initGuardRef.current = false
+    timerLoopStartedRef.current = false
+    bothJoinedAtMsRef.current = null
+    haptic4MinFiredRef.current = false
+    haptic5MinFiredRef.current = false
     if (joinRetryTimeoutRef.current) clearTimeout(joinRetryTimeoutRef.current)
     joinRetryTimeoutRef.current = null
   }, [])
@@ -689,25 +696,25 @@ export function DailyCallContainer({
       return false
     }
 
-    const handleJoinedMeeting = () => {
-      const participants = call.participants()
-      console.log("participants.local (vollständig):", participants?.local)
-      const currentRoom =
-        (participants?.local as { room_name?: string } | undefined)?.room_name ||
-        joinUrlRef.current?.split("/").pop() ||
-        "(unbekannt)"
-      console.log("INTERNER RAUM-NAME:", currentRoom)
-      if (serverSessionStartMsRef.current == null) {
-        sessionStartMsRef.current = Date.now()
-      } else {
-        sessionStartMsRef.current = serverSessionStartMsRef.current
+    const tryStartTimerIfBothPresent = () => {
+      if (timerLoopStartedRef.current) return
+      if (!syncRemoteParticipant()) {
+        setShowPartnerSearchWarning(true)
+        return
       }
+      setShowPartnerSearchWarning(false)
+      timerLoopStartedRef.current = true
+      bothJoinedAtMsRef.current = Date.now()
+      haptic4MinFiredRef.current = false
+      haptic5MinFiredRef.current = false
+      lowBalanceWarningShownRef.current = false
 
       const tick = () => {
+        const effectiveStart = bothJoinedAtMsRef.current ?? sessionStartMsRef.current ?? Date.now()
         if (useBillingTimer && sessionStartMsRef.current) {
           const balance = balanceCentsRef.current ?? userBalanceCents
           const remaining = calculateRemainingTime(
-            sessionStartMsRef.current,
+            effectiveStart,
             hasPaidBefore,
             balance,
             pricePerMinuteCents,
@@ -753,7 +760,7 @@ export function DailyCallContainer({
           })
         }
       }
-      const startMs = sessionStartMsRef.current ?? Date.now()
+      const startMs = bothJoinedAtMsRef.current ?? Date.now()
       const elapsedSec = (Date.now() - startMs) / 1000
       const initialRemaining = useBillingTimer
         ? calculateRemainingTime(startMs, hasPaidBefore, balanceCentsRef.current ?? userBalanceCents, pricePerMinuteCents, frozenDurationMsRef.current)
@@ -761,7 +768,22 @@ export function DailyCallContainer({
       setTimerSecondsLeft(initialRemaining)
       tick()
       timerIntervalRef.current = setInterval(tick, 1000)
-      syncRemoteParticipant()
+    }
+
+    const handleJoinedMeeting = () => {
+      const participants = call.participants()
+      console.log("participants.local (vollständig):", participants?.local)
+      const currentRoom =
+        (participants?.local as { room_name?: string } | undefined)?.room_name ||
+        joinUrlRef.current?.split("/").pop() ||
+        "(unbekannt)"
+      console.log("INTERNER RAUM-NAME:", currentRoom)
+      if (serverSessionStartMsRef.current == null) {
+        sessionStartMsRef.current = Date.now()
+      } else {
+        sessionStartMsRef.current = serverSessionStartMsRef.current
+      }
+      tryStartTimerIfBothPresent()
     }
 
     const handleParticipantJoined = (ev: { participant?: { session_id?: string; user_name?: string } }) => {
@@ -780,6 +802,7 @@ export function DailyCallContainer({
           hasAudio: !!audioTrack,
           audioTrack: audioTrack ?? undefined,
         })
+        tryStartTimerIfBothPresent()
       }
     }
 
@@ -917,6 +940,10 @@ export function DailyCallContainer({
       setIsMuted(false)
       setIsCameraOff(false)
       initGuardRef.current = false
+      timerLoopStartedRef.current = false
+      bothJoinedAtMsRef.current = null
+      setTimerSecondsLeft(null)
+      setShowPartnerSearchWarning(false)
     })
 
     call.startRemoteParticipantsAudioLevelObserver?.(200)
@@ -925,9 +952,9 @@ export function DailyCallContainer({
 
     syncRemoteParticipant()
     const participantsRefreshInterval = setInterval(() => {
-      if (remoteSessionIdRef.current) return
+      if (timerLoopStartedRef.current) return
       if (call.meetingState() !== "joined-meeting") return
-      syncRemoteParticipant()
+      if (syncRemoteParticipant()) tryStartTimerIfBothPresent()
     }, 500)
 
     return () => {
@@ -942,6 +969,8 @@ export function DailyCallContainer({
       call.off("remote-participants-audio-level", handleRemoteAudioLevel)
       call.off("track-started", handleTrackStarted)
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
+      timerLoopStartedRef.current = false
+      bothJoinedAtMsRef.current = null
     }
   }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId, t])
 
@@ -1093,11 +1122,18 @@ export function DailyCallContainer({
   // Paket 4: Timer neu starten nach Resume (Shugyo hatte 0 Guthaben, hat aufgeladen)
   useEffect(() => {
     if (isFrozen || !useBillingTimer || phase !== "IN_CALL" || !sessionStartMsRef.current || balanceCentsForTimer === null) return
+    if (!remoteParticipant) return
+
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+      timerIntervalRef.current = null
+    }
 
     const tick = () => {
       const balance = balanceCentsRef.current ?? userBalanceCents
+      const effectiveStart = bothJoinedAtMsRef.current ?? sessionStartMsRef.current ?? Date.now()
       const remaining = calculateRemainingTime(
-        sessionStartMsRef.current!,
+        effectiveStart,
         hasPaidBefore,
         balance,
         pricePerMinuteCents,
@@ -1133,7 +1169,7 @@ export function DailyCallContainer({
         timerIntervalRef.current = null
       }
     }
-  }, [isFrozen, useBillingTimer, phase, bookingId, hasPaidBefore, userBalanceCents, pricePerMinuteCents, balanceCentsForTimer])
+  }, [isFrozen, useBillingTimer, phase, bookingId, hasPaidBefore, userBalanceCents, pricePerMinuteCents, balanceCentsForTimer, remoteParticipant])
 
   // --- Paket 4: Takumi – Poll für isShugyoFrozen, Session-Status ---
   useEffect(() => {

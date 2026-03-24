@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { normalizeWebPushKey } from "@/lib/push-subscription-keys"
 
 export const runtime = "nodejs"
 
@@ -28,6 +29,9 @@ export async function POST(req: Request) {
       )
     }
 
+    const p256dh = normalizeWebPushKey(keys.p256dh.trim())
+    const authKey = normalizeWebPushKey(keys.auth.trim())
+
     await prisma.pushSubscription.upsert({
       where: {
         userId_endpoint: { userId: session.user.id, endpoint },
@@ -35,12 +39,12 @@ export async function POST(req: Request) {
       create: {
         userId: session.user.id,
         endpoint,
-        p256dh: keys.p256dh,
-        auth: keys.auth,
+        p256dh,
+        auth: authKey,
       },
       update: {
-        p256dh: keys.p256dh,
-        auth: keys.auth,
+        p256dh,
+        auth: authKey,
       },
     })
 

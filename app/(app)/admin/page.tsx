@@ -2186,6 +2186,22 @@ export default function AdminPage() {
                   </div>
                   <div className="rounded-xl border border-border/50 bg-card p-4">
                     <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                        <Star className="size-5 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Bewertungen</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Reviews und Sterne je Nutzer bearbeiten (öffentliche Reviews, Takumi-Bewertungen)
+                        </p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/reviews"><ExternalLink className="size-3" />Öffnen</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
                         <Mail className="size-5 text-blue-600" />
                       </div>

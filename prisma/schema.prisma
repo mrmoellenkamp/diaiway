@@ -439,6 +439,7 @@ model Booking {
   transaction     Transaction?
   safetyReports   SafetyReport[]
   safetyIncidents SafetyIncident[]
+  review Review?
 
   @@index([expertId, date, status])
   @@index([userId])
@@ -450,6 +451,8 @@ model Review {
   expertId  String
   expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
   userId    String
+  bookingId String?  @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   rating    Float
   text      String   @default("")
   createdAt DateTime @default(now())

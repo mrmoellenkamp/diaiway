@@ -47,17 +47,20 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
 
         if (cancelled) return
 
+        // Use browser-provided base64url keys (web-push expects these; manual btoa was error-prone).
+        const json = subscription.toJSON() as {
+          endpoint: string
+          keys?: { p256dh?: string; auth?: string }
+        }
+        if (!json.keys?.p256dh || !json.keys?.auth) return
+
         await fetch("/api/push/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
-            endpoint: subscription.endpoint,
-            keys: {
-              p256dh: btoa(
-                String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))
-              ),
-              auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth")!))),
-            },
+            endpoint: json.endpoint,
+            keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
           }),
         })
       } catch (err) {

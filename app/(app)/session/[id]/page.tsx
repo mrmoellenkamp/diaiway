@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Suspense, useCallback, useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { DailyCallContainer } from "@/components/video-call/DailyCallContainer"
 import { ConnectingSplash } from "@/components/connecting-splash"
@@ -72,11 +72,14 @@ function PostCallScreen({
   const [reviewText, setReviewText] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [showReleaseDialog, setShowReleaseDialog] = useState(false)
+  const submitReviewInFlightRef = useRef(false)
 
   const formatAmount = (cents: number) =>
     `€${(cents / 100).toFixed(2).replace(".", ",")}`
 
   const submitReviewOnly = useCallback(async () => {
+    if (submitReviewInFlightRef.current) return
+    submitReviewInFlightRef.current = true
     setSubmitting(true)
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
@@ -95,20 +98,24 @@ function PostCallScreen({
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
+      submitReviewInFlightRef.current = false
       setSubmitting(false)
     }
   }, [bookingId, isExpert, rating, reviewText, onDone, t])
 
   const handleSubmitReview = useCallback(() => {
+    if (submitting || submitReviewInFlightRef.current) return
     if (rating < 1) return
     if (!isExpert && paymentStatus === "paid" && (paidAmountCents ?? 0) > 0) {
       setShowReleaseDialog(true)
     } else {
       submitReviewOnly()
     }
-  }, [rating, isExpert, paymentStatus, paidAmountCents, submitReviewOnly])
+  }, [rating, isExpert, paymentStatus, paidAmountCents, submitReviewOnly, submitting])
 
   const handleReleaseAndSubmit = useCallback(async () => {
+    if (submitReviewInFlightRef.current) return
+    submitReviewInFlightRef.current = true
     setShowReleaseDialog(false)
     setSubmitting(true)
     try {
@@ -135,11 +142,13 @@ function PostCallScreen({
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("common.error"))
     } finally {
+      submitReviewInFlightRef.current = false
       setSubmitting(false)
     }
   }, [bookingId, rating, reviewText, onDone, t])
 
   const handleReportAndSubmit = useCallback(async () => {
+    if (submitReviewInFlightRef.current) return
     setShowReleaseDialog(false)
     setSubmitting(true)
     try {
