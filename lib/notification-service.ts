@@ -42,27 +42,36 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
     const respondBase = `${baseUrl}/booking/respond/${booking.id}?token=${booking.statusToken}`
 
-    // E-Mail (immer senden)
+    // Idempotenz-Gate: Wenn bereits booking_request für diese Buchung existiert,
+    // keine zweite Anfrage-E-Mail senden (verhindert Doppelmails bei Polling/Webhook-Rennen).
+    const existingRequestNotification = await prisma.notification.findFirst({
+      where: { bookingId, type: "booking_request" },
+      select: { id: true },
+    })
+
+    // E-Mail nur beim ersten Notify-Versuch senden
     let emailSent = false
-    try {
-      await sendBookingRequestEmail({
-        to: booking.expertEmail,
-        takumiName: takumiComm,
-        userName: shugyoComm,
-        userEmail: booking.userEmail,
-        date: booking.date,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        price: booking.price ?? 0,
-        note: booking.note || "",
-        acceptUrl: `${respondBase}&action=confirmed`,
-        declineUrl: `${respondBase}&action=declined`,
-        askUrl: `${respondBase}&action=ask`,
-        dashboardUrl: `${baseUrl}/sessions`,
-      })
-      emailSent = true
-    } catch (emailErr) {
-      console.error("[notification-service] Email failed:", emailErr)
+    if (!existingRequestNotification) {
+      try {
+        await sendBookingRequestEmail({
+          to: booking.expertEmail,
+          takumiName: takumiComm,
+          userName: shugyoComm,
+          userEmail: booking.userEmail,
+          date: booking.date,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          price: booking.price ?? 0,
+          note: booking.note || "",
+          acceptUrl: `${respondBase}&action=confirmed`,
+          declineUrl: `${respondBase}&action=declined`,
+          askUrl: `${respondBase}&action=ask`,
+          dashboardUrl: `${baseUrl}/sessions`,
+        })
+        emailSent = true
+      } catch (emailErr) {
+        console.error("[notification-service] Email failed:", emailErr)
+      }
     }
 
     let notifyUserId = booking.expert?.userId ?? null
@@ -76,9 +85,9 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
 
     let notificationCreated = false
     if (notifyUserId) {
-      const existing = await prisma.notification.findFirst({
+      const existing = existingRequestNotification ?? (await prisma.notification.findFirst({
         where: { bookingId, type: "booking_request", userId: notifyUserId },
-      })
+      }))
       if (!existing) {
         const bookingTime = `${booking.startTime}–${booking.endTime} Uhr`
         let waymailSubject = "Neue Buchungsanfrage (bezahlt)"
