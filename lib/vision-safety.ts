@@ -1,6 +1,6 @@
 /**
  * Google Cloud Vision API - SafeSearch
- * Prüft Bilder auf explizite Inhalte (adult, violence, racy) vor dem Speichern.
+ * Merkmalsweise Schwellen (adult, violence, racy, medical, spoof).
  * Unterstützt:
  * - GOOGLE_CLOUD_VISION_API_KEY (API-Key)
  * - GOOGLE_VISION_PROJECT_ID + CLIENT_EMAIL + PRIVATE_KEY (Service Account, Fallback)
@@ -9,16 +9,51 @@
  * Explizit EU-regionaler Endpunkt (eu-vision.googleapis.com).
  */
 const VISION_API = "https://eu-vision.googleapis.com/v1/images:annotate"
-const UNSAFE_LEVELS = ["LIKELY", "VERY_LIKELY"]
 
 export type SafeSearchLevel = "UNKNOWN" | "VERY_UNLIKELY" | "UNLIKELY" | "POSSIBLE" | "LIKELY" | "VERY_LIKELY"
 
+export type SafeSearchCategory = "adult" | "violence" | "racy" | "medical" | "spoof"
+
+/** Mindest-Likelihood für einen Verstoß, oder IGNORED (Merkmal wird nicht gewertet). */
+export type CategoryViolationPolicy = SafeSearchLevel | "IGNORED"
+
+const LEVEL_RANK: Record<string, number> = {
+  UNKNOWN: 0,
+  VERY_UNLIKELY: 1,
+  UNLIKELY: 2,
+  POSSIBLE: 3,
+  LIKELY: 4,
+  VERY_LIKELY: 5,
+}
+
+/** Google Vision Likelihood-Enum (protobuf) → Name */
+const LIKELIHOOD_BY_NUMBER: Record<number, string> = {
+  0: "UNKNOWN",
+  1: "VERY_UNLIKELY",
+  2: "UNLIKELY",
+  3: "POSSIBLE",
+  4: "LIKELY",
+  5: "VERY_LIKELY",
+}
+
+/**
+ * Produktions-Schwellen: Verstoß, wenn API-Wert ≥ konfigurierte Stufe.
+ * adult/violence: POSSIBLE+ · racy: nur VERY_LIKELY · medical: LIKELY+ · spoof: ausgeschaltet
+ */
+export const SAFE_SEARCH_CATEGORY_POLICY: Record<SafeSearchCategory, CategoryViolationPolicy> = {
+  adult: "POSSIBLE",
+  violence: "POSSIBLE",
+  racy: "VERY_LIKELY",
+  medical: "LIKELY",
+  spoof: "IGNORED",
+}
+
 interface SafeSearchAnnotation {
-  adult?: SafeSearchLevel
-  violence?: SafeSearchLevel
-  racy?: SafeSearchLevel
-  spoof?: SafeSearchLevel
-  medical?: SafeSearchLevel
+  adult?: SafeSearchLevel | string | number | unknown
+  violence?: SafeSearchLevel | string | number | unknown
+  racy?: SafeSearchLevel | string | number | unknown
+  spoof?: SafeSearchLevel | string | number | unknown
+  medical?: SafeSearchLevel | string | number | unknown
 }
 
 export interface SafetyCheckResult {
@@ -27,10 +62,44 @@ export interface SafetyCheckResult {
   violation?: { key: string; level: string }
 }
 
-function checkAnnotation(annotation: SafeSearchAnnotation): SafetyCheckResult {
-  for (const [key, level] of Object.entries(annotation)) {
-    if (UNSAFE_LEVELS.includes(level as string)) {
-      return { safe: false, reason: `Bild enthält möglicherweise ungeeignete Inhalte (${key}).`, violation: { key, level } }
+function normalizeLikelihood(level: unknown): string | null {
+  if (level == null) return null
+  if (typeof level === "string") return level
+  if (typeof level === "number") return LIKELIHOOD_BY_NUMBER[level] ?? null
+  const name = (level as { name?: string }).name
+  if (typeof name === "string") return name
+  return null
+}
+
+function isViolationForCategory(
+  category: string,
+  levelRaw: unknown,
+  policy: Record<string, CategoryViolationPolicy>
+): { violation: true; level: string } | null {
+  const rule = policy[category]
+  if (rule === undefined || rule === "IGNORED") return null
+  const levelStr = normalizeLikelihood(levelRaw)
+  if (!levelStr) return null
+  const need = LEVEL_RANK[rule]
+  const actual = LEVEL_RANK[levelStr]
+  if (need === undefined || actual === undefined) return null
+  if (actual >= need) return { violation: true, level: levelStr }
+  return null
+}
+
+function checkAnnotation(
+  annotation: SafeSearchAnnotation,
+  policy: Record<string, CategoryViolationPolicy>
+): SafetyCheckResult {
+  for (const [key, levelRaw] of Object.entries(annotation)) {
+    const cat = key.toLowerCase()
+    const hit = isViolationForCategory(cat, levelRaw, policy)
+    if (hit) {
+      return {
+        safe: false,
+        reason: `Bild enthält möglicherweise ungeeignete Inhalte (${cat}).`,
+        violation: { key: cat, level: hit.level },
+      }
     }
   }
   return { safe: true }
@@ -59,7 +128,10 @@ export function getVisionConfigStatus(): { configured: boolean; method: "api_key
   return { configured: false, method: null }
 }
 
-async function runSafeSearchWithClient(content: string): Promise<SafetyCheckResult> {
+async function runSafeSearchWithClient(
+  content: string,
+  policy: Record<string, CategoryViolationPolicy>
+): Promise<SafetyCheckResult> {
   const { ImageAnnotatorClient } = await import("@google-cloud/vision")
   const projectId = process.env.GOOGLE_VISION_PROJECT_ID!
   const clientEmail = process.env.GOOGLE_VISION_CLIENT_EMAIL!
@@ -75,10 +147,13 @@ async function runSafeSearchWithClient(content: string): Promise<SafetyCheckResu
   })
   const annotation = response.safeSearchAnnotation as SafeSearchAnnotation | undefined
   if (!annotation) return { safe: false, reason: "Bild konnte nicht geprüft werden.", violation: undefined }
-  return checkAnnotation(annotation)
+  return checkAnnotation(annotation, policy)
 }
 
-async function runSafeSearchWithApiKey(content: string): Promise<SafetyCheckResult> {
+async function runSafeSearchWithApiKey(
+  content: string,
+  policy: Record<string, CategoryViolationPolicy>
+): Promise<SafetyCheckResult> {
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY!
   const res = await fetch(`${VISION_API}?key=${apiKey}`, {
     method: "POST",
@@ -95,9 +170,16 @@ async function runSafeSearchWithApiKey(content: string): Promise<SafetyCheckResu
     return { safe: false, reason: "Bildprüfung fehlgeschlagen.", violation: undefined }
   }
   const data = await res.json()
-  const annotation = data?.responses?.[0]?.safeSearchAnnotation as SafeSearchAnnotation | undefined
-  if (!annotation) return { safe: false, reason: "Bild konnte nicht geprüft werden.", violation: undefined }
-  return checkAnnotation(annotation)
+  const ann = data?.responses?.[0]?.safeSearchAnnotation as Record<string, string> | undefined
+  if (!ann) return { safe: false, reason: "Bild konnte nicht geprüft werden.", violation: undefined }
+  const annotation: SafeSearchAnnotation = {
+    adult: ann.adult,
+    violence: ann.violence,
+    racy: ann.racy,
+    spoof: ann.spoof,
+    medical: ann.medical,
+  }
+  return checkAnnotation(annotation, policy)
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, errMsg: string): Promise<T> {
@@ -113,8 +195,8 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
   const base64 = buffer.toString("base64")
   const run = () =>
     process.env.GOOGLE_CLOUD_VISION_API_KEY?.trim()
-      ? runSafeSearchWithApiKey(base64)
-      : runSafeSearchWithClient(base64)
+      ? runSafeSearchWithApiKey(base64, SAFE_SEARCH_CATEGORY_POLICY)
+      : runSafeSearchWithClient(base64, SAFE_SEARCH_CATEGORY_POLICY)
 
   try {
     const result = await withTimeout(run(), 8000, "Timeout")
@@ -125,15 +207,27 @@ export async function checkImageSafety(buffer: Buffer): Promise<{ safe: boolean;
   }
 }
 
+export type CheckImageSafetyFromBase64Options = {
+  /** Überschreibt einzelne Merkmale (Rest bleibt SAFE_SEARCH_CATEGORY_POLICY). */
+  policy?: Partial<Record<SafeSearchCategory, CategoryViolationPolicy>>
+}
+
 /** Pre-Check & Alert: Prüft Base64-Bild, gibt detailliertes Ergebnis (inkl. violation für Speicherung) */
-export async function checkImageSafetyFromBase64(base64: string): Promise<SafetyCheckResult> {
+export async function checkImageSafetyFromBase64(
+  base64: string,
+  options?: CheckImageSafetyFromBase64Options
+): Promise<SafetyCheckResult> {
   if (!hasVisionConfig()) return { safe: false, reason: "Bildprüfung nicht konfiguriert.", violation: undefined }
 
+  const policy: Record<string, CategoryViolationPolicy> = {
+    ...SAFE_SEARCH_CATEGORY_POLICY,
+    ...options?.policy,
+  }
   const content = base64.replace(/^data:image\/\w+;base64,/, "").trim()
   const run = () =>
     process.env.GOOGLE_CLOUD_VISION_API_KEY?.trim()
-      ? runSafeSearchWithApiKey(content)
-      : runSafeSearchWithClient(content)
+      ? runSafeSearchWithApiKey(content, policy)
+      : runSafeSearchWithClient(content, policy)
 
   try {
     return await withTimeout(run(), 8000, "Timeout")

@@ -11,7 +11,8 @@ export const maxDuration = 15
 /**
  * POST /api/safety/snapshot
  * Live-Monitoring: Client sendet Stichproben-Snapshot aus Video-Call.
- * Vision API prüft auf Safety-Verstöße; bei Verstoß → Blob + SafetyIncident + Transaktion ON_HOLD.
+ * Vision API SafeSearch; merkmalsweise Schwellen (siehe SAFE_SEARCH_CATEGORY_POLICY).
+ * Bei Verstoß → Blob + SafetyIncident + Transaktion ON_HOLD.
  */
 export async function POST(req: NextRequest) {
   try {

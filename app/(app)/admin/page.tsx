@@ -2126,8 +2126,7 @@ export default function AdminPage() {
                 </div>
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
                   <p className="text-xs text-amber-800">
-                    <strong>Automatischer Schutz aktiv:</strong> Alle Video-Calls werden bei 5s · 30s · 60s · 90s · 120s per Google Vision SafeSearch geprüft.
-                    Bei einem Verstoß (LIKELY/VERY_LIKELY) wird die Verbindung sofort getrennt und ein Incident erstellt.
+                    <strong>Automatischer Schutz aktiv:</strong> Vorschau und Live-Snapshots nutzen Google Vision SafeSearch mit <strong>merkmalsweisen Schwellen</strong> (adult/violence ab POSSIBLE, racy nur VERY_LIKELY, medical ab LIKELY, spoof aus).
                   </p>
                 </div>
               </div>

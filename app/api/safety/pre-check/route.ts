@@ -8,7 +8,8 @@ export const maxDuration = 15
 
 /**
  * POST /api/safety/pre-check
- * Pre-Join Gate: Vision-API-Prüfung vor Daily-Beitritt (Blitzlicht bei 0s).
+ * Pre-Join Gate: Vision-API-Prüfung vor Daily-Beitritt (Lobby-Kamera / Blitzlicht).
+ * Gleiche merkmalsweise Policy wie Live-Snapshots (`SAFE_SEARCH_CATEGORY_POLICY`).
  * Kein status-active-Check – Session ist noch nicht gestartet.
  * Erstellt KEIN SafetyIncident, nur Vision-API-Check.
  */
