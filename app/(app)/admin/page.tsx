@@ -94,6 +94,7 @@ interface TopExpert {
 interface AdminUser {
   id: string; name: string; username: string | null; email: string; role: string; appRole: string
   image: string; createdAt: string; _count: { bookings: number }
+  reviewCounts?: { written: number; received: number }
 }
 
 interface AdminBooking {
@@ -522,9 +523,35 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
-                    <p className="text-[10px] text-muted-foreground">{u._count.bookings} Buchungen · {relDate(u.createdAt)}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {u._count.bookings} Buchungen
+                      {u.reviewCounts != null && (
+                        <>
+                          {" · "}
+                          <span title="Abgegebene öffentliche Reviews (Shugyo → Takumi)">
+                            ⭐ {u.reviewCounts.written} abgegeben
+                          </span>
+                          <span title="Erhaltene öffentliche Reviews auf dem Takumi-Profil (0 ohne Experten-Profil)">
+                            {" · "}{u.reviewCounts.received} erhalten
+                          </span>
+                        </>
+                      )}
+                      {" · "}
+                      {relDate(u.createdAt)}
+                    </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-7"
+                      title="Bewertungen (Admin)"
+                      asChild
+                    >
+                      <Link href={`/admin/reviews?userId=${encodeURIComponent(u.id)}`}>
+                        <Star className="size-3.5" />
+                      </Link>
+                    </Button>
                     <Button
                       size="icon"
                       variant="ghost"
@@ -2126,7 +2153,7 @@ export default function AdminPage() {
                 </div>
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
                   <p className="text-xs text-amber-800">
-                    <strong>Automatischer Schutz aktiv:</strong> Vorschau und Live-Snapshots nutzen Google Vision SafeSearch mit <strong>merkmalsweisen Schwellen</strong> (adult/violence ab POSSIBLE, racy nur VERY_LIKELY, medical ab LIKELY, spoof aus).
+                    <strong>Automatischer Schutz aktiv:</strong> Vorschau und Live-Snapshots nutzen Google Vision SafeSearch mit <strong>merkmalsweisen Schwellen</strong> (adult ab LIKELY, violence ab POSSIBLE, racy nur VERY_LIKELY, medical ab LIKELY, spoof aus).
                   </p>
                 </div>
               </div>

@@ -38,10 +38,10 @@ const LIKELIHOOD_BY_NUMBER: Record<number, string> = {
 
 /**
  * Produktions-Schwellen: Verstoß, wenn API-Wert ≥ konfigurierte Stufe.
- * adult/violence: POSSIBLE+ · racy: nur VERY_LIKELY · medical: LIKELY+ · spoof: ausgeschaltet
+ * adult: LIKELY+ · violence: POSSIBLE+ · racy: nur VERY_LIKELY · medical: LIKELY+ · spoof: ausgeschaltet
  */
 export const SAFE_SEARCH_CATEGORY_POLICY: Record<SafeSearchCategory, CategoryViolationPolicy> = {
-  adult: "POSSIBLE",
+  adult: "LIKELY",
   violence: "POSSIBLE",
   racy: "VERY_LIKELY",
   medical: "LIKELY",

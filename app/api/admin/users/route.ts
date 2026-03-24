@@ -50,5 +50,40 @@ export async function GET(req: NextRequest) {
     prisma.user.count({ where }),
   ])
 
-  return NextResponse.json({ users, total, page, limit })
+  const userIds = users.map((u) => u.id)
+  const [writtenGroups, expertsWithReviewCount] = await Promise.all([
+    userIds.length
+      ? prisma.review.groupBy({
+          by: ["userId"],
+          where: { userId: { in: userIds } },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+    userIds.length
+      ? prisma.expert.findMany({
+          where: { userId: { in: userIds } },
+          select: {
+            userId: true,
+            _count: { select: { reviews: true } },
+          },
+        })
+      : Promise.resolve([]),
+  ])
+
+  const writtenMap = new Map(writtenGroups.map((g) => [g.userId, g._count._all]))
+  const receivedMap = new Map(
+    expertsWithReviewCount
+      .filter((e): e is typeof e & { userId: string } => e.userId != null)
+      .map((e) => [e.userId, e._count.reviews])
+  )
+
+  const usersWithReviews = users.map((u) => ({
+    ...u,
+    reviewCounts: {
+      written: writtenMap.get(u.id) ?? 0,
+      received: receivedMap.get(u.id) ?? 0,
+    },
+  }))
+
+  return NextResponse.json({ users: usersWithReviews, total, page, limit })
 }

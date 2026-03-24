@@ -17,7 +17,7 @@ export function BottomNav() {
     { href: "/home", label: t("common.home"), icon: Home },
     { href: "/categories", label: t("common.categories"), icon: LayoutGrid },
     { href: "/ai-guide", label: "diAiway", icon: MessageSquare, brand: true },
-    { href: "/sessions", label: t("sessions.title"), icon: Calendar },
+    { href: "/sessions", label: t("common.bookings"), icon: Calendar },
     { href: "/profile", label: t("common.profile"), icon: User },
   ]
 

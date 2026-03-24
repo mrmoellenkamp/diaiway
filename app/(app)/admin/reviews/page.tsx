@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,7 +34,9 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { ChevronLeft, Loader2, Pencil, Search, Star } from "lucide-react"
+import { ChevronLeft, Loader2, Pencil, Plus, Search, Star, Trash2 } from "lucide-react"
+
+type ExpertRow = { id: string; name: string; email: string }
 
 type AdminUserRow = {
   id: string
@@ -84,7 +88,7 @@ type RatingsPayload = {
 
 const STAR_OPTIONS = ["1", "2", "3", "4", "5"] as const
 
-export default function AdminReviewsPage() {
+function AdminReviewsContent() {
   const [q, setQ] = useState("")
   const [usersLoading, setUsersLoading] = useState(false)
   const [users, setUsers] = useState<AdminUserRow[]>([])
@@ -101,6 +105,17 @@ export default function AdminReviewsPage() {
   const [bookingStars, setBookingStars] = useState<string>("none")
   const [bookingText, setBookingText] = useState("")
   const [bookingSaving, setBookingSaving] = useState(false)
+
+  const searchParams = useSearchParams()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createExpertQ, setCreateExpertQ] = useState("")
+  const [createExperts, setCreateExperts] = useState<ExpertRow[]>([])
+  const [createExpertId, setCreateExpertId] = useState("")
+  const [createBookingId, setCreateBookingId] = useState("")
+  const [createRating, setCreateRating] = useState("5")
+  const [createText, setCreateText] = useState("")
+  const [createSaving, setCreateSaving] = useState(false)
+  const [createExpertLoading, setCreateExpertLoading] = useState(false)
 
   const searchUsers = useCallback(async () => {
     setUsersLoading(true)
@@ -138,6 +153,87 @@ export default function AdminReviewsPage() {
     // Nur beim Mount: initiale Nutzerliste (leere Suche = letzte Registrierungen, begrenzt)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- q absichtlich nicht als Trigger
   }, [])
+
+  const presetUserId = searchParams.get("userId")
+  useEffect(() => {
+    if (presetUserId) void loadRatings(presetUserId)
+  }, [presetUserId, loadRatings])
+
+  const searchExpertsForCreate = async () => {
+    setCreateExpertLoading(true)
+    setCreateExpertId("")
+    try {
+      const res = await fetch(`/api/admin/experts?q=${encodeURIComponent(createExpertQ.trim())}`)
+      const json = (await res.json()) as { experts?: ExpertRow[]; error?: string }
+      if (!res.ok) throw new Error(json.error ?? "Suche fehlgeschlagen")
+      const list = json.experts ?? []
+      setCreateExperts(list)
+      if (list.length === 1) setCreateExpertId(list[0].id)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Suche fehlgeschlagen")
+      setCreateExperts([])
+    } finally {
+      setCreateExpertLoading(false)
+    }
+  }
+
+  const openCreateDialog = () => {
+    if (!selectedUserId) {
+      toast.error("Bitte zuerst einen Nutzer auswählen (Treffer öffnen).")
+      return
+    }
+    setCreateExpertQ("")
+    setCreateExperts([])
+    setCreateExpertId("")
+    setCreateBookingId("")
+    setCreateRating("5")
+    setCreateText("")
+    setCreateOpen(true)
+  }
+
+  const submitCreateReview = async () => {
+    if (!selectedUserId || !createExpertId) {
+      toast.error("Bitte einen Takumi aus der Liste wählen (Suche ausführen und Eintrag wählen).")
+      return
+    }
+    setCreateSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        userId: selectedUserId,
+        expertId: createExpertId,
+        rating: Math.min(5, Math.max(1, Number(createRating) || 5)),
+        text: createText,
+      }
+      if (createBookingId.trim()) body.bookingId = createBookingId.trim()
+      const res = await fetch("/api/admin/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      const json = (await res.json()) as { error?: string }
+      if (!res.ok) throw new Error(json.error ?? "Anlegen fehlgeschlagen")
+      toast.success("Review angelegt.")
+      setCreateOpen(false)
+      await loadRatings(selectedUserId)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Anlegen fehlgeschlagen")
+    } finally {
+      setCreateSaving(false)
+    }
+  }
+
+  const deleteReview = async (reviewId: string) => {
+    if (!confirm("Diese öffentliche Review wirklich löschen? Die Takumi-Sterne werden neu berechnet.")) return
+    try {
+      const res = await fetch(`/api/admin/reviews/${reviewId}`, { method: "DELETE" })
+      const json = (await res.json()) as { error?: string }
+      if (!res.ok) throw new Error(json.error ?? "Löschen fehlgeschlagen")
+      toast.success("Review gelöscht.")
+      if (selectedUserId) await loadRatings(selectedUserId)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Löschen fehlgeschlagen")
+    }
+  }
 
   const openReviewEdit = (r: WrittenReview | ReceivedReview) => {
     setReviewDialog(r)
@@ -301,13 +397,21 @@ export default function AdminReviewsPage() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Abgegebene öffentliche Reviews</CardTitle>
-                <CardDescription>Bewertungen dieses Nutzers über Takumis (Sterne + Text)</CardDescription>
+              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
+                <div className="space-y-1.5">
+                  <CardTitle className="text-base">Abgegebene öffentliche Reviews</CardTitle>
+                  <CardDescription>Bewertungen dieses Nutzers über Takumis (Sterne + Text)</CardDescription>
+                </div>
+                <Button type="button" size="sm" variant="secondary" className="gap-1 shrink-0" onClick={openCreateDialog}>
+                  <Plus className="size-4" />
+                  Neue Review
+                </Button>
               </CardHeader>
               <CardContent className="overflow-x-auto">
                 {data.writtenReviews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Keine Einträge.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Keine Einträge. Über „Neue Review“ kannst du eine Bewertung manuell anlegen.
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -316,7 +420,7 @@ export default function AdminReviewsPage() {
                         <TableHead>Sterne</TableHead>
                         <TableHead>Text</TableHead>
                         <TableHead>Datum</TableHead>
-                        <TableHead className="w-[80px]" />
+                        <TableHead className="w-[100px] text-right">Aktionen</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -330,10 +434,21 @@ export default function AdminReviewsPage() {
                           <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                             {new Date(r.createdAt).toLocaleString("de-DE")}
                           </TableCell>
-                          <TableCell>
-                            <Button size="icon" variant="ghost" onClick={() => openReviewEdit(r)} aria-label="Bearbeiten">
-                              <Pencil className="size-4" />
-                            </Button>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-0">
+                              <Button size="icon" variant="ghost" onClick={() => openReviewEdit(r)} aria-label="Bearbeiten">
+                                <Pencil className="size-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => void deleteReview(r.id)}
+                                aria-label="Löschen"
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -405,7 +520,7 @@ export default function AdminReviewsPage() {
                           <TableHead>Sterne</TableHead>
                           <TableHead>Text</TableHead>
                           <TableHead>Datum</TableHead>
-                          <TableHead className="w-[80px]" />
+                          <TableHead className="w-[100px] text-right">Aktionen</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -422,10 +537,21 @@ export default function AdminReviewsPage() {
                             <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                               {new Date(r.createdAt).toLocaleString("de-DE")}
                             </TableCell>
-                            <TableCell>
-                              <Button size="icon" variant="ghost" onClick={() => openReviewEdit(r)} aria-label="Bearbeiten">
-                                <Pencil className="size-4" />
-                              </Button>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-0">
+                                <Button size="icon" variant="ghost" onClick={() => openReviewEdit(r)} aria-label="Bearbeiten">
+                                  <Pencil className="size-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => void deleteReview(r.id)}
+                                  aria-label="Löschen"
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -512,7 +638,102 @@ export default function AdminReviewsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Neue öffentliche Review</DialogTitle>
+              <DialogDescription>
+                Der Reviewer ist der aktuell ausgewählte Nutzer ({data?.user.name ?? "—"}). Wähle den bewerteten Takumi
+                über die Suche.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="expert-q">Takumi suchen</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="expert-q"
+                    value={createExpertQ}
+                    onChange={(e) => setCreateExpertQ(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && void searchExpertsForCreate()}
+                    placeholder="Name oder E-Mail"
+                  />
+                  <Button type="button" variant="secondary" onClick={() => void searchExpertsForCreate()} disabled={createExpertLoading}>
+                    {createExpertLoading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Takumi</Label>
+                <Select value={createExpertId || undefined} onValueChange={setCreateExpertId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={createExperts.length ? "Takumi wählen" : "Zuerst suchen"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {createExperts.map((ex) => (
+                      <SelectItem key={ex.id} value={ex.id}>
+                        {ex.name} {ex.email ? `(${ex.email})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-booking">Buchungs-ID (optional)</Label>
+                <Input
+                  id="create-booking"
+                  value={createBookingId}
+                  onChange={(e) => setCreateBookingId(e.target.value)}
+                  placeholder="Nur wenn die Review zu einer Session gehört"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Sterne (1–5)</Label>
+                <Select value={createRating} onValueChange={setCreateRating}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STAR_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-text">Text</Label>
+                <Textarea id="create-text" value={createText} onChange={(e) => setCreateText(e.target.value)} rows={4} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={() => void submitCreateReview()} disabled={createSaving}>
+                {createSaving ? <Loader2 className="size-4 animate-spin" /> : "Anlegen"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </PageContainer>
     </div>
+  )
+}
+
+export default function AdminReviewsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <AdminReviewsContent />
+    </Suspense>
   )
 }

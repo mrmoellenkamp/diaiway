@@ -5,6 +5,7 @@ const de = {
   "common.aiGuide": "diAiway",
   "common.chats": "Chats",
   "common.profile": "Profil",
+  "common.bookings": "Buchungen",
   "common.back": "Zurück",
   "common.save": "Speichern",
   "common.edit": "Bearbeiten",

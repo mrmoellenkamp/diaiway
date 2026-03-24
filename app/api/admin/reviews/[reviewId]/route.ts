@@ -64,3 +64,32 @@ export async function PATCH(
 
   return NextResponse.json({ review: updated })
 }
+
+/**
+ * DELETE /api/admin/reviews/[reviewId]
+ * Öffentliche Review entfernen; Experten-Sterne werden neu berechnet.
+ */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ reviewId: string }> }
+) {
+  const session = await auth()
+  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const { reviewId } = await params
+
+  const existing = await prisma.review.findUnique({
+    where: { id: reviewId },
+    select: { id: true, expertId: true },
+  })
+  if (!existing) {
+    return NextResponse.json({ error: "Review nicht gefunden." }, { status: 404 })
+  }
+
+  await prisma.review.delete({ where: { id: reviewId } })
+  await recomputeExpertReviewAggregate(existing.expertId)
+
+  return NextResponse.json({ ok: true })
+}

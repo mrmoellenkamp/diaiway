@@ -5,6 +5,7 @@ const es = {
   "common.aiGuide": "diAiway",
   "common.chats": "Chats",
   "common.profile": "Perfil",
+  "common.bookings": "Reservas",
   "common.back": "Volver",
   "common.save": "Guardar",
   "common.edit": "Editar",
