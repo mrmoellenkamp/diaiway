@@ -14,6 +14,10 @@ import {
 import { communicationUsername } from "@/lib/communication-display"
 import { notifyAfterCancellation } from "@/lib/notification-service"
 import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
+import {
+  notifyPartnerJoinedVideoCall,
+  notifyPartnerWaitingInVideoCall,
+} from "@/lib/booking-partner-presence-notify"
 
 export const runtime = "nodejs"
 
@@ -349,6 +353,15 @@ export async function PATCH(
       }
       // Wenn bereits active (z.B. Partner hat gestartet), idempotent erfolgreich zurückgeben
       if (booking.status === "active") {
+        const openerId = booking.sessionOpenedByUserId
+        if (openerId && openerId !== uid) {
+          void notifyPartnerJoinedVideoCall({
+            bookingId: id,
+            joiningUserId: uid,
+            bookerUserId: booking.userId,
+            expertAccountUserId: booking.expert?.userId,
+          }).catch((e) => console.warn("[start-session] notifyPartnerJoinedVideoCall:", e))
+        }
         return NextResponse.json({
           success: true,
           status: "active",
@@ -370,8 +383,14 @@ export async function PATCH(
 
       const updated = await prisma.booking.update({
         where: { id },
-        data: { status: "active", sessionStartedAt: new Date() },
+        data: { status: "active", sessionStartedAt: new Date(), sessionOpenedByUserId: uid },
       })
+      void notifyPartnerWaitingInVideoCall({
+        bookingId: id,
+        joiningUserId: uid,
+        bookerUserId: booking.userId,
+        expertAccountUserId: booking.expert?.userId,
+      }).catch((e) => console.warn("[start-session] notifyPartnerWaitingInVideoCall:", e))
       return NextResponse.json({ success: true, status: "active", sessionStartedAt: updated.sessionStartedAt })
     }
 

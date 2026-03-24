@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { Home, MessageSquare, User, LayoutGrid, Mail } from "lucide-react"
+import { Home, MessageSquare, User, LayoutGrid, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
 import { DiAiwayBrand } from "@/components/diaiway-brand"
@@ -17,7 +17,7 @@ export function BottomNav() {
     { href: "/home", label: t("common.home"), icon: Home },
     { href: "/categories", label: t("common.categories"), icon: LayoutGrid },
     { href: "/ai-guide", label: "diAiway", icon: MessageSquare, brand: true },
-    { href: "/messages", label: t("messages.title"), icon: Mail },
+    { href: "/sessions", label: t("sessions.title"), icon: Calendar },
     { href: "/profile", label: t("common.profile"), icon: User },
   ]
 

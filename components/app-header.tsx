@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bell, Search } from "lucide-react"
+import { Mail, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
@@ -37,7 +37,7 @@ export function AppHeader({ title }: { title?: string }) {
           </Button>
           <Button variant="ghost" size="icon-sm" asChild className="relative">
             <Link href="/messages">
-              <Bell className="size-5 icon-paper" />
+              <Mail className="size-5 icon-paper" />
               <span className="sr-only">{t("messages.title")}</span>
               {totalUnread > 0 && (
                 <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" />

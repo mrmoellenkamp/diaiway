@@ -408,6 +408,8 @@ model Booking {
   // Video session
   dailyRoomUrl          String        @default("")
   sessionStartedAt      DateTime?
+  /** Nutzer, der die Session zuerst auf active gesetzt hat (für Partner-Push ohne Reconnect-Spam). */
+  sessionOpenedByUserId String?
   sessionEndedAt        DateTime?
   sessionDuration       Int?          // minutes
   trialUsed             Boolean       @default(false)
@@ -477,7 +479,7 @@ model Notification {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String   // booking_request | booking_confirmed | booking_declined | booking_cancelled | booking_question | new_message
+  type       String   // booking_request | … | booking_partner_waiting_in_call | booking_partner_joined_call | new_message
   bookingId  String?
   title      String
   body       String   @default("")
