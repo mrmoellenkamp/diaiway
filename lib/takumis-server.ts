@@ -19,7 +19,8 @@ export async function getTakumisForServer(): Promise<Takumi[]> {
     const active = experts.filter((e) => {
       if (!e.userId) return true
       const u = e.user
-      return u && u.appRole === "takumi"
+      if (!u || u.appRole !== "takumi") return false
+      return e.profileReviewStatus === "approved"
     })
 
     return active.map((e) => expertRowToTakumi(e))

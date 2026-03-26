@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { validateNoContactLeak } from "@/lib/contact-leak-validation"
 
 export const runtime = "nodejs"
 
@@ -77,13 +78,23 @@ export async function POST(req: Request) {
       ? new Date(body.completionDate)
       : null
 
+    const desc = typeof body.description === "string" ? body.description.trim() : ""
+    const titleLeak = validateNoContactLeak(title, "Titel")
+    if (!titleLeak.ok) return NextResponse.json({ error: titleLeak.message }, { status: 400 })
+    const descLeak = validateNoContactLeak(desc, "Beschreibung")
+    if (!descLeak.ok) return NextResponse.json({ error: descLeak.message }, { status: 400 })
+
+    const category = typeof body.category === "string" ? body.category.trim() : ""
+    const catLeak = validateNoContactLeak(category, "Kategorie")
+    if (!catLeak.ok) return NextResponse.json({ error: catLeak.message }, { status: 400 })
+
     const project = await prisma.takumiPortfolioProject.create({
       data: {
         userId: session.user.id,
         title,
-        description: typeof body.description === "string" ? body.description.trim() : "",
+        description: desc,
         imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : "",
-        category: typeof body.category === "string" ? body.category.trim() : "",
+        category,
         completionDate,
       },
     })

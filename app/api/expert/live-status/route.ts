@@ -59,6 +59,22 @@ export async function PATCH(req: NextRequest) {
     )
   }
 
+  if (status === "available") {
+    const row = await prisma.expert.findFirst({
+      where: { userId: session.user.id },
+      select: { profileReviewStatus: true },
+    })
+    if (row?.profileReviewStatus !== "approved") {
+      return NextResponse.json(
+        {
+          error:
+            "Instant-Connect ist erst verfügbar, wenn dein Takumi-Profil freigegeben wurde.",
+        },
+        { status: 403 },
+      )
+    }
+  }
+
   try {
     await prisma.expert.updateMany({
       where: { userId: session.user.id },

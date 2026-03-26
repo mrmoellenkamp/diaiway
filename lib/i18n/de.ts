@@ -483,6 +483,10 @@ const de = {
   "profile.previewDesc": "So sehen andere dein Profil.",
   "profile.backToProfile": "Zurück zum Profil",
   "profile.previewLoginRequired": "Bitte melde dich an.",
+  "profile.previewModerationPending": "Profil in Prüfung: Für andere noch nicht wie gewohnt sichtbar (Expertenliste nach Freigabe).",
+  "profile.previewModerationRejected": "Profil wurde nicht freigegeben.",
+  "profile.previewPublicBioPendingHint":
+    "So sehen andere dein Profil noch: die zuletzt freigegebene Beschreibung. Deine neue Fassung ist in Prüfung.",
   "profile.account": "Mein Benutzerkonto",
 
   // Finances
@@ -748,7 +752,16 @@ const de = {
   "editProfile.notAvailable": "Nicht verfügbar",
   "editProfile.saveAvailability": "Verfügbarkeit speichern",
   "editProfile.saveProfile": "Profil speichern",
+  "editProfile.saveDraft": "Entwurf speichern",
+  "editProfile.saveAndSubmit": "Profil speichern und abschicken",
+  "editProfile.draftSaved": "Entwurf gespeichert.",
+  "editProfile.submitForReviewSuccess": "Profil zur Prüfung eingereicht.",
+  "editProfile.moderationPending": "Dein Profil wird geprüft. Bis zur Freigabe bist du in der Expertenliste nicht sichtbar.",
+  "editProfile.moderationRejectedTitle": "Profil nicht freigegeben",
+  "editProfile.moderationRejectedFooter": "Bei Rückfragen erreichst du das Team per E-Mail:",
   "editProfile.createExpertHint": "Beim Speichern wird dein Experten-Profil erstellt und du bist für Kunden sichtbar.",
+  "editProfile.createExpertHintModeration":
+    "Nach dem ersten Abschicken prüft das diAiway-Team dein Profil. Bis zur Freigabe bist du nicht öffentlich gelistet.",
   "editProfile.confirmed": "Bestätigt",
   "editProfile.uploadSuccess": "Bild hochgeladen!",
   "editProfile.expertUploadSuccess": "Experten-Bild hochgeladen!",

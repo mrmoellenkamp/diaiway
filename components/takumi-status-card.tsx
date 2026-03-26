@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n"
 export function TakumiStatusCard() {
   const { locale } = useI18n()
   const [liveStatus, setLiveStatus] = useState<"offline" | "available" | null>(null)
+  const [profileApproved, setProfileApproved] = useState<boolean | null>(null)
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export function TakumiStatusCard() {
       .then((data) => {
         const s = data?.expert?.liveStatus ?? "offline"
         setLiveStatus(s === "available" ? "available" : "offline")
+        setProfileApproved(data?.expert?.profileReviewStatus === "approved")
       })
       .catch(() => setLiveStatus("offline"))
   }, [])
@@ -45,7 +47,7 @@ export function TakumiStatusCard() {
     }
   }
 
-  if (liveStatus === null) {
+  if (liveStatus === null || profileApproved === null) {
     return (
       <Card className="border-primary/20">
         <CardContent className="flex items-center justify-center py-6">
@@ -56,6 +58,7 @@ export function TakumiStatusCard() {
   }
 
   const isAvailable = liveStatus === "available"
+  const blocked = !profileApproved
   const statusLabel =
     locale === "en"
       ? isAvailable
@@ -85,18 +88,29 @@ export function TakumiStatusCard() {
               : "Instant-Connect Status"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-between pt-0">
-        <span
-          className={`text-sm font-medium ${isAvailable ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
-        >
-          {statusLabel}
-        </span>
-        <Switch
-          checked={isAvailable}
-          onCheckedChange={handleToggle}
-          disabled={updating}
-          className="data-[state=checked]:bg-emerald-500"
-        />
+      <CardContent className="flex flex-col gap-2 pt-0">
+        {blocked && (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            {locale === "en"
+              ? "Your expert profile must be approved before you can use Instant-Connect."
+              : locale === "es"
+                ? "Tu perfil de experto debe ser aprobado antes de usar Instant-Connect."
+                : "Dein Experten-Profil muss freigegeben sein, bevor du Instant-Connect nutzen kannst."}
+          </p>
+        )}
+        <div className="flex items-center justify-between">
+          <span
+            className={`text-sm font-medium ${isAvailable ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
+          >
+            {statusLabel}
+          </span>
+          <Switch
+            checked={isAvailable}
+            onCheckedChange={handleToggle}
+            disabled={updating || blocked}
+            className="data-[state=checked]:bg-emerald-500"
+          />
+        </div>
       </CardContent>
     </Card>
   )

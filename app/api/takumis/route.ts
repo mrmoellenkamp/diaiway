@@ -17,7 +17,8 @@ export async function GET() {
     const active = experts.filter((e) => {
       if (!e.userId) return true
       const u = e.user
-      return u && u.appRole === "takumi"
+      if (!u || u.appRole !== "takumi") return false
+      return e.profileReviewStatus === "approved"
     })
 
     const payload = active.map((e) => ({
@@ -71,6 +72,8 @@ export async function POST(req: Request) {
         categoryName: body.categoryName,
         subcategory: body.subcategory,
         bio: body.bio,
+        bioLive: typeof body.bio === "string" ? body.bio : "",
+        profileReviewStatus: "approved",
         rating: body.rating ?? 5.0,
         reviewCount: 0,
         sessionCount: 0,

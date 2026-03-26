@@ -26,6 +26,7 @@ import {
   Tags,
   Newspaper,
   LineChart,
+  UserCheck,
 } from "lucide-react"
 import { AdminAnalyticsTab } from "@/components/admin/admin-analytics-tab"
 import { ImageUpload } from "@/components/image-upload"
@@ -2206,6 +2207,44 @@ export default function AdminPage() {
                         </p>
                         <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
                           <Link href="/admin/home-news"><ExternalLink className="size-3" />News bearbeiten</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+                        <UserCheck className="size-5 text-violet-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Takumi-Profilprüfung</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Neue Profile und starke Bio-Änderungen freigeben oder ablehnen
+                        </p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/takumi-profile-reviews">
+                            <ExternalLink className="size-3" />
+                            Warteschlange
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10">
+                        <Lock className="size-5 text-rose-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Freigabe manuell entziehen</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Freigegebene Takumi-Profile zurücksetzen und Textbaustein-Benachrichtigung senden
+                        </p>
+                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
+                          <Link href="/admin/takumi-profile-revocations">
+                            <ExternalLink className="size-3" />
+                            Öffnen
+                          </Link>
                         </Button>
                       </div>
                     </div>

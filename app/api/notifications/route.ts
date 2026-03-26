@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { translateError } from "@/lib/api-handler"
 
 export const runtime = "nodejs"
+const NOTIFICATION_RETENTION_DAYS = 7
 
 /** GET — list notifications for the current user */
 export async function GET() {
@@ -13,6 +14,14 @@ export async function GET() {
   }
 
   try {
+    const cutoff = new Date(Date.now() - NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+    await prisma.notification.deleteMany({
+      where: {
+        userId: session.user.id,
+        createdAt: { lt: cutoff },
+      },
+    })
+
     const [notifications, unreadCount, unreadChats, unreadWaymails] = await Promise.all([
       prisma.notification.findMany({
         where: { userId: session.user.id },

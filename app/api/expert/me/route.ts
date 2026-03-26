@@ -21,7 +21,13 @@ export async function GET() {
 
     const expert = await prisma.expert.findUnique({
       where: { userId: session.user.id },
-      select: { id: true, liveStatus: true, lastSeenAt: true, isLive: true },
+      select: {
+        id: true,
+        liveStatus: true,
+        lastSeenAt: true,
+        isLive: true,
+        profileReviewStatus: true,
+      },
     })
 
     if (!expert) {
@@ -34,6 +40,7 @@ export async function GET() {
         liveStatus: expert.liveStatus ?? "offline",
         lastSeenAt: expert.lastSeenAt?.toISOString() ?? null,
         isLive: expert.isLive,
+        profileReviewStatus: expert.profileReviewStatus,
       },
     })
   } catch (err) {

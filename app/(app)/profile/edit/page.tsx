@@ -20,6 +20,7 @@ import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { toast } from "sonner"
 import { compressImageFileForUpload, MAX_RAW_IMAGE_BYTES } from "@/lib/browser-image-compress"
 import { parseUploadResponseJson } from "@/lib/parse-upload-response"
+import { isBioChangeSignificant } from "@/lib/bio-significant-change"
 import {
   Loader2,
   Save,
@@ -86,6 +87,7 @@ export default function EditProfilePage() {
   const [languages, setLanguages] = useState<string[]>([])
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingAction, setSavingAction] = useState<"submit" | "draft" | "profile" | null>(null)
   const [uploading, setUploading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
@@ -106,6 +108,9 @@ export default function EditProfilePage() {
   const [takumiImageUrl, setTakumiImageUrl] = useState("")
   const [takumiExists, setTakumiExists] = useState(false)
   const [loadingTakumi, setLoadingTakumi] = useState(true)
+  const [profileReviewStatus, setProfileReviewStatus] = useState<string | null>(null)
+  const [profileRejectionReason, setProfileRejectionReason] = useState<string | null>(null)
+  const [bioLive, setBioLive] = useState("")
 
   // Social links
   const [socialInstagram, setSocialInstagram] = useState("")
@@ -150,6 +155,11 @@ export default function EditProfilePage() {
           const data = await res.json()
           if (data.exists) {
             setTakumiExists(true)
+            setProfileReviewStatus(typeof data.profileReviewStatus === "string" ? data.profileReviewStatus : null)
+            setProfileRejectionReason(
+              typeof data.profileRejectionReason === "string" ? data.profileRejectionReason : null,
+            )
+            setBioLive(typeof data.bioLive === "string" ? data.bioLive : "")
             setInitialTaxSlug(data.categorySlug || "")
             setInitialTaxSub(data.subcategory || "")
             const tx = data.taxonomy as TakumiTaxonomyValue | undefined
@@ -183,6 +193,10 @@ export default function EditProfilePage() {
             setSocialLinkedin(sl.linkedin || "")
             setSocialX(sl.x || "")
             setSocialWebsite(sl.website || "")
+          } else {
+            setProfileReviewStatus(null)
+            setProfileRejectionReason(null)
+            setBioLive("")
           }
         }
       } catch { /* ignore */ }
@@ -319,8 +333,9 @@ export default function EditProfilePage() {
     }
   }
 
-  async function handleSave() {
+  async function handleSave(submitTakumiForReview: boolean, action: "submit" | "draft" | "profile") {
     setSaving(true)
+    setSavingAction(action)
     setFieldErrors({})
     try {
       const profilePayload: Record<string, string | string[] | null> = {}
@@ -386,6 +401,7 @@ export default function EditProfilePage() {
             priceVoice15Min: priceVoice15Min ? Number(priceVoice15Min) : undefined,
             responseTime,
             imageUrl: takumiImageUrl || undefined,
+            submitForReview: submitTakumiForReview,
             socialLinks: {
               instagram: socialInstagram.trim() || undefined,
               tiktok:    socialTiktok.trim()    || undefined,
@@ -403,7 +419,20 @@ export default function EditProfilePage() {
           setSaving(false)
           return
         }
+        const takumiData = await takumiRes.json()
         setTakumiExists(true)
+        if (typeof takumiData.profileReviewStatus === "string") {
+          setProfileReviewStatus(takumiData.profileReviewStatus)
+        }
+        if (submitTakumiForReview) {
+          toast.success(takumiData.message || t("editProfile.submitForReviewSuccess"))
+          router.push("/profile")
+          setSaving(false)
+          return
+        }
+        toast.success(takumiData.message || t("editProfile.draftSaved"))
+        setSaving(false)
+        return
       }
 
       toast.success(t("editProfile.saveSuccess"))
@@ -412,12 +441,23 @@ export default function EditProfilePage() {
       toast.error(t("common.networkError"))
     } finally {
       setSaving(false)
+      setSavingAction(null)
     }
   }
 
   const isLoading = loadingProfile || loadingTakumi
   const pendingBookings = bookings.filter((b) => b.status === "pending")
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed")
+  const needsReviewSubmit = (() => {
+    if (!isTakumi) return false
+    if (!takumiExists) return true
+    if (profileReviewStatus === "draft" || profileReviewStatus === "rejected") return true
+    if (profileReviewStatus !== "approved") return false
+    const currentBio = bio.trim()
+    const approvedBio = bioLive.trim()
+    if (!approvedBio) return currentBio.length > 0
+    return isBioChangeSignificant(currentBio, approvedBio)
+  })()
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-safe">
@@ -577,6 +617,23 @@ export default function EditProfilePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
+                    {profileReviewStatus === "pending_review" && (
+                      <div className="rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-100">
+                        {t("editProfile.moderationPending")}
+                      </div>
+                    )}
+                    {profileReviewStatus === "rejected" && profileRejectionReason && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground">
+                        <p className="font-medium text-destructive">{t("editProfile.moderationRejectedTitle")}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{profileRejectionReason}</p>
+                        <p className="mt-2 text-muted-foreground">
+                          {t("editProfile.moderationRejectedFooter")}{" "}
+                          <a href="mailto:admin@diaiway.com" className="font-medium text-primary underline">
+                            admin@diaiway.com
+                          </a>
+                        </p>
+                      </div>
+                    )}
                     {/* Takumi Image Upload */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-medium text-muted-foreground">{t("editProfile.expertImage")}</label>
@@ -878,22 +935,52 @@ export default function EditProfilePage() {
               </>
             )}
 
-            {/* ===== Save Profile Button ===== */}
-            <Button
-              onClick={handleSave}
-              disabled={saving || uploading}
-              className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
-            >
-              {saving ? (
-                <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
-              ) : (
-                <><Save className="size-4" /> {t("editProfile.saveProfile")}</>
-              )}
-            </Button>
+            {/* ===== Save Profile ===== */}
+            {isTakumi ? (
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  onClick={() => handleSave(needsReviewSubmit, needsReviewSubmit ? "submit" : "profile")}
+                  disabled={saving || uploading}
+                  className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
+                >
+                  {savingAction === "submit" || savingAction === "profile" ? (
+                    <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
+                  ) : (
+                    <><Save className="size-4" /> {needsReviewSubmit ? t("editProfile.saveAndSubmit") : t("editProfile.saveProfile")}</>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleSave(false, "draft")}
+                  disabled={saving || uploading}
+                  className="h-11 w-full gap-2 rounded-xl font-medium"
+                >
+                  {savingAction === "draft" ? (
+                    <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
+                  ) : (
+                    t("editProfile.saveDraft")
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => handleSave(false, "profile")}
+                disabled={saving || uploading}
+                className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
+              >
+                {savingAction === "profile" ? (
+                  <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
+                ) : (
+                  <><Save className="size-4" /> {t("editProfile.saveProfile")}</>
+                )}
+              </Button>
+            )}
 
             {isTakumi && !takumiExists && (
               <p className="text-center text-xs text-muted-foreground">
-                {t("editProfile.createExpertHint")}
+                {t("editProfile.createExpertHintModeration")}
               </p>
             )}
           </>

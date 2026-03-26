@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       : undefined,
     take: 40,
     orderBy: { name: "asc" },
-    select: { id: true, name: true, email: true },
+    select: { id: true, userId: true, name: true, email: true, profileReviewStatus: true },
   })
 
   return NextResponse.json({ experts })

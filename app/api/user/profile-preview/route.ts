@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { communicationUsername } from "@/lib/communication-display"
+import { expertPublicBio } from "@/lib/expert-public-bio"
 import { translateError } from "@/lib/api-handler"
 
 /**
@@ -47,6 +48,10 @@ export async function GET() {
           categoryName: true,
           subcategory: true,
           bio: true,
+          bioLive: true,
+          profileReviewStatus: true,
+          profileRejectionReason: true,
+          userId: true,
           priceVideo15Min: true,
           priceVoice15Min: true,
           pricePerSession: true,
@@ -101,6 +106,12 @@ export async function GET() {
     }
 
     const userDisplayName = communicationUsername(user.username, "Nutzer")
+    const publicBio = expert ? expertPublicBio(expert) : ""
+    const previewShowsPublicVsPendingHint = expert
+      ? expert.profileReviewStatus === "pending_review" &&
+        expert.bioLive.trim().length > 0 &&
+        expert.bio.trim() !== expert.bioLive.trim()
+      : false
     const takumi = expert
       ? {
           id: expert.id,
@@ -108,7 +119,11 @@ export async function GET() {
           avatar: expert.avatar,
           categoryName: expert.categoryName,
           subcategory: expert.subcategory,
-          bio: expert.bio,
+          bio: publicBio,
+          workingBio: expert.bio,
+          profileReviewStatus: expert.profileReviewStatus,
+          profileRejectionReason: expert.profileRejectionReason,
+          previewShowsPublicVsPendingHint,
           priceVideo15Min: Number(expert.priceVideo15Min),
           priceVoice15Min: Number(expert.priceVoice15Min),
           pricePerSession: expert.pricePerSession,

@@ -1,5 +1,6 @@
 import type { Expert, TaxonomyCategory, TaxonomySpecialty } from "@prisma/client"
 import type { CancelPolicy, Takumi } from "@/lib/types"
+import { expertPublicBio } from "@/lib/expert-public-bio"
 
 /** Fenster für „in der App / online“ (muss zu Heartbeat-Intervall passen, s. useTakumiPresence). */
 export const TAKUMI_ONLINE_PRESENCE_MS = 30 * 1000
@@ -28,13 +29,14 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
   const specNames = e.specialtyAssignments.map((a) => a.specialty.name)
   const allSpecialties = [...new Set([subcategory, ...specNames].filter(Boolean))]
   const u = e.user?.username?.trim()
+  const publicBio = expertPublicBio(e)
   const taxonomySearchText = [
     e.name,
     u ?? "",
     categoryName,
     subcategory,
     ...specNames,
-    e.bio,
+    publicBio,
     ...categorySlugs,
   ]
     .join(" ")
@@ -52,7 +54,7 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
     subcategory,
     allSpecialties,
     taxonomySearchText,
-    bio: e.bio,
+    bio: publicBio,
     rating: e.rating,
     reviewCount: e.reviewCount,
     sessionCount: e.sessionCount,

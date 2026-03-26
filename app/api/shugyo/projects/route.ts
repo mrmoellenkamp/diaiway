@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { validateNoContactLeak } from "@/lib/contact-leak-validation"
 
 export const runtime = "nodejs"
 
@@ -35,12 +36,17 @@ export async function POST(req: Request) {
     if (!title || title.length < 2) {
       return NextResponse.json({ error: "Titel muss mindestens 2 Zeichen haben." }, { status: 400 })
     }
+    const description = typeof body.description === "string" ? body.description.trim() : ""
+    const tl = validateNoContactLeak(title, "Titel")
+    if (!tl.ok) return NextResponse.json({ error: tl.message }, { status: 400 })
+    const dl = validateNoContactLeak(description, "Beschreibung")
+    if (!dl.ok) return NextResponse.json({ error: dl.message }, { status: 400 })
 
     const project = await prisma.shugyoProject.create({
       data: {
         userId: session.user.id,
         title,
-        description: typeof body.description === "string" ? body.description.trim() : "",
+        description,
         imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : "",
       },
     })

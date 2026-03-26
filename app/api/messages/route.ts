@@ -6,6 +6,7 @@ import { z } from "zod"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
 import { communicationUsername, waymailSenderLabel } from "@/lib/communication-display"
+import { validateNoContactLeak } from "@/lib/contact-leak-validation"
 
 export const runtime = "nodejs"
 
@@ -308,6 +309,13 @@ export const POST = apiHandler(async (req) => {
   const recipientId = await resolveRecipientUserId(body.recipientExpertId, body.recipientUserId)
   if (!recipientId || recipientId === session.user.id) {
     return NextResponse.json({ error: "Empfänger nicht gefunden." }, { status: 400 })
+  }
+
+  const subj = body.communicationType === "MAIL" ? String(body.subject ?? "").trim() : ""
+  const leakText = body.communicationType === "MAIL" ? `${subj}\n${trimmed}` : trimmed
+  const leak = validateNoContactLeak(leakText, "Nachricht")
+  if (!leak.ok) {
+    return NextResponse.json({ error: leak.message }, { status: 400 })
   }
 
   const message = await prisma.directMessage.create({

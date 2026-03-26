@@ -477,6 +477,10 @@ const es = {
   "profile.previewDesc": "Así ven otros tu perfil.",
   "profile.backToProfile": "Volver al perfil",
   "profile.previewLoginRequired": "Por favor inicia sesión.",
+  "profile.previewModerationPending": "Perfil en revisión: aún no visible para otros como de costumbre (lista de expertos tras aprobación).",
+  "profile.previewModerationRejected": "El perfil no fue aprobado.",
+  "profile.previewPublicBioPendingHint":
+    "Los demás aún ven tu última descripción aprobada. Tu nueva versión está en revisión.",
   "profile.account": "Mi cuenta de usuario",
 
   // Finances
@@ -740,7 +744,16 @@ const es = {
   "editProfile.notAvailable": "No disponible",
   "editProfile.saveAvailability": "Guardar disponibilidad",
   "editProfile.saveProfile": "Guardar perfil",
+  "editProfile.saveDraft": "Guardar borrador",
+  "editProfile.saveAndSubmit": "Guardar perfil y enviar a revisión",
+  "editProfile.draftSaved": "Borrador guardado.",
+  "editProfile.submitForReviewSuccess": "Perfil enviado para revisión.",
+  "editProfile.moderationPending": "Tu perfil está en revisión. No aparecerás en la lista de expertos hasta que sea aprobado.",
+  "editProfile.moderationRejectedTitle": "Perfil no aprobado",
+  "editProfile.moderationRejectedFooter": "Para consultas, contacta al equipo por correo:",
   "editProfile.createExpertHint": "Al guardar se creará tu perfil de experto y serás visible para los clientes.",
+  "editProfile.createExpertHintModeration":
+    "Tras el primer envío, el equipo de diAiway revisará tu perfil. No estarás en la lista pública hasta la aprobación.",
   "editProfile.confirmed": "Confirmado",
   "editProfile.uploadSuccess": "¡Imagen subida!",
   "editProfile.expertUploadSuccess": "¡Imagen de experto subida!",

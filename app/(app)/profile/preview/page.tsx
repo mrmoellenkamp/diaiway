@@ -99,6 +99,10 @@ type TakumiData = {
   categoryName: string
   subcategory: string
   bio: string
+  workingBio?: string
+  profileReviewStatus?: string
+  profileRejectionReason?: string | null
+  previewShowsPublicVsPendingHint?: boolean
   priceVideo15Min: number
   priceVoice15Min: number
   pricePerSession: number | null
@@ -369,6 +373,30 @@ export default function ProfilePreviewPage() {
           {t("profile.backToProfile")}
         </Link>
       </div>
+
+      {tk.profileReviewStatus === "pending_review" && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          {t("profile.previewModerationPending")}
+        </div>
+      )}
+      {tk.profileReviewStatus === "rejected" && (
+        <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-foreground">
+          <p className="font-medium text-destructive">{t("profile.previewModerationRejected")}</p>
+          {tk.profileRejectionReason && (
+            <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{tk.profileRejectionReason}</p>
+          )}
+          <p className="mt-2 text-muted-foreground">
+            <a href="mailto:admin@diaiway.com" className="font-medium text-primary underline">
+              admin@diaiway.com
+            </a>
+          </p>
+        </div>
+      )}
+      {tk.previewShowsPublicVsPendingHint && (
+        <div className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-950 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-100">
+          {t("profile.previewPublicBioPendingHint")}
+        </div>
+      )}
 
       {/* Cover */}
       <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">

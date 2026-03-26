@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import type { Prisma } from "@prisma/client"
+import type { Prisma, TakumiProfileReviewStatus } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { ensureTaxonomySeeded, isTaxonomySchemaAvailable } from "@/lib/taxonomy-server"
 import { TAKUMI_ONLINE_PRESENCE_MS } from "@/lib/expert-to-takumi"
+import { validateNoContactLeak } from "@/lib/contact-leak-validation"
+import { expertPublicBio } from "@/lib/expert-public-bio"
+import { computeProfileSubmitState } from "@/lib/takumi-profile-moderation"
 
 type ExpertWithTaxonomyAssignments = Prisma.ExpertGetPayload<{
   include: {
@@ -41,6 +44,12 @@ export async function GET() {
         })
     if (!expert) return NextResponse.json({ exists: false })
 
+    const publicBio = expertPublicBio(expert)
+    const previewShowsPublicVsPendingHint =
+      expert.profileReviewStatus === "pending_review" &&
+      expert.bioLive.trim().length > 0 &&
+      expert.bio.trim() !== expert.bioLive.trim()
+
     const now = Date.now()
     const lastSeenMs = expert.lastSeenAt?.getTime()
     const recentPresence =
@@ -69,6 +78,12 @@ export async function GET() {
         primarySpecialtyId: expert.primarySpecialtyId,
       },
       bio: expert.bio,
+      bioLive: expert.bioLive,
+      publicBio,
+      profileReviewStatus: expert.profileReviewStatus,
+      profileRejectionReason: expert.profileRejectionReason,
+      profileSubmittedAt: expert.profileSubmittedAt?.toISOString() ?? null,
+      previewShowsPublicVsPendingHint,
       priceVideo15Min: Number(expert.priceVideo15Min),
       priceVoice15Min: Number(expert.priceVoice15Min),
       pricePerSession: expert.pricePerSession,
@@ -142,6 +157,51 @@ async function applyTaxonomyFromLegacy(
   })
 }
 
+function moderationExtras(
+  existing: {
+    profileReviewStatus: TakumiProfileReviewStatus
+    bioLive: string
+    bio: string
+  } | null,
+  nextBio: string,
+  submitForReview: boolean,
+): { update: Record<string, unknown>; create: Record<string, unknown> } {
+  if (!submitForReview) {
+    if (!existing) {
+      return {
+        update: {},
+        create: { profileReviewStatus: "draft" as const, bioLive: "" },
+      }
+    }
+    return { update: {}, create: {} }
+  }
+  const submit = computeProfileSubmitState({
+    previousStatus: existing?.profileReviewStatus ?? null,
+    previousBioLive: existing?.bioLive ?? "",
+    nextBio,
+  })
+  const update: Record<string, unknown> = {
+    profileReviewStatus: submit.profileReviewStatus,
+  }
+  const create: Record<string, unknown> = {
+    profileReviewStatus: submit.profileReviewStatus,
+    bioLive: submit.syncBioLiveToBio ? nextBio : "",
+  }
+  if (submit.profileReviewStatus === "pending_review") {
+    const now = new Date()
+    update.profileSubmittedAt = now
+    update.profileRejectionReason = null
+    update.profileRejectedAt = null
+    create.profileSubmittedAt = now
+    create.profileRejectionReason = null
+    create.profileRejectedAt = null
+  }
+  if (submit.syncBioLiveToBio) {
+    update.bioLive = nextBio
+  }
+  return { update, create }
+}
+
 /** PUT — create or update the logged-in user's Expert profile */
 export async function PUT(req: Request) {
   const session = await auth()
@@ -151,10 +211,16 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json()
+    const submitForReview = body.submitForReview === true
     const taxonomyReady = await isTaxonomySchemaAvailable()
     if (taxonomyReady) {
       await ensureTaxonomySeeded()
     }
+
+    const existing = await prisma.expert.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true, bio: true, bioLive: true, profileReviewStatus: true },
+    })
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -168,8 +234,25 @@ export async function PUT(req: Request) {
       .slice(0, 2)
       .toUpperCase()
 
-    const data: Record<string, unknown> = { userId: session.user.id, name: expertName, avatar }
-    if (body.bio !== undefined) data.bio = body.bio
+    const nextBio = body.bio !== undefined ? String(body.bio) : (existing?.bio ?? "")
+    const leak = validateNoContactLeak(nextBio, "Beschreibung")
+    if (!leak.ok) {
+      return NextResponse.json({ error: leak.message }, { status: 400 })
+    }
+
+    const mod = moderationExtras(
+      existing
+        ? {
+            profileReviewStatus: existing.profileReviewStatus,
+            bioLive: existing.bioLive,
+            bio: existing.bio,
+          }
+        : null,
+      nextBio,
+      submitForReview,
+    )
+
+    const data: Record<string, unknown> = { name: expertName, avatar, bio: nextBio }
     if (body.priceVideo15Min !== undefined) {
       const v = Number(body.priceVideo15Min)
       if (v < 1) return NextResponse.json({ error: "Video-Preis muss mindestens 1,00 € betragen." }, { status: 400 })
@@ -185,7 +268,6 @@ export async function PUT(req: Request) {
     if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl
     if (body.socialLinks !== undefined) data.socialLinks = body.socialLinks
     if (body.cancelPolicy !== undefined) data.cancelPolicy = body.cancelPolicy
-    if (body.isLive !== undefined) data.isLive = !!body.isLive
 
     const hasNewTaxonomy =
       Array.isArray(body.categoryIds) &&
@@ -268,7 +350,7 @@ export async function PUT(req: Request) {
 
       const expert = await prisma.expert.upsert({
         where: { userId: session.user.id },
-        update: data,
+        update: { ...data, ...mod.update },
         create: {
           userId: session.user.id,
           name: data.name as string,
@@ -276,7 +358,7 @@ export async function PUT(req: Request) {
           categorySlug: categorySlugForCreate,
           categoryName: categoryNameForCreate,
           subcategory: subcategoryForCreate,
-          bio: (data.bio as string) ?? "",
+          bio: nextBio,
           priceVideo15Min: (data.priceVideo15Min as number) ?? 1,
           priceVoice15Min: (data.priceVoice15Min as number) ?? 1,
           pricePerSession: (data.pricePerSession as number) ?? 0,
@@ -292,8 +374,16 @@ export async function PUT(req: Request) {
           matchRate: 0,
           primaryCategoryId,
           primarySpecialtyId,
+          ...mod.create,
         },
       })
+
+      if (expert.profileReviewStatus !== "approved") {
+        await prisma.expert.update({
+          where: { id: expert.id },
+          data: { isLive: false },
+        })
+      }
 
       await prisma.$transaction(async (tx) => {
         await tx.categoryOnExpert.deleteMany({ where: { expertId: expert.id } })
@@ -314,10 +404,17 @@ export async function PUT(req: Request) {
       revalidatePath("/categories")
       revalidatePath("/takumis")
 
+      const msg =
+        !submitForReview
+          ? "Entwurf gespeichert."
+          : expert.profileReviewStatus === "pending_review"
+            ? "Profil zur Prüfung eingereicht."
+            : "Takumi-Profil gespeichert."
       return NextResponse.json({
         success: true,
         id: expert.id,
-        message: "Takumi-Profil gespeichert.",
+        profileReviewStatus: expert.profileReviewStatus,
+        message: msg,
       })
     }
 
@@ -328,7 +425,7 @@ export async function PUT(req: Request) {
 
     const expert = await prisma.expert.upsert({
       where: { userId: session.user.id },
-      update: data,
+      update: { ...data, ...mod.update },
       create: {
         userId: session.user.id,
         name: data.name as string,
@@ -336,7 +433,7 @@ export async function PUT(req: Request) {
         categorySlug: (data.categorySlug as string) || "dienstleistungen",
         categoryName: (data.categoryName as string) || "Dienstleistungen",
         subcategory: (data.subcategory as string) || "",
-        bio: (data.bio as string) ?? "",
+        bio: nextBio,
         priceVideo15Min: (data.priceVideo15Min as number) ?? 1,
         priceVoice15Min: (data.priceVoice15Min as number) ?? 1,
         pricePerSession: (data.pricePerSession as number) ?? 0,
@@ -350,8 +447,16 @@ export async function PUT(req: Request) {
         portfolio: [],
         joinedDate: new Date().toISOString().slice(0, 10),
         matchRate: 0,
+        ...mod.create,
       },
     })
+
+    if (expert.profileReviewStatus !== "approved") {
+      await prisma.expert.update({
+        where: { id: expert.id },
+        data: { isLive: false },
+      })
+    }
 
     const slug = (data.categorySlug as string) || expert.categorySlug
     const sub = (data.subcategory as string) ?? expert.subcategory
@@ -368,10 +473,17 @@ export async function PUT(req: Request) {
     revalidatePath("/categories")
     revalidatePath("/takumis")
 
+    const msg =
+      !submitForReview
+        ? "Entwurf gespeichert."
+        : expert.profileReviewStatus === "pending_review"
+          ? "Profil zur Prüfung eingereicht."
+          : "Takumi-Profil gespeichert."
     return NextResponse.json({
       success: true,
       id: expert.id,
-      message: "Takumi-Profil gespeichert.",
+      profileReviewStatus: expert.profileReviewStatus,
+      message: msg,
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
@@ -387,10 +499,23 @@ export async function PATCH(req: Request) {
 
   try {
     const body = await req.json()
-    const data: { isLive?: boolean; hideOnlineStatus?: boolean } = {}
+    const data: { isLive?: boolean; hideOnlineStatus?: boolean; cancelPolicy?: Prisma.InputJsonValue } = {}
 
     if (typeof body.isLive === "boolean") {
       if (body.isLive) {
+        const expertRow = await prisma.expert.findUnique({
+          where: { userId: session.user.id },
+          select: { profileReviewStatus: true },
+        })
+        if (expertRow?.profileReviewStatus !== "approved") {
+          return NextResponse.json(
+            {
+              error:
+                "Dein Profil ist noch nicht freigegeben. Nach der Freigabe kannst du dich in der Expertenliste sichtbar schalten.",
+            },
+            { status: 403 },
+          )
+        }
         const user = await prisma.user.findUnique({
           where: { id: session.user.id },
           select: { emailConfirmedAt: true },
@@ -407,9 +532,12 @@ export async function PATCH(req: Request) {
     if (typeof body.hideOnlineStatus === "boolean") {
       data.hideOnlineStatus = body.hideOnlineStatus
     }
+    if (body.cancelPolicy !== undefined && body.cancelPolicy !== null && typeof body.cancelPolicy === "object") {
+      data.cancelPolicy = body.cancelPolicy as Prisma.InputJsonValue
+    }
 
     if (Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "isLive oder hideOnlineStatus erforderlich." }, { status: 400 })
+      return NextResponse.json({ error: "Keine unterstützten Felder zum Aktualisieren." }, { status: 400 })
     }
 
     const expert = await prisma.expert.updateMany({

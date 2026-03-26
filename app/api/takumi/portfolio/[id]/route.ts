@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { validateNoContactLeak } from "@/lib/contact-leak-validation"
 
 export const runtime = "nodejs"
 
@@ -43,11 +44,23 @@ export async function PATCH(
       if (t.length < 2) {
         return NextResponse.json({ error: "Titel muss mindestens 2 Zeichen haben." }, { status: 400 })
       }
+      const tl = validateNoContactLeak(t, "Titel")
+      if (!tl.ok) return NextResponse.json({ error: tl.message }, { status: 400 })
       data.title = t
     }
-    if (body.description !== undefined) data.description = typeof body.description === "string" ? body.description : ""
+    if (body.description !== undefined) {
+      const d = typeof body.description === "string" ? body.description : ""
+      const dl = validateNoContactLeak(d, "Beschreibung")
+      if (!dl.ok) return NextResponse.json({ error: dl.message }, { status: 400 })
+      data.description = d
+    }
     if (body.imageUrl !== undefined) data.imageUrl = typeof body.imageUrl === "string" ? body.imageUrl : ""
-    if (body.category !== undefined) data.category = typeof body.category === "string" ? body.category : ""
+    if (body.category !== undefined) {
+      const c = typeof body.category === "string" ? body.category : ""
+      const cl = validateNoContactLeak(c, "Kategorie")
+      if (!cl.ok) return NextResponse.json({ error: cl.message }, { status: 400 })
+      data.category = c
+    }
     if (body.completionDate !== undefined) {
       data.completionDate = body.completionDate ? new Date(body.completionDate) : null
     }

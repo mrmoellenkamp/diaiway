@@ -92,6 +92,14 @@ enum LiveStatus {
   busy      // Beschäftigt (nicht verfügbar)
 }
 
+/// Takumi-Selbstregistrierung: Profilfreigabe durch Admin
+enum TakumiProfileReviewStatus {
+  draft            // Entwurf, nicht eingereicht
+  pending_review   // Wartet auf Admin
+  approved         // Öffentlich sichtbar (mit anderen Gates)
+  rejected         // Abgelehnt, Hinweis an Nutzer
+}
+
 enum TransactionStatus {
   PENDING    // @deprecated Legacy, wird als AUTHORIZED behandelt
   COMPLETED  // @deprecated Legacy, wird als CAPTURED behandelt
@@ -266,6 +274,14 @@ model Expert {
   categoryName    String
   subcategory     String
   bio             String
+  /// Zuletzt freigegebene öffentliche Langbeschreibung (bleibt sichtbar während Bio-Nachprüfung)
+  bioLive         String   @default("")
+  profileReviewStatus      TakumiProfileReviewStatus @default(draft)
+  profileSubmittedAt       DateTime?
+  profileReviewedAt        DateTime?
+  profileRejectedAt        DateTime?
+  profileRejectionReason   String?                   @db.Text
+  profileReviewedByUserId  String?
   rating          Float    @default(0)
   reviewCount     Int      @default(0)
   sessionCount    Int      @default(0)
@@ -305,6 +321,7 @@ model Expert {
   categoryAssignments  CategoryOnExpert[]
   specialtyAssignments SpecialtyOnExpert[]
 
+  @@index([profileReviewStatus])
   // Relations
   bookings    Booking[]
   reviews     Review[]
@@ -722,4 +739,17 @@ model InvoiceCounter {
   type  String   @unique  // "RE" | "GS" | "SR" | "SG" | "KD"
   value Int      @default(0)
   updatedAt DateTime @updatedAt
+}
+
+/// Admin-verwaltbare Textbausteine für manuelle Profil-Entziehung
+model TakumiProfileRevokeSnippet {
+  id        String   @id @default(cuid())
+  title     String
+  body      String   @db.Text
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
 }
