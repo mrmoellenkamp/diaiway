@@ -405,14 +405,47 @@ export async function PATCH(
         )
       }
       const now = new Date()
-      const duration = booking.sessionStartedAt
-        ? Math.round((now.getTime() - new Date(booking.sessionStartedAt).getTime()) / 60000)
+      const durationMs = booking.sessionStartedAt
+        ? now.getTime() - new Date(booking.sessionStartedAt).getTime()
         : 0
+      const durationSec = Math.round(durationMs / 1000)
+      // minutengenau für Instant, Viertelstunden für geplante Calls
+      const durationMinRaw = durationMs / 60_000
 
-      const FREE_TRIAL_MINUTES = 5
-      const isFreeSession = (duration ?? 0) < FREE_TRIAL_MINUTES
+      // ── Handshake-Grenzen je Call-Typ ──────────────────────────────────────
+      // Geplanter Call:  Erstkontakt 300 Sek, Folgekontakt 30 Sek
+      // Instant Call:    60 Sek (Erst- und Folgekontakt)
+      // Guest Call:      60 Sek
+      const isInstant = booking.bookingMode === "instant"
+      const isGuestCall = booking.isGuestCall ?? false
 
-      // If session was under 5 minutes and was already paid → full automatic refund (oder Cancel vor Capture)
+      // hasPaidBefore: für geplante Calls ermitteln (Instant: wird in chargeInstantCallToWallet behandelt)
+      let hasPaidBeforeScheduled = false
+      if (!isInstant && !isGuestCall) {
+        hasPaidBeforeScheduled = !!(await prisma.booking.findFirst({
+          where: {
+            userId: booking.userId ?? undefined,
+            expertId: booking.expertId,
+            paymentStatus: "paid",
+            id: { not: id },
+          },
+          select: { id: true },
+        }))
+      }
+
+      // Handshake-Schwelle in Sekunden
+      const handshakeSec = isInstant || isGuestCall
+        ? 60                                           // Instant + Guest: 60 Sek
+        : hasPaidBeforeScheduled ? 30 : 300            // Geplant: 30 Sek Folge, 300 Sek Erst
+
+      const isFreeSession = durationSec < handshakeSec
+
+      // duration für DB: geplante Calls → Viertelstunden-genau, Instant → minutengenau
+      const duration = isInstant
+        ? Math.round(durationMinRaw)                         // minutengenau
+        : Math.ceil(durationMinRaw / 15) * 15                // Viertelstunden aufgerundet
+
+      // Wenn Handshake nicht überschritten: Zahlung freigeben/stornieren
       let autoRefunded = false
       if (isFreeSession && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
         try {
@@ -430,13 +463,13 @@ export async function PATCH(
             autoRefunded = true
           }
         } catch (refundErr) {
-          console.error("[end-session] Auto-refund für <5min Session fehlgeschlagen:", refundErr)
+          console.error("[end-session] Auto-refund fehlgeschlagen:", refundErr)
         }
       }
 
       let chargedAmountCents: number | undefined
       let instantBillingError: string | undefined
-      if (booking.bookingMode === "instant" && isBooker && booking.expert) {
+      if (isInstant && !isFreeSession && isBooker && booking.expert) {
         const price15 =
           booking.callType === "VOICE"
             ? Number(booking.expert.priceVoice15Min ?? booking.expert.priceVideo15Min ?? (booking.expert.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0))

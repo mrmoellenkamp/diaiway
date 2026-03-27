@@ -342,69 +342,114 @@ Expires: 0
 
 ---
 
-## 8. Instant-Call-Abrechnungslogik
+## 8. Abrechnungslogik aller Call-Typen
 
-### Problem
+### Drei Call-Typen mit unterschiedlichen Regeln
 
-Instant Calls haben kein festes Preismodell im Voraus – der Nutzer weiß beim Anruf noch nicht, wie lang er spricht. Gleichzeitig soll ein **Erstgespräch** großzügiger behandelt werden als Folgegespräche.
+Das System kennt drei Call-Typen mit eigenen Handshake- und Abrechnungsregeln:
 
-### Lösung: hasPaidBefore-Logik
+---
 
-Nach Session-Ende (`PATCH /api/bookings/[id]`, `action: end-session`) wird die Wallet-Abrechnung ausgelöst:
+#### 1. Geplanter/Gebuchter Call (scheduled)
 
-```typescript
-const hasPaidBefore = !!(await prisma.booking.findFirst({
-  where: {
-    userId: booking.userId,
-    expertId: booking.expertId,
-    paymentStatus: "paid",
-    id: { not: id },
-  },
-}))
-await chargeInstantCallToWallet(id, duration, pricePerMinuteCents, hasPaidBefore)
-```
+Zahlung erfolgt per **Stripe-Deposit vorab** (Hold & Capture).
 
-In `lib/wallet-service.ts`:
+| Kontakt | Handshake-Grenze | Verhalten bei Abbruch | Verhalten bei längerer Dauer |
+|---------|-----------------|----------------------|------------------------------|
+| **Erstkontakt** | 300 Sek (5 Min) | Deposit wird storniert/zurückgebucht, kein Geld | Volle Dauer wird abgerechnet |
+| **Folgekontakt** | 30 Sek | Deposit wird storniert/zurückgebucht, kein Geld | Volle Dauer wird abgerechnet |
+
+- **Abrechnung:** Viertelstunden-genau (auf die nächste volle 15 Min aufgerundet)
+- **Abrechnungsbasis:** Gebuchter Festpreis (nicht minutengenau)
+- **Capture:** via `processCompletion()` nach 24h oder bei manueller Freigabe
 
 ```typescript
-const FREE_MIN = hasPaidBefore ? 0.5 : 5  // 30 Sek oder 5 Min gratis
-const billingMin = Math.max(0, durationMin - FREE_MIN)
-const amountCents = Math.round(billingMin * pricePerMinuteCents)
+// Handshake-Schwelle in end-session (app/api/bookings/[id]/route.ts)
+const handshakeSec = hasPaidBeforeScheduled ? 30 : 300
+const isFreeSession = durationSec < handshakeSec
+// Viertelstunden-Rundung:
+const duration = Math.ceil(durationMinRaw / 15) * 15
 ```
 
-| Kontakt | Kostenlose Phase | Begründung |
-|---------|-----------------|------------|
-| **Erstkontakt** (`hasPaidBefore = false`) | 5 Minuten | Kennenlernen ohne Risiko |
-| **Zweitkontakt+** (`hasPaidBefore = true`) | 30 Sekunden | Kurzer Puffer, danach volle Abrechnung |
+---
 
-### UI-Synchronisation
+#### 2. Instant Call
 
-`DailyCallContainer.tsx` (`calculateRemainingTime`) spiegelt exakt dieselbe Logik wider:
+Zahlung erfolgt **post-session** aus dem Wallet (kein Vorab-Hold).
 
-```typescript
-const freePeriodSec = hasPaidBefore ? 30 : 5 * 60
-```
+| Kontakt | Handshake-Grenze | Verhalten bei Abbruch | Verhalten bei längerer Dauer |
+|---------|-----------------|----------------------|------------------------------|
+| **Erstkontakt** | 60 Sek | Kein Wallet-Abzug | Volle Dauer, mind. 5 Min |
+| **Folgekontakt** | 60 Sek | Kein Wallet-Abzug | Volle Dauer, mind. 5 Min |
 
-Der Countdown im Call zeigt dem Nutzer korrekt an, ab wann Kosten entstehen.
-
-### Idempotenz bei Instant-Call-Abrechnung
-
-`chargeInstantCallToWallet` läuft innerhalb einer `prisma.$transaction`. Bereits abgerechnete Bookings (`paymentStatus: "paid"`) werden übersprungen – mehrfache Aufrufe (z. B. durch Retry bei Netzwerkfehler) sind sicher:
+- **Abrechnung:** Minutengenau, Mindestabrechnung 5 Minuten
+- **Abrechnungsbasis:** Preis/Min des Takumi × abgerechnete Minuten
 
 ```typescript
 // lib/wallet-service.ts
-const existing = await tx.booking.findUnique({ where: { id: bookingId }, select: { paymentStatus: true } })
-if (existing?.paymentStatus === "paid") return { ok: true }  // Idempotenz-Guard
+const HANDSHAKE_MIN = 1         // 60 Sek
+const MIN_BILLING_MIN = 5       // Mindestabrechnung
+
+if (durationMin < HANDSHAKE_MIN) return { ok: true, amountCents: 0 }
+const billingMin = Math.max(durationMin, MIN_BILLING_MIN)
+const amountCents = Math.round(billingMin * pricePerMinuteCents)
 ```
 
-### Abgrenzung zu Scheduled Sessions
+---
 
-| Feature | Scheduled | Instant |
-|---------|-----------|---------|
-| Vorauszahlung | ✅ Stripe oder Wallet | ❌ (Wallet post-session) |
-| Kostenlose Phase | 5 Min (fix) | 5 Min Erstkontakt / 30 Sek Folge |
-| Abrechnung | Capture via Cron/Event | `chargeInstantCallToWallet` bei end-session |
-| Idempotenz | `paymentStatus`-Guard | `paymentStatus`-Guard in `$transaction` |
+#### 3. Guest Call
+
+Zahlung erfolgt per **Stripe Einmalzahlung** direkt vor dem Call (Festpreis).
+
+| Handshake-Grenze | Verhalten bei Abbruch | Verhalten bei längerer Dauer |
+|-----------------|----------------------|------------------------------|
+| 60 Sek | Stripe-Storno / Refund | Voller Festpreis, Viertelstunden-genau |
+
+- **Abrechnung:** Festpreis (beim Anlegen der Einladung fixiert)
+- Der 60-Sek-Handshake wird in `end-session` und `session-terminate.ts` geprüft
+
+---
+
+### Wo die Logik lebt – Übersicht
+
+| Schicht | Datei | Zuständig für |
+|---------|-------|---------------|
+| Handshake + Freigabe (Server) | `app/api/bookings/[id]/route.ts` → `end-session` | Alle Call-Typen: Handshake-Check, hasPaidBefore, Viertelstunden-Rundung |
+| Instant Wallet-Abrechnung | `lib/wallet-service.ts` → `chargeInstantCallToWallet()` | 60-Sek-Schwelle, Mindest-5-Min, volle Dauer |
+| Cron/Freeze-Terminierung | `lib/session-terminate.ts` | Dynamische Handshake-Grenze (30/60/300 Sek je Typ) |
+| Client-Timer (Anzeige) | `components/video-call/DailyCallContainer.tsx` | Timer läuft ab Sekunde 1, Wallet-Restzeit-Anzeige |
+
+---
+
+### Dynamische Handshake-Grenze (session-terminate.ts)
+
+```typescript
+const handshakeSec = isInstant || isGuestCall
+  ? 60                              // Instant + Guest
+  : hasPaidBefore ? 30 : 300        // Geplant: Folge / Erst
+```
+
+### Client-Timer
+
+`DailyCallContainer.tsx` zeigt den Countdown **ab Sekunde 1** (keine Freizeit-Verzögerung mehr im Client). Die Handshake-Grenze ist ausschließlich eine **serverseitige no-charge-Grenze**.
+
+### Idempotenz bei Instant-Call-Abrechnung
+
+`chargeInstantCallToWallet` läuft innerhalb einer `prisma.$transaction`. Bereits abgerechnete Bookings (`paymentStatus: "paid"`) werden übersprungen:
+
+```typescript
+if (booking.paymentStatus === "paid") return { ok: true, amountCents }
+```
+
+### Vergleich aller drei Call-Typen
+
+| Feature | Geplant | Instant | Guest |
+|---------|---------|---------|-------|
+| Zahlung | Vorab (Hold) | Post-Session (Wallet) | Vorab (Stripe Einmal) |
+| Handshake Erstkontakt | 300 Sek | 60 Sek | 60 Sek |
+| Handshake Folgekontakt | 30 Sek | 60 Sek | – |
+| Abrechnung | Viertelstunden-genau | Minutengenau, mind. 5 Min | Festpreis |
+| Capture | Cron / manuelle Freigabe | Sofort bei end-session | Stripe direkt |
 
 ---
 
@@ -480,7 +525,7 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | LogoutBackGuard | `components/logout-back-guard.tsx` |
 | Cache-Control (geschützte Routen) | `middleware.ts` |
 | DB_ERROR Handling | `lib/auth.ts` (authorize), `app/login/page.tsx` |
-| Instant-Abrechnung (hasPaidBefore) | `lib/wallet-service.ts`, `app/api/bookings/[id]/route.ts`, `components/video-call/DailyCallContainer.tsx` |
+| Abrechnungslogik alle Call-Typen | `lib/wallet-service.ts`, `app/api/bookings/[id]/route.ts`, `lib/session-terminate.ts`, `components/video-call/DailyCallContainer.tsx` |
 | Instant-Abrechnung Idempotenz | `lib/wallet-service.ts` (paymentStatus-Guard in `$transaction`) |
 | Video-Safety PRE_CHECK Gate | `app/api/safety/pre-check/route.ts`, `components/video-call/DailyCallContainer.tsx` |
 | Video-Safety Blitzlicht-Protokoll | `components/video-call/DailyCallContainer.tsx` (SNAPSHOT_DELAYS_MS, Hard-Stop 120s) |
@@ -597,4 +642,4 @@ Der Buchungsflow setzt immer `deferNotification: true` — Takumi-Benachrichtigu
 
 ---
 
-*Letzte Aktualisierung: März 2026*
+*Letzte Aktualisierung: März 2026 – Abrechnungslogik überarbeitet (Handshake-Grenzen, Viertelstunden-Rundung, Mindestabrechnung)*

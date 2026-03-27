@@ -383,8 +383,14 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 
 /**
  * Instant-Call: Belastet Shugyo-Wallet nach Session-Ende.
- * Kosten = (Dauer - kostenlose Phase) × Preis/Min. Erstellt Transaction AUTHORIZED.
- * Erstkontakt: 5 Min gratis. Zweitkontakt (hasPaidBefore): 30 Sek gratis.
+ *
+ * Handshake-Logik (Erstkontakt = Folgekontakt = 60 Sek):
+ *   - Dauer < 60 Sek → keine Abrechnung (amountCents = 0)
+ *   - Dauer ≥ 60 Sek → volle Dauer wird abgerechnet (ab Sekunde 1)
+ *
+ * Mindestabrechnung: 5 Minuten (auch wenn Gespräch z.B. 2 Min dauerte,
+ * aber die Handshake-Schwelle überschritten wurde).
+ * Abrechnung: minutengenau.
  */
 export async function chargeInstantCallToWallet(
   bookingId: string,
@@ -392,9 +398,21 @@ export async function chargeInstantCallToWallet(
   pricePerMinuteCents: number,
   hasPaidBefore: boolean
 ): Promise<{ ok: boolean; amountCents?: number; error?: string }> {
-  const FREE_MIN = hasPaidBefore ? 0.5 : 5 // 30 Sek oder 5 Min gratis
-  const billingMin = Math.max(0, durationMin - FREE_MIN)
+  // 60 Sek Handshake für Erst- und Folgekontakt
+  const HANDSHAKE_MIN = 1 // 60 Sekunden = 1 Minute
+  const MIN_BILLING_MIN = 5 // Mindestabrechnung 5 Minuten
+
+  if (durationMin < HANDSHAKE_MIN) {
+    // Unter 60 Sek → keine Abrechnung
+    return { ok: true, amountCents: 0 }
+  }
+
+  // Volle Dauer, mindestens 5 Minuten
+  const billingMin = Math.max(durationMin, MIN_BILLING_MIN)
   const amountCents = Math.round(billingMin * pricePerMinuteCents) || 0
+
+  // hasPaidBefore wird für zukünftige Differenzierung behalten, aktuell gleiche Logik
+  void hasPaidBefore
 
   if (amountCents <= 0) return { ok: true, amountCents: 0 }
 

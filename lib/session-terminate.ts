@@ -1,13 +1,16 @@
 /**
  * Shared session termination logic (Case A/B).
  * Used by: /api/sessions/[id]/terminate and ghost-session cron.
+ *
+ * Handshake-Grenzen:
+ *   Instant Call:    60 Sek (Erst- und Folgekontakt)
+ *   Guest Call:      60 Sek
+ *   Geplanter Call:  300 Sek Erstkontakt, 30 Sek Folgekontakt
  */
 import { prisma } from "@/lib/db"
 import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { releaseReservation, refundTransactionForBooking } from "@/lib/wallet-service"
 import { processCompletion } from "@/app/actions/process-completion"
-
-const HANDSHAKE_LIMIT_MS = 5 * 60 * 1000 // 5 minutes
 
 export type TerminateResult =
   | { ok: true; status: "cancelled_in_handshake" | "completed"; durationMs: number }
@@ -40,7 +43,30 @@ export async function terminateSessionForBooking(bookingId: string): Promise<Ter
 
   const startedAt = booking.sessionStartedAt ?? booking.createdAt
   const durationInMs = Date.now() - new Date(startedAt).getTime()
-  const isHandshake = durationInMs < HANDSHAKE_LIMIT_MS
+  const durationSec = durationInMs / 1000
+
+  const isInstant = booking.bookingMode === "instant"
+  const isGuestCall = booking.isGuestCall ?? false
+
+  // Handshake-Schwelle dynamisch bestimmen
+  let handshakeSec: number
+  if (isInstant || isGuestCall) {
+    handshakeSec = 60
+  } else {
+    // Geplanter Call: hasPaidBefore aus DB prüfen
+    const hasPaidBefore = !!(await prisma.booking.findFirst({
+      where: {
+        userId: booking.userId ?? undefined,
+        expertId: booking.expertId,
+        paymentStatus: "paid",
+        id: { not: bookingId },
+      },
+      select: { id: true },
+    }))
+    handshakeSec = hasPaidBefore ? 30 : 300
+  }
+
+  const isHandshake = durationSec < handshakeSec
 
   if (isHandshake) {
     const piId = booking.stripePaymentIntentId

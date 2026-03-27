@@ -81,7 +81,14 @@ const AUDIO_LEVEL_SPEAKING_THRESHOLD = 0.02
 const MAX_JOIN_RETRIES = 3
 const JOIN_RETRY_DELAYS_MS = [2000, 2500, 3000] as const
 
-/** Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung (Start = beide im Raum). */
+/**
+ * Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung (Start = beide im Raum).
+ *
+ * Handshake: 60 Sek (Erst- und Folgekontakt). Unter 60 Sek → keine Abrechnung.
+ * Timer läuft ab Sekunde 1 (zeigt volle Restzeit). Die 60-Sek-Schwelle ist nur
+ * eine no-charge-Grenze auf dem Server – der Client-Timer läuft zur Anzeige ab Sek. 1.
+ * Mindestabrechnung: 5 Min (serverseitig). Timer zeigt echte verbleibende Wallet-Zeit.
+ */
 function calculateRemainingTime(
   effectiveStartMs: number,
   hasPaidBefore: boolean,
@@ -90,11 +97,12 @@ function calculateRemainingTime(
   frozenDurationMs = 0
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
-  const freePeriodSec = hasPaidBefore ? 30 : 5 * 60 // 30 Sek Zweitkontakt, 5 Min Erstkontakt
+  // Timer läuft ab Sekunde 1 – keine freePeriod mehr im Client
+  // Mindestabrechnung 5 Min wird serverseitig angewendet
+  void hasPaidBefore
   const elapsedSec = (Date.now() - effectiveStartMs - frozenDurationMs) / 1000
-  const billingElapsedSec = Math.max(0, elapsedSec - freePeriodSec)
   const balanceMinutes = userBalanceCents / pricePerMinuteCents
-  const remainingSec = Math.max(0, balanceMinutes * 60 - billingElapsedSec)
+  const remainingSec = Math.max(0, balanceMinutes * 60 - elapsedSec)
   return Math.round(remainingSec)
 }
 
@@ -1702,7 +1710,7 @@ export function DailyCallContainer({
               <span>{formatMmSs(secs)}</span>
             </div>
             {useBillingTimer && (
-              <span className="text-[10px] text-white/70">30 Sek. kostenlos</span>
+              <span className="text-[10px] text-white/70">ab Sek. 1 abrechnungsrelevant</span>
             )}
           </div>
         )}
