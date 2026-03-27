@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdminApi } from "@/lib/require-admin"
+import type { PaymentStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
 
@@ -17,10 +18,15 @@ export async function GET(req: NextRequest) {
   const statusFilter = searchParams.get("status") || "all"
   const search = searchParams.get("search")?.trim().toLowerCase() || ""
 
+  const validStatuses: PaymentStatus[] = ["unpaid", "paid", "refunded"]
+  const paymentStatusFilter = validStatuses.includes(statusFilter as PaymentStatus)
+    ? (statusFilter as PaymentStatus)
+    : undefined
+
   const bookings = await prisma.booking.findMany({
     where: {
       isGuestCall: true,
-      ...(statusFilter !== "all" ? { paymentStatus: statusFilter } : {}),
+      ...(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}),
       ...(search ? { guestEmail: { contains: search, mode: "insensitive" } } : {}),
     },
     select: {
