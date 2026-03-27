@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * SMTP-Check: nodemailer.verify() gegen EMAIL_SERVER_* / SMTP_*.
  * Aufruf:

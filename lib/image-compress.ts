@@ -29,7 +29,7 @@ export async function optimizeImageForUpload(
     })
   }
 
-  let out = await pipeline.jpeg({ quality: 85, mozjpeg: true }).toBuffer()
+  const out = await pipeline.jpeg({ quality: 85, mozjpeg: true }).toBuffer()
 
   if (out.length <= TARGET_MAX_BYTES) {
     return { buffer: out, contentType: "image/jpeg" }

@@ -173,6 +173,8 @@ export function DailyCallContainer({
     if (!scheduledDate || !scheduledStartTime) return 0
     const earliest = getScheduledEarliestJoin(scheduledDate, scheduledStartTime)
     return Math.max(0, Math.ceil((earliest.getTime() - Date.now()) / 1000))
+    // scheduleTick triggers recalculation every second when waiting
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingMode, bookingStatus, scheduledDate, scheduledStartTime, scheduleTick])
 
   const scheduleJoinBlocked = secondsUntilScheduledJoin > 0

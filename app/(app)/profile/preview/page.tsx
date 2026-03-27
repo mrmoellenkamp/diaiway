@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,7 +16,7 @@ import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/component
 import { useI18n } from "@/lib/i18n"
 import { useApp } from "@/lib/app-context"
 import {
-  ArrowLeft, Clock, Video, MessageSquare, Shield, Star, Loader2, User, Eye, FolderOpen, ImageIcon,
+  Clock, Video, MessageSquare, Shield, Star, Loader2, User, Eye, FolderOpen, ImageIcon,
 } from "lucide-react"
 import type { SocialLinks } from "@/lib/types"
 
@@ -295,7 +296,7 @@ export default function ProfilePreviewPage() {
                         <div key={p.id} className="rounded-lg border border-border/40 overflow-hidden bg-muted/30">
                           {p.imageUrl ? (
                             <div className="relative aspect-video w-full">
-                              <img src={p.imageUrl} alt={p.title} className="size-full object-cover" />
+                              <Image src={p.imageUrl} alt={p.title} fill className="object-cover" />
                             </div>
                           ) : (
                             <div className="flex aspect-video items-center justify-center bg-muted/50">

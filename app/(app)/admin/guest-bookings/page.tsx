@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import {
-  Loader2, Search, Copy, Trash2, XCircle, RefreshCw,
+  Loader2, Search, Trash2, XCircle, RefreshCw,
   UserPlus, CheckCircle2, Clock, Euro, Link2, Filter,
 } from "lucide-react"
 import {
