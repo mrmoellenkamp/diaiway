@@ -28,6 +28,7 @@ import {
   type IDateException,
   type IAvailabilityData,
 } from "@/lib/availability-utils"
+import { BookingCalendar } from "@/components/booking-calendar"
 import { useI18n } from "@/lib/i18n"
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -1172,8 +1173,10 @@ export default function AvailabilityPage() {
                       </div>
                     ) : (
                       /* ── Form ── */
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
+                      <div className="flex flex-col gap-4">
+
+                        {/* E-Mail */}
+                        <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.guestEmail")} *</label>
                           <input
                             type="email"
@@ -1183,56 +1186,79 @@ export default function AvailabilityPage() {
                             placeholder="gast@beispiel.de"
                           />
                         </div>
+
+                        {/* Kalender – zeigt eigene Verfügbarkeiten */}
+                        <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {t("guestInvite.date")} *
+                          </p>
+                          {session?.user?.id && (
+                            <BookingCalendar
+                              takumiId={session.user.id}
+                              selectedDate={guestForm.date}
+                              selectedTime={guestForm.startTime}
+                              onSelect={(date, startTime, endTime) => {
+                                setGuestForm((f) => ({ ...f, date, startTime, endTime }))
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Gewählter Slot – editierbar */}
+                        {guestForm.date && (
+                          <div className="grid grid-cols-2 gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.startTime")} *</label>
+                              <input
+                                type="time" step="900"
+                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                value={guestForm.startTime}
+                                onChange={(e) => setGuestForm((f) => ({ ...f, startTime: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.endTime")} *</label>
+                              <input
+                                type="time" step="900"
+                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                value={guestForm.endTime}
+                                onChange={(e) => setGuestForm((f) => ({ ...f, endTime: e.target.value }))}
+                              />
+                            </div>
+                            <div className="col-span-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <Calendar className="size-3 shrink-0" />
+                              <span>{formatDisplay(guestForm.date)} · {guestForm.startTime} – {guestForm.endTime}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Call-Typ + Preis */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
+                            <select
+                              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                              value={guestForm.callType}
+                              onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
+                            >
+                              <option value="VIDEO">Video</option>
+                              <option value="VOICE">Audio</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.price")}</label>
+                            <input
+                              type="number" min="1" step="0.01"
+                              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                              value={guestForm.totalPrice}
+                              onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
+                              placeholder={t("guestInvite.priceHint")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Notiz */}
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.date")} *</label>
-                          <input
-                            type="date"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            value={guestForm.date}
-                            min={formatDateStr(new Date())}
-                            onChange={(e) => setGuestForm((f) => ({ ...f, date: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
-                          <select
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            value={guestForm.callType}
-                            onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
-                          >
-                            <option value="VIDEO">Video</option>
-                            <option value="VOICE">Audio</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.startTime")} *</label>
-                          <input
-                            type="time" step="900"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            value={guestForm.startTime}
-                            onChange={(e) => setGuestForm((f) => ({ ...f, startTime: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.endTime")} *</label>
-                          <input
-                            type="time" step="900"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            value={guestForm.endTime}
-                            onChange={(e) => setGuestForm((f) => ({ ...f, endTime: e.target.value }))}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.price")}</label>
-                          <input
-                            type="number" min="1" step="0.01"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            value={guestForm.totalPrice}
-                            onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
-                            placeholder={t("guestInvite.priceHint")}
-                          />
-                        </div>
-                        <div className="col-span-2">
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.note")}</label>
                           <input
                             type="text"
@@ -1242,18 +1268,17 @@ export default function AvailabilityPage() {
                             placeholder="z.B. Erstgespräch Projekt X"
                           />
                         </div>
-                        <div className="col-span-2">
-                          <Button
-                            className="w-full gap-2"
-                            onClick={handleCreateGuestInvite}
-                            disabled={guestCreating}
-                          >
-                            {guestCreating
-                              ? <><Loader2 className="size-4 animate-spin" /> {t("guestInvite.creating")}</>
-                              : <><UserPlus className="size-4" /> {t("guestInvite.create")}</>
-                            }
-                          </Button>
-                        </div>
+
+                        <Button
+                          className="w-full gap-2"
+                          onClick={handleCreateGuestInvite}
+                          disabled={guestCreating}
+                        >
+                          {guestCreating
+                            ? <><Loader2 className="size-4 animate-spin" /> {t("guestInvite.creating")}</>
+                            : <><UserPlus className="size-4" /> {t("guestInvite.create")}</>
+                          }
+                        </Button>
                       </div>
                     )}
                   </CardContent>
