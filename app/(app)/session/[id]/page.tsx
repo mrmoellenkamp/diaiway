@@ -33,6 +33,8 @@ interface BookingData {
     callType: "VIDEO" | "VOICE"
     bookingMode?: "scheduled" | "instant"
     isExpert: boolean
+    isGuestCall?: boolean
+    guestToken?: string | null
     userName: string
     takumiName: string
     takumiImageUrl: string
@@ -358,6 +360,8 @@ function SessionCallContent() {
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"call" | "post-call">("call")
   const [hasJoinedCall, setHasJoinedCall] = useState(false)
+  // Guest call: Takumi waits for payment
+  const [guestPaymentPaid, setGuestPaymentPaid] = useState(false)
 
   const fetchBooking = useCallback(async () => {
     try {
@@ -369,6 +373,10 @@ function SessionCallContent() {
       }
       const json = await res.json()
       setData(json)
+      // If this is a guest call and payment is already done, skip waiting
+      if (json?.booking?.isGuestCall && json?.booking?.paymentStatus === "paid") {
+        setGuestPaymentPaid(true)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("toast.loadError"))
     }
@@ -377,6 +385,25 @@ function SessionCallContent() {
   useEffect(() => {
     fetchBooking()
   }, [fetchBooking])
+
+  // Poll für Takumi im Gast-Call-Warteraum: bis Gast bezahlt hat
+  const shouldPollGuestPayment =
+    data?.booking?.isGuestCall && data?.booking?.isExpert && !guestPaymentPaid
+  useEffect(() => {
+    if (!shouldPollGuestPayment) return
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`)
+        if (!res.ok) return
+        const json = await res.json()
+        if (json?.booking?.paymentStatus === "paid") {
+          setData(json)
+          setGuestPaymentPaid(true)
+        }
+      } catch { /* ignore */ }
+    }, 2500)
+    return () => clearInterval(timer)
+  }, [shouldPollGuestPayment, bookingId])
 
   // Poll für Shugyo im Wartemodus (Instant-Anklopf): bis Takumi annimmt oder ablehnt
   const shouldPollWait = isWaitMode && data && !data.booking.isExpert && data.booking.status === "pending"
@@ -434,6 +461,39 @@ function SessionCallContent() {
   const userRole: UserRole = booking.isExpert ? "takumi" : "shugyo"
   const partnerName = booking.isExpert ? booking.userName : booking.takumiName
   const partnerImageUrl = booking.isExpert ? booking.userImageUrl : booking.takumiImageUrl
+
+  // ── Takumi wartet auf Gast-Zahlung ──────────────────────────────────────────
+  if (booking.isGuestCall && booking.isExpert && !guestPaymentPaid) {
+    const guestCallLink = booking.guestToken
+      ? `${typeof window !== "undefined" ? window.location.origin : ""}/call/${booking.guestToken}`
+      : null
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+        <div className="flex size-20 items-center justify-center rounded-full bg-amber-100 animate-pulse">
+          <span className="text-4xl">💳</span>
+        </div>
+        <div className="text-center max-w-sm">
+          <h2 className="text-xl font-bold text-foreground">Warte auf Gast-Zahlung</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Dein Gast muss zuerst bezahlen, bevor der Call startet. Diese Seite aktualisiert sich automatisch.
+          </p>
+          {guestCallLink && (
+            <div className="mt-4 rounded-xl bg-muted p-3 text-xs text-muted-foreground break-all">
+              <p className="font-medium mb-1">Einladungslink für den Gast:</p>
+              <span className="select-all">{guestCallLink}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+          Warte auf Zahlung…
+        </div>
+        <Button variant="outline" onClick={() => router.push("/sessions")}>
+          {t("sessions.backToSessions")}
+        </Button>
+      </div>
+    )
+  }
 
   // Shugyo wartet auf Takumi (Instant-Anklopf)
   if (isWaitMode && !booking.isExpert && booking.status === "pending") {

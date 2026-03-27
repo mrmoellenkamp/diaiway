@@ -108,10 +108,10 @@ export async function POST(
     // Bei Ablehnung + bereits bezahlt: Refund an Shugyo (Auszahlung oder Wallet-Gutschrift)
     if (action === "declined" && booking.paymentStatus === "paid") {
       try {
-        const shugyo = await prisma.user.findUnique({
+        const shugyo = booking.userId ? await prisma.user.findUnique({
           where: { id: booking.userId },
           select: { refundPreference: true },
-        })
+        }) : null
         const pref = (shugyo?.refundPreference as "payout" | "wallet") || "payout"
 
         const paidViaWallet = !booking.stripePaymentIntentId || booking.stripePaymentIntentId === "wallet"
@@ -160,7 +160,7 @@ export async function POST(
         action === "confirmed"
           ? `${comm.takumiLabel} hat deine Buchung am ${booking.date} (${booking.startTime}–${booking.endTime}) bestätigt.`
           : `${comm.takumiLabel} hat deine Buchungsanfrage am ${booking.date} leider abgelehnt.`
-      await prisma.notification.create({
+      if (booking.userId) await prisma.notification.create({
         data: {
           userId: booking.userId,
           type: action === "confirmed" ? "booking_confirmed" : "booking_declined",
@@ -169,13 +169,13 @@ export async function POST(
           body,
         },
       })
-      const waymail = await createSystemWaymail({
+      const waymail = booking.userId ? await createSystemWaymail({
         recipientId: booking.userId,
         subject: title,
         body,
-      }).catch(() => null)
+      }).catch(() => null) : null
       const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
-      sendPushToUser(booking.userId, {
+      if (booking.userId) sendPushToUser(booking.userId, {
         title,
         body,
         url: waymailUrl,
@@ -240,7 +240,7 @@ export async function POST(
     // Notification für Shugyo (zeitgleich mit E-Mail)
     try {
       const notifBody = `${comm.takumiLabel} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
-      await prisma.notification.create({
+      if (booking.userId) await prisma.notification.create({
         data: {
           userId: booking.userId,
           type: "booking_question",
@@ -249,13 +249,13 @@ export async function POST(
           body: notifBody,
         },
       })
-      const waymail = await createSystemWaymail({
+      const waymail = booking.userId ? await createSystemWaymail({
         recipientId: booking.userId,
         subject: "Rückfrage zu deiner Buchung",
         body: notifBody,
-      }).catch(() => null)
+      }).catch(() => null) : null
       const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
-      sendPushToUser(booking.userId, {
+      if (booking.userId) sendPushToUser(booking.userId, {
         title: "Rückfrage zu deiner Buchung",
         body: notifBody,
         url: waymailUrl,

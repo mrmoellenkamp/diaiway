@@ -71,11 +71,17 @@ export async function POST(req: Request) {
   }
   const isShugyo = booking.userId === session.user.id
   const isTakumi = booking.expert?.userId === session.user.id
+  // For guest calls: only the Takumi can join via this endpoint (guest uses /api/guest/meeting)
   if (!isShugyo && !isTakumi) {
     return NextResponse.json({ error: "Keine Berechtigung für diese Buchung." }, { status: 403 })
   }
   if ((userRole === "shugyo" && !isShugyo) || (userRole === "takumi" && !isTakumi)) {
     return NextResponse.json({ error: "userRole stimmt nicht mit deiner Rolle in dieser Buchung überein." }, { status: 403 })
+  }
+
+  // Guest call: payment must be confirmed before Takumi can join
+  if ((booking as { isGuestCall?: boolean }).isGuestCall && booking.paymentStatus !== "paid") {
+    return NextResponse.json({ error: "GUEST_PAYMENT_PENDING", waitingForPayment: true }, { status: 402 })
   }
 
   const nowDate = new Date()

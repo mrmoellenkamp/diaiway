@@ -246,6 +246,7 @@ export async function onPaymentReceived(bookingId: string, totalAmountCents: num
   })
   if (!booking) throw new Error("Booking not found")
   if (!booking.expert?.userId) throw new Error("Expert has no user")
+  if (!booking.userId) throw new Error("Booking has no user (guest calls not supported in wallet flow)")
 
   // KD-Nummer spätestens beim Zahlungseingang (Shugyo + Takumi für spätere Belege)
   await ensureCustomerNumber(booking.userId).catch((err) =>
@@ -295,6 +296,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
   if (booking.paymentStatus === "paid") return { ok: true }
   const expertUserId = booking.expert?.userId
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
+  if (!booking.userId) return { ok: false, error: "Wallet payment not supported for guest bookings" }
 
   const inv = validateInvoiceDataForPayment(booking.user?.invoiceData ?? null)
   if (!inv.ok) return { ok: false, error: "INVOICE_INCOMPLETE" }
@@ -314,12 +316,13 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
   const platformFee = Math.round(totalAmountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = totalAmountCents - platformFee
 
+  const shugyoId = booking.userId! // guarded above
   try {
     await prisma.$transaction(async (tx) => {
       // Atomic balance deduction with guard: only update if balance >= amount (race-condition safe)
       const updateResult = await tx.user.updateMany({
         where: {
-          id: booking.userId,
+          id: shugyoId,
           balance: { gte: totalAmountCents },
         },
         data: { balance: { decrement: totalAmountCents } },
@@ -338,7 +341,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
         data: {
           bookingId,
           expertId: booking.expertId,
-          userId: booking.userId,
+          userId: shugyoId,
           totalAmount: totalAmountCents,
           platformFee,
           netPayout,
@@ -348,7 +351,7 @@ export async function payBookingWithWallet(bookingId: string): Promise<{ ok: boo
 
       await tx.walletTransaction.create({
         data: {
-          userId: booking.userId,
+          userId: shugyoId,
           amountCents: -totalAmountCents, // DEBIT (negative = Belastung)
           type: "booking_payment",
           referenceId: bookingId,
@@ -406,6 +409,7 @@ export async function chargeInstantCallToWallet(
   if (booking.paymentStatus === "paid") return { ok: true, amountCents }
   const expertUserId = booking.expert?.userId
   if (!expertUserId) return { ok: false, error: "Expert has no user" }
+  if (!booking.userId) return { ok: false, error: "Wallet payment not supported for guest bookings" }
 
   const invInstant = validateInvoiceDataForPayment(booking.user?.invoiceData ?? null)
   if (!invInstant.ok) return { ok: false, error: "INVOICE_INCOMPLETE", amountCents }
@@ -421,9 +425,10 @@ export async function chargeInstantCallToWallet(
   const platformFee = Math.round(amountCents * (PLATFORM_FEE_PERCENT / 100))
   const netPayout = amountCents - platformFee
 
+  const shugyoIdInstant = booking.userId! // guarded above
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
-      where: { id: booking.userId },
+      where: { id: shugyoIdInstant },
       data: { balance: { decrement: amountCents } },
     })
     await tx.user.update({
@@ -434,7 +439,7 @@ export async function chargeInstantCallToWallet(
       data: {
         bookingId,
         expertId: booking.expertId,
-        userId: booking.userId,
+        userId: shugyoIdInstant,
         totalAmount: amountCents,
         platformFee,
         netPayout,

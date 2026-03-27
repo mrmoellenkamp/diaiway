@@ -37,6 +37,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
 
   const expertUserId = booking.expert?.userId
   if (!expertUserId) return { ok: false, error: "Expert hat keinen User" }
+  if (!booking.userId) return { ok: false, error: "Buchungsabschluss nur für registrierte Nutzer (keine Gast-Calls)" }
 
   try {
     // 1. Stripe Capture (falls Kartenzahlung)

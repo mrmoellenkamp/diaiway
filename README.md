@@ -35,7 +35,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Instant-Call-Abrechnung**: Wallet post-session; **Erstkontakt: 5 Min gratis**, **Zweitkontakt: 30 Sek gratis** (`hasPaidBefore`-Logik)
 - **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
 - **Benachrichtigungen**: Buchungsbestätigungen; **löschbar mit Bestätigungsdialog**
-- **Nachrichten (Postfach)**: **Chat** (Direktnachrichten) und **Waymails** (E-Mail-ähnlich mit Betreff); **Posteingang** und **Postausgang**; Waymails/Chats/Nachrichten **löschbar mit Bestätigungsdialog**; Anhänge (Bilder, PDF) via Secure Upload; Waymail-Deep-Links (`/messages?waymail={id}`) mit callbackUrl nach Login
+- **Nachrichten (Postfach)**: **Chat** (Direktnachrichten) und **Waymails** (E-Mail-ähnlich mit Betreff); **Posteingang** und **Postausgang**; Waymails/Chats/Nachrichten **löschbar mit Bestätigungsdialog**; Anhänge (Bilder, PDF) via Secure Upload; Waymail-Deep-Links (`/messages?waymail={id}`) mit callbackUrl nach Login; **serverseitig keine externen Links/Kontaktdaten** in Chat, Waymail-Betreifen und relevanten Freitextfeldern (`lib/contact-leak-validation.ts`)
 - **Profil**: **Username** als Profilname (optional, eindeutig); Favoriten, Sessions; **Konto pausieren** (sofort offline als Takumi); **Konto löschen** (DSGVO-Anonymisierung)
 - **Session-Aktivität**: 15 Min Inaktivitäts-Time-out; Warnung 60 Sek vor Ablauf; Heartbeat verlängert Session; automatischer Logout
 - **Safety**: Snapshot-Einwilligung, Live-Monitoring; bei Voice entfällt Pre-Check
@@ -43,9 +43,11 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 
 ### Für Takumi (Experten)
 - **Profil & Verfügbarkeit**: 15-Min-Intervall-Kalender; Preis Video/Voice pro 15 Min
+- **Profil-Moderation**: Entwurf speichern vs. Einreichen zur Prüfung; erst nach Admin-Freigabe (`profileReviewStatus: approved`) öffentlich in Takumi-Listen; bei signifikanten Bio-Änderungen erneute Prüfung; öffentliche Bio kann während Re-Review `bioLive` bleiben; Admin: `/admin/takumi-profile-reviews`, Widerruf mit Textbausteinen: `/admin/takumi-profile-revocations`
+- **Gast-Calls (externe Kunden)**: Tab **„Gast einladen“** unter `/profile/availability` – Gast-E-Mail, Slot, optional Preis; API `POST /api/expert/guest-bookings`; öffentlicher Link `/call/[guestToken]` (Rechnungsdaten, Einwilligungen, Stripe-Sofortzahlung, optional Konto mit Passwort; Daily.co nach Zahlung)
 - **Stornierungsrichtlinie**: Kostenlose Stornierung bis X Stunden, danach Gebühr
 - **Buchungsanfragen**: E-Mail + In-App + Push; Annehmen/Ablehnen/Rückfrage
-- **Live-Status**: `offline` | `available` | `in_call` | `busy` für Instant Connect
+- **Live-Status**: `offline` | `available` | `in_call` | `busy` für Instant Connect; **„Verfügbar“ nur bei freigegebenem Profil**
 - **Instant Connect**: Anklopfen durch Shugyo; Takumi antwortet live
 
 ### Für Admins
@@ -55,7 +57,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Vision-Scanner** (Tab): Google Cloud Vision – Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web; Bild-Upload oder Kamera; Ergebnisse direkt unter dem Analyse-Button
 - **Sicherheit-Tab**: Safety Reports, KI-Incidents; Links zu `/admin/safety` und `/admin/safety/incidents`
 - **System-Tab**: Links zu **Taxonomie** (`/admin/taxonomy`), **Startseiten-News** (`/admin/home-news`), Health-Check, Waymail-Templates, DB-Tools
-- **Eigene Seiten** (zusätzlich zum Dashboard): `/admin/health-check`, `/admin/finance`, `/admin/templates`, `/admin/taxonomy`, `/admin/home-news`, `/admin/safety`, `/admin/safety/incidents`; `/admin/scanner` → Redirect ins Dashboard (Scanner-Tab)
+- **Eigene Seiten** (zusätzlich zum Dashboard): `/admin/health-check`, `/admin/finance`, `/admin/templates`, `/admin/taxonomy`, `/admin/home-news`, `/admin/safety`, `/admin/safety/incidents`, `/admin/takumi-profile-reviews`, `/admin/takumi-profile-revocations`, `/admin/guest-bookings` (Gast-Call-Einladungen: Liste, Stornieren, Löschen, Link kopieren); `/admin/scanner` → Redirect ins Dashboard (Scanner-Tab)
 - **Health-Check** (`/admin/health-check`): Live-Monitoring – Cron-Laufzeiten, Stripe-Escrow-Risiken (6+ Tage), Wallet-Integrität, Push-Reachability; Force-Capture pro Buchung
 - **Finance Monitoring** (`/admin/finance`): Escrow-Holds, Stripe-Expiry (7 Tage), Shugyo-Wallet-Liability; Force Capture, Manual Release mit Doppelbestätigung
 - **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen; alle Finanz-Ops in `prisma.$transaction`
@@ -66,6 +68,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Startseiten-News**: Mehrsprachige Meldungen (DE/EN/ES), optional Links pro Sprache + Fallback-Link (`HomeNewsItem` / `HomeNewsTranslation`)
 
 ### Technisch
+- **Öffentliche Gast-Route**: `/call/[guestToken]` ohne Login (Middleware-Ausnahme); Rechtstexte und Formular in DE/EN/ES (`guestCall.*`, `guestInvite.*`)
+- **Gast-Safety**: Blitzlicht-Snapshots über `POST /api/guest/snapshot` (Auth via `guestToken`); gleiche Vision-Policy wie eingeloggte Nutzer; bei Verstoß Incident + Experten-Flag
 - **i18n**: Deutsch (Master), Englisch, Spanisch; Sprachenauswahl im Header (Länderkürzel: DE, EN, ES)
 - **Beta-Landing**: `/beta` → Redirect `/beta/de`; statische Seiten `/beta/de`, `/beta/en`, `/beta/es` (Founder-Karte, CTA, Hero-Visuals)
 - **Vercel Analytics**: `@vercel/analytics` im Root-Layout (anbieterseitige Metriken); **eigene** Statistik zusätzlich in Admin-Tab (siehe oben)
@@ -108,7 +112,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 ```
 ├── app/
 │   ├── (app)/              # Geschützte App-Routen
-│   │   ├── admin/          # Admin (layout Guard): Dashboard 9 Tabs + Seiten taxonomy, home-news, finance, health-check, safety, templates, scanner→redirect
+│   │   ├── admin/          # Admin: Dashboard + taxonomy, home-news, finance, health-check, safety, takumi-profile-reviews, takumi-profile-revocations, guest-bookings, …
+│   │   ├── call/[guestToken]/  # Öffentlich: Gast-Call Legal-Gate + Zahlung + Video
 │   │   ├── ai-guide/
 │   │   ├── booking/[id]/
 │   │   ├── session/[id]/   # Session-Seite (Daily.co)
@@ -117,6 +122,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 │   ├── api/
 │   │   ├── admin/finance/  # Summary, Force-Capture, Manual-Release, Audit-Log, Export
 │   │   ├── bookings/       # POST, instant, instant-check, pay-with-wallet
+│   │   ├── guest/          # checkout, meeting, snapshot, auto-login, signin
+│   │   ├── expert/guest-bookings/  # Takumi: Gast-Buchungen anlegen + listen
 │   │   ├── sessions/[id]/terminate/
 │   │   ├── daily/meeting/
 │   │   ├── expert/         # heartbeat, live-status, instant-requests
@@ -232,12 +239,12 @@ Details: [docs/ENV.md](docs/ENV.md)
 
 ### Wichtige Modelle
 - **User**: `name`, `username` (optional, eindeutig; wird als Profilname verwendet); balance, pendingBalance (Wallet); appRole (shugyo/takumi); Anonymisierte: `user_deleted_xxx@anonymized.local`
-- **Expert**: liveStatus (`offline` \| `available` \| `in_call` \| `busy`); priceVideo15Min, priceVoice15Min
-- **Booking**: status (incl. `cancelled_in_handshake`, `instant_expired`); bookingMode (scheduled \| instant)
+- **Expert**: liveStatus (`offline` \| `available` \| `in_call` \| `busy`); priceVideo15Min, priceVoice15Min; **Profil-Moderation**: u. a. `profileReviewStatus`, `bioLive`, `bioPendingReview`, `profileRejectionReason`; `TakumiProfileRevokeSnippet` für Widerrufs-Textbausteine
+- **Booking**: status (incl. `cancelled_in_handshake`, `instant_expired`); bookingMode (scheduled \| instant); **Gast-Calls**: `isGuestCall`, `guestEmail`, `guestToken` (unique); **`userId` optional** (null bis Gast ggf. nach Zahlung ein Konto anlegt)
 - **Transaction**: status (AUTHORIZED, CAPTURED, CANCELED, REFUNDED)
 - **WalletTransaction**: amountCents (positiv = Credit, negativ = Debit); type (topup, booking_payment, refund)
 - **PushSubscription**: endpoint, p256dh, auth für Web Push
-- **CronRunLog**: cronName, lastRunAt (Health-Check; release-wallet, experts-offline, cleanup-safety-data, …)
+- **CronRunLog**: cronName, lastRunAt (Health-Check; release-wallet, experts-offline, instant-request-cleanup, cleanup-safety-data, session-reminders, …)
 - **AdminActionLog**: Admin-Aktionen (force_capture, manual_release, refund)
 - **HomeNewsItem** / **HomeNewsTranslation**: Startseiten-Newsfeed (mehrsprachig, optionale Links pro Locale)
 - **TaxonomyCategory** / **TaxonomySpecialty** / Junctions: Kategorien-System für Takumis (siehe `docs/ARCHITECTURE.md`)
@@ -309,8 +316,8 @@ npx prisma studio
 1. Projekt mit GitHub verbinden
 2. Umgebungsvariablen setzen (inkl. `DATABASE_URL` / `DIRECT_URL`, `CRON_SECRET` für Cron-Routes)
 3. Build: Standard ist `npm run build` – dabei laufen **`prisma migrate deploy`** (offene Migrationen auf die DB) **und** `prisma generate` vor `next build`. Vercel muss dafür **Production** (und ggf. Preview) mit derselben DB-URL versorgen.
-4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`
-5. Cron-Jobs: `vercel.json` definiert `release-wallet`, `experts-offline`, `instant-request-cleanup`; alle benötigen `Authorization: Bearer <CRON_SECRET>`
+4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`; für **Gast-Calls** zusätzlich Metadaten `paymentType: guest_call_payment` (Embedded Checkout für `/call/…` – siehe `app/api/webhooks/stripe/route.ts`)
+5. Cron-Jobs: `vercel.json` – `release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders`; alle benötigen `Authorization: Bearer <CRON_SECRET>` (außer ggf. Hobby-Plan-Limits beachten)
 
 ### Vercel CLI (ohne Git)
 

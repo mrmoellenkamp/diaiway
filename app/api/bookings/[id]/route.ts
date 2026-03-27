@@ -86,13 +86,13 @@ export async function GET(
     let hasPaidBefore = false
     if (isBooker && booking.bookingMode === "instant") {
       const [shugyoUser, priorPaid] = await Promise.all([
-        prisma.user.findUnique({
+        booking.userId ? prisma.user.findUnique({
           where: { id: booking.userId },
           select: { balance: true },
-        }),
+        }) : Promise.resolve(null),
         prisma.booking.findFirst({
           where: {
-            userId: booking.userId,
+            userId: booking.userId ?? undefined,
             expertId: booking.expertId,
             paymentStatus: "paid",
             id: { not: booking.id },
@@ -150,6 +150,8 @@ export async function GET(
         cancelledAt: booking.cancelledAt,
         cancelPreview,
         isExpert, // true if current user is the Takumi (expert) for this booking
+        isGuestCall: booking.isGuestCall ?? false,
+        guestToken: isExpert ? (booking.guestToken ?? null) : null, // only expose to Takumi
         shugyoSkillLevel,
         shugyoProjects,
         userBalanceCents,
@@ -342,7 +344,7 @@ export async function PATCH(
 
     // ── start-session ──────────────────────────────────────────────────────
     if (action === "start-session") {
-      const bookerGate = await assertBookerPaymentVerified(booking.userId)
+      const bookerGate = booking.userId ? await assertBookerPaymentVerified(booking.userId) : null
       if (bookerGate) return bookerGate
 
       if (booking.status !== "confirmed" && booking.status !== "active") {
@@ -355,7 +357,7 @@ export async function PATCH(
       if (booking.status === "active") {
         const openerId = booking.sessionOpenedByUserId
         if (openerId && openerId !== uid) {
-          void notifyPartnerJoinedVideoCall({
+          if (booking.userId) void notifyPartnerJoinedVideoCall({
             bookingId: id,
             joiningUserId: uid,
             bookerUserId: booking.userId,
@@ -385,7 +387,7 @@ export async function PATCH(
         where: { id },
         data: { status: "active", sessionStartedAt: new Date(), sessionOpenedByUserId: uid },
       })
-      void notifyPartnerWaitingInVideoCall({
+      if (booking.userId) void notifyPartnerWaitingInVideoCall({
         bookingId: id,
         joiningUserId: uid,
         bookerUserId: booking.userId,
@@ -579,7 +581,7 @@ export async function PATCH(
       await prisma.review.create({
         data: {
           expertId: booking.expertId,
-          userId: booking.userId,
+          userId: booking.userId ?? "",
           bookingId: id,
           rating: r,
           text: (reviewText || "").trim().slice(0, 2000),
@@ -716,7 +718,7 @@ export async function PATCH(
       expertUserId: booking.expert?.userId ?? null,
       expertEmail: booking.expertEmail,
       expertName: booking.expertName,
-      userId: booking.userId,
+      userId: booking.userId ?? "",
       userEmail: booking.userEmail,
       userName: booking.userName,
       date: booking.date,

@@ -16,7 +16,7 @@ import { toast } from "sonner"
 import {
   Plus, Trash2, Loader2, Save, Clock, Calendar,
   CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight,
-  CalendarX2, CalendarDays, Info, Phone,
+  CalendarX2, CalendarDays, Info, Phone, UserPlus, Copy, Check, Link2,
 } from "lucide-react"
 import {
   resolveSlots,
@@ -46,6 +46,19 @@ interface Booking {
   endTime: string
   status: "pending" | "confirmed" | "declined" | "cancelled" | "active" | "completed"
   statusToken: string
+}
+
+interface GuestBooking {
+  id: string
+  guestToken: string
+  guestEmail: string
+  date: string
+  startTime: string
+  endTime: string
+  totalPrice: number
+  paymentStatus: "unpaid" | "paid" | "refunded"
+  status: string
+  createdAt: string
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -214,6 +227,17 @@ export default function AvailabilityPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  // Guest invite state
+  const [guestBookings, setGuestBookings] = useState<GuestBooking[]>([])
+  const [guestForm, setGuestForm] = useState({
+    guestEmail: "", date: "", startTime: "10:00", endTime: "11:00",
+    callType: "VIDEO", totalPrice: "", note: "",
+  })
+  const [guestCreating, setGuestCreating] = useState(false)
+  const [guestLink, setGuestLink] = useState<string | null>(null)
+  const [guestCopied, setGuestCopied] = useState(false)
+  const [guestCancelling, setGuestCancelling] = useState<string | null>(null)
+
   // Calendar navigation
   const today = new Date()
   const todayStr = formatDateStr(today)
@@ -234,8 +258,9 @@ export default function AvailabilityPage() {
     Promise.all([
       fetch(`/api/availability?takumiId=${session.user.id}&full=true`).then((r) => r.json()),
       fetch("/api/bookings?view=takumi").then((r) => r.json()),
+      fetch("/api/expert/guest-bookings").then((r) => r.json()),
     ])
-      .then(([availData, bookingsData]) => {
+      .then(([availData, bookingsData, guestData]) => {
         setSlots(availData.slots || EMPTY_SLOTS)
         setYearlyRules(availData.yearlyRules || [])
         setExceptions(availData.exceptions || [])
@@ -245,10 +270,84 @@ export default function AvailabilityPage() {
             (b: Booking) => !["cancelled", "declined"].includes(b.status)
           )
         )
+        setGuestBookings(guestData.bookings || [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [session])
+
+  // ── Guest invite handlers ─────────────────────────────────────────────────
+  async function handleCreateGuestInvite() {
+    if (!guestForm.guestEmail || !guestForm.date || !guestForm.startTime || !guestForm.endTime) {
+      toast.error("Bitte alle Pflichtfelder ausfüllen.")
+      return
+    }
+    setGuestCreating(true)
+    try {
+      const res = await fetch("/api/expert/guest-bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...guestForm,
+          totalPrice: guestForm.totalPrice ? Number(guestForm.totalPrice) : undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast.error(data.error || "Fehler beim Erstellen."); return }
+      const origin = window.location.origin
+      setGuestLink(`${origin}${data.booking.callLink}`)
+      setGuestBookings((prev) => [
+        {
+          id: data.booking.id,
+          guestToken: data.booking.guestToken,
+          guestEmail: data.booking.guestEmail,
+          date: data.booking.date,
+          startTime: data.booking.startTime,
+          endTime: data.booking.endTime,
+          totalPrice: data.booking.totalPrice,
+          paymentStatus: "unpaid",
+          status: "confirmed",
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ])
+      setGuestForm({ guestEmail: "", date: "", startTime: "10:00", endTime: "11:00", callType: "VIDEO", totalPrice: "", note: "" })
+      toast.success("Einladungslink erstellt!")
+    } catch {
+      toast.error("Netzwerkfehler.")
+    } finally {
+      setGuestCreating(false)
+    }
+  }
+
+  async function handleCancelGuestBooking(bookingId: string) {
+    setGuestCancelling(bookingId)
+    try {
+      const res = await fetch(`/api/admin/guest-bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      })
+      if (res.ok) {
+        setGuestBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b))
+        toast.success("Einladung storniert.")
+      } else {
+        const d = await res.json()
+        toast.error(d.error || "Fehler beim Stornieren.")
+      }
+    } catch {
+      toast.error("Netzwerkfehler.")
+    } finally {
+      setGuestCancelling(null)
+    }
+  }
+
+  function copyGuestLink(link: string) {
+    navigator.clipboard.writeText(link).then(() => {
+      setGuestCopied(true)
+      setTimeout(() => setGuestCopied(false), 2000)
+    })
+  }
 
   // ── Save ──────────────────────────────────────────────────────────────────
   async function handleSave() {
@@ -470,7 +569,7 @@ export default function AvailabilityPage() {
 
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="schedule" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="schedule" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Clock className="size-3" /> {t("avail.tabWeekly")}
               </TabsTrigger>
@@ -482,6 +581,9 @@ export default function AvailabilityPage() {
               </TabsTrigger>
               <TabsTrigger value="rules" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <CalendarDays className="size-3" /> {t("avail.tabSeasonal")}
+              </TabsTrigger>
+              <TabsTrigger value="guest" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <UserPlus className="size-3" /> {t("guestInvite.tab")}
               </TabsTrigger>
             </TabsList>
 
@@ -1036,6 +1138,203 @@ export default function AvailabilityPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            {/* ── Tab: Gast einladen ────────────────────────────────────── */}
+            <TabsContent value="guest">
+              <div className="flex flex-col gap-4">
+
+                {/* Create form / link result */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <UserPlus className="size-4 text-primary" />
+                      {t("guestInvite.title")}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">{t("guestInvite.desc")}</p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3">
+                    {guestLink ? (
+                      /* ── Link result ── */
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                          <Link2 className="size-4 shrink-0 text-primary" />
+                          <span className="flex-1 truncate text-xs font-mono text-foreground">{guestLink}</span>
+                        </div>
+                        <Button
+                          className="w-full gap-2"
+                          onClick={() => copyGuestLink(guestLink)}
+                        >
+                          {guestCopied ? <><Check className="size-4" /> {t("guestInvite.copied")}</> : <><Copy className="size-4" /> {t("guestInvite.copyLink")}</>}
+                        </Button>
+                        <p className="text-center text-xs text-muted-foreground">{t("guestInvite.shareHint")}</p>
+                        <Button variant="outline" className="w-full" onClick={() => setGuestLink(null)}>
+                          {t("guestInvite.newInvite")}
+                        </Button>
+                      </div>
+                    ) : (
+                      /* ── Form ── */
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.guestEmail")} *</label>
+                          <input
+                            type="email"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.guestEmail}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, guestEmail: e.target.value }))}
+                            placeholder="gast@beispiel.de"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.date")} *</label>
+                          <input
+                            type="date"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.date}
+                            min={formatDateStr(new Date())}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, date: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
+                          <select
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.callType}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
+                          >
+                            <option value="VIDEO">Video</option>
+                            <option value="VOICE">Audio</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.startTime")} *</label>
+                          <input
+                            type="time" step="900"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.startTime}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, startTime: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.endTime")} *</label>
+                          <input
+                            type="time" step="900"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.endTime}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, endTime: e.target.value }))}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.price")}</label>
+                          <input
+                            type="number" min="1" step="0.01"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.totalPrice}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
+                            placeholder={t("guestInvite.priceHint")}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.note")}</label>
+                          <input
+                            type="text"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.note}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, note: e.target.value }))}
+                            placeholder="z.B. Erstgespräch Projekt X"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Button
+                            className="w-full gap-2"
+                            onClick={handleCreateGuestInvite}
+                            disabled={guestCreating}
+                          >
+                            {guestCreating
+                              ? <><Loader2 className="size-4 animate-spin" /> {t("guestInvite.creating")}</>
+                              : <><UserPlus className="size-4" /> {t("guestInvite.create")}</>
+                            }
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* List of past guest invites */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Calendar className="size-4 text-primary" />
+                      {t("guestInvite.myInvites")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {guestBookings.length === 0 ? (
+                      <p className="py-4 text-center text-xs italic text-muted-foreground">{t("guestInvite.noInvites")}</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {guestBookings.map((gb) => {
+                          const link = `${typeof window !== "undefined" ? window.location.origin : ""}/call/${gb.guestToken}`
+                          const isPaid = gb.paymentStatus === "paid"
+                          const isCancelled = gb.status === "cancelled"
+                          return (
+                            <div key={gb.id} className={`rounded-xl border p-3 ${isCancelled ? "opacity-50" : ""}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-xs font-semibold">{gb.guestEmail}</p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {formatDisplay(gb.date)} · {gb.startTime}–{gb.endTime}
+                                    {gb.totalPrice ? ` · ${Number(gb.totalPrice).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` : ""}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={`shrink-0 text-[10px] ${
+                                    isCancelled ? "border-muted text-muted-foreground" :
+                                    isPaid ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600" :
+                                    "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                                  }`}
+                                >
+                                  {isCancelled ? t("guestInvite.statusCancelled") : isPaid ? t("guestInvite.statusPaid") : t("guestInvite.statusUnpaid")}
+                                </Badge>
+                              </div>
+                              {!isCancelled && (
+                                <div className="mt-2 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 flex-1 gap-1 text-xs"
+                                    onClick={() => copyGuestLink(link)}
+                                  >
+                                    <Copy className="size-3" /> {t("guestInvite.copyLink")}
+                                  </Button>
+                                  {!isPaid && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                                      disabled={guestCancelling === gb.id}
+                                      onClick={() => handleCancelGuestBooking(gb.id)}
+                                    >
+                                      {guestCancelling === gb.id
+                                        ? <Loader2 className="size-3 animate-spin" />
+                                        : <XCircle className="size-3" />
+                                      }
+                                      {t("guestInvite.cancel")}
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+              </div>
+            </TabsContent>
+
           </Tabs>
 
           {/* Upcoming confirmed bookings */}

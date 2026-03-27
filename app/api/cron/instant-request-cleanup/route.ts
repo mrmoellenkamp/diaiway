@@ -72,17 +72,19 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    sendPushToUser(b.userId, {
-      title: "Keine Antwort",
-      body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
-      url: "/sessions",
-      tag: `instant-expired-${b.id}`,
-    }).catch(() => {})
-    createSystemWaymail({
-      recipientId: b.userId,
-      subject: "Kein Experte verfügbar",
-      body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
-    }).catch(() => {})
+    if (b.userId) {
+      sendPushToUser(b.userId, {
+        title: "Keine Antwort",
+        body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
+        url: "/sessions",
+        tag: `instant-expired-${b.id}`,
+      }).catch(() => {})
+      createSystemWaymail({
+        recipientId: b.userId,
+        subject: "Kein Experte verfügbar",
+        body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
+      }).catch(() => {})
+    }
 
     results.push({ bookingId: b.id, ok: true })
   }

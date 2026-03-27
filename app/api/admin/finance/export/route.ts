@@ -198,7 +198,7 @@ async function handleCsvExport(
     let takumiName = ""
     const b = w.referenceId ? bookingMap[w.referenceId] : null
     if (b) {
-      shugyoId = b.userId
+      shugyoId = b.userId ?? ""
       shugyoName = b.userName ?? "(gelöscht)"
       takumiId = expertMap[b.expertId] ?? ""
       takumiName = b.expertName ?? "(gelöscht)"

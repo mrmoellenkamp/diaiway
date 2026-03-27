@@ -122,7 +122,9 @@ export default authMiddleware((req) => {
   // Protected app pages — any logged-in user (except /booking/respond which uses token from email)
   // callbackUrl = pathname + search → Deep-Links (waymail=, with= für Chat) bleiben nach Login erhalten
   const isBookingRespond = pathname.startsWith("/booking/respond")
-  if (!isBookingRespond) {
+  // Guest call route: accessible without login (guest pays & joins without an account)
+  const isGuestCall = pathname.startsWith("/call/")
+  if (!isBookingRespond && !isGuestCall) {
     const protectedPrefixes = ["/dashboard", "/profile", "/booking", "/sessions", "/session", "/messages"]
     for (const prefix of protectedPrefixes) {
       if (pathname.startsWith(prefix) && !isLoggedIn) {

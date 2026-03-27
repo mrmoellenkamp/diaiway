@@ -89,7 +89,7 @@ export async function GET() {
         bookingId: b.id,
         transactionId: tx.id,
         shugyoName: b.userName,
-        shugyoUserId: b.userId,
+        shugyoUserId: b.userId ?? "",
         takumiName: b.expertName,
         takumiExpertId: b.expertId,
         amountCents,

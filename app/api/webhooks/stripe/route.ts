@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
+import { createGuestShugyoAccount } from "@/lib/guest-onboarding"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -118,6 +119,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
+  // ── Guest call payment ─────────────────────────────────────────────────────
+  if (paymentType === "guest_call_payment") {
+    await handleGuestCallPayment(session, bookingId)
+    return
+  }
+
   const existing = await prisma.booking.findUnique({
     where: { id: bookingId },
     select: {
@@ -166,6 +173,85 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     } catch (notifyErr) {
       console.error("[Stripe Webhook] Booking notification failed:", notifyErr)
     }
+  }
+}
+
+/**
+ * Handles a completed guest call payment:
+ * 1. Marks booking as paid
+ * 2. If guest set a password: creates a Shugyo account and links it to the booking
+ * 3. Notifies the Takumi
+ */
+async function handleGuestCallPayment(session: Stripe.Checkout.Session, bookingId: string) {
+  const existing = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { paymentStatus: true, guestEmail: true, note: true, isGuestCall: true },
+  })
+  if (!existing || !existing.isGuestCall) {
+    console.error("[Stripe Webhook] guest_call_payment: booking not found or not a guest call", bookingId)
+    return
+  }
+  if (existing.paymentStatus === "paid") return // Idempotenz
+
+  const amountTotal = session.amount_total ?? 0
+  const now = new Date()
+
+  // Parse the note field where we stored invoice + password data at checkout
+  let invoiceData: unknown = null
+  let guestPassword: string | null = null
+  try {
+    if (existing.note) {
+      const parsed = JSON.parse(existing.note) as Record<string, unknown>
+      invoiceData = parsed.invoiceData ?? null
+      guestPassword = typeof parsed.guestPassword === "string" ? parsed.guestPassword : null
+    }
+  } catch {
+    console.warn("[Stripe Webhook] guest_call_payment: could not parse note field for bookingId", bookingId)
+  }
+
+  // Mark booking as paid
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      paymentStatus: "paid",
+      stripePaymentIntentId: session.payment_intent as string,
+      paidAt: now,
+      paidAmount: amountTotal,
+      // Clear the note field (it held temporary checkout data)
+      note: "",
+    },
+  })
+
+  // Instant Shugyo onboarding: create account if password was provided
+  if (guestPassword && existing.guestEmail) {
+    try {
+      const result = await createGuestShugyoAccount({
+        guestEmail: existing.guestEmail,
+        password: guestPassword,
+        invoiceData,
+        consentTimestamp: now,
+      })
+
+      if (result) {
+        // Link the booking to the new (or existing) user account
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: { userId: result.userId },
+        })
+        console.log(
+          `[Stripe Webhook] Guest onboarding: ${result.isNew ? "created" : "linked existing"} account ${result.userId} for booking ${bookingId}`
+        )
+      }
+    } catch (err) {
+      console.error("[Stripe Webhook] Guest onboarding failed (non-fatal):", err)
+    }
+  }
+
+  // Notify Takumi that payment was received
+  try {
+    await notifyTakumiAfterPayment(bookingId)
+  } catch (notifyErr) {
+    console.error("[Stripe Webhook] Guest call notification failed:", notifyErr)
   }
 }
 

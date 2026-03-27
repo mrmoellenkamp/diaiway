@@ -44,7 +44,8 @@ async function runSessionReminders() {
     const shugyoName = communicationUsername(b.user?.username, "Shugyo")
     const bookingUrl = `/session/${b.id}?connecting=1`
 
-    // Bucher erinnern
+    // Bucher erinnern (nur bei regulären Buchungen mit userId)
+    if (!b.userId) { skipped += 1; continue }
     const userReminderExists = await prisma.notification.findFirst({
       where: { userId: b.userId, bookingId: b.id, type: "booking_reminder" },
       select: { id: true },

@@ -405,10 +405,15 @@ model Booking {
   expert                Expert        @relation(fields: [expertId], references: [id])
   expertName            String
   expertEmail           String        @default("")
-  userId                String
-  user                  User          @relation("UserBookings", fields: [userId], references: [id])
-  userName              String
-  userEmail             String
+  userId                String?
+  user                  User?         @relation("UserBookings", fields: [userId], references: [id])
+  userName              String        @default("")
+  userEmail             String        @default("")
+
+  // Guest call fields (no account required)
+  isGuestCall           Boolean       @default(false)
+  guestEmail            String?
+  guestToken            String?       @unique  // UUID, used as public call link
 
   bookingMode           BookingMode   @default(scheduled)
   date                  String        // YYYY-MM-DD (bei instant: heute)
@@ -463,6 +468,7 @@ model Booking {
   @@index([expertId, date, status])
   @@index([userId])
   @@index([statusToken])
+  @@index([guestToken])
 }
 
 model Review {

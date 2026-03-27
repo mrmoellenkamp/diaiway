@@ -220,17 +220,19 @@ export async function GET(
           },
         })
         // Fallback ohne Webhook/verifySessionPayment: KD trotzdem setzen (onPaymentReceived läuft hier nicht)
-        await ensureCustomerNumber(booking.userId).catch((err) =>
-          console.error("[pay GET status] ensureCustomerNumber shugyo:", err)
-        )
+        if (booking.userId) {
+          await ensureCustomerNumber(booking.userId).catch((err) =>
+            console.error("[pay GET status] ensureCustomerNumber shugyo:", err)
+          )
+          await markVerified(booking.userId, "STRIPE_PAYMENT").catch((err) =>
+            console.error("[pay GET status] markVerified:", err)
+          )
+        }
         if (booking.expert?.userId) {
           await ensureCustomerNumber(booking.expert.userId).catch((err) =>
             console.error("[pay GET status] ensureCustomerNumber takumi:", err)
           )
         }
-        await markVerified(booking.userId, "STRIPE_PAYMENT").catch((err) =>
-          console.error("[pay GET status] markVerified:", err)
-        )
         return NextResponse.json({ status: "paid" })
       }
     } catch {
