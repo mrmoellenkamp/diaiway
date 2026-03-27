@@ -1258,84 +1258,89 @@ export default function AvailabilityPage() {
                           </select>
                         </div>
 
-                        {/* Preis + auto-Berechnung */}
+                        {/* ── Preis ────────────────────────────────────────── */}
                         {(() => {
-                          const [sh, sm] = guestForm.startTime.split(":").map(Number)
-                          const [eh, em] = guestForm.endTime.split(":").map(Number)
-                          const durationMin = guestForm.date ? Math.max(0, (eh * 60 + em) - (sh * 60 + sm)) : 0
-                          const autoPrice = priceVideo15 > 0 && durationMin > 0
-                            ? Math.round((priceVideo15 * durationMin / 15) * 100) / 100
+                          const [sh, sm] = (guestForm.startTime || "0:0").split(":").map(Number)
+                          const [eh, em] = (guestForm.endTime   || "0:0").split(":").map(Number)
+                          const durationMin = Math.max(0, (eh * 60 + em) - (sh * 60 + sm))
+                          const autoPrice = (priceVideo15 > 0 && durationMin > 0)
+                            ? Math.round(priceVideo15 * (durationMin / 15) * 100) / 100
                             : null
-                          const customPrice = guestForm.totalPrice ? Number(guestForm.totalPrice) : null
-                          const effectivePrice = customPrice ?? autoPrice
+                          const customPrice = guestForm.totalPrice !== "" ? Number(guestForm.totalPrice) : null
+                          const displayPrice = customPrice ?? autoPrice
+
+                          const fmtEur = (n: number) =>
+                            n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
 
                           return (
-                            <div className="flex flex-col gap-3">
-                              {/* Berechneter Preis – wie Buchungsseite */}
-                              {durationMin > 0 && effectivePrice !== null && (
-                                <div className={[
-                                  "flex items-center justify-between rounded-xl border px-4 py-3 transition-colors",
-                                  customPrice !== null
-                                    ? "border-primary/30 bg-primary/5"
-                                    : "border-border bg-muted/30",
-                                ].join(" ")}>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">
-                                      {durationMin} Min · {locale === "en" ? "Total" : "Gesamtbetrag"}
-                                      {customPrice === null && autoPrice !== null && (
-                                        <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                                          {locale === "en" ? "auto" : "berechnet"}
-                                        </span>
-                                      )}
-                                      {customPrice !== null && (
-                                        <span className="ml-1.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                                          {locale === "en" ? "custom" : "individuell"}
-                                        </span>
-                                      )}
-                                    </p>
-                                    <p className="text-xl font-bold text-foreground">
-                                      {effectivePrice.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                                    </p>
-                                  </div>
-                                  {customPrice !== null && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setGuestForm((f) => ({ ...f, totalPrice: "" }))}
-                                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                                    >
-                                      {locale === "en" ? "Reset to auto" : "Zurücksetzen"}
-                                    </button>
-                                  )}
-                                </div>
-                              )}
+                            <div className="flex flex-col gap-2">
 
-                              {/* Individuellen Preis angeben */}
-                              <details className="group rounded-xl border border-dashed border-border/60">
-                                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground">
-                                  <span>
-                                    {locale === "en" ? "Or enter a custom price" : locale === "es" ? "O introduce un precio personalizado" : "Oder individuellen Preis angeben"}
-                                  </span>
-                                  <span className="text-muted-foreground/50 group-open:rotate-180 transition-transform">▾</span>
-                                </summary>
-                                <div className="px-4 pb-3 pt-1">
-                                  <input
-                                    type="number" min="1" step="0.01"
-                                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                    value={guestForm.totalPrice}
-                                    onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
-                                    placeholder={autoPrice !== null
-                                      ? `${autoPrice.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € (${locale === "en" ? "calculated" : "berechnet"})`
-                                      : t("guestInvite.priceHint")}
-                                  />
-                                  <p className="mt-1.5 text-[11px] text-muted-foreground">
-                                    {locale === "en"
-                                      ? "Leave blank to use the automatically calculated price."
-                                      : locale === "es"
-                                      ? "Deja en blanco para usar el precio calculado automáticamente."
-                                      : "Leer lassen = berechneter Preis wird verwendet."}
+                              {/* Preis-Anzeige – immer sichtbar sobald Datum gewählt */}
+                              <div className={[
+                                "flex items-center justify-between rounded-xl border px-4 py-3",
+                                displayPrice !== null
+                                  ? customPrice !== null
+                                    ? "border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20"
+                                    : "border-primary/30 bg-primary/5"
+                                  : "border-border/60 bg-muted/30",
+                              ].join(" ")}>
+                                <div>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                    {durationMin > 0 ? `${durationMin} Min · ` : ""}
+                                    {locale === "en" ? "Total amount" : "Gesamtbetrag"}
+                                    {displayPrice !== null && customPrice === null && (
+                                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                                        {locale === "en" ? "auto" : "berechnet"}
+                                      </span>
+                                    )}
+                                    {customPrice !== null && (
+                                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                                        {locale === "en" ? "custom" : "individuell"}
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-2xl font-bold text-foreground">
+                                    {displayPrice !== null
+                                      ? fmtEur(displayPrice)
+                                      : <span className="text-base text-muted-foreground">–</span>}
                                   </p>
                                 </div>
-                              </details>
+                                {customPrice !== null && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setGuestForm((f) => ({ ...f, totalPrice: "" }))}
+                                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                                  >
+                                    {locale === "en" ? "Reset" : "Zurücksetzen"}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Individuellen Preis eingeben */}
+                              <div className="rounded-xl border border-dashed border-border/60 px-4 py-3">
+                                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                                  {locale === "en" ? "Or enter a custom price (€)" : locale === "es" ? "O introduce un precio personalizado (€)" : "Oder individuellen Preis eingeben (€)"}
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="0.01"
+                                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                  value={guestForm.totalPrice}
+                                  onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
+                                  placeholder={autoPrice !== null
+                                    ? fmtEur(autoPrice)
+                                    : locale === "en" ? "e.g. 99.00" : "z.B. 99,00"}
+                                />
+                                {autoPrice !== null && (
+                                  <p className="mt-1 text-[11px] text-muted-foreground">
+                                    {locale === "en"
+                                      ? `Leave blank to use auto-calculated price (${fmtEur(autoPrice)}).`
+                                      : `Leer lassen = berechneter Preis (${fmtEur(autoPrice)}) wird verwendet.`}
+                                  </p>
+                                )}
+                              </div>
+
                             </div>
                           )
                         })()}
