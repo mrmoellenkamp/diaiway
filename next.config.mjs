@@ -47,6 +47,22 @@ const nextConfig = {
       bodySizeLimit: "8mb",
     },
   },
+  async headers() {
+    return [
+      {
+        // Gast-Call-Seite: Stripe Embedded Checkout bettet hCaptcha als Sub-iframe ein.
+        // Ohne diese Policy blockiert der Browser Camera+Mic für alle Sub-iFrames,
+        // was zu Permission-Policy-Fehlern und dem fehlgeschlagenen enumerateDevices-Aufruf führt.
+        source: "/call/:path*",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(self)",
+          },
+        ],
+      },
+    ]
+  },
   async redirects() {
     return [
       { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },

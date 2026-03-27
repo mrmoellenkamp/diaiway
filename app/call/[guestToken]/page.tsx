@@ -36,7 +36,17 @@ interface BookingInfo {
   expert: { name: string; avatarUrl?: string | null }
 }
 
-type Stage = "loading" | "form" | "checkout" | "joining" | "in_call" | "success" | "error" | "already_paid"
+interface WindowInfo {
+  payOpenAt: string
+  callStartAt: string
+  callEndAt: string
+  payCloseAt: string
+  isOpen: boolean
+  isExpired: boolean
+  secondsUntilOpen: number
+}
+
+type Stage = "loading" | "too_early" | "expired" | "form" | "checkout" | "joining" | "in_call" | "success" | "error" | "already_paid"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +73,8 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
 
   const [stage, setStage] = useState<Stage>("loading")
   const [booking, setBooking] = useState<BookingInfo | null>(null)
+  const [windowInfo, setWindowInfo] = useState<WindowInfo | null>(null)
+  const [countdown, setCountdown] = useState(0)
   const [errorMsg, setErrorMsg] = useState("")
 
   // Form state
@@ -111,12 +123,18 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
         }
         const data = await res.json()
         const b: BookingInfo = data.booking
+        const wi: WindowInfo | null = data.windowInfo ?? null
         setBooking(b)
+        if (wi) setWindowInfo(wi)
 
         if (b.alreadyPaid) {
           setStage("already_paid")
+        } else if (wi?.isExpired) {
+          setStage("expired")
+        } else if (wi && !wi.isOpen) {
+          setCountdown(wi.secondsUntilOpen)
+          setStage("too_early")
         } else {
-          // Pre-fill email from guestEmail if available
           setStage("form")
         }
       } catch {
@@ -126,6 +144,26 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
     }
     load()
   }, [guestToken, t])
+
+  // Countdown: tick every second, reload when window opens
+  useEffect(() => {
+    if (stage !== "too_early") return
+    if (countdown <= 0) {
+      window.location.reload()
+      return
+    }
+    const id = setInterval(() => {
+      setCountdown((s) => {
+        if (s <= 1) {
+          clearInterval(id)
+          window.location.reload()
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [stage, countdown])
 
   // Submit form → create Stripe session
   const handleSubmit = useCallback(async () => {
@@ -249,19 +287,92 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
     )
   }
 
+  // ── Too early: payment link not yet active ──────────────────────────────────
+  if (stage === "too_early") {
+    const hh = Math.floor(countdown / 3600)
+    const mm = Math.floor((countdown % 3600) / 60)
+    const ss = countdown % 60
+    const countdownStr = hh > 0
+      ? `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
+      : `${mm}:${String(ss).padStart(2, "0")}`
+    const callStart = windowInfo?.callStartAt
+      ? new Date(windowInfo.callStartAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+      : booking?.startTime ?? ""
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">Noch nicht aktiv</h2>
+          <p className="text-slate-600 mb-1 text-sm">
+            Der Zahlungslink öffnet 5 Minuten vor dem Call.
+          </p>
+          <p className="text-slate-500 text-sm mb-6">
+            Call-Start: <span className="font-medium text-slate-700">{callStart} Uhr</span>
+          </p>
+          <div className="text-4xl font-bold tabular-nums text-primary mb-6">{countdownStr}</div>
+          <p className="text-xs text-slate-400">Diese Seite lädt automatisch neu wenn der Link aktiv wird.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Expired ─────────────────────────────────────────────────────────────────
+  if (stage === "expired") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+          <PhoneOff className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">Termin abgelaufen</h2>
+          <p className="text-slate-600 text-sm">
+            Dieser Call-Link ist nicht mehr gültig. Bitte wende dich an deinen Gesprächspartner.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (stage === "already_paid") {
+    const callActive = windowInfo
+      ? windowInfo.isOpen
+      : true  // if no windowInfo, assume it's open (backward compat)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <p className="text-slate-700 mb-6">{t("guestCall.alreadyPaid")}</p>
-          {bookingId && (
-            <a
-              href={`/session/${bookingId}`}
-              className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition"
-            >
-              {t("guestCall.joinCall")}
-            </a>
+          {callActive ? (
+            bookingId ? (
+              <a
+                href={`/session/${bookingId}`}
+                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition"
+              >
+                {t("guestCall.joinCall")}
+              </a>
+            ) : (
+              // Booking ID may be missing if user lands here fresh – use guestToken to fetch it
+              <button
+                onClick={async () => {
+                  const res = await fetch(`/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}`)
+                  const data = await res.json()
+                  if (data.booking?.id) {
+                    window.location.href = `/session/${data.booking.id}`
+                  }
+                }}
+                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition"
+              >
+                {t("guestCall.joinCall")}
+              </button>
+            )
+          ) : windowInfo?.isExpired ? (
+            <p className="text-sm text-slate-500">Der Call-Zeitraum ist abgelaufen.</p>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Du kannst dem Call ab{" "}
+              {windowInfo?.callStartAt
+                ? new Date(windowInfo.callStartAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+                : booking?.startTime ?? ""}{" "}
+              Uhr beitreten.
+            </p>
           )}
         </div>
       </div>

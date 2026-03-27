@@ -3,6 +3,11 @@ import { prisma } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
+import { parseBerlinDateTime } from "@/lib/date-utils"
+
+// Payment window: opens 5 min before call, closes 5 min after call end
+const PAY_OPEN_MIN_BEFORE  = 5
+const CALL_GRACE_MIN_AFTER = 5
 
 export const runtime = "nodejs"
 
@@ -68,6 +73,32 @@ export async function POST(req: Request) {
   }
   if (booking.paymentStatus === "paid") {
     return NextResponse.json({ error: "Bereits bezahlt.", code: "ALREADY_PAID" }, { status: 409 })
+  }
+
+  // Enforce payment window: 5 min before call start until 5 min after call end
+  if (booking.date && booking.startTime && booking.endTime) {
+    const now = new Date()
+    const callStart = parseBerlinDateTime(booking.date, booking.startTime)
+    const callEnd   = parseBerlinDateTime(booking.date, booking.endTime)
+    const payOpenAt = new Date(callStart.getTime() - PAY_OPEN_MIN_BEFORE  * 60_000)
+    const payCloseAt = new Date(callEnd.getTime()  + CALL_GRACE_MIN_AFTER * 60_000)
+    if (now < payOpenAt) {
+      return NextResponse.json(
+        {
+          error: "Der Zahlungslink ist noch nicht aktiv.",
+          code: "TOO_EARLY",
+          payOpenAt: payOpenAt.toISOString(),
+          callStartAt: callStart.toISOString(),
+        },
+        { status: 425 }  // Too Early
+      )
+    }
+    if (now > payCloseAt) {
+      return NextResponse.json(
+        { error: "Der Termin ist abgelaufen.", code: "EXPIRED" },
+        { status: 410 }  // Gone
+      )
+    }
   }
 
   // Reuse existing Stripe session if still open
@@ -212,14 +243,43 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Einladung nicht gefunden." }, { status: 404 })
   }
 
+  // Compute time window info for the client
+  let windowInfo: {
+    payOpenAt: string
+    callStartAt: string
+    callEndAt: string
+    payCloseAt: string
+    isOpen: boolean
+    isExpired: boolean
+    secondsUntilOpen: number
+  } | null = null
+
+  if (booking.date && booking.startTime && booking.endTime) {
+    const now = new Date()
+    const callStart  = parseBerlinDateTime(booking.date, booking.startTime)
+    const callEnd    = parseBerlinDateTime(booking.date, booking.endTime)
+    const payOpenAt  = new Date(callStart.getTime() - PAY_OPEN_MIN_BEFORE  * 60_000)
+    const payCloseAt = new Date(callEnd.getTime()   + CALL_GRACE_MIN_AFTER * 60_000)
+    const isOpen    = now >= payOpenAt && now <= payCloseAt
+    const isExpired = now > payCloseAt
+    const secondsUntilOpen = isOpen ? 0 : Math.max(0, Math.ceil((payOpenAt.getTime() - now.getTime()) / 1000))
+    windowInfo = {
+      payOpenAt:    payOpenAt.toISOString(),
+      callStartAt:  callStart.toISOString(),
+      callEndAt:    callEnd.toISOString(),
+      payCloseAt:   payCloseAt.toISOString(),
+      isOpen,
+      isExpired,
+      secondsUntilOpen,
+    }
+  }
+
   if (booking.paymentStatus === "paid") {
     return NextResponse.json({
-      booking: {
-        ...booking,
-        alreadyPaid: true,
-      },
+      booking: { ...booking, alreadyPaid: true },
+      windowInfo,
     })
   }
 
-  return NextResponse.json({ booking })
+  return NextResponse.json({ booking, windowInfo })
 }
