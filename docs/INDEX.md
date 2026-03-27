@@ -30,17 +30,17 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 - AI-Guide, Kategorien (Taxonomie), Buchungen Video/Voice, Instant Connect, Sessions, Wallet, Postfach (Chat + Waymails), Profil, Session-Timeout, Push, Safety
 
 ### Takumi (Experten)
-- Verfügbarkeit, Live-Status, Buchungsanfragen, Instant Connect
+- Verfügbarkeit (inkl. Tab **Gast einladen** → Gast-Call-Link), Profil-Moderation (Freigabe vor Live-Schaltung), Live-Status, Buchungsanfragen, Instant Connect
 
 ### Admin
-- Dashboard mit **9 Tabs** inkl. **Statistik** (Website-Traffic); Unterseiten Taxonomie, Home-News, Finance, Health-Check, Safety, Templates; Vision-Scanner; DSGVO-Anonymisierung
+- Dashboard mit **9 Tabs** inkl. **Statistik** (Website-Traffic); Unterseiten Taxonomie, Home-News, Finance, Health-Check, Safety, Templates; **Takumi-Profil-Freigaben** (`/admin/takumi-profile-reviews`), **Freigabe entziehen** (`/admin/takumi-profile-revocations`), **Gast-Buchungen** (`/admin/guest-bookings`); Vision-Scanner; DSGVO-Anonymisierung
 
 ### Öffentlich / Marketing
 - **Beta-Landing** `/beta/de` | `/beta/en` | `/beta/es`
 - **Home-News** auf der Startseite (`GET /api/home-news`)
 
 ### Technisch
-- Next.js 16, Prisma, NextAuth, Stripe, Daily.co, Capacitor 8, i18n DE/EN/ES, E2EE-Calls, Site-Analytics (Beacon + DB), Vercel Analytics
+- Next.js 16, Prisma, NextAuth, Stripe, Daily.co, Capacitor 8, i18n DE/EN/ES, E2EE-Calls, **Gast-Calls** (`/call/[guestToken]`, APIs unter `/api/guest/*`), Kontaktleck-Validierung, Site-Analytics (Beacon + DB), Vercel Analytics
 
 ---
 
@@ -77,12 +77,13 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 |---------|------------------|
 | Auth | `/api/auth/*`, Heartbeat |
 | Buchungen | `/api/bookings`, instant-*, pay-with-wallet |
+| Gast-Calls | `/api/guest/checkout`, `meeting`, `snapshot`, `auto-login`, `signin`; Takumi: `POST/GET /api/expert/guest-bookings` |
 | Sessions | `/api/daily/meeting`, `/api/sessions/*/terminate` |
-| Admin | `/api/admin/stats`, `/api/admin/analytics`, `/api/admin/users`, `/api/admin/finance/*`, `/api/admin/home-news`, `/api/admin/taxonomy/*`, … |
+| Admin | `/api/admin/stats`, `/api/admin/analytics`, `/api/admin/users`, `/api/admin/finance/*`, `/api/admin/home-news`, `/api/admin/taxonomy/*`, `/api/admin/guest-bookings`, `/api/admin/takumi-profile-reviews`, `/api/admin/takumi-profile-revocations`, … |
 | Öffentlich | `/api/home-news`, `/api/taxonomy/categories`, `/api/takumis` |
 | Analytics | `POST /api/analytics/beacon` (öffentlich, kein `/admin`-Tracking) |
-| Cron | `/api/cron/release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data` (Header `CRON_SECRET`) |
-| Safety | `/api/safety/pre-check`, `snapshot`, … |
+| Cron | `/api/cron/release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders` (Header `CRON_SECRET`) |
+| Safety | `/api/safety/pre-check`, `snapshot`; Gäste: `POST /api/guest/snapshot` |
 | Dateien | `/api/files/secure-upload` |
 
 ---

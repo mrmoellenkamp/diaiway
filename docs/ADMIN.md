@@ -17,6 +17,9 @@ app/(app)/admin/
 ├── safety/
 ├── safety/incidents/
 ├── templates/
+├── takumi-profile-reviews/   # Profil-Freigaben (pending_review)
+├── takumi-profile-revocations/  # Freigabe entziehen + Textbausteine
+├── guest-bookings/     # Gast-Call-Einladungen: Liste, Steuerung
 └── scanner/            # Redirect → /admin (Scanner-Tab)
 ```
 
@@ -78,7 +81,7 @@ Live-Monitoring für kritische Systemkomponenten.
 ### CRON-MONITOR
 
 - **Quelle**: `CronRunLog` (Prisma)
-- **Logs**: `release-wallet`, `experts-offline`, `cleanup-safety-data`
+- **Logs**: `release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders` (siehe `vercel.json`)
 - **Anzeige**: Letzter Laufzeitpunkt pro Cron
 - **Cron-Routen** schreiben nach jedem Lauf `upsert` in `CronRunLog`
 
@@ -225,7 +228,16 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 | `/admin/templates` | Waymail-Vorlagen |
 | `/admin/safety` | Safety Reports |
 | `/admin/safety/incidents` | KI-Incidents (Vision) |
+| `/admin/takumi-profile-reviews` | Warteschlange `pending_review`: Bio-Arbeitsversion vs. `bioLive`, Freigabe/Ablehnung |
+| `/admin/takumi-profile-revocations` | Manuelles Entziehen der Freigabe (nur bei `approved`), wählbare Benachrichtigungs-Textbausteine (`TakumiProfileRevokeSnippet`) |
+| `/admin/guest-bookings` | Alle Gast-Call-Buchungen: Filter, Takumi-Zuordnung, Link kopieren, **Stornieren** (nur unbezahlt), **Löschen** (hart) |
 | `/admin/scanner` | Redirect → `/admin` (Scanner nur als Tab) |
+
+### Gast-Buchungen (Admin-Steuerung)
+
+- **Liste**: `GET /api/admin/guest-bookings` (optional `?status=unpaid|paid|all`, `?search=` E-Mail-Fragment)
+- **Stornieren**: `PATCH /api/admin/guest-bookings/[id]` mit `{ "action": "cancel" }` – nur wenn `paymentStatus !== paid`; berechtigt: **Admin** oder **Takumi**, dem die Buchung gehört (`booking.expert.userId`)
+- **Löschen**: `PATCH` mit `{ "action": "delete" }` – **nur Admin** (Datensatz entfernen)
 
 ---
 
@@ -239,6 +251,12 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 | `/api/admin/users/[id]` | DELETE | Anonymisierung (nicht Admin), Blob-Delete |
 | `/api/user/account` | PATCH | Pause/Resume (inkl. liveStatus offline) |
 | `/api/user/account` | DELETE | Selbstlöschung (Anonymisierung) |
+| `/api/admin/guest-bookings` | GET | Gast-Buchungen (Filter, Suche) |
+| `/api/admin/guest-bookings/[id]` | PATCH | `cancel` \| `delete` (delete nur Admin) |
+| `/api/admin/takumi-profile-reviews` | GET, PATCH | Profil-Prüfungs-Warteschlange, Freigabe/Ablehnung |
+| `/api/admin/takumi-profile-revocations` | POST | Freigabe entziehen + Benachrichtigung |
+| `/api/admin/takumi-profile-revoke-snippets` | GET, POST | Textbausteine für Widerruf |
+| `/api/admin/takumi-profile-revoke-snippets/[id]` | PATCH, DELETE | Einzelner Textbaustein |
 
 ---
 
@@ -251,10 +269,14 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
   "crons": [
     { "path": "/api/cron/release-wallet", "schedule": "0 6 * * *" },
     { "path": "/api/cron/experts-offline", "schedule": "0 7 * * *" },
-    { "path": "/api/cron/instant-request-cleanup", "schedule": "0 8 * * *" }
+    { "path": "/api/cron/instant-request-cleanup", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/cleanup-safety-data", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/session-reminders", "schedule": "*/1 * * * *" }
   ]
 }
 ```
+
+**Hinweis:** `session-reminders` minütlich setzt Voraussetzungen am Hosting-Plan voraus; auf Hobby ggf. anpassen oder extern triggern.
 
 ### Hobby-Plan
 

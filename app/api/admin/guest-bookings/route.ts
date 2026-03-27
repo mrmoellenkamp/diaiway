@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { requireAdminApi } from "@/lib/api-auth"
+import { requireAdminApi } from "@/lib/require-admin"
 
 export const runtime = "nodejs"
 
@@ -11,7 +11,7 @@ export const runtime = "nodejs"
  */
 export async function GET(req: NextRequest) {
   const authResult = await requireAdminApi()
-  if (authResult.response) return authResult.response
+  if (!authResult.ok) return authResult.response
 
   const { searchParams } = new URL(req.url)
   const statusFilter = searchParams.get("status") || "all"

@@ -113,12 +113,12 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 ├── app/
 │   ├── (app)/              # Geschützte App-Routen
 │   │   ├── admin/          # Admin: Dashboard + taxonomy, home-news, finance, health-check, safety, takumi-profile-reviews, takumi-profile-revocations, guest-bookings, …
-│   │   ├── call/[guestToken]/  # Öffentlich: Gast-Call Legal-Gate + Zahlung + Video
 │   │   ├── ai-guide/
 │   │   ├── booking/[id]/
 │   │   ├── session/[id]/   # Session-Seite (Daily.co)
 │   │   ├── sessions/
 │   │   └── ...
+│   ├── call/[guestToken]/  # Öffentlich: Gast-Call (Legal-Gate, Stripe, Daily)
 │   ├── api/
 │   │   ├── admin/finance/  # Summary, Force-Capture, Manual-Release, Audit-Log, Export
 │   │   ├── bookings/       # POST, instant, instant-check, pay-with-wallet
@@ -316,7 +316,7 @@ npx prisma studio
 1. Projekt mit GitHub verbinden
 2. Umgebungsvariablen setzen (inkl. `DATABASE_URL` / `DIRECT_URL`, `CRON_SECRET` für Cron-Routes)
 3. Build: Standard ist `npm run build` – dabei laufen **`prisma migrate deploy`** (offene Migrationen auf die DB) **und** `prisma generate` vor `next build`. Vercel muss dafür **Production** (und ggf. Preview) mit derselben DB-URL versorgen.
-4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`; für **Gast-Calls** zusätzlich Metadaten `paymentType: guest_call_payment` (Embedded Checkout für `/call/…` – siehe `app/api/webhooks/stripe/route.ts`)
+4. Stripe Webhook: `checkout.session.completed`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`; für **Gast-Calls** setzt die Checkout-Session in den Metadaten u. a. `type: guest_call_payment` und `bookingId` (siehe `app/api/webhooks/stripe/route.ts`)
 5. Cron-Jobs: `vercel.json` – `release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders`; alle benötigen `Authorization: Bearer <CRON_SECRET>` (außer ggf. Hobby-Plan-Limits beachten)
 
 ### Vercel CLI (ohne Git)

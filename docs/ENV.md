@@ -44,6 +44,8 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 - `payment_intent.amount_capturable_updated` (Fallback bei Hold & Capture)
 - `payment_intent.payment_failed`
 
+**Gast-Calls:** Embedded Checkout setzt in den Session-Metadaten u. a. `type: guest_call_payment` und `bookingId`; der Webhook-Handler in `app/api/webhooks/stripe/route.ts` verarbeitet diesen Pfad gesondert (Sofortzahlung, optional Shugyo-Konto).
+
 ## AI (diAIway intelligence)
 
 | Variable | Beschreibung |
@@ -112,7 +114,7 @@ VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateV
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `CRON_SECRET` | Schützt Cron-Endpoints (`/api/cron/release-wallet`, `/api/cron/daily-ghost-sessions`). Bei Vercel Cron: `Authorization: Bearer <CRON_SECRET>` |
+| `CRON_SECRET` | Schützt Cron-Endpoints. Aufruf: `Authorization: Bearer <CRON_SECRET>`. Routen u. a.: `/api/cron/release-wallet`, `/api/cron/experts-offline`, `/api/cron/instant-request-cleanup`, `/api/cron/cleanup-safety-data`, `/api/cron/session-reminders`, `/api/cron/daily-ghost-sessions` (siehe `vercel.json`) |
 | `DAILY_GHOST_SECRET` | Alternative zu CRON_SECRET nur für `/api/cron/daily-ghost-sessions` |
 | `TZ` | Timezone (z.B. `Europe/Berlin` für CET/CEST) |
 

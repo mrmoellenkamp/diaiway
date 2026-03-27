@@ -15,6 +15,8 @@
 1. Key in `de.ts` ergänzen
 2. Entsprechende Übersetzung in `en.ts` und `es.ts` ergänzen
 
+**Rechtstexte / Gast-Flows:** Keys unter `guestCall.*` (öffentliche Call-Seite) und `guestInvite.*` (Takumi „Gast einladen“) in allen drei Dateien synchron halten; `npm run docs:check` prüft die i18n-Sync-Regeln.
+
 ### Kategorien
 - Übersetzungen in `cat.{slug}`, `cat.{slug}.desc`, `cat.{slug}.sub{i}`
 - Hook: `useCategories()` aus `lib/categories-i18n.ts`

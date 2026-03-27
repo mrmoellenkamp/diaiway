@@ -18,6 +18,7 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 | GitHub Actions, Secrets, .gitignore-Politik | `docs/GITHUB.md` |
 | Neue Env-Variablen | `docs/ENV.md`, `.env.example` |
 | API-Routen, Datenflüsse, Taxonomie, News, Analytics | `docs/ARCHITECTURE.md` |
+| Gast-Calls, Profil-Moderation, Safety (Gast) | `README.md`, `docs/INDEX.md`, `docs/ARCHITECTURE.md`, `docs/HIDDEN-MECHANICS.md` |
 | Admin-UI, Tabs, Unterseiten, Statistik | `docs/ADMIN.md` |
 | Unsichtbare Logik (degraded Responses, Beacon, …) | `docs/HIDDEN-MECHANICS.md` |
 | i18n-Regeln | `docs/CONTRIBUTING.md` |
@@ -35,7 +36,7 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 
 ## Checkliste vor Release / größerem Merge
 
-- [ ] `README.md`: Admin-Tabs, Beta, Analytics, lokaler Port **3001**, neue Modelle
+- [ ] `README.md`: Admin-Tabs, Beta, Analytics, lokaler Port **3001**, neue Modelle, Gast-Calls, Takumi-Moderation
 - [ ] `docs/INDEX.md` + `docs/GITHUB.md`: neue Docs verlinkt
 - [ ] `docs/ENV.md` + `.env.example`: vollständig
 - [ ] `docs/ARCHITECTURE.md`: neue öffentliche/admin APIs

@@ -1,13 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { requireAdminApi } from "@/lib/api-auth"
+import { requireAuth } from "@/lib/api-auth"
+import { requireAdminApi } from "@/lib/require-admin"
 
 export const runtime = "nodejs"
 
 /**
  * PATCH /api/admin/guest-bookings/[id]
  * Actions: cancel | delete
- * Also used by Takumi to cancel their own guest booking (action: cancel).
+ *
+ * cancel – Admin OR the owning Takumi (booking.expert.userId); only if paymentStatus !== paid
+ * delete – Admin only (hard delete)
  */
 export async function PATCH(
   req: NextRequest,
@@ -15,7 +18,6 @@ export async function PATCH(
 ) {
   const { id } = await params
 
-  // Allow both admin and the owning takumi
   const body = await req.json().catch(() => ({}))
   const { action } = body as { action?: string }
 
@@ -23,15 +25,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Ungültige Aktion. Erlaubt: cancel, delete." }, { status: 400 })
   }
 
-  // For delete, require admin
+  let cancelUserId: string | undefined
+  let cancelJwtRole: string | undefined
+
   if (action === "delete") {
-    const authResult = await requireAdminApi()
-    if (authResult.response) return authResult.response
+    const adminResult = await requireAdminApi()
+    if (!adminResult.ok) return adminResult.response
   } else {
-    // For cancel: accept admin OR the owning takumi (checked below)
-    const { requireAuth } = await import("@/lib/api-auth")
+    // cancel: any logged-in user; ownership checked below
     const authResult = await requireAuth()
     if (authResult.response) return authResult.response
+    cancelUserId = authResult.session.user.id
+    cancelJwtRole = (authResult.session.user as { role?: string }).role
   }
 
   const booking = await prisma.booking.findUnique({
@@ -44,6 +49,19 @@ export async function PATCH(
   }
 
   if (action === "cancel") {
+    const uid = cancelUserId!
+    let isAdmin = false
+    if (cancelJwtRole === "admin") {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: uid },
+        select: { role: true },
+      })
+      isAdmin = dbUser?.role === "admin"
+    }
+    const isExpertOwner = booking.expert?.userId === uid
+    if (!isAdmin && !isExpertOwner) {
+      return NextResponse.json({ error: "Keine Berechtigung." }, { status: 403 })
+    }
     if (booking.paymentStatus === "paid") {
       return NextResponse.json({ error: "Bezahlte Buchungen können nicht storniert werden." }, { status: 409 })
     }
@@ -54,10 +72,7 @@ export async function PATCH(
     return NextResponse.json({ ok: true, status: "cancelled" })
   }
 
-  if (action === "delete") {
-    await prisma.booking.delete({ where: { id } })
-    return NextResponse.json({ ok: true, deleted: true })
-  }
-
-  return NextResponse.json({ error: "Unbekannte Aktion." }, { status: 400 })
+  // delete (admin only – already verified above)
+  await prisma.booking.delete({ where: { id } })
+  return NextResponse.json({ ok: true, deleted: true })
 }

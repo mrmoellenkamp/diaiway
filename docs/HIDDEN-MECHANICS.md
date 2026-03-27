@@ -440,6 +440,13 @@ if (data?.incidentCreated) {
 
 Der Nutzer sieht sofort einen Toast und wird aus dem Call geworfen. Der Incident ist in der DB und unter `/admin/safety/incidents` sichtbar.
 
+### Gast-Calls (`/call/[guestToken]`)
+
+- **Endpoint:** `POST /api/guest/snapshot` – kein NextAuth; `guestToken` + `imageBase64`. Rate-Limit nach IP (`lib/rate-limit.ts`).
+- **Client:** `GuestVideoCall` in `app/call/[guestToken]/page.tsx` plant dieselben Abstände **5 / 30 / 60 / 90 / 120 s** nach Join.
+- **Bei Verstoß:** wie oben Blob + `SafetyIncident`; zusätzlich `moderationViolationAt` am **Experten**-User (Gast oft ohne `User`-Zeile). Kein `setTransactionOnHoldForBooking` in diesem Pfad (Gast-Escrow anders modelliert).
+- **Response:** `incidentCreated: true` → Client beendet den Call (`onLeave`).
+
 ---
 
 ## 10. DB-Resilienz im Auth-Flow
@@ -477,6 +484,7 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | Instant-Abrechnung Idempotenz | `lib/wallet-service.ts` (paymentStatus-Guard in `$transaction`) |
 | Video-Safety PRE_CHECK Gate | `app/api/safety/pre-check/route.ts`, `components/video-call/DailyCallContainer.tsx` |
 | Video-Safety Blitzlicht-Protokoll | `components/video-call/DailyCallContainer.tsx` (SNAPSHOT_DELAYS_MS, Hard-Stop 120s) |
+| Gast-Call Blitzlicht | `app/call/[guestToken]/page.tsx` (`GuestVideoCall` → `/api/guest/snapshot`) |
 | Video-Safety Incident-Terminierung | `DailyCallContainer.tsx` – bei `incidentCreated` → `performCleanup()`, `onCallEnded()`, Toast, Redirect |
 | DSGVO Cleanup (Safety-Blobs) | `app/api/cron/cleanup-safety-data/route.ts` |
 | WalletTransaction-Anonymisierung | `lib/anonymize-user.ts` (referenceId → null, metadata → null) |

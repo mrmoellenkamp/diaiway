@@ -29,8 +29,8 @@ diAIway ist eine **Hybrid-App**:
 - **Seed:** Beim ersten Zugriff füllt `ensureTaxonomySeeded()` die DB aus `lib/categories.ts` (`CategorySeedRow`), falls leer.
 - **Öffentlich:** `GET /api/taxonomy/categories` — aktive Kategorien inkl. Fachbereiche und Takumi-Zählung; Kategorieseiten laden via `getPublicCategoriesForApp()` / `getCategoryForAppBySlug()`.
 - **Admin:** `/admin/taxonomy` — CRUD, Lucide-Icon (`lib/taxonomy-icons.ts`) oder **eigenes Icon** via `POST /api/admin/taxonomy/category-icon` (Vercel Blob). `POST /api/admin/taxonomy/backfill` mappt alte Expert-Felder auf Junction-Tabellen.
-- **Takumi-Profil:** `PUT /api/user/takumi-profile` mit `categoryIds`, `specialtyIds`, `primaryCategoryId`, `primarySpecialtyId`; UI: `components/takumi-taxonomy-editor.tsx`.
-- **Listen:** `lib/expert-to-takumi.ts` — `categorySlugs[]`, `taxonomySearchText`, `allSpecialties[]` für Filter/Suche.
+- **Takumi-Profil:** `PUT /api/user/takumi-profile` mit `categoryIds`, `specialtyIds`, `primaryCategoryId`, `primarySpecialtyId`; UI: `components/takumi-taxonomy-editor.tsx`. **Moderation:** `profileReviewStatus` (`draft` \| `pending_review` \| `approved` \| `rejected`), `bioLive` (zuletzt freigegebene öffentliche Bio), signifikante Bio-Änderungen → erneute Prüfung (`lib/bio-significant-change.ts`, `lib/takumi-profile-moderation.ts`); öffentliche Listen filtern auf `approved` (`lib/takumis-server.ts`, `GET /api/takumis`). **Kontaktlecks:** Freitext in Profil, Chat, Waymails, Portfolio, Projekte → `lib/contact-leak-validation.ts`.
+- **Listen:** `lib/expert-to-takumi.ts` — öffentliche Bio via `lib/expert-public-bio.ts` (`bioLive` während Re-Review); `categorySlugs[]`, `taxonomySearchText`, `allSpecialties[]` für Filter/Suche.
 
 ### Startseiten-Newsfeed (Home)
 
@@ -75,6 +75,16 @@ diAIway ist eine **Hybrid-App**:
 8. Takumi: E-Mail-Link, In-App oder Geplant-Tab → `/booking/respond/[id]` (Annehmen/Ablehnen/Rückfrage)
 9. Shugyo erhält E-Mail + Notification
 10. Session starten (max. 5 Min vor Termin)
+
+### Gast-Calls (externe Gäste, ohne Registrieration)
+
+1. Takumi legt unter **Profil → Verfügbarkeit → Tab „Gast einladen“** eine Buchung an (`POST /api/expert/guest-bookings`): `guestEmail`, `date`, `startTime`, `endTime`, optional `totalPrice`, `callType`, `note`. Es entsteht ein eindeutiger `guestToken`; Slot-Konflikt-Prüfung wie bei anderen Buchungen desselben Experten.
+2. Öffentlicher Link: **`/call/[guestToken]`** (Middleware erlaubt ohne Login). Seite lädt Metadaten via `GET /api/guest/checkout?guestToken=…`.
+3. **Legal + Billing Gate:** Rechnungsdaten (`lib/invoice-requirements.ts`), optional Passwort für späteres Shugyo-Konto, Checkboxen Widerrufsverzicht + Blitzlicht-Einwilligung; `POST /api/guest/checkout` legt Embedded Checkout an (Stripe).
+4. Nach Zahlung: Webhook `checkout.session.completed` mit Metadata `type: guest_call_payment` → Buchung `paid`, optional `createGuestShugyoAccount` + Verknüpfung `booking.userId` (`app/api/webhooks/stripe/route.ts`, `lib/guest-onboarding.ts`).
+5. **Daily.co:** Gast: `POST /api/guest/meeting` (Auth `guestToken`); Takumi: `POST /api/daily/meeting` – bei Gast-Call mit ausstehender Zahlung HTTP **402** `GUEST_PAYMENT_PENDING`. Session-Seite `/session/[id]` pollt Zahlung und leitet Takumi nach `paid` in den Call.
+6. **Safety (Gast):** `POST /api/guest/snapshot` mit `guestToken` + Bild – gleiche Vision-Policy; bei Verstoß Incident, Experten-`moderationViolationAt`; Client: Blitzlicht 5/30/60/90/120 s auf `app/call/[guestToken]/page.tsx` (`GuestVideoCall`).
+7. Optional **Auto-Login** nach Zahlung mit Konto: `GET /api/guest/auto-login` → signiert mit `NEXTAUTH_SECRET`; `GET /api/guest/signin` leitet zur Anmeldung.
 
 ### Instant Connect (Shugyo wartet auf Takumi)
 - **Eligibility**: Takumi muss `liveStatus = available` haben; optional `instantSlots` im Kalender
@@ -129,7 +139,7 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 - **Automated AI-Scanning**: Google Vision API (SafeSearch) prüft Bildinhalte; `lib/vision-safety.ts`; Kategorien: adult, violence, racy (LIKELY/VERY_LIKELY = Verstoß)
 - **EU-Region-Locking**: Vision API nutzt `eu-vision.googleapis.com` – Bilddaten verlassen die EU nicht (DSGVO Art. 44)
 - **PRE_CHECK Gate** (0s): Vor dem Daily-Beitritt wird ein Snapshot der Lokal-Kamera an `POST /api/safety/pre-check` gesendet; bei `safe: false` → Beitritt blockiert. Kein `SafetyIncident` wird angelegt; nur Vision-Check. Der „Beitreten"-Button ist während der Prüfung deaktiviert.
-- **Blitzlicht-Protokoll (feste Intervalle)**: Nach Session-Start werden Snapshots zu exakt **5 s, 30 s, 60 s, 90 s, 120 s** gesendet. Hard-Stop nach 120 Sekunden – kein weiteres Monitoring. Nur bei Video + Safety-Einwilligung.
+- **Blitzlicht-Protokoll (feste Intervalle)**: Nach Session-Start werden Snapshots zu exakt **5 s, 30 s, 60 s, 90 s, 120 s** gesendet. Hard-Stop nach 120 Sekunden – kein weiteres Monitoring. Nur bei Video + Safety-Einwilligung. **Eingeloggte Nutzer:** `POST /api/safety/snapshot` (NextAuth). **Gast-Calls:** `POST /api/guest/snapshot` (Body: `guestToken`, `imageBase64`); bei Verstoß u. a. `SafetyIncident` + Flag am **Experten** (Gast hat oft kein User-Record).
 - **Bei Verstoß (Live)**: Blob speichern (`safety-incidents/`), `SafetyIncident` erstellen, `setTransactionOnHoldForBooking`; **sofortige Verbindungstrennung** – `performCleanup()`, `onCallEnded()`, Toast „Verstoß gegen Community-Richtlinien“
 - **DSGVO-Datenminimierung**: Snapshots ohne zugehörigen `SafetyIncident`-Eintrag werden nach 48 h durch den Cron `cleanup-safety-data` gelöscht
 - **Manueller Report**: Notfall-Button im Call unterbricht und meldet; Admin prüft unter `/admin/safety/incidents`
@@ -191,6 +201,17 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/bookings/instant-accept` | POST | Instant annehmen (Body) |
 | `/api/booking-respond/[id]` | GET, POST | Bestätigen/Ablehnen/Rückfrage |
 | `/api/availability` | GET, PATCH | Verfügbarkeit (Takumi) |
+| `/api/expert/guest-bookings` | GET, POST | Takumi: Gast-Buchungen listen / anlegen (`guestToken`, `callLink`) |
+
+### Gast (öffentlich / Token-Auth)
+
+| Route | Methode | Beschreibung |
+|-------|---------|--------------|
+| `/api/guest/checkout` | GET, POST | Buchungsinfo; Legal-Gate + Stripe Embedded Checkout Session |
+| `/api/guest/meeting` | POST | Daily-Raum + Gast-Token (`guestToken`, nach `paid`) |
+| `/api/guest/snapshot` | POST | Blitzlicht-Safety (Vision), Rate-Limit pro IP |
+| `/api/guest/auto-login` | GET | Kurzlebiges Signatur-Token (`NEXTAUTH_SECRET`) wenn Konto verknüpft |
+| `/api/guest/signin` | GET | Redirect zur Login-Seite mit Token |
 
 ### Session
 | Route | Methode | Beschreibung |
@@ -207,6 +228,8 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/expert/live-status` | GET, PATCH | liveStatus: offline/available/in_call/busy |
 | `/api/expert/instant-requests` | GET | Eingehende Instant-Anfragen |
 | `/api/expert/heartbeat` | POST | Liveness (hält liveStatus=available) |
+
+*(Gast-Buchungen siehe `/api/expert/guest-bookings` unter Buchungen.)*
 
 ### Zahlung & Wallet
 | Route | Methode | Beschreibung |
@@ -262,6 +285,12 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/admin/safety` | GET | Safety-Overview |
 | `/api/admin/safety/incidents` | GET | Incidents-Liste |
 | `/api/admin/safety/incidents/[id]` | GET, PATCH | Incident |
+| `/api/admin/guest-bookings` | GET | Alle Gast-Buchungen (Filter `status`, Suche `search`) |
+| `/api/admin/guest-bookings/[id]` | PATCH | `action: cancel` (Admin oder besitzender Takumi, nicht bei `paid`) \| `delete` (nur Admin) |
+| `/api/admin/takumi-profile-reviews` | GET, PATCH | Profil-Moderation Warteschlange, Freigabe/Ablehnung |
+| `/api/admin/takumi-profile-revocations` | POST | Freigabe entziehen + Benachrichtigung |
+| `/api/admin/takumi-profile-revoke-snippets` | GET, POST | Widerrufs-Textbausteine |
+| `/api/admin/takumi-profile-revoke-snippets/[id]` | PATCH, DELETE | Textbaustein |
 
 ### Admin Finance
 | Route | Methode | Beschreibung |
@@ -286,6 +315,8 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/cron/experts-offline` | GET | Experten nach Inaktivität → liveStatus: offline |
 | `/api/cron/daily-ghost-sessions` | GET | Ghost-Sessions terminieren |
 | `/api/cron/instant-request-cleanup` | GET | Instant-Anfragen älter 60s → instant_expired, Release, Push/Waymail |
+| `/api/cron/cleanup-safety-data` | GET | Safety-Blobs älter 48h ohne Incident löschen |
+| `/api/cron/session-reminders` | GET | Session-Erinnerungen (minütlich laut `vercel.json`) |
 
 ### Sonstige
 | Route | Methode | Beschreibung |
@@ -303,7 +334,7 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 
 - `app/(app)/admin/layout.tsx`: Server Component mit Auth- und Prisma-Role-Check; **kein Sidebar**
 - Alle `/admin/*` Routen durch Layout geschützt; entkoppelt vom Profil-Kontext
-- **Dashboard**: 8 Tabs (Übersicht, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System); mobile-optimiert
+- **Dashboard**: 9 Tabs (Übersicht, **Statistik**, Nutzer, Buchungen, Takumis, Finanzen, Sicherheit, Scanner, System); mobile-optimiert; weitere Admin-Seiten siehe [ADMIN.md](./ADMIN.md)
 
 ### Health-Check (`/admin/health-check`)
 
@@ -395,6 +426,8 @@ Details: [docs/ADMIN.md](./ADMIN.md)
 | Instant Cleanup | 60s ohne Takumi-Antwort → `instant_expired`, Payment-Release, Push/Waymail |
 | Instant-Abrechnung | Wallet nach Session: Erstkontakt 5 Min gratis, Zweitkontakt 30 Sek gratis (`chargeInstantCallToWallet`) |
 | Wallet-Release-Cron | 24h nach Session-Ende: `processPendingCompletions` (Capture, Rechnung, Takumi-Guthaben) |
+| Gast-Call Zahlung | Stripe Embedded Checkout; Webhook anhand Metadata `type: guest_call_payment`; `userId` auf Buchung optional bis Onboarding |
+| Safety-Blobs | Cron `cleanup-safety-data`: 48h, ohne verknüpften Incident |
 | AdminActionLog | Alle Admin-Aktionen (force_capture, manual_release, etc.) |
 | DirectMessage | `communicationType`: CHAT vs MAIL (Waymail); löschbar (Waymail, Nachricht, Thread) |
 | User.username | Optional, eindeutig; als Profilname (`username ?? name`) überall verwendet |
