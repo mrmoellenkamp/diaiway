@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server"
-import { randomBytes } from "crypto"
-import { randomUUID } from "crypto"
+import { randomBytes, randomUUID } from "crypto"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
+import {
+  sendGuestCallInviteEmail,
+  sendGuestCallConfirmTakumiEmail,
+  sendGuestEmailDeliveryFailedEmail,
+} from "@/lib/email"
 
 export const runtime = "nodejs"
 
@@ -19,7 +23,7 @@ export const POST = apiHandler(async (req) => {
   const { session } = authResult
 
   const body = await req.json()
-  const { guestEmail, date, startTime, endTime, callType, totalPrice, note } = body
+  const { guestEmail, date, startTime, endTime, callType, totalPrice, note, hostMessage } = body
 
   if (!guestEmail || !date || !startTime || !endTime) {
     return NextResponse.json({ error: "Pflichtfelder fehlen: guestEmail, date, startTime, endTime." }, { status: 400 })
@@ -97,13 +101,56 @@ export const POST = apiHandler(async (req) => {
     })
   })
 
-  const callLink = `/call/${guestToken}`
+  const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || ""
+  const callLink = `${appUrl}/call/${guestToken}`
+  const priceFormatted = effectiveTotalPrice.toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
+  // ── Send e-mails (fire-and-forget, never block the response) ─────────────
+  void (async () => {
+    // 1. Invitation e-mail to guest
+    const guestMailResult = await sendGuestCallInviteEmail({
+      to: guestEmail,
+      takumiName: expert.name || "Ihr Takumi",
+      date,
+      startTime,
+      endTime,
+      price: priceFormatted,
+      callLink,
+      hostMessage: typeof hostMessage === "string" ? hostMessage : undefined,
+    })
+
+    // 2. If guest mail failed → notify Takumi immediately
+    if (!guestMailResult.sent) {
+      await sendGuestEmailDeliveryFailedEmail({
+        to: expertEmail,
+        takumiName: expert.name || "Takumi",
+        guestEmail,
+        date,
+        startTime,
+        callLink,
+      })
+    }
+
+    // 3. Confirmation e-mail to Takumi (always)
+    await sendGuestCallConfirmTakumiEmail({
+      to: expertEmail,
+      takumiName: expert.name || "Takumi",
+      guestEmail,
+      date,
+      startTime,
+      endTime,
+      price: priceFormatted,
+    })
+  })()
 
   return NextResponse.json({
     booking: {
       id: booking.id,
       guestToken: booking.guestToken,
-      callLink,
+      callLink: `/call/${guestToken}`,
       date: booking.date,
       startTime: booking.startTime,
       endTime: booking.endTime,

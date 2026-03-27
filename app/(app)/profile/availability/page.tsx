@@ -232,12 +232,14 @@ export default function AvailabilityPage() {
   const [guestBookings, setGuestBookings] = useState<GuestBooking[]>([])
   const [guestForm, setGuestForm] = useState({
     guestEmail: "", date: "", startTime: "10:00", endTime: "11:00",
-    callType: "VIDEO", totalPrice: "", note: "",
+    callType: "VIDEO", totalPrice: "", note: "", hostMessage: "",
   })
   const [guestCreating, setGuestCreating] = useState(false)
   const [guestLink, setGuestLink] = useState<string | null>(null)
   const [guestCopied, setGuestCopied] = useState(false)
   const [guestCancelling, setGuestCancelling] = useState<string | null>(null)
+  // Takumi price per 15 min for auto-calculation
+  const [priceVideo15, setPriceVideo15] = useState<number>(0)
 
   // Calendar navigation
   const today = new Date()
@@ -260,8 +262,9 @@ export default function AvailabilityPage() {
       fetch(`/api/availability?takumiId=${session.user.id}&full=true`).then((r) => r.json()),
       fetch("/api/bookings?view=takumi").then((r) => r.json()),
       fetch("/api/expert/guest-bookings").then((r) => r.json()),
+      fetch("/api/user/takumi-profile").then((r) => r.json()).catch(() => null),
     ])
-      .then(([availData, bookingsData, guestData]) => {
+      .then(([availData, bookingsData, guestData, profileData]) => {
         setSlots(availData.slots || EMPTY_SLOTS)
         setYearlyRules(availData.yearlyRules || [])
         setExceptions(availData.exceptions || [])
@@ -272,6 +275,11 @@ export default function AvailabilityPage() {
           )
         )
         setGuestBookings(guestData.bookings || [])
+        if (profileData?.expert) {
+          const p15 = profileData.expert.priceVideo15Min
+            ?? (profileData.expert.pricePerSession ? profileData.expert.pricePerSession / 2 : 0)
+          setPriceVideo15(Number(p15) || 0)
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -291,6 +299,7 @@ export default function AvailabilityPage() {
         body: JSON.stringify({
           ...guestForm,
           totalPrice: guestForm.totalPrice ? Number(guestForm.totalPrice) : undefined,
+          hostMessage: guestForm.hostMessage || undefined,
         }),
       })
       const data = await res.json()
@@ -312,7 +321,7 @@ export default function AvailabilityPage() {
         },
         ...prev,
       ])
-      setGuestForm({ guestEmail: "", date: "", startTime: "10:00", endTime: "11:00", callType: "VIDEO", totalPrice: "", note: "" })
+      setGuestForm({ guestEmail: "", date: "", startTime: "10:00", endTime: "11:00", callType: "VIDEO", totalPrice: "", note: "", hostMessage: "" })
       toast.success("Einladungslink erstellt!")
     } catch {
       toast.error("Netzwerkfehler.")
@@ -1232,34 +1241,85 @@ export default function AvailabilityPage() {
                           </div>
                         )}
 
-                        {/* Call-Typ + Preis */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
-                            <select
-                              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                              value={guestForm.callType}
-                              onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
-                            >
-                              <option value="VIDEO">Video</option>
-                              <option value="VOICE">Audio</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.price")}</label>
-                            <input
-                              type="number" min="1" step="0.01"
-                              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                              value={guestForm.totalPrice}
-                              onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
-                              placeholder={t("guestInvite.priceHint")}
-                            />
-                          </div>
+                        {/* Call-Typ */}
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
+                          <select
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={guestForm.callType}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
+                          >
+                            <option value="VIDEO">Video</option>
+                            <option value="VOICE">Audio</option>
+                          </select>
                         </div>
 
-                        {/* Notiz */}
+                        {/* Preis + auto-Berechnung */}
+                        {(() => {
+                          const [sh, sm] = guestForm.startTime.split(":").map(Number)
+                          const [eh, em] = guestForm.endTime.split(":").map(Number)
+                          const durationMin = guestForm.date ? Math.max(0, (eh * 60 + em) - (sh * 60 + sm)) : 0
+                          const autoPrice = priceVideo15 > 0 && durationMin > 0
+                            ? Math.round((priceVideo15 * durationMin / 15) * 100) / 100
+                            : null
+                          const displayPrice = guestForm.totalPrice
+                            ? Number(guestForm.totalPrice)
+                            : autoPrice
+                          return (
+                            <div className="flex flex-col gap-2">
+                              {/* Price summary — like booking page */}
+                              {durationMin > 0 && displayPrice !== null && (
+                                <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
+                                  <span className="text-sm text-muted-foreground">
+                                    {durationMin} Min · {locale === "en" ? "Total" : "Gesamtbetrag"}
+                                  </span>
+                                  <span className="text-lg font-bold text-foreground">
+                                    {displayPrice.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                                  </span>
+                                </div>
+                              )}
+                              <div>
+                                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                  {t("guestInvite.price")}
+                                  {autoPrice !== null && !guestForm.totalPrice && (
+                                    <span className="ml-1 text-muted-foreground/60">({locale === "en" ? "auto" : "automatisch"})</span>
+                                  )}
+                                </label>
+                                <input
+                                  type="number" min="1" step="0.01"
+                                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                  value={guestForm.totalPrice}
+                                  onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
+                                  placeholder={autoPrice !== null
+                                    ? `${autoPrice.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € (${locale === "en" ? "calculated" : "berechnet"})`
+                                    : t("guestInvite.priceHint")}
+                                />
+                              </div>
+                            </div>
+                          )
+                        })()}
+
+                        {/* Persönliche Nachricht an Gast */}
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.note")}</label>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            {locale === "en" ? "Personal message to guest" : locale === "es" ? "Mensaje personal al invitado" : "Persönliche Nachricht an den Gast"}
+                            <span className="ml-1 text-muted-foreground/60">({locale === "en" ? "optional, appears in invitation email" : locale === "es" ? "opcional, aparece en el correo" : "optional, erscheint in der Einladungs-E-Mail"})</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                            value={guestForm.hostMessage}
+                            onChange={(e) => setGuestForm((f) => ({ ...f, hostMessage: e.target.value }))}
+                            placeholder={locale === "en" ? "e.g. Looking forward to our conversation about your project!" : locale === "es" ? "ej. ¡Espero con interés nuestra conversación!" : "z.B. Ich freue mich auf unser Gespräch zu deinem Projekt!"}
+                          />
+                        </div>
+
+                        {/* Interne Notiz */}
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            {t("guestInvite.note")}
+                            <span className="ml-1 text-muted-foreground/60">({locale === "en" ? "internal, not sent" : locale === "es" ? "interna, no se envía" : "intern, wird nicht versendet"})</span>
+                          </label>
                           <input
                             type="text"
                             className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"

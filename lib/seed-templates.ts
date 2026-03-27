@@ -92,4 +92,137 @@ El equipo de diAiway`
       update: { subject, body },
     })
   }
+
+  // ── Gast-Call: Einladung an Gast ─────────────────────────────────────────
+  const tGuestInvite = await prisma.communicationTemplate.upsert({
+    where: { slug: "guest-call-invite" },
+    create: {
+      slug: "guest-call-invite",
+      category: "BOOKING",
+      availableVariables: ["takumi_name", "date", "start_time", "end_time", "price", "call_link", "host_message"],
+    },
+    update: {},
+  })
+
+  for (const { language, subject, body } of [
+    {
+      language: "de",
+      subject: "Du hast eine Call-Einladung von {{takumi_name}} erhalten",
+      body: `Hallo,
+
+{{takumi_name}} hat dich zu einem persönlichen Call auf diAiway eingeladen.
+
+Termin: {{date}}, {{start_time}} – {{end_time}} Uhr
+Preis: {{price}} €
+
+{{host_message}}
+
+Klicke auf den Button, um deinen Termin zu bestätigen und zu bezahlen. Eine Registrierung ist nicht erforderlich.
+
+{{call_link}}
+
+Bitte halte diesen Link vertraulich – er ist nur für dich bestimmt.`,
+    },
+    {
+      language: "en",
+      subject: "You have received a call invitation from {{takumi_name}}",
+      body: `Hello,
+
+{{takumi_name}} has invited you to a personal call on diAiway.
+
+Appointment: {{date}}, {{start_time}} – {{end_time}}
+Price: {{price}} €
+
+{{host_message}}
+
+Click the button to confirm and pay for your appointment. No registration required.
+
+{{call_link}}
+
+Please keep this link confidential – it is intended for you only.`,
+    },
+    {
+      language: "es",
+      subject: "Has recibido una invitación de llamada de {{takumi_name}}",
+      body: `Hola,
+
+{{takumi_name}} te ha invitado a una llamada personal en diAiway.
+
+Cita: {{date}}, {{start_time}} – {{end_time}}
+Precio: {{price}} €
+
+{{host_message}}
+
+Haz clic en el botón para confirmar y pagar tu cita. No es necesario registrarse.
+
+{{call_link}}
+
+Por favor, mantén este enlace confidencial – es solo para ti.`,
+    },
+  ]) {
+    await prisma.templateTranslation.upsert({
+      where: { templateId_language: { templateId: tGuestInvite.id, language } },
+      create: { templateId: tGuestInvite.id, language, subject, body },
+      update: { subject, body },
+    })
+  }
+
+  // ── Gast-Call: Bestätigung an Takumi ─────────────────────────────────────
+  const tGuestConfirm = await prisma.communicationTemplate.upsert({
+    where: { slug: "guest-call-confirm-takumi" },
+    create: {
+      slug: "guest-call-confirm-takumi",
+      category: "BOOKING",
+      availableVariables: ["takumi_name", "guest_email", "date", "start_time", "end_time", "price"],
+    },
+    update: {},
+  })
+
+  for (const { language, subject, body } of [
+    {
+      language: "de",
+      subject: "Einladung an {{guest_email}} wurde versendet",
+      body: `Hallo {{takumi_name}},
+
+deine Gast-Einladung wurde erfolgreich versendet.
+
+Gast: {{guest_email}}
+Termin: {{date}}, {{start_time}} – {{end_time}} Uhr
+Preis: {{price}} €
+
+Der Gast erhält den Call-Link per E-Mail und kann direkt beitreten, sobald die Zahlung erfolgt ist. Du wirst benachrichtigt, sobald der Gast bezahlt hat.`,
+    },
+    {
+      language: "en",
+      subject: "Invitation to {{guest_email}} has been sent",
+      body: `Hello {{takumi_name}},
+
+your guest invitation has been successfully sent.
+
+Guest: {{guest_email}}
+Appointment: {{date}}, {{start_time}} – {{end_time}}
+Price: {{price}} €
+
+The guest will receive the call link by email and can join directly once payment is made. You will be notified as soon as the guest has paid.`,
+    },
+    {
+      language: "es",
+      subject: "La invitación a {{guest_email}} ha sido enviada",
+      body: `Hola {{takumi_name}},
+
+tu invitación de invitado se ha enviado correctamente.
+
+Invitado: {{guest_email}}
+Cita: {{date}}, {{start_time}} – {{end_time}}
+Precio: {{price}} €
+
+El invitado recibirá el enlace de la llamada por correo electrónico y podrá unirse directamente una vez realizado el pago. Recibirás una notificación cuando el invitado haya pagado.`,
+    },
+  ]) {
+    await prisma.templateTranslation.upsert({
+      where: { templateId_language: { templateId: tGuestConfirm.id, language } },
+      create: { templateId: tGuestConfirm.id, language, subject, body },
+      update: { subject, body },
+    })
+  }
 }

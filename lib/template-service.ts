@@ -105,3 +105,49 @@ export const BOOKING_VARIABLES = [
   "booking_time",
   "booking_note",
 ] as const
+
+export const GUEST_CALL_VARIABLES = [
+  "takumi_name",
+  "guest_email",
+  "date",
+  "start_time",
+  "end_time",
+  "price",
+  "call_link",
+  "host_message",
+] as const
+
+/**
+ * Rendert ein Template direkt mit expliziten Variablen — ohne DB-Lookup für Sender/Empfänger.
+ * Verwendet für E-Mails an nicht registrierte Nutzer (z.B. Gäste).
+ */
+export async function getRenderedTemplateRaw(
+  slug: string,
+  language: SupportedLanguage,
+  variables: Record<string, string>,
+): Promise<{ subject: string; body: string } | null> {
+  const template = await prisma.communicationTemplate.findUnique({
+    where: { slug },
+    include: {
+      translations: {
+        where: { language },
+        take: 1,
+      },
+    },
+  })
+
+  // Fallback: try "de" if requested language not found
+  let translation = template?.translations[0]
+  if (!translation && language !== "de") {
+    const fallback = await prisma.communicationTemplate.findUnique({
+      where: { slug },
+      include: { translations: { where: { language: "de" }, take: 1 } },
+    })
+    translation = fallback?.translations[0]
+  }
+  if (!translation) return null
+
+  const subject = replaceVariables(translation.subject ?? "", variables)
+  const body = replaceVariables(translation.body, variables)
+  return { subject, body }
+}

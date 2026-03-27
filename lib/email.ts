@@ -440,6 +440,216 @@ export async function sendInvoiceReadyEmail(opts: {
   }
 }
 
+/* ----- Gast-Call: Einladung an Gast ----- */
+/**
+ * Sendet die Gast-Einladungsmail. Versucht zuerst das DB-Template (slug: guest-call-invite),
+ * fällt auf ein eingebettetes Fallback-Template zurück wenn nicht gefunden.
+ * Gibt { sent, error? } zurück – wirft niemals.
+ */
+export async function sendGuestCallInviteEmail(opts: {
+  to: string
+  takumiName: string
+  date: string
+  startTime: string
+  endTime: string
+  price: string
+  callLink: string
+  hostMessage?: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const { getRenderedTemplateRaw } = await import("@/lib/template-service")
+
+  const hostMessageBlock = opts.hostMessage?.trim()
+    ? `<table role="presentation" width="100%" style="background:#f0fdf4;border-left:3px solid #064e3b;border-radius:0 8px 8px 0;margin-bottom:20px;">
+        <tr><td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;font-style:italic;color:#1c1917;">"${opts.hostMessage}"</p>
+        </td></tr>
+       </table>`
+    : ""
+
+  let subject = `Du hast eine Call-Einladung von ${opts.takumiName} erhalten`
+  let bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo,<br/>
+      <strong style="color:#1c1917;">${opts.takumiName}</strong> hat dich zu einem persönlichen Call auf diAiway eingeladen.
+    </p>
+    <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:20px;">
+      <tr><td style="padding:20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Datum:</strong> ${opts.date}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Uhrzeit:</strong> ${opts.startTime}–${opts.endTime} Uhr</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Preis:</strong> ${opts.price} €</p>
+      </td></tr>
+    </table>
+    ${hostMessageBlock}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0 24px;">
+          <a href="${opts.callLink}" target="_blank" style="display:inline-block;padding:14px 40px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            Zum Call beitreten
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:#78716c;">
+      Keine Registrierung erforderlich – Zahlung direkt vor dem Call.<br/>
+      Bitte halte diesen Link vertraulich, er ist nur für dich bestimmt.
+    </p>
+    <p style="margin:12px 0 0;font-size:11px;color:#a8a29e;word-break:break-all;">
+      Link: <a href="${opts.callLink}" style="color:#064e3b;">${opts.callLink}</a>
+    </p>`
+
+  // Try DB template first
+  try {
+    const rendered = await getRenderedTemplateRaw("guest-call-invite", "de", {
+      takumi_name: opts.takumiName,
+      date: opts.date,
+      start_time: opts.startTime,
+      end_time: opts.endTime,
+      price: opts.price,
+      call_link: opts.callLink,
+      host_message: opts.hostMessage?.trim() ? `Nachricht: ${opts.hostMessage}` : "",
+    })
+    if (rendered) {
+      subject = rendered.subject
+      // Convert plain-text body to simple HTML paragraphs
+      const textBody = rendered.body.replace(/\{\{call_link\}\}/g, opts.callLink)
+      bodyHtml = textBody
+        .split(/\n\n+/)
+        .map((p) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#78716c;">${p.replace(/\n/g, "<br/>")}</p>`)
+        .join("") +
+        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+          <tr><td align="center" style="padding:8px 0 24px;">
+            <a href="${opts.callLink}" target="_blank" style="display:inline-block;padding:14px 40px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+              Zum Call beitreten
+            </a>
+          </td></tr>
+        </table>` + hostMessageBlock
+    }
+  } catch {
+    // keep fallback body
+  }
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject,
+      html: emailWrapper("Call-Einladung", bodyHtml),
+    })
+    return { sent: true }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err)
+    return { sent: false, error }
+  }
+}
+
+/* ----- Gast-Call: Bestätigung an Takumi ----- */
+export async function sendGuestCallConfirmTakumiEmail(opts: {
+  to: string
+  takumiName: string
+  guestEmail: string
+  date: string
+  startTime: string
+  endTime: string
+  price: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const { getRenderedTemplateRaw } = await import("@/lib/template-service")
+
+  let subject = `Einladung an ${opts.guestEmail} wurde versendet`
+  let bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.takumiName}</strong>,<br/>
+      deine Gast-Einladung wurde erfolgreich versendet.
+    </p>
+    <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:12px;margin-bottom:20px;">
+      <tr><td style="padding:20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Gast:</strong> ${opts.guestEmail}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Datum:</strong> ${opts.date}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Uhrzeit:</strong> ${opts.startTime}–${opts.endTime} Uhr</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Preis:</strong> ${opts.price} €</p>
+      </td></tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:#78716c;">
+      Du wirst benachrichtigt, sobald der Gast bezahlt hat. Den Call-Link kannst du jederzeit in deiner Verfügbarkeitsansicht kopieren.
+    </p>`
+
+  try {
+    const rendered = await getRenderedTemplateRaw("guest-call-confirm-takumi", "de", {
+      takumi_name: opts.takumiName,
+      guest_email: opts.guestEmail,
+      date: opts.date,
+      start_time: opts.startTime,
+      end_time: opts.endTime,
+      price: opts.price,
+    })
+    if (rendered) {
+      subject = rendered.subject
+      bodyHtml = rendered.body
+        .split(/\n\n+/)
+        .map((p) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#78716c;">${p.replace(/\n/g, "<br/>")}</p>`)
+        .join("")
+    }
+  } catch {
+    // keep fallback
+  }
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject,
+      html: emailWrapper("Einladung versendet", bodyHtml),
+    })
+    return { sent: true }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err)
+    return { sent: false, error }
+  }
+}
+
+/* ----- Gast-Call: Zustellfehler-Benachrichtigung an Takumi ----- */
+export async function sendGuestEmailDeliveryFailedEmail(opts: {
+  to: string
+  takumiName: string
+  guestEmail: string
+  date: string
+  startTime: string
+  callLink: string
+}): Promise<void> {
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.takumiName}</strong>,<br/>
+      die Einladungsmail an deinen Gast konnte leider <strong style="color:#dc2626;">nicht zugestellt</strong> werden.
+    </p>
+    <table role="presentation" width="100%" style="background:#fef2f2;border-left:3px solid #dc2626;border-radius:0 8px 8px 0;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <p style="margin:0;font-size:13px;color:#1c1917;"><strong>Nicht zugestellte Adresse:</strong> ${opts.guestEmail}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#1c1917;"><strong>Termin:</strong> ${opts.date}, ${opts.startTime} Uhr</p>
+      </td></tr>
+    </table>
+    <p style="margin:0 0 16px;font-size:13px;color:#78716c;">
+      Bitte prüfe die E-Mail-Adresse und sende dem Gast den Call-Link manuell:
+    </p>
+    <table role="presentation" width="100%" style="background:#f5f5f4;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:12px 16px;">
+        <p style="margin:0;font-size:12px;font-family:monospace;color:#1c1917;word-break:break-all;">${opts.callLink}</p>
+      </td></tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:#a8a29e;">
+      Du kannst den Link auch jederzeit in deiner <a href="${process.env.NEXTAUTH_URL || ""}/profile/availability" style="color:#064e3b;">Verfügbarkeitsansicht</a> kopieren.
+    </p>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: `⚠ E-Mail an ${opts.guestEmail} nicht zustellbar – bitte Adresse prüfen`,
+      html: emailWrapper("E-Mail nicht zustellbar", body),
+    })
+  } catch {
+    // silent — delivery failure notification itself failed, nothing we can do
+  }
+}
+
 /* ----- Gutschrift bereit (Takumi) ----- */
 export async function sendCreditNoteReadyEmail(opts: {
   to: string

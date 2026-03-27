@@ -31,6 +31,8 @@ interface Template {
 const LANGUAGES = ["de", "en", "es"] as const
 const STANDARD_VARS = ["{{sender_name}}", "{{recipient_name}}", "{{sender_role}}", "{{recipient_role}}"]
 const BOOKING_VARS = ["{{booking_date}}", "{{service_name}}", "{{booking_time}}", "{{booking_note}}"]
+const GUEST_CALL_VARS = ["{{takumi_name}}", "{{guest_email}}", "{{date}}", "{{start_time}}", "{{end_time}}", "{{price}}", "{{call_link}}", "{{host_message}}"]
+const GUEST_CALL_SLUGS = ["guest-call-invite", "guest-call-confirm-takumi"]
 
 export default function AdminTemplatesPage() {
   const { t } = useI18n()
@@ -161,8 +163,10 @@ export default function AdminTemplatesPage() {
     }
   }
 
-  const varsForCategory = (cat: string) =>
-    cat === "BOOKING" ? [...STANDARD_VARS, ...BOOKING_VARS] : STANDARD_VARS
+  const varsForTemplate = (slug: string, cat: string) => {
+    if (GUEST_CALL_SLUGS.includes(slug)) return GUEST_CALL_VARS
+    return cat === "BOOKING" ? [...STANDARD_VARS, ...BOOKING_VARS] : STANDARD_VARS
+  }
 
   return (
     <PageContainer>
@@ -231,7 +235,7 @@ export default function AdminTemplatesPage() {
                     <span className="text-xs font-normal text-muted-foreground">({t.category})</span>
                   </CardTitle>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {varsForCategory(t.category).map((v) => (
+                    {varsForTemplate(t.slug, t.category).map((v) => (
                       <code key={v} className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                         {v}
                       </code>
