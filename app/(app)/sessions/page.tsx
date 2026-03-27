@@ -2,6 +2,8 @@
 
 import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
 import useSWR from "swr"
 import { PageContainer } from "@/components/page-container"
 import { BookingCard } from "@/components/booking-card"
@@ -9,7 +11,7 @@ import { scheduleSessionReminder, cancelPastReminders } from "@/lib/native-utils
 import { getCachedBookings, setCachedBookings } from "@/lib/offline-cache"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { Video, CalendarCheck, CheckCircle2, Inbox } from "lucide-react"
+import { Video, CalendarCheck, CheckCircle2, Inbox, UserPlus } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { parseBerlinDateTime } from "@/lib/date-utils"
@@ -85,6 +87,9 @@ function LoadingSkeleton() {
 /** Inner content that uses useSearchParams – must be wrapped in Suspense to avoid prerender errors */
 function SessionsContent() {
   const { t } = useI18n()
+  const { data: session } = useSession()
+  const appRole = (session?.user as { appRole?: string })?.appRole
+  const isTakumi = appRole === "takumi"
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
   const initialTab: TabId =
@@ -175,6 +180,24 @@ function SessionsContent() {
   return (
     <PageContainer>
       <AppSubpageHeader className="mb-3" title={t("sessions.title")} />
+
+      {/* Gast einladen – prominent für Takumis */}
+      {isTakumi && (
+        <Link
+          href="/profile/availability?tab=guest"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10 active:scale-[0.98]"
+        >
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
+            <UserPlus className="size-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Externen Gast einladen</p>
+            <p className="text-xs text-muted-foreground">Call-Link erstellen – ohne Registrierung für den Gast</p>
+          </div>
+          <span className="text-xs font-medium text-primary">→</span>
+        </Link>
+      )}
+
       {/* Tab bar */}
       <div className="flex gap-1 rounded-xl bg-muted p-1" role="tablist">
         {tabs.map((tab) => (

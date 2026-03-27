@@ -161,7 +161,7 @@ export async function sendVerificationEmail(opts: {
 }
 
 /* ----- Shared email wrapper ----- */
-function emailWrapper(title: string, body: string): string {
+export function emailWrapper(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background-color:#fafaf9;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">

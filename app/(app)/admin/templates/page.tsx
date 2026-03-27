@@ -42,6 +42,7 @@ export default function AdminTemplatesPage() {
   const [seedLoading, setSeedLoading] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
   const [testUserId, setTestUserId] = useState("")
+  const [testEmail, setTestEmail] = useState("")
   const [edits, setEdits] = useState<Record<string, Record<string, { subject?: string; body?: string }>>>({})
 
   const load = useCallback(async () => {
@@ -135,8 +136,15 @@ export default function AdminTemplatesPage() {
     }
   }
 
+  const isGuestCallSlug = (slug: string) => GUEST_CALL_SLUGS.includes(slug)
+
   async function handleTest(slug: string, language: string) {
-    if (!testUserId.trim()) {
+    const isGuest = isGuestCallSlug(slug)
+    if (isGuest && !testEmail.trim()) {
+      toast.error("Bitte Test-E-Mail-Adresse eingeben (für Gast-Call-Templates).")
+      return
+    }
+    if (!isGuest && !testUserId.trim()) {
       toast.error(t("toast.enterUserId"))
       return
     }
@@ -149,12 +157,16 @@ export default function AdminTemplatesPage() {
           action: "test",
           slug,
           language,
-          recipientUserId: testUserId.trim(),
+          ...(isGuest ? { testEmail: testEmail.trim() } : { recipientUserId: testUserId.trim() }),
         }),
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`Test-Waymail gesendet (ID: ${data.waymailId})`)
+        if (data.mode === "email") {
+          toast.success(`Test-E-Mail gesendet an ${data.sentTo}`)
+        } else {
+          toast.success(`Test-Waymail gesendet (ID: ${data.waymailId})`)
+        }
       } else {
         toast.error(data.error ?? "Fehler")
       }
@@ -210,19 +222,37 @@ export default function AdminTemplatesPage() {
             {/* Test-Empfänger */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Test-Waymail senden</CardTitle>
+                <CardTitle className="text-sm">Test senden</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[200px]">
-                  <Label className="text-xs">Empfänger User-ID</Label>
-                  <Input
-                    placeholder="User-ID (z.B. eigene)"
-                    value={testUserId}
-                    onChange={(e) => setTestUserId(e.target.value)}
-                    className="mt-1"
-                  />
+              <CardContent className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="text-xs">
+                      Empfänger User-ID <span className="font-normal text-muted-foreground">(Standard-Templates &rarr; Waymail)</span>
+                    </Label>
+                    <Input
+                      placeholder="User-ID (z.B. eigene)"
+                      value={testUserId}
+                      onChange={(e) => setTestUserId(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">
+                      Test-E-Mail <span className="font-normal text-muted-foreground">(Gast-Call-Templates &rarr; echte E-Mail)</span>
+                    </Label>
+                    <Input
+                      type="email"
+                      placeholder="test@beispiel.de"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Wähle ein Template und Sprache, dann „Test senden“.</p>
+                <p className="text-xs text-muted-foreground">
+                  Gast-Call-Templates (<code className="rounded bg-muted px-1 py-0.5 text-[11px]">guest-call-*</code>) senden eine echte E-Mail, alle anderen eine Waymail.
+                </p>
               </CardContent>
             </Card>
 

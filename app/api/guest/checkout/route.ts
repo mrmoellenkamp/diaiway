@@ -197,6 +197,7 @@ export async function GET(req: Request) {
     where: { guestToken },
     select: {
       id: true,
+      isGuestCall: true,
       date: true,
       startTime: true,
       endTime: true,
@@ -207,7 +208,7 @@ export async function GET(req: Request) {
     },
   })
 
-  if (!booking || !(booking as { isGuestCall?: boolean }).isGuestCall) {
+  if (!booking || !booking.isGuestCall) {
     return NextResponse.json({ error: "Einladung nicht gefunden." }, { status: 404 })
   }
 
