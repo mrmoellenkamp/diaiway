@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -194,6 +194,7 @@ function WeeklySlotsEditor({
 export default function AvailabilityPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t, locale } = useI18n()
   const userRole = (session?.user as { role?: string })?.role
   const appRole = (session?.user as { appRole?: string })?.appRole
@@ -578,7 +579,10 @@ export default function AvailabilityPage() {
           )}
 
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
-          <Tabs defaultValue="schedule" className="w-full">
+          <Tabs
+            defaultValue={["schedule","instant","calendar","rules","guest"].includes(searchParams.get("tab") ?? "") ? (searchParams.get("tab") as string) : "schedule"}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="schedule" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Clock className="size-3" /> {t("avail.tabWeekly")}

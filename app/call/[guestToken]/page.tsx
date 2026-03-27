@@ -333,12 +333,32 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
           )}
           <p className="text-sm text-slate-500">{t("guestCall.with")}</p>
           <h2 className="text-xl font-bold text-slate-800">{booking?.expert?.name}</h2>
-          <div className="mt-3 flex justify-center gap-6 text-sm text-slate-600">
+          <div className="mt-3 flex justify-center gap-4 text-sm text-slate-600 flex-wrap">
             <span><span className="font-medium">{t("guestCall.date")}:</span> {booking ? formatDate(booking.date) : "–"}</span>
             <span><span className="font-medium">{t("guestCall.time")}:</span> {booking?.startTime}–{booking?.endTime}</span>
-            <span><span className="font-medium">{t("guestCall.price")}:</span> {formatPrice(booking?.totalPrice)}</span>
           </div>
         </div>
+
+        {/* Preis – prominent wie Buchungsseite */}
+        {booking && (
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
+            <div>
+              <p className="text-sm text-slate-500">
+                {(() => {
+                  if (!booking.startTime || !booking.endTime) return t("guestCall.price")
+                  const [sh, sm] = booking.startTime.split(":").map(Number)
+                  const [eh, em] = booking.endTime.split(":").map(Number)
+                  const dur = (eh * 60 + em) - (sh * 60 + sm)
+                  return dur > 0 ? `${dur} Min · ${t("guestCall.price")}` : t("guestCall.price")
+                })()}
+              </p>
+              <p className="text-2xl font-bold text-slate-900">{formatPrice(booking.totalPrice)}</p>
+            </div>
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <ShieldCheck className="size-6 text-primary" />
+            </div>
+          </div>
+        )}
 
         {/* Billing data */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
