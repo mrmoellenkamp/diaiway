@@ -127,7 +127,7 @@ const de = {
   "landing.reasonEscrowDesc": "Dein Geld ist sicher. Zahlung erst nach Freigabe.",
   "landing.takumiExpectationsAria": "Hinweis zur Rolle eines Takumi",
   "landing.takumiExpectationsBody":
-    "Es ist wichtig zu verstehen, dass ein Takumi Hilfestellung leistet, er ist nicht für dein Problem oder Projekt verantwortlich. Die Erwartungshaltung ist, Hilfe zu bekommen, nicht einen Handwerker zu rufen, der über das Telefon dein Problem löst.",
+    "Es ist wichtig, die Rolle des Takumi richtig zu verstehen. Ein Takumi gibt dir Hilfestellung bei deinem DIY-Projekt; er ist dein Mentor, Begleiter und dein As im Ärmel, wenn es mal klemmt. Er wird sein Bestes geben, um mit dir gemeinsam dein Problem zu lösen. Ein Takumi ist jedoch nicht verantwortlich für dein Projekt oder dein Problem – er ist keine verlängerte Werkbank, der du deine Arbeit aufdrückst. Es bleibt dein Herzensprojekt, dein Fortschritt und dein Erfolg.",
   "landing.takumiBenefitsHeading": "Und was hat ein Takumi davon?",
   "landing.takumiBenefitsIntroA": "Auf der Plattform ",
   "landing.takumiBenefitsIntroPlatform": "diAiway",

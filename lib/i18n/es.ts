@@ -126,7 +126,7 @@ const es = {
   "landing.reasonEscrowDesc": "Tu dinero está seguro. Pago solo tras aprobación.",
   "landing.takumiExpectationsAria": "Nota sobre el papel del Takumi",
   "landing.takumiExpectationsBody":
-    "Es importante entender que un Takumi ofrece orientación; no es responsable de tu problema o proyecto. La expectativa es recibir ayuda, no llamar a un artesano que resuelva tu problema por teléfono.",
+    "Es importante entender bien el papel del Takumi. Un Takumi te apoya en tu proyecto DIY; es tu mentor, compañía y tu as en la manga cuando las cosas se atascan. Dará lo mejor de sí para resolver el problema contigo. Sin embargo, un Takumi no es responsable de tu proyecto o tu problema - no es un banco de trabajo extra al que le encargas tu trabajo. Sigue siendo tu proyecto del corazón, tu avance y tu éxito.",
   "landing.takumiBenefitsHeading": "¿Qué gana un Takumi?",
   "landing.takumiBenefitsIntroA": "En la plataforma ",
   "landing.takumiBenefitsIntroPlatform": "diAiway",
