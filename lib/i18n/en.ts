@@ -110,6 +110,12 @@ const en = {
   "landing.conceptTakumiBody":
     "A “Takumi” is a master of their craft, an artisan who has perfected their skills over many years. They bring the intuition, experience, and problem-solving ability that only someone with real-world practice can offer. When AI reaches its limits or a project is too complex for a text-only answer, Takumis step in. Via live video calls or voice calls, they provide individual support.",
   "landing.whyDiaiway": "Why diAiway?",
+  "landing.diaiwayManifestoIsTitle": "What diAiway is",
+  "landing.diaiwayManifestoIsBody":
+    "diAiway is a synergistic knowledge platform that combines the speed of artificial intelligence (Hisho) with the practical intuition of human experts (Takumi). Inspired by the Japanese philosophy of Shugyo, it offers a structured space for individual learning and mastering your own DIY projects. It is a digital ecosystem where live video support and AI-assisted analysis empower you to tackle complex craft or technical challenges on your own, in a lasting way.",
+  "landing.diaiwayManifestoNotTitle": "What diAiway is not",
+  "landing.diaiwayManifestoNotBody":
+    "diAiway is not a classic emergency hotline for acute everyday crises - such as a burst pipe in the middle of the night or a locked-out locksmith situation. Unlike those kinds of instant-help services, the focus here is on planned projects and learning - not quick damage control by third parties, but guidance toward self-help. diAiway is also not an anonymous trade directory or a rigid subscription model; it does not replace on-site tradespeople for large construction sites, but bridges the gap between theoretical AI knowledge and practical implementation help from real experts.",
   "landing.reasonIndividualTitle": "Individual support",
   "landing.reasonIndividualDesc":
     "diAiway combines artificial intelligence and people with experience to support you individually.",
@@ -121,9 +127,10 @@ const en = {
   "landing.reasonQualityDesc": "Our rating system makes each Takumi's quality transparent.",
   "landing.reasonHandshakeTitle": "Handshake",
   "landing.reasonHandshakeDesc":
-    "On first contact you have 5 minutes to see if you are a good match.",
+    "Use the first 5 minutes of a first contact completely risk-free to see whether the chemistry is right and the expertise fits your project. This brief exchange reduces misunderstandings and helps users and Takumis form a real success team before the actual consultation begins. If you realize during this time that different expertise is needed, the call is not charged. Your advantage: full transparency and no risk of buying a pig in a poke.",
   "landing.reasonEscrowTitle": "Escrow protection",
-  "landing.reasonEscrowDesc": "Your money is safe. Payment only after approval.",
+  "landing.reasonEscrowDesc":
+    "Your money is safe for both sides. Payment only after release. Right after the call, the user is asked for feedback and to release the amount. If they do not want to release it, they can report the call in the dialog instead. The platform then investigates. If there is no rating or report, the Takumi automatically receives release after 24 hours.",
   "landing.takumiExpectationsAria": "Note on the Takumi's role",
   "landing.takumiExpectationsBody":
     "It is important to understand a Takumi's role correctly. A Takumi supports your DIY project - they are your mentor, companion, and ace in the hole when things get stuck. They will do their best to solve the problem together with you. A Takumi is not responsible for your project or your problem - they are not an extra workbench you unload your work onto. It stays your passion project, your progress, and your success.",
@@ -164,7 +171,8 @@ const en = {
   "landing.takumiBenefitHishoBody":
     "An interesting angle is the synergy: Hisho helps users get oriented first and can suggest suitable Takumis. That brings you requests that fit your profile better, so you can focus on real expertise.",
   "landing.escrowTitle": "Escrow protection",
-  "landing.escrowDesc": "Your money is safe. Payment only after approval.",
+  "landing.escrowDesc":
+    "Your money is safe for both sides. Payment only after release. Right after the call, the user is asked for feedback and to release the amount. If they do not want to release it, they can report the call in the dialog instead. The platform then investigates. If there is no rating or report, the Takumi automatically receives release after 24 hours.",
   "landing.liveVideoTitle": "Live Video-Sessions",
   "landing.liveVideoDesc": "Direct help via video or phone - individual and competent.",
   "landing.verifiedTitle": "Verified experts",

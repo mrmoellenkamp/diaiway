@@ -25,6 +25,8 @@ import {
   Globe2,
   Award,
   Info,
+  BookOpen,
+  Ban,
 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { takumiPublicLabel } from "@/lib/communication-display"
@@ -402,6 +404,52 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section
+        className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12"
+        aria-labelledby="landing-diaiway-is-heading landing-diaiway-not-heading"
+      >
+        <div className="flex flex-col gap-4">
+          <article className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+            <div className="flex min-h-0">
+              <div className="w-1 shrink-0 bg-primary" aria-hidden />
+              <div className="flex min-w-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5">
+                <BookOpen className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+                <div className="min-w-0">
+                  <h2
+                    id="landing-diaiway-is-heading"
+                    className="text-base font-bold leading-snug tracking-tight text-foreground"
+                  >
+                    {t("landing.diaiwayManifestoIsTitle")}
+                  </h2>
+                  <p className="mt-2.5 text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    {t("landing.diaiwayManifestoIsBody")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article className="overflow-hidden rounded-xl border border-border/60 bg-muted/25 shadow-sm">
+            <div className="flex min-h-0">
+              <div className="w-1 shrink-0 bg-muted-foreground/35" aria-hidden />
+              <div className="flex min-w-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5">
+                <Ban className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
+                <div className="min-w-0">
+                  <h2
+                    id="landing-diaiway-not-heading"
+                    className="text-base font-bold leading-snug tracking-tight text-foreground"
+                  >
+                    {t("landing.diaiwayManifestoNotTitle")}
+                  </h2>
+                  <p className="mt-2.5 text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    {t("landing.diaiwayManifestoNotBody")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 

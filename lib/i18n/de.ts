@@ -111,6 +111,12 @@ const de = {
   "landing.conceptTakumiBody":
     "Ein „Takumi“ ist ein Meister seines Fachs, ein Kunsthandwerker, der seine Technik über viele Jahre perfektioniert hat. Sie bringen die nötige Intuition, Erfahrung und Problemlösungskompetenz ein, die nur ein Mensch mit Praxiserfahrung bieten kann. Wenn die KI an ihre Grenzen stößt oder ein Projekt zu komplex für eine reine Textantwort ist, kommen die Takumis ins Spiel. Über Live-Video-Calls oder Sprachanrufe geben sie individuelle Hilfestellung.",
   "landing.whyDiaiway": "Warum diAiway?",
+  "landing.diaiwayManifestoIsTitle": "Was diAiway ist",
+  "landing.diaiwayManifestoIsBody":
+    "diAiway versteht sich als eine synergetische Wissensplattform, die die Schnelligkeit künstlicher Intelligenz (Hisho) mit der praktischen Intuition menschlicher Experten (Takumi) verbindet. Inspiriert von der japanischen Philosophie des Shugyo, bietet die Seite einen strukturierten Raum für individuelles Lernen und das Meistern eigener Projekte im DIY-Bereich. Es ist ein digitales Ökosystem, in dem Nutzer durch gezielten Live-Video-Support und KI-gestützte Analysen befähigt werden, komplexe handwerkliche oder technische Herausforderungen eigenständig und nachhaltig umzusetzen.",
+  "landing.diaiwayManifestoNotTitle": "Was diAiway nicht ist",
+  "landing.diaiwayManifestoNotBody":
+    "diAiway ist kein klassisches Notfalltelefon für akute Alltagskrisen, wie etwa einen Wasserrohrbruch mitten in der Nacht oder einen ausgesperrten Schlüsseldienst-Fall. Im Gegensatz zu solchen Soforthilfe-Diensten liegt der Fokus hier auf dem geplanten Projekt und dem Wissenserwerb – es geht nicht um die schnelle Schadensbegrenzung durch Dritte, sondern um die Anleitung zur Selbsthilfe. Ebenso ist diAiway kein anonymes Branchenverzeichnis oder ein starres Abo-Modell; es ersetzt nicht den Vor-Ort-Handwerker für Großbaustellen, sondern schließt die Lücke zwischen theoretischem KI-Wissen und praktischer Umsetzungshilfe durch echte Experten.",
   "landing.reasonIndividualTitle": "Individueller Support",
   "landing.reasonIndividualDesc":
     "diAiway verbindet Künstliche Intelligenz und Menschen mit Erfahrung, um dich individuell zu unterstützen.",
@@ -122,9 +128,10 @@ const de = {
   "landing.reasonQualityDesc": "Unser Bewertungssystem macht die Qualität eines Takumis transparent.",
   "landing.reasonHandshakeTitle": "Handshake",
   "landing.reasonHandshakeDesc":
-    "Im Erstkontakt habt ihr 5 Min Zeit, um herauszufinden, ob ihr zusammenpasst.",
+    "Nutze die ersten 5 Minuten eines Erstkontakts völlig risikofrei, um abzuklären, ob die Chemie stimmt und die Expertise zum Projekt passt. Dieser kurze Austausch minimiert Missverständnisse und stellt sicher, dass Nutzer und Takumi ein echtes Erfolgsteam bilden, bevor die eigentliche Beratung beginnt. Stellt ihr in dieser Zeit fest, dass eine andere Expertise nötig ist, wird der Call nicht abgerechnet. Dein Vorteil: Volle Transparenz und kein Risiko, die „Katze im Sack“ zu kaufen.",
   "landing.reasonEscrowTitle": "Escrow-Schutz",
-  "landing.reasonEscrowDesc": "Dein Geld ist sicher. Zahlung erst nach Freigabe.",
+  "landing.reasonEscrowDesc":
+    "Dein Geld ist für beide Seiten sicher. Zahlungen erst nach Freigabe. Direkt nach dem Call wird der Nutzer nach seinem Feedback und der Freigabe des Betrages gefragt. Sollte er den Betrag nicht freigeben wollen, kann er im Dialogfenster alternativ den Call melden. Die Plattform untersucht dann den Vorfall. Wird nicht bewertet oder gemeldet, erhält der Takumi automatisch nach 24h die Freigabe.",
   "landing.takumiExpectationsAria": "Hinweis zur Rolle eines Takumi",
   "landing.takumiExpectationsBody":
     "Es ist wichtig, die Rolle des Takumi richtig zu verstehen. Ein Takumi gibt dir Hilfestellung bei deinem DIY-Projekt; er ist dein Mentor, Begleiter und dein As im Ärmel, wenn es mal klemmt. Er wird sein Bestes geben, um mit dir gemeinsam dein Problem zu lösen. Ein Takumi ist jedoch nicht verantwortlich für dein Projekt oder dein Problem – er ist keine verlängerte Werkbank, der du deine Arbeit aufdrückst. Es bleibt dein Herzensprojekt, dein Fortschritt und dein Erfolg.",
@@ -168,7 +175,8 @@ const de = {
   "landing.takumiBenefitHishoBody":
     "Ein interessanter Aspekt ist die Synergie: Hisho unterstützt Nutzer bei der ersten Einordnung und kann passende Takumis vorschlagen. So erreichen dich Anfragen, die besser zu deinem Profil passen, und du kannst dich auf echte Expertise konzentrieren.",
   "landing.escrowTitle": "Escrow-Schutz",
-  "landing.escrowDesc": "Dein Geld ist sicher. Zahlung erst nach Freigabe.",
+  "landing.escrowDesc":
+    "Dein Geld ist für beide Seiten sicher. Zahlungen erst nach Freigabe. Direkt nach dem Call wird der Nutzer nach seinem Feedback und der Freigabe des Betrages gefragt. Sollte er den Betrag nicht freigeben wollen, kann er im Dialogfenster alternativ den Call melden. Die Plattform untersucht dann den Vorfall. Wird nicht bewertet oder gemeldet, erhält der Takumi automatisch nach 24h die Freigabe.",
   "landing.liveVideoTitle": "Live Video-Sessions",
   "landing.liveVideoDesc": "Direkte Hilfe per Video oder Telefon - individuell und kompetent.",
   "landing.verifiedTitle": "Verifizierte Experten",
