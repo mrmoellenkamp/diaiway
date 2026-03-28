@@ -80,7 +80,7 @@ const en = {
   "landing.findExpert": "Ask AI and find experts (Takumi)",
   "landing.discoverCategories": "Ask AI & discover categories",
   "landing.becomeTakumi": "Become a Takumi",
-  "landing.freeMinutes": "Handshake free",
+  "landing.freeMinutes": "Handshake time",
   "landing.noSubscription": "No subscription",
   "landing.gdprCompliant": "GDPR compliant",
   "landing.mentorTitle": "diAIway intelligence",
@@ -109,6 +109,15 @@ const en = {
   "landing.conceptTakumiTitle": "3. Takumi (匠) - The human expert",
   "landing.conceptTakumiBody":
     "A “Takumi” is a master of their craft, an artisan who has perfected their skills over many years. They bring the intuition, experience, and problem-solving ability that only someone with real-world practice can offer. When AI reaches its limits or a project is too complex for a text-only answer, Takumis step in. Via live video calls or voice calls, they provide individual support.",
+  "landing.whoTakumiTitle": "Who is a Takumi?",
+  "landing.whoTakumiP1":
+    "A Takumi does not have to be a certified pro - what matters far more is deep passion and mastery of the details. Often it is precisely an ambitious ",
+  "landing.whoTakumiEmHobby": "hobbyist",
+  "landing.whoTakumiP2":
+    " who understands a project's pitfalls best, because they have lived through them. While a professional often reaches for standard solutions, a Takumi brings the ",
+  "landing.whoTakumiEmSpirit": "spirit of discovery",
+  "landing.whoTakumiP3":
+    " and the patience your project needs. They are not a distant service provider, but an ally whose knowledge comes not from textbooks but from real, hands-on dedication.",
   "landing.whyDiaiway": "Why diAiway?",
   "landing.diaiwayManifestoIsTitle": "What diAiway is",
   "landing.diaiwayManifestoIsBody":
@@ -167,9 +176,6 @@ const en = {
   "landing.takumiBenefitRepLi2Label": "Specialization:",
   "landing.takumiBenefitRepLi2Body":
     "Position yourself in specific categories (e.g. smart home, classic car restoration, landscape gardening) and reach the audience that needs your exact skills.",
-  "landing.takumiBenefitHishoTitle": "Working with the AI (Hisho)",
-  "landing.takumiBenefitHishoBody":
-    "An interesting angle is the synergy: Hisho helps users get oriented first and can suggest suitable Takumis. That brings you requests that fit your profile better, so you can focus on real expertise.",
   "landing.escrowTitle": "Escrow protection",
   "landing.escrowDesc":
     "Your money is safe for both sides. Payment only after release. Right after the call, the user is asked for feedback and to release the amount. If they do not want to release it, they can report the call in the dialog instead. The platform then investigates. If there is no rating or report, the Takumi automatically receives release after 24 hours.",
@@ -187,6 +193,38 @@ const en = {
   "landing.terms": "Terms",
   "landing.copyright": "© 2026 JM faircharge UG. All rights reserved.",
   "landing.step": "Step",
+
+  "howItWorks.metaTitle": "How it works – diAiway",
+  "howItWorks.metaDescription":
+    "From Shugyo to Takumi: describe your request, Handshake time, escrow protection. How diAiway works, step by step.",
+  "howItWorks.backAria": "Back to home",
+  "howItWorks.pageSubtitle": "The path: From Shugyo to Takumi",
+  "howItWorks.introBadge": "Your journey starts here",
+  "howItWorks.introTitle": "Every master was once a learner.",
+  "howItWorks.introP1": "On diAiway we call learners ",
+  "howItWorks.introShugyo": "Shugyo",
+  "howItWorks.introP2": " – people on the path. And masters ",
+  "howItWorks.introTakumi": "Takumi",
+  "howItWorks.introP3":
+    " – experts who share their knowledge. Like a journey where every harbor brings new insight: you ask your question, find your Takumi, and learn in a live session from someone who has already walked the path.",
+  "howItWorks.step1Title": "Describe your problem",
+  "howItWorks.step1Before":
+    "Your journey starts with a clear direction. Describe your request in whatever way is easiest for you: via ",
+  "howItWorks.step1EmText": "text",
+  "howItWorks.step1Or": " or ",
+  "howItWorks.step1EmBilder": "images",
+  "howItWorks.step1Mid": ". Hisho analyzes your project right away and suggests suitable ",
+  "howItWorks.step1EmTakumi": "Takumis (experts)",
+  "howItWorks.step1After": " who bring exactly the experience you need for your next step.",
+  "howItWorks.step2Title": "The handshake – Handshake time",
+  "howItWorks.step3Title": "Together to the goal – valuing knowledge",
+  "howItWorks.step3Before":
+    "After the handshake, real collaboration begins. Your project is the focus while your Takumi guides you live. Thanks to our ",
+  "howItWorks.step3EmEscrow": "escrow system",
+  "howItWorks.step3After":
+    ", your money stays protected and is only released when you are happy with the session. That way real expertise is paid fairly and your progress toward mastery is safeguarded.",
+  "howItWorks.ctaStart": "Get started for free",
+  "howItWorks.ctaHome": "Back to home",
 
   // Login
   "login.title": "Welcome back",

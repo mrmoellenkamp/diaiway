@@ -119,19 +119,6 @@ function TakumiBenefitsSection() {
                 </div>
               </div>
             </article>
-            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
-              <div className="flex gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <Sparkles className="size-5 text-primary" aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold leading-snug text-foreground">
-                    {t("landing.takumiBenefitHishoTitle")}
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitHishoBody")}</p>
-                </div>
-              </div>
-            </article>
           </div>
         </div>
       </div>
@@ -380,6 +367,24 @@ export default function LandingPage() {
             <p className="text-xs text-muted-foreground leading-relaxed">{t("landing.conceptTakumiBody")}</p>
           </article>
         </div>
+      </section>
+
+      <section
+        className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12"
+        aria-labelledby="landing-who-takumi-heading"
+      >
+        <h2 id="landing-who-takumi-heading" className="mb-4 text-lg font-bold text-foreground">
+          {t("landing.whoTakumiTitle")}
+        </h2>
+        <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+          <p className="text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
+            {t("landing.whoTakumiP1")}
+            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmHobby")}</strong>
+            {t("landing.whoTakumiP2")}
+            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmSpirit")}</strong>
+            {t("landing.whoTakumiP3")}
+          </p>
+        </article>
       </section>
 
       {/* Trust Section */}
