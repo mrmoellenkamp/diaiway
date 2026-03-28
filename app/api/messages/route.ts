@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { sendWaymailNotificationEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { z } from "zod"
 import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
@@ -339,16 +341,18 @@ export const POST = apiHandler(async (req) => {
 
   if (body.communicationType === "CHAT") {
     try {
+      const rloc = await getUserPreferredLocale(recipientId)
+      const chatTitle = pushT(rloc, "chatWritingTitle", { sender: senderName })
       await prisma.notification.create({
         data: {
           userId: recipientId,
           type: "new_message",
-          title: `${senderName} schreibt dir…`,
+          title: chatTitle,
           body: trimmed.length > 60 ? trimmed.slice(0, 60) + "…" : trimmed,
         },
       })
       sendPushToUser(recipientId, {
-        title: `${senderName} schreibt dir…`,
+        title: chatTitle,
         body: trimmed.slice(0, 60) + (trimmed.length > 60 ? "…" : ""),
         url: `/messages?with=${encodeURIComponent(session.user.id)}`,
       }).catch(() => {})
@@ -359,16 +363,18 @@ export const POST = apiHandler(async (req) => {
     // Link zur Waymail-Inbox des Empfängers (recipientId), nicht des Absenders
     const waymailUrl = `${baseUrl}/messages?waymail=${message.id}`
     try {
+      const rloc = await getUserPreferredLocale(recipientId)
+      const wmTitle = pushT(rloc, "waymailFromTitle", { sender: senderName })
       await prisma.notification.create({
         data: {
           userId: recipientId,
           type: "new_message",
-          title: `Waymail von ${senderName}`,
+          title: wmTitle,
           body: (message.subject ?? "").slice(0, 80),
         },
       })
       sendPushToUser(recipientId, {
-        title: `Waymail von ${senderName}`,
+        title: wmTitle,
         body: (message.subject ?? "").slice(0, 60),
         url: waymailUrl,
       }).catch(() => {})

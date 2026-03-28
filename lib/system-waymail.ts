@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 
 /**
  * Erstellt eine System-Waymail (Absender: "diAiway System").
@@ -23,14 +25,16 @@ export async function createSystemWaymail(opts: {
   })
 
   // Zusätzlich Push + Notification für System-Waymail (best effort).
-  // So bekommt der Nutzer auch außerhalb der App einen Hinweis auf neue Nachrichten.
+  const loc = await getUserPreferredLocale(opts.recipientId)
+  const waymailPushTitle = pushT(loc, "newWaymailTitle")
+
   try {
     await prisma.notification.create({
       data: {
         userId: opts.recipientId,
         type: "new_message",
         bookingId: opts.bookingId ?? null,
-        title: "Neue Waymail",
+        title: waymailPushTitle,
         body: (opts.subject || "").slice(0, 80),
       },
     })
@@ -39,7 +43,7 @@ export async function createSystemWaymail(opts: {
   }
 
   sendPushToUser(opts.recipientId, {
-    title: "Neue Waymail",
+    title: waymailPushTitle,
     body: (opts.subject || "").slice(0, 60),
     url: `/messages?waymail=${waymail.id}`,
   }).catch(() => {})

@@ -5,6 +5,8 @@ import { Prisma } from "@prisma/client"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { sendBookingRequestEmail } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { validateBookingDateWindow } from "@/lib/booking-date-validation"
 import { emailForName } from "@/lib/email-utils"
@@ -269,24 +271,32 @@ export const POST = apiHandler(async (req) => {
 
     if (expert.userId) {
       try {
+        const eloc = await getUserPreferredLocale(expert.userId)
+        const timeRange = `${startTime}–${endTime}`
+        const brTitle = pushT(eloc, "bookingRequestUnpaidTitle")
+        const brBody = pushT(eloc, "bookingRequestUnpaidBody", {
+          shugyoName: shugyoCommName,
+          date,
+          timeRange,
+        })
         await prisma.notification.create({
           data: {
             userId: expert.userId,
             type: "booking_request",
             bookingId: booking.id,
-            title: "Neue Buchungsanfrage",
-            body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+            title: brTitle,
+            body: brBody,
           },
         })
         const waymail = await createSystemWaymail({
           recipientId: expert.userId,
-          subject: "Neue Buchungsanfrage",
-          body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          subject: brTitle,
+          body: brBody,
         }).catch(() => null)
         const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
         sendPushToUser(expert.userId, {
-          title: "Neue Buchungsanfrage",
-          body: `${shugyoCommName} möchte am ${date} von ${startTime}–${endTime} Uhr buchen.`,
+          title: brTitle,
+          body: brBody,
           url: waymailUrl,
         }).catch(() => {})
       } catch { /* notification errors must not block */ }

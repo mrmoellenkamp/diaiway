@@ -6,11 +6,15 @@
 
 import { prisma } from "@/lib/db"
 import { sendBookingRequestEmail, sendBookingCancelledEmail } from "@/lib/email"
-import { sendPushToUser } from "@/lib/push"
+import { sendLocalizedPushToUser, sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { getRenderedTemplate } from "@/lib/template-service"
 import { seedCommunicationTemplates } from "@/lib/seed-templates"
 import { communicationUsername } from "@/lib/communication-display"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
+import { serverT } from "@/lib/i18n/server-t"
+import type { SupportedLanguage } from "@/lib/template-service"
 
 export async function notifyAfterPayment(bookingId: string): Promise<{
   ok: boolean
@@ -89,11 +93,17 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
         where: { bookingId, type: "booking_request", userId: notifyUserId },
       }))
       if (!existing) {
-        const bookingTime = `${booking.startTime}–${booking.endTime} Uhr`
-        let waymailSubject = "Neue Buchungsanfrage (bezahlt)"
-        let waymailBody = `${shugyoComm} hat eine Session am ${booking.date} von ${bookingTime} gebucht und bezahlt.`
+        const recipientLocale = await getUserPreferredLocale(notifyUserId)
+        const lang = recipientLocale as SupportedLanguage
+        const bookingTime = `${booking.startTime}–${booking.endTime}`
+        let waymailSubject = serverT(recipientLocale, "notify.fallbackBookingRequestSubject")
+        let waymailBody = serverT(recipientLocale, "notify.fallbackBookingRequestBody", {
+          shugyoName: shugyoComm,
+          date: booking.date,
+          bookingTime,
+        })
 
-        const rendered = await getRenderedTemplate("booking-request-paid", "de", {
+        const rendered = await getRenderedTemplate("booking-request-paid", lang, {
           senderUserId: booking.userId,
           recipientUserId: notifyUserId,
           extraVariables: {
@@ -107,7 +117,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
           waymailBody = rendered.body
         } else {
           await seedCommunicationTemplates().catch(() => {})
-          const retry = await getRenderedTemplate("booking-request-paid", "de", {
+          const retry = await getRenderedTemplate("booking-request-paid", lang, {
             senderUserId: booking.userId,
             recipientUserId: notifyUserId,
             extraVariables: {
@@ -138,11 +148,15 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
         }).catch(() => null)
         notificationCreated = true
         const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
-        sendPushToUser(notifyUserId, {
-          title: "Neue Buchung (bezahlt)",
-          body: `${shugyoComm} hat am ${booking.date} um ${booking.startTime} Uhr gebucht.`,
+        sendLocalizedPushToUser(notifyUserId, (loc) => ({
+          title: pushT(loc, "bookingPaidPushTitle"),
+          body: pushT(loc, "bookingPaidPushBody", {
+            shugyoName: shugyoComm,
+            date: booking.date,
+            time: `${booking.startTime}`,
+          }),
           url: waymailUrl,
-        }).catch(() => {})
+        })).catch(() => {})
       }
     } else {
       console.warn("[notification-service] Expert ohne userId:", booking.expertEmail)
@@ -206,8 +220,14 @@ export async function notifyAfterCancellation(opts: {
 
   if (!recipientUserId) return
 
-  const title = "Buchung storniert"
-  const body = `Deine Buchung am ${opts.date} um ${opts.startTime} Uhr wurde von ${cancelledByName} storniert.`
+  const { getUserPreferredLocale } = await import("@/lib/user-preferred-locale")
+  const loc = await getUserPreferredLocale(recipientUserId)
+  const title = pushT(loc, "bookingCancelledTitle")
+  const body = pushT(loc, "bookingCancelledBody", {
+    date: opts.date,
+    time: opts.startTime,
+    cancelledByName,
+  })
 
   // In-App Notification
   try {

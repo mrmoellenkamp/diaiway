@@ -107,6 +107,10 @@ export async function scheduleSessionReminder(booking: {
   expertName: string
   date: string
   startTime: string
+  /** Android channel label + notification copy (use i18n on the caller). */
+  channelName: string
+  title: string
+  body: string
 }): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   try {
@@ -114,7 +118,7 @@ export async function scheduleSessionReminder(booking: {
     if (Capacitor.getPlatform() === "android") {
       await LocalNotifications.createChannel({
         id: SESSION_CHANNEL_ID,
-        name: "Session-Erinnerungen",
+        name: booking.channelName,
         importance: 4,
       })
     }
@@ -137,8 +141,8 @@ export async function scheduleSessionReminder(booking: {
         {
           id: Math.abs(id) || 1,
           channelId: SESSION_CHANNEL_ID,
-          title: "Session-Erinnerung",
-          body: `Deine Session mit ${booking.expertName} startet in 30 Minuten.`,
+          title: booking.title,
+          body: booking.body,
           schedule: { at },
         },
       ],
@@ -174,14 +178,18 @@ const SESSION_ACTIVE_CHANNEL_ID = "session-active"
  * Zeigt eine lokale Benachrichtigung wenn die App in den Hintergrund geht während einer Session.
  * "Session still active. Tap to return."
  */
-export async function scheduleSessionActiveNotification(): Promise<void> {
+export async function scheduleSessionActiveNotification(opts: {
+  channelName: string
+  title: string
+  body: string
+}): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications")
     if (Capacitor.getPlatform() === "android") {
       await LocalNotifications.createChannel({
         id: SESSION_ACTIVE_CHANNEL_ID,
-        name: "Session aktiv",
+        name: opts.channelName,
         importance: 3,
       })
     }
@@ -197,8 +205,8 @@ export async function scheduleSessionActiveNotification(): Promise<void> {
         {
           id: 9001,
           channelId: SESSION_ACTIVE_CHANNEL_ID,
-          title: "Session aktiv",
-          body: "Session noch aktiv. Tippe zum Zurückkehren.",
+          title: opts.title,
+          body: opts.body,
           schedule: { at: new Date(Date.now() + 500) },
         },
       ],

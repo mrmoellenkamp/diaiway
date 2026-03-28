@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db"
 import { ensureCustomerNumber } from "@/lib/billing"
 import { isWithinInstantSlots } from "@/lib/availability-utils"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import type { WeeklySlots } from "@/lib/availability-utils"
 import { communicationUsername } from "@/lib/communication-display"
 import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
@@ -129,17 +131,19 @@ export async function POST(req: Request) {
     })
 
     if (takumiUserId) {
-    sendPushToUser(takumiUserId, {
-      title: "Instant-Anfrage",
-      body: `${communicationUsername((user as { username?: string | null }).username, "Ein Nutzer")} möchte mit dir verbinden.`,
-      url: `/session/${booking.id}`,
-      tag: `instant-${booking.id}`,
-      data: {
-        type: "BOOKING_REQUEST",
-        bookingId: booking.id,
-        statusToken,
-      },
-    }).catch(() => {})
+      const tloc = await getUserPreferredLocale(takumiUserId)
+      const userLabel = communicationUsername((user as { username?: string | null }).username, "Ein Nutzer")
+      sendPushToUser(takumiUserId, {
+        title: pushT(tloc, "instantRequestTitle"),
+        body: pushT(tloc, "instantRequestBody", { userName: userLabel }),
+        url: `/session/${booking.id}`,
+        tag: `instant-${booking.id}`,
+        data: {
+          type: "BOOKING_REQUEST",
+          bookingId: booking.id,
+          statusToken,
+        },
+      }).catch(() => {})
     }
 
     return NextResponse.json({

@@ -48,28 +48,33 @@ interface WindowInfo {
 
 type Stage = "loading" | "too_early" | "expired" | "form" | "checkout" | "joining" | "in_call" | "success" | "error" | "already_paid"
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatPrice(price: unknown): string {
-  const n = Number(price)
-  if (isNaN(n)) return "–"
-  return n.toLocaleString("de-DE", { style: "currency", currency: "EUR" })
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    const [y, m, d] = dateStr.split("-").map(Number)
-    return new Date(y, m - 1, d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
-  } catch {
-    return dateStr
-  }
-}
-
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export default function GuestCallPage({ params }: { params: Promise<{ guestToken: string }> }) {
   const { guestToken } = use(params)
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const localeTag = locale === "de" ? "de-DE" : locale === "es" ? "es-ES" : "en-US"
+
+  const formatPrice = useCallback(
+    (price: unknown): string => {
+      const n = Number(price)
+      if (isNaN(n)) return "–"
+      return n.toLocaleString(localeTag, { style: "currency", currency: "EUR" })
+    },
+    [localeTag]
+  )
+
+  const formatDate = useCallback(
+    (dateStr: string): string => {
+      try {
+        const [y, m, d] = dateStr.split("-").map(Number)
+        return new Date(y, m - 1, d).toLocaleDateString(localeTag, { day: "2-digit", month: "2-digit", year: "numeric" })
+      } catch {
+        return dateStr
+      }
+    },
+    [localeTag]
+  )
 
   const [stage, setStage] = useState<Stage>("loading")
   const [booking, setBooking] = useState<BookingInfo | null>(null)
@@ -115,7 +120,9 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}`)
+        const res = await fetch(
+          `/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}&locale=${encodeURIComponent(locale)}`
+        )
         if (!res.ok) {
           setErrorMsg(t("guestCall.notFound"))
           setStage("error")
@@ -143,7 +150,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       }
     }
     load()
-  }, [guestToken, t])
+  }, [guestToken, t, locale])
 
   // Countdown: tick every second, reload when window opens
   useEffect(() => {
@@ -173,7 +180,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       return
     }
     if (password && password.length < 8) {
-      setFormError("Passwort muss mindestens 8 Zeichen haben.")
+      setFormError(t("guestCall.passwordMinLength"))
       return
     }
 
@@ -188,12 +195,13 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
           password: password || null,
           consentWithdrawal,
           consentSnapshot,
+          locale,
         }),
       })
 
       const data = await res.json()
       if (!res.ok) {
-        setFormError(data.error || "Fehler beim Erstellen der Zahlung.")
+        setFormError(typeof data.error === "string" ? data.error : t("guestCall.paymentCreateError"))
         setSubmitting(false)
         return
       }
@@ -202,11 +210,11 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       setBookingId(data.bookingId)
       setStage("checkout")
     } catch {
-      setFormError("Netzwerkfehler. Bitte versuche es erneut.")
+      setFormError(t("guestCall.networkErrorRetry"))
     } finally {
       setSubmitting(false)
     }
-  }, [guestToken, invoiceData, password, consentWithdrawal, consentSnapshot, t])
+  }, [guestToken, invoiceData, password, consentWithdrawal, consentSnapshot, t, locale])
 
   // Stripe onComplete callback
   const onCompleteRef = useRef<() => Promise<void>>(async () => {})
@@ -216,7 +224,9 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
     // Poll payment status (webhook may take a few seconds)
     for (let i = 0; i < 12; i++) {
       try {
-        const res = await fetch(`/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}`)
+        const res = await fetch(
+          `/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}&locale=${encodeURIComponent(locale)}`
+        )
         const data = await res.json()
         if (data.booking?.alreadyPaid || data.booking?.paymentStatus === "paid") {
           // Payment confirmed — join the Daily call
@@ -296,21 +306,26 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       ? `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
       : `${mm}:${String(ss).padStart(2, "0")}`
     const callStart = windowInfo?.callStartAt
-      ? new Date(windowInfo.callStartAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+      ? new Date(windowInfo.callStartAt).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })
       : booking?.startTime ?? ""
+    const timeSuffix = t("guestCall.timeSuffix")
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
           <div className="text-5xl mb-4">⏳</div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">Noch nicht aktiv</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">{t("guestCall.tooEarlyTitle")}</h2>
           <p className="text-slate-600 mb-1 text-sm">
-            Der Zahlungslink öffnet 5 Minuten vor dem Call.
+            {t("guestCall.tooEarlyBody")}
           </p>
           <p className="text-slate-500 text-sm mb-6">
-            Call-Start: <span className="font-medium text-slate-700">{callStart} Uhr</span>
+            {t("guestCall.callStartLabel")}{" "}
+            <span className="font-medium text-slate-700">
+              {callStart}
+              {timeSuffix ? ` ${timeSuffix}` : ""}
+            </span>
           </p>
           <div className="text-4xl font-bold tabular-nums text-primary mb-6">{countdownStr}</div>
-          <p className="text-xs text-slate-400">Diese Seite lädt automatisch neu wenn der Link aktiv wird.</p>
+          <p className="text-xs text-slate-400">{t("guestCall.autoReloadHint")}</p>
         </div>
       </div>
     )
@@ -322,9 +337,9 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
           <PhoneOff className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">Termin abgelaufen</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">{t("guestCall.expiredTitle")}</h2>
           <p className="text-slate-600 text-sm">
-            Dieser Call-Link ist nicht mehr gültig. Bitte wende dich an deinen Gesprächspartner.
+            {t("guestCall.expiredBody")}
           </p>
         </div>
       </div>
@@ -352,7 +367,9 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               // Booking ID may be missing if user lands here fresh – use guestToken to fetch it
               <button
                 onClick={async () => {
-                  const res = await fetch(`/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}`)
+                  const res = await fetch(
+                    `/api/guest/checkout?guestToken=${encodeURIComponent(guestToken)}&locale=${encodeURIComponent(locale)}`
+                  )
                   const data = await res.json()
                   if (data.booking?.id) {
                     window.location.href = `/session/${data.booking.id}`
@@ -364,14 +381,15 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               </button>
             )
           ) : windowInfo?.isExpired ? (
-            <p className="text-sm text-slate-500">Der Call-Zeitraum ist abgelaufen.</p>
+            <p className="text-sm text-slate-500">{t("guestCall.callPeriodExpired")}</p>
           ) : (
             <p className="text-sm text-slate-500">
-              Du kannst dem Call ab{" "}
-              {windowInfo?.callStartAt
-                ? new Date(windowInfo.callStartAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
-                : booking?.startTime ?? ""}{" "}
-              Uhr beitreten.
+              {t("guestCall.joinCallFromTime", {
+                time:
+                  windowInfo?.callStartAt
+                    ? new Date(windowInfo.callStartAt).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })
+                    : booking?.startTime ?? "",
+              })}
             </p>
           )}
         </div>
@@ -387,7 +405,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
           <p className="text-slate-700 font-medium">{t("guestCall.paymentSuccess")}</p>
           <div className="flex items-center justify-center gap-2 mt-4 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Video-Raum wird vorbereitet…
+            {t("guestCall.preparingVideoRoom")}
           </div>
         </div>
       </div>
@@ -399,7 +417,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
       <GuestVideoCall
         roomUrl={dailyUrl}
         token={dailyToken}
-        guestName={invoiceData.fullName || invoiceData.companyName || booking?.expert?.name || "Gast"}
+        guestName={invoiceData.fullName || invoiceData.companyName || booking?.expert?.name || t("guestCall.guestDefaultName")}
         guestToken={guestToken}
         onLeave={() => setStage("success")}
         dailyCallRef={dailyCallRef}
@@ -460,7 +478,9 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                   const [sh, sm] = booking.startTime.split(":").map(Number)
                   const [eh, em] = booking.endTime.split(":").map(Number)
                   const dur = (eh * 60 + em) - (sh * 60 + sm)
-                  return dur > 0 ? `${dur} Min · ${t("guestCall.price")}` : t("guestCall.price")
+                  return dur > 0
+                    ? t("guestCall.durationLine", { minutes: dur, priceLabel: t("guestCall.price") })
+                    : t("guestCall.price")
                 })()}
               </p>
               <p className="text-2xl font-bold text-slate-900">{formatPrice(booking.totalPrice)}</p>
@@ -501,7 +521,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                 <div className="col-span-2">
                   <input
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    placeholder="Vollständiger Name *"
+                    placeholder={t("guestCall.placeholder.fullName")}
                     value={invoiceData.fullName}
                     onChange={(e) => setInvoiceData((d) => ({ ...d, fullName: e.target.value }))}
                   />
@@ -512,7 +532,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                   <div className="col-span-2">
                     <input
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      placeholder="Firmenname *"
+                      placeholder={t("guestCall.placeholder.companyName")}
                       value={invoiceData.companyName}
                       onChange={(e) => setInvoiceData((d) => ({ ...d, companyName: e.target.value }))}
                     />
@@ -520,7 +540,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                   <div className="col-span-2">
                     <input
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      placeholder="USt-IdNr. (optional)"
+                      placeholder={t("guestCall.placeholder.vatId")}
                       value={invoiceData.vatId}
                       onChange={(e) => setInvoiceData((d) => ({ ...d, vatId: e.target.value }))}
                     />
@@ -529,32 +549,32 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               )}
               <input
                 className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Straße *"
+                placeholder={t("guestCall.placeholder.street")}
                 value={invoiceData.street}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, street: e.target.value }))}
               />
               <input
                 className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Nr. *"
+                placeholder={t("guestCall.placeholder.houseNumber")}
                 value={invoiceData.houseNumber}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, houseNumber: e.target.value }))}
               />
               <input
                 className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="PLZ *"
+                placeholder={t("guestCall.placeholder.zip")}
                 value={invoiceData.zip}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, zip: e.target.value }))}
               />
               <input
                 className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Stadt *"
+                placeholder={t("guestCall.placeholder.city")}
                 value={invoiceData.city}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, city: e.target.value }))}
               />
               <div className="col-span-2">
                 <input
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Land *"
+                  placeholder={t("guestCall.placeholder.country")}
                   value={invoiceData.country}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, country: e.target.value }))}
                 />
@@ -563,7 +583,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                 <input
                   type="email"
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="E-Mail (für Rechnung) *"
+                  placeholder={t("guestCall.placeholder.emailInvoice")}
                   value={invoiceData.email}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, email: e.target.value }))}
                 />
@@ -657,6 +677,7 @@ function GuestVideoCall({
   onLeave: () => void
   dailyCallRef: React.MutableRefObject<unknown>
 }) {
+  const { t } = useI18n()
   const [phase, setPhase] = useState<"joining" | "in_call" | "error">("joining")
   const [errorMsg, setErrorMsg] = useState("")
   const [micOn, setMicOn] = useState(true)
@@ -736,7 +757,7 @@ function GuestVideoCall({
 
         call.on("error", (ev) => {
           console.error("[GuestVideoCall] Daily error:", ev)
-          setErrorMsg("Verbindungsfehler. Bitte versuche es erneut.")
+          setErrorMsg(t("guestCall.videoConnectionError"))
           setPhase("error")
         })
 
@@ -745,7 +766,7 @@ function GuestVideoCall({
         scheduleSnapshots()
       } catch (err) {
         console.error("[GuestVideoCall] join failed:", err)
-        setErrorMsg("Verbindung zum Video-Raum fehlgeschlagen.")
+        setErrorMsg(t("guestCall.videoRoomJoinFailed"))
         setPhase("error")
       }
     }
@@ -795,7 +816,7 @@ function GuestVideoCall({
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-slate-700 mb-4">{errorMsg}</p>
           <button onClick={onLeave} className="bg-primary text-white px-6 py-2 rounded-xl">
-            Zurück
+            {t("guestCall.back")}
           </button>
         </div>
       </div>
@@ -810,7 +831,7 @@ function GuestVideoCall({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-white">
               <Loader2 className="h-10 w-10 animate-spin mx-auto mb-3" />
-              <p className="text-sm opacity-75">Verbinde…</p>
+              <p className="text-sm opacity-75">{t("guestCall.connecting")}</p>
             </div>
           </div>
         )}

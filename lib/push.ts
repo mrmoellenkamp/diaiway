@@ -5,6 +5,8 @@
 
 import webpush from "web-push"
 import { prisma } from "@/lib/db"
+import type { AppLocale } from "@/lib/i18n/types"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 
 let vapidConfigured = false
 
@@ -118,4 +120,16 @@ export async function sendPushToUser(
   } catch (err) {
     console.error("[Push] sendPushToUser error:", err)
   }
+}
+
+/**
+ * Resolves the recipient's saved UI language (preferredLocale) and builds the payload.
+ * Use for all user-facing pushes (cron, booking flows, messages).
+ */
+export async function sendLocalizedPushToUser(
+  userId: string,
+  build: (locale: AppLocale) => PushPayload
+): Promise<void> {
+  const locale = await getUserPreferredLocale(userId)
+  await sendPushToUser(userId, build(locale))
 }

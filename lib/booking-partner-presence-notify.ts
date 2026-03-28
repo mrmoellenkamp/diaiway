@@ -5,6 +5,8 @@
 
 import { prisma } from "@/lib/db"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { communicationUsername } from "@/lib/communication-display"
 
 /** Erste Person hat Session gestartet – Partner noch nicht im Call */
@@ -90,13 +92,14 @@ export async function notifyPartnerWaitingInVideoCall(params: {
   const isBooker = params.joiningUserId === params.bookerUserId
   const name = await joinerDisplayName(params.joiningUserId, isBooker)
   const url = `/session/${params.bookingId}?connecting=1`
+  const loc = await getUserPreferredLocale(recipientId)
 
   await sendOnce({
     bookingId: params.bookingId,
     recipientUserId: recipientId,
     type: NOTIFICATION_TYPE_PARTNER_WAITING_IN_CALL,
-    title: "Terminpartner ist im Videocall",
-    body: `${name} wartet in eurem gebuchten Videogespräch.`,
+    title: pushT(loc, "partnerWaitingTitle"),
+    body: pushT(loc, "partnerWaitingBody", { name }),
     url,
     pushTag: `booking-partner-waiting-${params.bookingId}-${recipientId}`,
   })
@@ -121,13 +124,14 @@ export async function notifyPartnerJoinedVideoCall(params: {
   const isBooker = params.joiningUserId === params.bookerUserId
   const name = await joinerDisplayName(params.joiningUserId, isBooker)
   const url = `/session/${params.bookingId}?connecting=1`
+  const loc = await getUserPreferredLocale(recipientId)
 
   await sendOnce({
     bookingId: params.bookingId,
     recipientUserId: recipientId,
     type: NOTIFICATION_TYPE_PARTNER_JOINED_CALL,
-    title: "Terminpartner ist dabei",
-    body: `${name} ist dem Videogespräch beigetreten.`,
+    title: pushT(loc, "partnerJoinedTitle"),
+    body: pushT(loc, "partnerJoinedBody", { name }),
     url,
     pushTag: `booking-partner-joined-${params.bookingId}-${recipientId}`,
   })

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { releaseExpiredInstantPayment } from "@/lib/instant-expired-release"
 
@@ -73,16 +75,19 @@ export async function GET(req: NextRequest) {
     }
 
     if (b.userId) {
+      const loc = await getUserPreferredLocale(b.userId)
+      const subj = pushT(loc, "instantExpiredWaymailSubject")
+      const msg = pushT(loc, "instantExpiredWaymailBody")
       sendPushToUser(b.userId, {
-        title: "Keine Antwort",
-        body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
+        title: pushT(loc, "instantExpiredPushTitle"),
+        body: msg,
         url: "/sessions",
         tag: `instant-expired-${b.id}`,
       }).catch(() => {})
       createSystemWaymail({
         recipientId: b.userId,
-        subject: "Kein Experte verfügbar",
-        body: "Aktuell kein Experte verfügbar. Deine Mittel wurden freigegeben.",
+        subject: subj,
+        body: msg,
       }).catch(() => {})
     }
 

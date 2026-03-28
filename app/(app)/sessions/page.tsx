@@ -154,7 +154,15 @@ function SessionsContent() {
       const [h, min] = (b.startTime || "00:00").split(":").map(Number)
       const at = new Date(y, m - 1, d, h, min, 0)
       if (at.getTime() > now.getTime()) {
-        scheduleSessionReminder({ id: b.id, expertName: b.expertName, date: b.date, startTime: b.startTime || "00:00" })
+        scheduleSessionReminder({
+          id: b.id,
+          expertName: b.expertName,
+          date: b.date,
+          startTime: b.startTime || "00:00",
+          channelName: t("native.sessionReminderChannel"),
+          title: t("native.sessionReminderTitle"),
+          body: t("native.sessionReminderBody", { expertName: b.expertName }),
+        })
       } else {
         past.push(b.id)
       }
@@ -163,7 +171,7 @@ function SessionsContent() {
       .filter((b) => ["completed", "declined", "cancelled"].includes(b.status) || past.includes(b.id))
       .map((b) => b.id)
     if (toCancel.length > 0) cancelPastReminders([...new Set(toCancel)])
-  }, [bookings])
+  }, [bookings, t])
 
   const filtered = bookings
     .filter((b) => tabForBooking(b) === activeTab)
@@ -191,8 +199,8 @@ function SessionsContent() {
             <UserPlus className="size-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">Externen Gast einladen</p>
-            <p className="text-xs text-muted-foreground">Call-Link erstellen – ohne Registrierung für den Gast</p>
+            <p className="text-sm font-semibold text-foreground">{t("sessions.inviteGuestTitle")}</p>
+            <p className="text-xs text-muted-foreground">{t("sessions.inviteGuestDesc")}</p>
           </div>
           <span className="text-xs font-medium text-primary">→</span>
         </Link>

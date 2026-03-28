@@ -134,6 +134,7 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 - **Native**: Capacitor `@capacitor/push-notifications`; Token via `POST /api/push/fcm-token`; Firebase Admin für FCM
 - **Quick Actions (Instant Connect)**: `BOOKING_REQUEST` mit `bookingId`, `statusToken`; Web: ACCEPT → `/api/bookings/[id]/instant-accept?token=`, DECLINE → `/api/bookings/[id]/instant-decline?token=`; Native: `pushNotificationActionPerformed` in `quick-action-push-handler.ts`
 - `sendPushToUser()` versucht Web Push + FCM parallel; `lib/push.ts`, `lib/push-fcm.ts`
+- **Sprache**: `User.preferredLocale` (`de` \| `en` \| `es`) steuert Titel/Texte für serverseitige Pushes (Cron-Terminerinnerung, Buchungen, Messages, Waymail-Hinweis). Wird beim Sprachwechsel in der App mit `PATCH /api/user/profile` (`preferredLocale`) und beim Login aus dem Profil geladen (`lib/push-strings.ts`, `lib/user-preferred-locale.ts`).
 
 ### Safety Enforcement
 - **Automated AI-Scanning**: Google Vision API (SafeSearch) prüft Bildinhalte; `lib/vision-safety.ts`; Kategorien: adult, violence, racy (LIKELY/VERY_LIKELY = Verstoß)

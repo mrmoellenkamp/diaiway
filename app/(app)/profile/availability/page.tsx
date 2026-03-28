@@ -276,9 +276,11 @@ export default function AvailabilityPage() {
           )
         )
         setGuestBookings(guestData.bookings || [])
-        if (profileData?.expert) {
-          const p15 = profileData.expert.priceVideo15Min
-            ?? (profileData.expert.pricePerSession ? profileData.expert.pricePerSession / 2 : 0)
+        // API returns the expert data flat (not nested under .expert)
+        const expertData = profileData?.expert ?? profileData
+        if (expertData?.priceVideo15Min != null || expertData?.pricePerSession != null) {
+          const p15 = expertData.priceVideo15Min
+            ?? (expertData.pricePerSession ? expertData.pricePerSession / 2 : 0)
           setPriceVideo15(Number(p15) || 0)
         }
       })
@@ -289,7 +291,7 @@ export default function AvailabilityPage() {
   // ── Guest invite handlers ─────────────────────────────────────────────────
   async function handleCreateGuestInvite() {
     if (!guestForm.guestEmail || !guestForm.date || !guestForm.startTime || !guestForm.endTime) {
-      toast.error("Bitte alle Pflichtfelder ausfüllen.")
+      toast.error(t("avail.toast.fillRequired"))
       return
     }
     setGuestCreating(true)
@@ -304,7 +306,7 @@ export default function AvailabilityPage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { toast.error(data.error || "Fehler beim Erstellen."); return }
+      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : t("avail.toast.createFailed")); return }
       const origin = window.location.origin
       setGuestLink(`${origin}${data.booking.callLink}`)
       setGuestBookings((prev) => [
@@ -323,9 +325,9 @@ export default function AvailabilityPage() {
         ...prev,
       ])
       setGuestForm({ guestEmail: "", date: "", startTime: "10:00", endTime: "11:00", callType: "VIDEO", totalPrice: "", note: "", hostMessage: "" })
-      toast.success("Einladungslink erstellt!")
+      toast.success(t("avail.toast.linkCreated"))
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("avail.toast.networkErrorShort"))
     } finally {
       setGuestCreating(false)
     }
@@ -341,13 +343,13 @@ export default function AvailabilityPage() {
       })
       if (res.ok) {
         setGuestBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b))
-        toast.success("Einladung storniert.")
+        toast.success(t("avail.toast.inviteCancelled"))
       } else {
         const d = await res.json()
-        toast.error(d.error || "Fehler beim Stornieren.")
+        toast.error(typeof d.error === "string" ? d.error : t("avail.toast.cancelFailed"))
       }
     } catch {
-      toast.error("Netzwerkfehler.")
+      toast.error(t("avail.toast.networkErrorShort"))
     } finally {
       setGuestCancelling(null)
     }
@@ -476,7 +478,7 @@ export default function AvailabilityPage() {
   function addException(type: "unavailable" | "custom") {
     if (!selectedDate) return
     if (exceptions.find((e) => e.date === selectedDate)) {
-      toast.error(locale === "en" ? "There is already an exception for this day." : locale === "es" ? "Ya existe una excepción para este día." : "Für diesen Tag gibt es bereits eine Ausnahme.")
+      toast.error(t("avail.exceptionExists"))
       return
     }
     const base: IDateException = {
@@ -488,7 +490,7 @@ export default function AvailabilityPage() {
         : [],
     }
     setExceptions((prev) => [...prev, base])
-    toast.success(locale === "en" ? "Exception added — don't forget to save!" : locale === "es" ? "Excepción añadida — ¡no olvides guardar!" : "Ausnahme hinzugefügt — vergiss nicht zu speichern!")
+    toast.success(t("avail.exceptionAdded"))
   }
 
   function removeException(date: string) {
@@ -583,21 +585,36 @@ export default function AvailabilityPage() {
             defaultValue={["schedule","instant","calendar","rules","guest"].includes(searchParams.get("tab") ?? "") ? (searchParams.get("tab") as string) : "schedule"}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="schedule" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Clock className="size-3" /> {t("avail.tabWeekly")}
+            <TabsList className="grid h-auto w-full grid-cols-3 gap-1.5 p-1.5 sm:grid-cols-6 sm:gap-2">
+              <TabsTrigger
+                value="schedule"
+                className="col-span-1 flex min-h-10 flex-col gap-0.5 px-1.5 py-2 text-center text-[11px] leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-2 sm:flex-row sm:gap-1 sm:px-2 sm:text-xs"
+              >
+                <Clock className="size-3 shrink-0 sm:mt-0" /> {t("avail.tabWeekly")}
               </TabsTrigger>
-              <TabsTrigger value="instant" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Phone className="size-3" /> {t("avail.tabInstant")}
+              <TabsTrigger
+                value="instant"
+                className="col-span-1 flex min-h-10 flex-col gap-0.5 px-1.5 py-2 text-center text-[11px] leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-2 sm:flex-row sm:gap-1 sm:px-2 sm:text-xs"
+              >
+                <Phone className="size-3 shrink-0 sm:mt-0" /> {t("avail.tabInstant")}
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Calendar className="size-3" /> {t("avail.tabCalendar")}
+              <TabsTrigger
+                value="calendar"
+                className="col-span-1 flex min-h-10 flex-col gap-0.5 px-1.5 py-2 text-center text-[11px] leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-2 sm:flex-row sm:gap-1 sm:px-2 sm:text-xs"
+              >
+                <Calendar className="size-3 shrink-0 sm:mt-0" /> {t("avail.tabCalendar")}
               </TabsTrigger>
-              <TabsTrigger value="rules" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <CalendarDays className="size-3" /> {t("avail.tabSeasonal")}
+              <TabsTrigger
+                value="rules"
+                className="col-span-1 flex min-h-10 flex-col gap-0.5 px-1.5 py-2 text-center text-[11px] leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-2 sm:col-start-2 sm:flex-row sm:gap-1 sm:px-2 sm:text-xs"
+              >
+                <CalendarDays className="size-3 shrink-0 sm:mt-0" /> {t("avail.tabSeasonal")}
               </TabsTrigger>
-              <TabsTrigger value="guest" className="gap-1 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <UserPlus className="size-3" /> {t("guestInvite.tab")}
+              <TabsTrigger
+                value="guest"
+                className="col-span-1 flex min-h-10 flex-col gap-0.5 px-1.5 py-2 text-center text-[11px] leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-2 sm:col-start-4 sm:flex-row sm:gap-1 sm:px-2 sm:text-xs"
+              >
+                <UserPlus className="size-3 shrink-0 sm:mt-0" /> {t("guestInvite.tab")}
               </TabsTrigger>
             </TabsList>
 
@@ -828,10 +845,10 @@ export default function AvailabilityPage() {
                                 : selectedInfo.exception?.type === "custom"
                                   ? `${t("avail.dayCustom")}: ${selectedInfo.exception.reason}`
                                   : selectedInfo.source === "rule"
-                                    ? (locale === "en" ? "Overridden by seasonal rule" : locale === "es" ? "Anulado por regla estacional" : "Überschrieben durch Saison-Regel")
+                                    ? t("avail.overriddenBySeasonal")
                                     : selectedInfo.resolved.length > 0
-                                      ? (locale === "en" ? "Available by default schedule" : locale === "es" ? "Disponible según horario estándar" : "Verfügbar nach Standard-Wochenplan")
-                                      : (locale === "en" ? "No schedule for this weekday" : locale === "es" ? "Sin horario para este día" : "Kein Standardplan für diesen Wochentag")}
+                                      ? t("avail.availableByDefault")
+                                      : t("avail.noScheduleWeekday")}
                             </span>
                           </div>
 
@@ -907,7 +924,7 @@ export default function AvailabilityPage() {
                         {/* Right column: Exception controls */}
                         <div className="flex flex-col gap-3 sm:border-l sm:border-border/40 sm:pl-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            {locale === "en" ? "Exception for this day" : locale === "es" ? "Excepción para este día" : "Ausnahme für diesen Tag"}
+                            {t("avail.exceptionForDay")}
                           </p>
 
                           {selectedInfo.exception ? (
@@ -916,7 +933,7 @@ export default function AvailabilityPage() {
                               <Input
                                 value={selectedInfo.exception.reason}
                                 onChange={(e) => updateException(selectedDate, { reason: e.target.value })}
-                                placeholder={locale === "en" ? "Reason (e.g. Holiday)" : locale === "es" ? "Motivo (ej. Vacaciones)" : "Grund (z.B. Urlaub, Feiertag)"}
+                                placeholder={t("avail.exceptionReasonPlaceholder")}
                                 className="h-8 text-xs"
                               />
 
@@ -987,7 +1004,7 @@ export default function AvailabilityPage() {
                           ) : (
                             <div className="flex flex-col gap-2">
                               <p className="text-[11px] text-muted-foreground">
-                                {locale === "en" ? "Override the default availability for this single day." : locale === "es" ? "Anula la disponibilidad estándar para este día." : "Überschreibe die Standard-Verfügbarkeit für diesen einzelnen Tag."}
+                                {t("avail.exceptionOverrideHint")}
                               </p>
                               <Button
                                 size="sm"
@@ -1017,7 +1034,7 @@ export default function AvailabilityPage() {
                   <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-8 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Calendar className="size-7 opacity-25" />
-                      <p className="text-xs">{locale === "en" ? "Click a day to edit details" : locale === "es" ? "Haz clic en un día para editar detalles" : "Klicke auf einen Tag um Details zu bearbeiten"}</p>
+                      <p className="text-xs">{t("avail.clickDayToEdit")}</p>
                     </div>
                   </div>
                 )}
@@ -1033,7 +1050,7 @@ export default function AvailabilityPage() {
                     {t("avail.tabSeasonal")}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    {locale === "en" ? "Override the weekly schedule for specific calendar weeks (e.g. summer holidays, off-season)." : locale === "es" ? "Anula el horario semanal para semanas específicas (ej. vacaciones de verano, temporada baja)." : "Überschreibe den Wochenplan für bestimmte Kalenderwochen (z.B. Sommerferien, Nebensaison)."}
+                    {t("avail.seasonalRulesIntro")}
                   </p>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -1100,7 +1117,7 @@ export default function AvailabilityPage() {
                           />
                           <Input
                             type="number" min={2024} max={2050}
-                            placeholder={locale === "en" ? "Year (opt.)" : locale === "es" ? "Año (opc.)" : "Jahr (opt.)"}
+                            placeholder={t("avail.ruleYearPlaceholder")}
                             value={newRule.year ?? ""}
                             onChange={(e) =>
                               setNewRule({
@@ -1120,11 +1137,11 @@ export default function AvailabilityPage() {
                             size="sm"
                             className="h-8 flex-1 text-xs"
                             onClick={() => {
-                              if (!newRule.name) { toast.error(locale === "en" ? "Please enter a name." : locale === "es" ? "Por favor ingresa un nombre." : "Bitte Namen eingeben."); return }
+                              if (!newRule.name) { toast.error(t("avail.enterName")); return }
                               setYearlyRules([...yearlyRules, { ...newRule }])
                               setNewRule({ name: "", startWeek: 1, endWeek: 52, slots: { ...EMPTY_WEEKLY_SLOTS } })
                               setShowNewRule(false)
-                              toast.success(locale === "en" ? "Rule added!" : locale === "es" ? "¡Regla añadida!" : "Regel hinzugefügt!")
+                              toast.success(t("avail.ruleAdded"))
                             }}
                           >
                             <Plus className="mr-1 size-3" /> {t("avail.addRule")}
@@ -1196,7 +1213,7 @@ export default function AvailabilityPage() {
                             className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                             value={guestForm.guestEmail}
                             onChange={(e) => setGuestForm((f) => ({ ...f, guestEmail: e.target.value }))}
-                            placeholder="gast@beispiel.de"
+                            placeholder={t("guestInvite.guestEmailPlaceholder")}
                           />
                         </div>
 
@@ -1253,8 +1270,8 @@ export default function AvailabilityPage() {
                             value={guestForm.callType}
                             onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
                           >
-                            <option value="VIDEO">Video</option>
-                            <option value="VOICE">Audio</option>
+                            <option value="VIDEO">{t("guestInvite.optionVideo")}</option>
+                            <option value="VOICE">{t("guestInvite.optionVoice")}</option>
                           </select>
                         </div>
 
@@ -1269,8 +1286,10 @@ export default function AvailabilityPage() {
                           const customPrice = guestForm.totalPrice !== "" ? Number(guestForm.totalPrice) : null
                           const displayPrice = customPrice ?? autoPrice
 
+                          const priceLocale =
+                            locale === "de" ? "de-DE" : locale === "es" ? "es-ES" : "en-US"
                           const fmtEur = (n: number) =>
-                            n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
+                            n.toLocaleString(priceLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
 
                           return (
                             <div className="flex flex-col gap-2">
@@ -1286,16 +1305,16 @@ export default function AvailabilityPage() {
                               ].join(" ")}>
                                 <div>
                                   <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                    {durationMin > 0 ? `${durationMin} Min · ` : ""}
-                                    {locale === "en" ? "Total amount" : "Gesamtbetrag"}
+                                    {durationMin > 0 ? t("avail.durationMinutesPrefix", { minutes: durationMin }) : ""}
+                                    {t("avail.totalAmount")}
                                     {displayPrice !== null && customPrice === null && (
                                       <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                                        {locale === "en" ? "auto" : "berechnet"}
+                                        {t("avail.priceCalculatedBadge")}
                                       </span>
                                     )}
                                     {customPrice !== null && (
                                       <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                                        {locale === "en" ? "custom" : "individuell"}
+                                        {t("avail.priceCustomBadge")}
                                       </span>
                                     )}
                                   </p>
@@ -1311,7 +1330,7 @@ export default function AvailabilityPage() {
                                     onClick={() => setGuestForm((f) => ({ ...f, totalPrice: "" }))}
                                     className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                                   >
-                                    {locale === "en" ? "Reset" : "Zurücksetzen"}
+                                    {t("avail.reset")}
                                   </button>
                                 )}
                               </div>
@@ -1319,7 +1338,7 @@ export default function AvailabilityPage() {
                               {/* Individuellen Preis eingeben */}
                               <div className="rounded-xl border border-dashed border-border/60 px-4 py-3">
                                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                                  {locale === "en" ? "Or enter a custom price (€)" : locale === "es" ? "O introduce un precio personalizado (€)" : "Oder individuellen Preis eingeben (€)"}
+                                  {t("avail.customPriceHint")}
                                 </label>
                                 <input
                                   type="number"
@@ -1330,13 +1349,11 @@ export default function AvailabilityPage() {
                                   onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
                                   placeholder={autoPrice !== null
                                     ? fmtEur(autoPrice)
-                                    : locale === "en" ? "e.g. 99.00" : "z.B. 99,00"}
+                                    : t("avail.priceExamplePlaceholder")}
                                 />
                                 {autoPrice !== null && (
                                   <p className="mt-1 text-[11px] text-muted-foreground">
-                                    {locale === "en"
-                                      ? `Leave blank to use auto-calculated price (${fmtEur(autoPrice)}).`
-                                      : `Leer lassen = berechneter Preis (${fmtEur(autoPrice)}) wird verwendet.`}
+                                    {t("avail.autoPriceHint", { price: fmtEur(autoPrice) })}
                                   </p>
                                 )}
                               </div>
@@ -1348,15 +1365,15 @@ export default function AvailabilityPage() {
                         {/* Persönliche Nachricht an Gast */}
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            {locale === "en" ? "Personal message to guest" : locale === "es" ? "Mensaje personal al invitado" : "Persönliche Nachricht an den Gast"}
-                            <span className="ml-1 text-muted-foreground/60">({locale === "en" ? "optional, appears in invitation email" : locale === "es" ? "opcional, aparece en el correo" : "optional, erscheint in der Einladungs-E-Mail"})</span>
+                            {t("avail.personalMessageGuest")}
+                            <span className="ml-1 text-muted-foreground/60">({t("avail.hostMessageOptionalHint")})</span>
                           </label>
                           <textarea
                             rows={2}
                             className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                             value={guestForm.hostMessage}
                             onChange={(e) => setGuestForm((f) => ({ ...f, hostMessage: e.target.value }))}
-                            placeholder={locale === "en" ? "e.g. Looking forward to our conversation about your project!" : locale === "es" ? "ej. ¡Espero con interés nuestra conversación!" : "z.B. Ich freue mich auf unser Gespräch zu deinem Projekt!"}
+                            placeholder={t("avail.hostMessagePlaceholder")}
                           />
                         </div>
 
@@ -1364,14 +1381,14 @@ export default function AvailabilityPage() {
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">
                             {t("guestInvite.note")}
-                            <span className="ml-1 text-muted-foreground/60">({locale === "en" ? "internal, not sent" : locale === "es" ? "interna, no se envía" : "intern, wird nicht versendet"})</span>
+                            <span className="ml-1 text-muted-foreground/60">({t("avail.internalNoteSendHint")})</span>
                           </label>
                           <input
                             type="text"
                             className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                             value={guestForm.note}
                             onChange={(e) => setGuestForm((f) => ({ ...f, note: e.target.value }))}
-                            placeholder="z.B. Erstgespräch Projekt X"
+                            placeholder={t("guestInvite.notePlaceholder")}
                           />
                         </div>
 

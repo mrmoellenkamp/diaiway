@@ -7,6 +7,8 @@ import { cancelOrRefundPaymentIntent } from "@/lib/stripe"
 import { refundTransactionForBooking, creditRefundToShugyoWallet } from "@/lib/wallet-service"
 import { sendBookingStatusEmail, transporter, smtpFrom } from "@/lib/email"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { bookingPartyDisplayLabels } from "@/lib/booking-party-labels"
 import type { BookingStatus } from "@prisma/client"
@@ -155,11 +157,26 @@ export async function POST(
 
     // Notification für Shugyo (zeitgleich mit E-Mail)
     try {
-      const title = action === "confirmed" ? "Buchung bestätigt" : "Buchung abgelehnt"
-      const body =
-        action === "confirmed"
-          ? `${comm.takumiLabel} hat deine Buchung am ${booking.date} (${booking.startTime}–${booking.endTime}) bestätigt.`
-          : `${comm.takumiLabel} hat deine Buchungsanfrage am ${booking.date} leider abgelehnt.`
+      let title = ""
+      let body = ""
+      if (booking.userId) {
+        const uloc = await getUserPreferredLocale(booking.userId)
+        const timeRange = `${booking.startTime}–${booking.endTime}`
+        if (action === "confirmed") {
+          title = pushT(uloc, "bookingConfirmedTitle")
+          body = pushT(uloc, "bookingConfirmedBody", {
+            takumiName: comm.takumiLabel,
+            date: booking.date,
+            timeRange,
+          })
+        } else {
+          title = pushT(uloc, "bookingDeclinedTitle")
+          body = pushT(uloc, "bookingDeclinedBody", {
+            takumiName: comm.takumiLabel,
+            date: booking.date,
+          })
+        }
+      }
       if (booking.userId) await prisma.notification.create({
         data: {
           userId: booking.userId,
@@ -239,24 +256,34 @@ export async function POST(
 
     // Notification für Shugyo (zeitgleich mit E-Mail)
     try {
-      const notifBody = `${comm.takumiLabel} hat eine Rückfrage gestellt: ${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
+      const snippet = `${message.trim().slice(0, 120)}${message.length > 120 ? "…" : ""}`
+      let qTitle = ""
+      let notifBody = ""
+      if (booking.userId) {
+        const uloc = await getUserPreferredLocale(booking.userId)
+        qTitle = pushT(uloc, "bookingQuestionTitle")
+        notifBody = pushT(uloc, "bookingQuestionBody", {
+          takumiName: comm.takumiLabel,
+          snippet,
+        })
+      }
       if (booking.userId) await prisma.notification.create({
         data: {
           userId: booking.userId,
           type: "booking_question",
           bookingId: booking.id,
-          title: "Rückfrage zu deiner Buchung",
+          title: qTitle,
           body: notifBody,
         },
       })
       const waymail = booking.userId ? await createSystemWaymail({
         recipientId: booking.userId,
-        subject: "Rückfrage zu deiner Buchung",
+        subject: qTitle,
         body: notifBody,
       }).catch(() => null) : null
       const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/messages`
       if (booking.userId) sendPushToUser(booking.userId, {
-        title: "Rückfrage zu deiner Buchung",
+        title: qTitle,
         body: notifBody,
         url: waymailUrl,
       }).catch(() => {})

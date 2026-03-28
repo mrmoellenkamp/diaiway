@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { apiHandler, type RouteContext } from "@/lib/api-handler"
+import { isAppLocale } from "@/lib/i18n/types"
 
 export const runtime = "nodejs"
 
@@ -28,6 +29,7 @@ async function getProfile(_req: Request, _context: RouteContext) {
       customerNumber: true,
       skillLevel: true,
       languages: true,
+      preferredLocale: true,
       isVerified: true,
       createdAt: true,
       isPaymentVerified: true,
@@ -51,6 +53,7 @@ async function getProfile(_req: Request, _context: RouteContext) {
     customerNumber: user.customerNumber ?? null,
     skillLevel: user.skillLevel ?? null,
     languages: user.languages ?? [],
+    preferredLocale: user.preferredLocale && isAppLocale(user.preferredLocale) ? user.preferredLocale : "de",
     isVerified: user.isVerified ?? false,
     createdAt: user.createdAt,
     isPaymentVerified: user.isPaymentVerified ?? false,
@@ -142,6 +145,13 @@ async function patchProfile(req: Request, _context: RouteContext) {
     const arr = Array.isArray(body.languages) ? body.languages : []
     const filtered = arr.filter((l: string) => valid.includes(String(l).toLowerCase()))
     data.languages = [...new Set(filtered)]
+  }
+  if (body.preferredLocale !== undefined) {
+    const raw = String(body.preferredLocale).trim().toLowerCase()
+    if (!isAppLocale(raw)) {
+      return NextResponse.json({ error: "Ungueltige Sprache (de, en, es)." }, { status: 400 })
+    }
+    data.preferredLocale = raw
   }
 
   if (Object.keys(data).length === 0) {

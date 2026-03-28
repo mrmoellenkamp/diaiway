@@ -153,6 +153,9 @@ model User {
   // Gesprochene Sprachen (z.B. ["de","en","es"]) für Fahnen-Anzeige
   languages        String[]    @default([])
 
+  // UI-/Push-Sprache (de | en | es); synchron mit Cookie/localStorage diaiway-locale
+  preferredLocale  String      @default("de")
+
   // Vertrauens-System: Silent-Verifizierung (Stripe, Aktivität, Admin)
   isVerified       Boolean    @default(false)
   verificationSource VerificationSource @default(NONE)

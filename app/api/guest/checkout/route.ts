@@ -4,6 +4,8 @@ import { stripe } from "@/lib/stripe"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { parseBerlinDateTime } from "@/lib/date-utils"
+import { localeFromRequest } from "@/lib/i18n/request-locale"
+import { serverT } from "@/lib/i18n/server-t"
 
 // Payment window: opens 5 min before call, closes 5 min after call end
 const PAY_OPEN_MIN_BEFORE  = 5
@@ -27,8 +29,9 @@ export async function POST(req: Request) {
   const ip = getClientIp(req)
   const rl = rateLimit(`guest-checkout:${ip}`, { limit: 20, windowSec: 3600 })
   if (!rl.success) {
+    const loc = localeFromRequest(req)
     return NextResponse.json(
-      { error: "Zu viele Anfragen. Bitte später erneut versuchen.", retryAfterSec: rl.retryAfterSec },
+      { error: serverT(loc, "guestApi.rateLimit"), retryAfterSec: rl.retryAfterSec },
       { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
     )
   }
@@ -37,25 +40,26 @@ export async function POST(req: Request) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: "Ungültiger Request-Body." }, { status: 400 })
+    return NextResponse.json({ error: serverT(localeFromRequest(req), "guestApi.invalidBody") }, { status: 400 })
   }
 
+  const locale = localeFromRequest(req, body.locale)
   const { guestToken, invoiceData, password, consentWithdrawal, consentSnapshot } = body
 
   if (!guestToken || typeof guestToken !== "string") {
-    return NextResponse.json({ error: "guestToken fehlt." }, { status: 400 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.guestTokenMissing") }, { status: 400 })
   }
   if (!consentWithdrawal) {
-    return NextResponse.json({ error: "Widerrufsverzicht muss bestätigt werden." }, { status: 400 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.withdrawalRequired") }, { status: 400 })
   }
   if (!consentSnapshot) {
-    return NextResponse.json({ error: "Einwilligung zum Sicherheits-Snapshot muss erteilt werden." }, { status: 400 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.snapshotRequired") }, { status: 400 })
   }
 
   const invoiceValidation = validateInvoiceDataForPayment(invoiceData)
   if (!invoiceValidation.ok) {
     return NextResponse.json(
-      { error: "Rechnungsdaten unvollständig.", code: "INVOICE_INCOMPLETE", missingFieldKeys: invoiceValidation.missingFieldKeys },
+      { error: serverT(locale, "guestApi.invoiceIncomplete"), code: "INVOICE_INCOMPLETE", missingFieldKeys: invoiceValidation.missingFieldKeys },
       { status: 400 }
     )
   }
@@ -66,13 +70,13 @@ export async function POST(req: Request) {
   })
 
   if (!booking) {
-    return NextResponse.json({ error: "Einladung nicht gefunden oder abgelaufen." }, { status: 404 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.inviteNotFound") }, { status: 404 })
   }
   if (!booking.isGuestCall) {
-    return NextResponse.json({ error: "Ungültige Einladung." }, { status: 400 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.invalidInvite") }, { status: 400 })
   }
   if (booking.paymentStatus === "paid") {
-    return NextResponse.json({ error: "Bereits bezahlt.", code: "ALREADY_PAID" }, { status: 409 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.alreadyPaid"), code: "ALREADY_PAID" }, { status: 409 })
   }
 
   // Enforce payment window: 5 min before call start until 5 min after call end
@@ -85,7 +89,7 @@ export async function POST(req: Request) {
     if (now < payOpenAt) {
       return NextResponse.json(
         {
-          error: "Der Zahlungslink ist noch nicht aktiv.",
+          error: serverT(locale, "guestApi.paymentLinkNotActive"),
           code: "TOO_EARLY",
           payOpenAt: payOpenAt.toISOString(),
           callStartAt: callStart.toISOString(),
@@ -95,7 +99,7 @@ export async function POST(req: Request) {
     }
     if (now > payCloseAt) {
       return NextResponse.json(
-        { error: "Der Termin ist abgelaufen.", code: "EXPIRED" },
+        { error: serverT(locale, "guestApi.bookingExpired"), code: "EXPIRED" },
         { status: 410 }  // Gone
       )
     }
@@ -150,8 +154,12 @@ export async function POST(req: Request) {
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Gast-Call mit ${takumiName}`,
-            description: `${durationMin} Minuten am ${booking.date} um ${booking.startTime} Uhr`,
+            name: serverT(locale, "guestApi.stripeProductName", { expertName: takumiName }),
+            description: serverT(locale, "guestApi.stripeProductDesc", {
+              duration: String(durationMin),
+              date: booking.date,
+              time: booking.startTime ?? "",
+            }),
           },
           unit_amount: priceInCents,
         },
@@ -211,17 +219,18 @@ export async function POST(req: Request) {
  * Returns booking details needed for the legal-gate form (date, time, price, takumi name).
  */
 export async function GET(req: Request) {
+  const locale = localeFromRequest(req)
   const { searchParams } = new URL(req.url)
   const guestToken = searchParams.get("guestToken")
 
   if (!guestToken) {
-    return NextResponse.json({ error: "guestToken fehlt." }, { status: 400 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.guestTokenMissing") }, { status: 400 })
   }
 
   const ip = getClientIp(req)
   const rl = rateLimit(`guest-info:${ip}`, { limit: 60, windowSec: 3600 })
   if (!rl.success) {
-    return NextResponse.json({ error: "Zu viele Anfragen." }, { status: 429 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.rateLimitShort") }, { status: 429 })
   }
 
   const booking = await prisma.booking.findUnique({
@@ -240,7 +249,7 @@ export async function GET(req: Request) {
   })
 
   if (!booking || !booking.isGuestCall) {
-    return NextResponse.json({ error: "Einladung nicht gefunden." }, { status: 404 })
+    return NextResponse.json({ error: serverT(locale, "guestApi.inviteNotFoundShort") }, { status: 404 })
   }
 
   // Compute time window info for the client

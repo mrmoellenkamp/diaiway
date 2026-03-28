@@ -131,6 +131,14 @@ export function DailyCallContainer({
   hasPaidBefore = false,
 }: DailyCallContainerProps) {
   const { t } = useI18n()
+  const nativeSessionActive = useMemo(
+    () => ({
+      channelName: t("native.sessionActiveChannel"),
+      title: t("native.sessionActiveTitle"),
+      body: t("native.sessionActiveBody"),
+    }),
+    [t]
+  )
   const { setCallActive } = useSessionActivity()
   const [phase, setPhase] = useState<CallPhase>("LOBBY")
   const [error, setError] = useState<string | null>(null)
@@ -990,7 +998,7 @@ export function DailyCallContainer({
     import("@capacitor/app")
       .then(({ App }) => App.addListener("appStateChange", ({ isActive }) => {
         if (isActive) cancelSessionActiveNotification()
-        else scheduleSessionActiveNotification()
+        else scheduleSessionActiveNotification(nativeSessionActive)
       }))
       .then((l) => {
         appStateRemoveRef.current = () => l.remove()
@@ -1000,7 +1008,7 @@ export function DailyCallContainer({
       appStateRemoveRef.current?.()
       appStateRemoveRef.current = null
     }
-  }, [phase])
+  }, [phase, nativeSessionActive])
 
   // --- Graceful Reconnect: 60s countdown (boolean-Dep bleibt während Countdown true → Interval wird nicht jede Sek. neu gestartet)
   const reconnectCountdownActive = reconnectState != null && reconnectState.secondsLeft > 0

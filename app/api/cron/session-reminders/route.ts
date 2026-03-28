@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { communicationUsername } from "@/lib/communication-display"
 
 export const runtime = "nodejs"
@@ -51,18 +53,22 @@ async function runSessionReminders() {
       select: { id: true },
     })
     if (!userReminderExists) {
+      const bookerLoc = await getUserPreferredLocale(b.userId)
       await prisma.notification.create({
         data: {
           userId: b.userId,
           bookingId: b.id,
           type: "booking_reminder",
-          title: "Erinnerung: Deine Session startet gleich",
-          body: `In etwa 5 Minuten startet deine Session mit ${takumiName}.`,
+          title: pushT(bookerLoc, "sessionReminderUserInappTitle"),
+          body: pushT(bookerLoc, "sessionReminderUserInappBody", { partnerName: takumiName }),
         },
       })
       sendPushToUser(b.userId, {
-        title: "Session startet in 5 Minuten",
-        body: `Mit ${takumiName} um ${b.startTime} Uhr`,
+        title: pushT(bookerLoc, "sessionReminderUserPushTitle"),
+        body: pushT(bookerLoc, "sessionReminderUserPushBody", {
+          partnerName: takumiName,
+          time: b.startTime || "",
+        }),
         url: bookingUrl,
         tag: `booking-reminder-${b.id}-user`,
       }).catch(() => {})
@@ -79,18 +85,22 @@ async function runSessionReminders() {
         select: { id: true },
       })
       if (!expertReminderExists) {
+        const expertLoc = await getUserPreferredLocale(takumiUserId)
         await prisma.notification.create({
           data: {
             userId: takumiUserId,
             bookingId: b.id,
             type: "booking_reminder",
-            title: "Erinnerung: Session startet gleich",
-            body: `In etwa 5 Minuten startet deine Session mit ${shugyoName}.`,
+            title: pushT(expertLoc, "sessionReminderExpertInappTitle"),
+            body: pushT(expertLoc, "sessionReminderExpertInappBody", { partnerName: shugyoName }),
           },
         })
         sendPushToUser(takumiUserId, {
-          title: "Session startet in 5 Minuten",
-          body: `Mit ${shugyoName} um ${b.startTime} Uhr`,
+          title: pushT(expertLoc, "sessionReminderExpertPushTitle"),
+          body: pushT(expertLoc, "sessionReminderExpertPushBody", {
+            partnerName: shugyoName,
+            time: b.startTime || "",
+          }),
           url: bookingUrl,
           tag: `booking-reminder-${b.id}-expert`,
         }).catch(() => {})

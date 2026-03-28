@@ -11,9 +11,131 @@ import { useCategories } from "@/lib/categories-i18n"
 import { useTakumis } from "@/hooks/use-takumis"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
-import { ArrowRight, Video, Shield, CheckCircle, Star, FlaskConical } from "lucide-react"
+import {
+  ArrowRight,
+  Video,
+  Shield,
+  CheckCircle,
+  Star,
+  FlaskConical,
+  Sparkles,
+  BadgeCheck,
+  Handshake,
+  CircleDollarSign,
+  Globe2,
+  Award,
+  Info,
+} from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { takumiPublicLabel } from "@/lib/communication-display"
+
+function TakumiBenefitsSection() {
+  const { t } = useI18n()
+  return (
+    <section
+      className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12"
+      aria-labelledby="landing-takumi-benefits-heading"
+    >
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.06] via-background to-background p-5 shadow-sm sm:p-6">
+        <div className="pointer-events-none absolute -right-16 top-0 size-40 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+        <div className="relative">
+          <h2 id="landing-takumi-benefits-heading" className="mb-3 text-lg font-bold tracking-tight text-foreground">
+            {t("landing.takumiBenefitsHeading")}
+          </h2>
+          <p className="mb-8 text-sm leading-relaxed text-muted-foreground">
+            {t("landing.takumiBenefitsIntroA")}
+            <strong className="font-medium text-foreground">{t("landing.takumiBenefitsIntroPlatform")}</strong>
+            {t("landing.takumiBenefitsIntroB")}
+            <strong className="font-medium text-foreground">{t("landing.takumiBenefitsIntroRole")}</strong>
+            {t("landing.takumiBenefitsIntroC")}
+          </p>
+          <div className="flex flex-col gap-4">
+            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <CircleDollarSign className="size-5 text-primary" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground">
+                    {t("landing.takumiBenefitMoneyTitle")}
+                  </h3>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitMoneyIntro")}</p>
+                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-primary/60">
+                    {(
+                      [
+                        ["landing.takumiBenefitMoneyLi1Label", "landing.takumiBenefitMoneyLi1Body"],
+                        ["landing.takumiBenefitMoneyLi2Label", "landing.takumiBenefitMoneyLi2Body"],
+                        ["landing.takumiBenefitMoneyLi3Label", "landing.takumiBenefitMoneyLi3Body"],
+                        ["landing.takumiBenefitMoneyLi4Label", "landing.takumiBenefitMoneyLi4Body"],
+                      ] as const
+                    ).map(([lk, bk]) => (
+                      <li key={lk} className="text-xs leading-relaxed text-muted-foreground">
+                        <span className="font-medium text-foreground">{t(lk)}</span> {t(bk)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </article>
+            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Globe2 className="size-5 text-primary" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground">
+                    {t("landing.takumiBenefitFlexTitle")}
+                  </h3>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexIntro")}</p>
+                  <ul className="mt-3 list-disc space-y-2 pl-4 marker:text-primary/60">
+                    <li className="text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexLi1")}</li>
+                    <li className="text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexLi2")}</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Award className="size-5 text-primary" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground">
+                    {t("landing.takumiBenefitRepTitle")}
+                  </h3>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitRepIntro")}</p>
+                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-primary/60">
+                    <li className="text-xs leading-relaxed text-muted-foreground">
+                      <span className="font-medium text-foreground">{t("landing.takumiBenefitRepLi1Label")}</span>{" "}
+                      {t("landing.takumiBenefitRepLi1Body")}
+                    </li>
+                    <li className="text-xs leading-relaxed text-muted-foreground">
+                      <span className="font-medium text-foreground">{t("landing.takumiBenefitRepLi2Label")}</span>{" "}
+                      {t("landing.takumiBenefitRepLi2Body")}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Sparkles className="size-5 text-primary" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground">
+                    {t("landing.takumiBenefitHishoTitle")}
+                  </h3>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitHishoBody")}</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 /** Verzögert Takumis-Fetch: Erst nach Hero-Render, damit LCP nicht blockiert */
 function LiveTakumisSection() {
@@ -129,13 +251,13 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
-          <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-primary-foreground">
-            {t("landing.heroTitle")}
+          <h1 className="text-balance text-center text-3xl font-bold leading-tight tracking-tight text-primary-foreground">
+            <span className="block">{t("landing.heroTitle")}</span>
+            <span className="mt-2 block text-lg font-semibold leading-snug tracking-tight text-primary-foreground/90 sm:text-xl">
+              {t("landing.heroIntro")}
+            </span>
           </h1>
           <p className="font-jp text-4xl text-accent/80">匠</p>
-          <p className="text-pretty text-sm leading-relaxed text-primary-foreground/70">
-            {t("landing.heroIntro")}
-          </p>
 
           <h2 className="text-base font-semibold text-primary-foreground">
             {t("landing.heroWaysTitle")}
@@ -227,14 +349,48 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Hisho, Shugyo, Takumi – unter Kategorien, über „Warum diAiway“ */}
+      <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12" aria-labelledby="landing-concepts-heading">
+        <h2 id="landing-concepts-heading" className="mb-4 text-lg font-bold text-foreground">
+          {t("landing.conceptsHeading")}
+        </h2>
+        <div className="flex flex-col gap-4">
+          <article className="rounded-xl border border-border/60 bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
+              {t("landing.conceptHishoTitle")}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t("landing.conceptHishoLead")}
+              <strong className="font-medium text-foreground">{t("landing.conceptHishoEmphasis")}</strong>
+              {t("landing.conceptHishoTail")}
+            </p>
+          </article>
+          <article className="rounded-xl border border-border/60 bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
+              {t("landing.conceptShugyoTitle")}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{t("landing.conceptShugyoBody")}</p>
+          </article>
+          <article className="rounded-xl border border-border/60 bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
+              {t("landing.conceptTakumiTitle")}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{t("landing.conceptTakumiBody")}</p>
+          </article>
+        </div>
+      </section>
+
       {/* Trust Section */}
       <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
         <h2 className="mb-4 text-lg font-bold text-foreground">{t("landing.whyDiaiway")}</h2>
         <div className="flex flex-col gap-3">
           {[
-            { icon: Shield, title: t("landing.escrowTitle"), desc: t("landing.escrowDesc") },
-            { icon: Video, title: t("landing.liveVideoTitle"), desc: t("landing.liveVideoDesc") },
-            { icon: Star, title: t("landing.verifiedTitle"), desc: t("landing.verifiedDesc") },
+            { icon: Sparkles, title: t("landing.reasonIndividualTitle"), desc: t("landing.reasonIndividualDesc") },
+            { icon: Video, title: t("landing.reasonLiveSessionsTitle"), desc: t("landing.reasonLiveSessionsDesc") },
+            { icon: BadgeCheck, title: t("landing.reasonExpertsTitle"), desc: t("landing.reasonExpertsDesc") },
+            { icon: Star, title: t("landing.reasonQualityTitle"), desc: t("landing.reasonQualityDesc") },
+            { icon: Handshake, title: t("landing.reasonHandshakeTitle"), desc: t("landing.reasonHandshakeDesc") },
+            { icon: Shield, title: t("landing.reasonEscrowTitle"), desc: t("landing.reasonEscrowDesc") },
           ].map((item) => (
             <div key={item.title} className="flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -248,6 +404,20 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      <section
+        className="mx-auto w-full max-w-lg px-4 pb-6 sm:px-6 sm:pb-8"
+        aria-label={t("landing.takumiExpectationsAria")}
+      >
+        <aside className="flex gap-3 rounded-xl border border-border/80 bg-muted/35 p-4 shadow-sm sm:p-5">
+          <Info className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+          <p className="text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
+            {t("landing.takumiExpectationsBody")}
+          </p>
+        </aside>
+      </section>
+
+      <TakumiBenefitsSection />
 
       {/* CTA */}
       <section className="mx-auto w-full max-w-lg px-4 pb-12 sm:px-6 sm:pb-16">

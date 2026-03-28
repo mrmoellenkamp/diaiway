@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { useSession } from "next-auth/react"
 import de from "./de"
 import en from "./en"
 import es from "./es"
@@ -38,24 +39,77 @@ type I18nContextType = {
 
 const I18nContext = createContext<I18nContextType | null>(null)
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("de")
+function persistPreferredLocaleServer(l: Locale) {
+  void fetch("/api/user/profile", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ preferredLocale: l }),
+  }).catch(() => {})
+}
 
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const { status } = useSession()
+  const [locale, setLocaleState] = useState<Locale>("de")
   useEffect(() => {
-    const stored = localStorage.getItem("diaiway-locale") as Locale | null
-    if (stored && dictionaries[stored]) {
-      setLocaleState(stored)
-      document.documentElement.lang = stored
-      setLocaleCookie(stored)
+    if (status !== "authenticated") {
+      const stored = localStorage.getItem("diaiway-locale") as Locale | null
+      if (stored && dictionaries[stored]) {
+        setLocaleState(stored)
+        document.documentElement.lang = stored
+        setLocaleCookie(stored)
+      }
+      return
     }
-  }, [])
+
+    let cancelled = false
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p: { preferredLocale?: string } | null) => {
+        if (cancelled || !p) return
+        const pl = p.preferredLocale as Locale | null
+        const stored = localStorage.getItem("diaiway-locale") as Locale | null
+        // Bestehende Nutzer: nur localStorage EN/ES, DB noch Default "de" → einmal übernehmen
+        if (pl === "de" && stored && stored !== "de" && dictionaries[stored]) {
+          setLocaleState(stored)
+          localStorage.setItem("diaiway-locale", stored)
+          document.documentElement.lang = stored
+          setLocaleCookie(stored)
+          persistPreferredLocaleServer(stored)
+          return
+        }
+        if (pl && dictionaries[pl]) {
+          setLocaleState(pl)
+          localStorage.setItem("diaiway-locale", pl)
+          document.documentElement.lang = pl
+          setLocaleCookie(pl)
+          return
+        }
+        if (stored && dictionaries[stored]) {
+          setLocaleState(stored)
+          document.documentElement.lang = stored
+          setLocaleCookie(stored)
+        }
+      })
+      .catch(() => {
+        const stored = localStorage.getItem("diaiway-locale") as Locale | null
+        if (stored && dictionaries[stored]) {
+          setLocaleState(stored)
+          document.documentElement.lang = stored
+          setLocaleCookie(stored)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [status])
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l)
     localStorage.setItem("diaiway-locale", l)
     document.documentElement.lang = l
     setLocaleCookie(l)
-  }, [])
+    if (status === "authenticated") persistPreferredLocaleServer(l)
+  }, [status])
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>): string => {
