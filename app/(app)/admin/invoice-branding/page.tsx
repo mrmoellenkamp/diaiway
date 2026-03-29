@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   DOC_TEMPLATE_FIELDS_BY_KEY,
   DOC_TEMPLATE_FIELD_LABELS,
@@ -20,7 +29,7 @@ import {
   type InvoiceDocTemplatePatch,
 } from "@/lib/invoice-doc-templates"
 import { toast } from "sonner"
-import { ArrowLeft, Eye, Loader2, Palette, Save, Upload } from "lucide-react"
+import { ArrowLeft, ExternalLink, Eye, Loader2, Mail, Palette, RefreshCw, Save, Upload } from "lucide-react"
 
 type BrandingPayload = {
   logoUrl: string | null
@@ -47,6 +56,7 @@ function initialDocTemplatesState(): Record<InvoiceDocKey, Record<keyof InvoiceD
 }
 
 export default function AdminInvoiceBrandingPage() {
+  const { data: session } = useSession()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -61,6 +71,20 @@ export default function AdminInvoiceBrandingPage() {
   })
   const [docTemplates, setDocTemplates] = useState(initialDocTemplatesState)
   const [activeDocTab, setActiveDocTab] = useState<InvoiceDocKey>("re_session")
+  const [testEmail, setTestEmail] = useState("")
+  const [testDoc, setTestDoc] = useState<"re_session" | "re_wallet">("re_session")
+  const [testZugferd, setTestZugferd] = useState(false)
+  const [testSending, setTestSending] = useState(false)
+  /** Eingebettete PDF-Vorschau (API = gespeichertes Branding) */
+  const [previewDoc, setPreviewDoc] = useState<InvoiceDocKey>("re_session")
+  const [previewRev, setPreviewRev] = useState(0)
+
+  useEffect(() => {
+    const em = session?.user?.email?.trim()
+    if (em) {
+      setTestEmail((prev) => (prev.trim() ? prev : em))
+    }
+  }, [session?.user?.email])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -152,6 +176,36 @@ export default function AdminInvoiceBrandingPage() {
     }
   }
 
+  async function handleTestInvoiceEmail() {
+    const to = testEmail.trim()
+    if (!to) {
+      toast.error("Bitte eine E-Mail-Adresse eingeben.")
+      return
+    }
+    setTestSending(true)
+    try {
+      const res = await fetch("/api/admin/invoice-branding/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: to,
+          doc: testDoc,
+          zugferd: testDoc === "re_session" ? testZugferd : false,
+        }),
+      })
+      const data = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        toast.error(data.error ?? "Versand fehlgeschlagen.")
+        return
+      }
+      toast.success("Test-Rechnung wurde versendet.")
+    } catch {
+      toast.error("Netzwerkfehler beim Versand.")
+    } finally {
+      setTestSending(false)
+    }
+  }
+
   async function handleSave() {
     setSaving(true)
     try {
@@ -173,6 +227,7 @@ export default function AdminInvoiceBrandingPage() {
         return
       }
       toast.success("Rechnungs-PDF-Einstellungen gespeichert. Gilt für neu erzeugte PDFs.")
+      setPreviewRev((n) => n + 1)
     } finally {
       setSaving(false)
     }
@@ -208,7 +263,7 @@ export default function AdminInvoiceBrandingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <PageContainer>
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/admin/finance">
@@ -249,6 +304,72 @@ export default function AdminInvoiceBrandingPage() {
             </Card>
           ) : (
             <>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Eye className="size-4" />
+                    Direktvorschau PDF
+                  </CardTitle>
+                  <CardDescription>
+                    Zeigt ein Muster-PDF mit dem <strong>zuletzt gespeicherten</strong> Branding aus der Datenbank.
+                    Nicht gespeicherte Änderungen siehst du erst nach <strong>Speichern</strong> oder nach
+                    „Aktualisieren“ (lädt die gespeicherte Version neu).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-2 min-w-[200px] flex-1">
+                      <Label htmlFor="preview-doc">Belegtyp</Label>
+                      <Select
+                        value={previewDoc}
+                        onValueChange={(v) => setPreviewDoc(v as InvoiceDocKey)}
+                      >
+                        <SelectTrigger id="preview-doc" className="w-full max-w-md">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INVOICE_DOC_KEYS.map((k) => (
+                            <SelectItem key={k} value={k}>
+                              {DOC_TYPE_LABELS[k]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setPreviewRev((n) => n + 1)}
+                      >
+                        <RefreshCw className="size-4" />
+                        Aktualisieren
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2" asChild>
+                        <a
+                          href={`/api/admin/invoice-branding/preview?doc=${previewDoc}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="size-4" />
+                          Neuer Tab
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="relative w-full overflow-hidden rounded-lg border border-border bg-muted/20">
+                    <iframe
+                      key={`${previewDoc}-${previewRev}`}
+                      title={`PDF-Vorschau ${DOC_TYPE_LABELS[previewDoc]}`}
+                      className="max-h-[920px] min-h-[520px] h-[78vh] w-full bg-white"
+                      src={`/api/admin/invoice-branding/preview?doc=${previewDoc}&_=${previewRev}`}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Darstellung &amp; globale Texte</CardTitle>
@@ -268,7 +389,19 @@ export default function AdminInvoiceBrandingPage() {
                           <img src={form.logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
                         </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Kein Logo</span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex h-14 w-40 items-center justify-center overflow-hidden rounded border bg-white p-1">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src="/diaiway-logo-transparent.svg"
+                              alt="Standard-Logo"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            Standard-Logo im PDF (transparent, darstellungssicher)
+                          </span>
+                        </div>
                       )}
                       <input
                         ref={fileInputRef}
@@ -365,6 +498,79 @@ export default function AdminInvoiceBrandingPage() {
 
               <Card>
                 <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Mail className="size-4" />
+                    Test-Rechnung per E-Mail
+                  </CardTitle>
+                  <CardDescription>
+                    Sendet eine <strong>Muster-PDF</strong> mit dem zuletzt in der Datenbank gespeicherten Branding
+                    (vor dem Test ggf. <strong>Speichern</strong>). Es werden fiktive Beispieldaten verwendet. SMTP
+                    (<code className="rounded bg-muted px-1">SMTP_HOST</code> /{" "}
+                    <code className="rounded bg-muted px-1">EMAIL_SERVER_HOST</code>) muss konfiguriert sein.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="test-invoice-email">Empfänger-E-Mail</Label>
+                    <Input
+                      id="test-invoice-email"
+                      type="email"
+                      autoComplete="email"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      placeholder="admin@beispiel.de"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Belegtyp</Label>
+                    <Select
+                      value={testDoc}
+                      onValueChange={(v) => {
+                        setTestDoc(v as "re_session" | "re_wallet")
+                        if (v === "re_wallet") setTestZugferd(false)
+                      }}
+                    >
+                      <SelectTrigger className="w-full max-w-md">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="re_session">Rechnung (Session)</SelectItem>
+                        <SelectItem value="re_wallet">Rechnung (Wallet-Aufladung)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <Checkbox
+                      id="test-zugferd"
+                      checked={testZugferd}
+                      disabled={testDoc !== "re_session"}
+                      onCheckedChange={(c) => setTestZugferd(c === true)}
+                    />
+                    <div className="grid gap-1">
+                      <Label htmlFor="test-zugferd" className="font-normal leading-snug cursor-pointer">
+                        ZUGFeRD / Factur-X einbetten
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Nur bei „Rechnung (Session)“. Erzeugt ein PDF mit eingebetteter XML-Rechnung für
+                        Geschäftskunden-Workflows.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-fit gap-2"
+                    disabled={testSending}
+                    onClick={() => void handleTestInvoiceEmail()}
+                  >
+                    {testSending ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
+                    Test-Rechnung senden
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle className="text-base">Texte pro Belegtyp</CardTitle>
                   <CardDescription>
                     Leere Felder = Standard aus Code bzw. globale Texte (siehe Platzhalter). Nach Änderungen bitte{" "}
@@ -372,7 +578,14 @@ export default function AdminInvoiceBrandingPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
-                  <Tabs value={activeDocTab} onValueChange={(v) => setActiveDocTab(v as InvoiceDocKey)}>
+                  <Tabs
+                    value={activeDocTab}
+                    onValueChange={(v) => {
+                      const k = v as InvoiceDocKey
+                      setActiveDocTab(k)
+                      setPreviewDoc(k)
+                    }}
+                  >
                     <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
                       {INVOICE_DOC_KEYS.map((k) => (
                         <TabsTrigger key={k} value={k} className="text-xs sm:text-sm">
@@ -383,18 +596,9 @@ export default function AdminInvoiceBrandingPage() {
 
                     {INVOICE_DOC_KEYS.map((docKey) => (
                       <TabsContent key={docKey} value={docKey} className="mt-4 flex flex-col gap-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button variant="secondary" type="button" className="gap-2" asChild>
-                            <a
-                              href={`/api/admin/invoice-branding/preview?doc=${docKey}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Eye className="size-4" />
-                              PDF-Vorschau ({DOC_TYPE_LABELS[docKey]})
-                            </a>
-                          </Button>
-                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          PDF-Vorschau oben im Block „Direktvorschau PDF“ — wechselt mit diesem Tab mit.
+                        </p>
                         <div className="grid gap-4 sm:grid-cols-1">
                           {DOC_TEMPLATE_FIELDS_BY_KEY[docKey].map((field) => (
                             <div key={field} className="space-y-1.5">

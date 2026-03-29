@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { generateInvoicePdf } from "@/lib/pdf-invoice"
+import { generateInvoicePdf, pdfDemoRecipientInvoiceData } from "@/lib/pdf-invoice"
 import { transporter, smtpFrom } from "@/lib/email"
 
 /**
@@ -25,12 +25,20 @@ export async function GET(req: Request) {
       recipientName: "Max Mustermann GmbH",
       recipientEmail: "rechnung@mustermann.de",
       recipientCustomerNumber: "KD-99999",
+      recipientCountry: "Deutschland",
+      recipientInvoiceData: {
+        ...pdfDemoRecipientInvoiceData,
+        companyName: "Max Mustermann GmbH",
+        email: "rechnung@mustermann.de",
+        country: "Deutschland",
+      },
       bookingId: "bkl-example-001",
       expertName: "Maria Expertin",
       totalAmountCents: 5950,
       date: new Date(),
       durationMinutes: 30,
       useZugferd: true,
+      introGreeting: { firstName: "Max", lastName: "Mustermann", username: "mmustermann" },
     })
 
     if (targetEmail && process.env.SMTP_HOST) {

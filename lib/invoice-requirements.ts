@@ -59,3 +59,70 @@ export function validateInvoiceDataForPayment(invoiceDataRaw: unknown): InvoiceV
 
   return { ok: false, missingFieldKeys: missing }
 }
+
+/** Land aus User-Rechnungsdaten (`invoiceData.country`), sonst null */
+export function invoiceDataCountry(invoiceDataRaw: unknown): string | null {
+  const c = toInvoiceData(invoiceDataRaw).country
+  if (typeof c !== "string") return null
+  const t = c.trim()
+  return t || null
+}
+
+export type InvoiceDataAddressLines = {
+  /** Straße + Hausnummer */
+  streetLine: string
+  /** PLZ + Ort */
+  cityLine: string
+}
+
+/**
+ * Zwei Anschriftzeilen für den PDF-Rechnungskopf aus `invoiceData`.
+ * Fehlende Teile werden weggelassen; ist eine Zeile leer → „—“.
+ */
+export function invoiceDataAddressLines(invoiceDataRaw: unknown): InvoiceDataAddressLines {
+  const d = toInvoiceData(invoiceDataRaw)
+  const street = asNonEmptyString(d.street)
+  const houseNumber = asNonEmptyString(d.houseNumber)
+  const streetLine = [street, houseNumber].filter(Boolean).join(" ").trim() || "—"
+  const zip = asNonEmptyString(d.zip)
+  const city = asNonEmptyString(d.city)
+  const cityLine = [zip, city].filter(Boolean).join(" ").trim() || "—"
+  return { streetLine, cityLine }
+}
+
+export type InvoiceIntroGreeting = {
+  firstName: string
+  lastName: string
+  username: string
+}
+
+function splitFirstAndRest(full: string): { first: string; rest: string } {
+  const t = full.trim()
+  if (!t) return { first: "", rest: "" }
+  const i = t.indexOf(" ")
+  if (i === -1) return { first: t, rest: "" }
+  return { first: t.slice(0, i).trim(), rest: t.slice(i + 1).trim() }
+}
+
+/**
+ * Vor-/Nachname (aus Rechnungsdaten bzw. Profilname) und Benutzername für die RE-PDF-Einleitung
+ * (Platzhalter {{firstName}}, {{lastName}}, {{username}}).
+ */
+export function greetingPartsFromInvoiceData(
+  invoiceDataRaw: unknown,
+  userName: string,
+  username: string | null | undefined
+): InvoiceIntroGreeting {
+  const d = toInvoiceData(invoiceDataRaw)
+  const base =
+    d.type === "unternehmen"
+      ? asNonEmptyString(d.fullName) || asNonEmptyString(d.companyName) || userName.trim()
+      : asNonEmptyString(d.fullName) || userName.trim()
+  const { first, rest } = splitFirstAndRest(base)
+  const un = typeof username === "string" ? username.trim() : ""
+  return {
+    firstName: first,
+    lastName: rest,
+    username: un || "—",
+  }
+}

@@ -8,6 +8,7 @@ import { put } from "@vercel/blob"
 import { generateInvoicePdf, generateCreditNotePdf } from "@/lib/pdf-invoice"
 import { sendInvoiceReadyEmail, sendCreditNoteReadyEmail } from "@/lib/email"
 import { getBillingDownloadUrl } from "@/lib/billing-download"
+import { greetingPartsFromInvoiceData, invoiceDataCountry } from "@/lib/invoice-requirements"
 
 const RELEASE_DELAY_HOURS = 24
 
@@ -64,7 +65,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const [shugyo, takumiUser] = await Promise.all([
       prisma.user.findUnique({
         where: { id: booking.userId },
-        select: { customerNumber: true, invoiceData: true, email: true, name: true },
+        select: { customerNumber: true, invoiceData: true, email: true, name: true, username: true },
       }),
       prisma.user.findUnique({
         where: { id: expertUserId },
@@ -98,23 +99,33 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
         ? takumiInvoiceData?.companyName?.trim()
         : takumiInvoiceData?.fullName?.trim()) || takumiUser?.name || booking.expert!.name
 
+    const introGreeting = greetingPartsFromInvoiceData(
+      shugyo?.invoiceData,
+      shugyo?.name ?? "",
+      shugyo?.username
+    )
     const invoiceBuf = await generateInvoicePdf({
       invoiceNumber,
       recipientName: shugyoRealName,
       recipientEmail: booking.userEmail,
       recipientCustomerNumber: shugyo?.customerNumber ?? null,
+      recipientCountry: invoiceDataCountry(shugyo?.invoiceData),
+      recipientInvoiceData: shugyo?.invoiceData,
       bookingId,
       expertName: booking.expertName,
       totalAmountCents: tx.totalAmount,
       date: now,
       durationMinutes: durationMin,
       useZugferd: shugyoIsGeschaeftskunde,
+      introGreeting,
     })
     const creditBuf = await generateCreditNotePdf({
       creditNumber: creditNoteNumber,
       recipientName: takumiRealName,
       recipientEmail: booking.expert!.email || "",
       recipientCustomerNumber: takumiUser?.customerNumber ?? null,
+      recipientCountry: invoiceDataCountry(takumiUser?.invoiceData),
+      recipientInvoiceData: takumiUser?.invoiceData,
       bookingId,
       netPayoutCents: tx.netPayout,
       platformFeeCents: tx.platformFee,

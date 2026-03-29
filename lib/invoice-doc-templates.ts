@@ -19,6 +19,12 @@ export type InvoiceDocTemplatePatch = {
   documentNumberLabel?: string | null
   recipientLabel?: string | null
   sectionLabel?: string | null
+  /** Betreff-Zeile unter dem Adressblock (nur RE / Wallet-RE) */
+  subjectLine?: string | null
+  /** Einleitungstext vor der Leistungstabelle (nur RE / Wallet-RE) */
+  introductionText?: string | null
+  /** Hinweis zu maschineller Erstellung / Unterschrift (nur RE / Wallet-RE) */
+  signatureNote?: string | null
   walletLineText?: string | null
   serviceName?: string | null
   customerNumberLabel?: string | null
@@ -41,6 +47,9 @@ export type ResolvedInvoiceDocTemplate = {
   documentNumberLabel: string
   recipientLabel: string
   sectionLabel: string
+  subjectLine: string
+  introductionText: string
+  signatureNote: string
   walletLineText: string
   serviceName: string
   customerNumberLabel: string
@@ -61,12 +70,17 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     title: "Rechnung",
     documentNumberLabel: "Rechnungsnummer:",
     recipientLabel: "Rechnungsempfänger:",
-    sectionLabel: "Positionen:",
+    sectionLabel: "Block erhaltene Dienstleistungen",
+    subjectLine: "Rechnung Video/Voicecall",
+    introductionText:
+      "Guten Tag {{firstName}} {{lastName}} ({{username}}),\nfolgende erbrachte Leistung dürfen wir in Rechnung stellen:",
+    signatureNote:
+      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
     walletLineText: "",
-    serviceName: "Expertensitzung",
+    serviceName: "Video/Voicecall mit Takumi",
     customerNumberLabel: "Kundennummer:",
-    paymentNote: "Zahlbar sofort. Enthält 19% MwSt. (falls anwendbar).",
-    closingLine: "Vielen Dank für Ihr Vertrauen. — diAiway",
+    paymentNote: "Der Betrag wird entsprechend des gewählten Zahlungsmittels beglichen.",
+    closingLine: "Vielen Dank, wir freuen uns über den nächsten Besuch auf diAIway\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
     storniertLabel: "Storniert:",
@@ -80,12 +94,17 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     title: "Rechnung",
     documentNumberLabel: "Rechnungsnummer:",
     recipientLabel: "Rechnungsempfänger:",
-    sectionLabel: "Positionen:",
+    sectionLabel: "Block erhaltene Dienstleistungen",
+    subjectLine: "Rechnung — Wallet-Aufladung",
+    introductionText:
+      "Guten Tag {{firstName}} {{lastName}} ({{username}}),\nfolgende erbrachte Leistung dürfen wir in Rechnung stellen:",
+    signatureNote:
+      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
     walletLineText: "Wallet-Aufladung",
     serviceName: "Expertensitzung",
     customerNumberLabel: "Kundennummer:",
-    paymentNote: "Zahlbar sofort. Enthält 19% MwSt. (falls anwendbar).",
-    closingLine: "Vielen Dank für Ihr Vertrauen. — diAiway",
+    paymentNote: "Der Betrag wird entsprechend des gewählten Zahlungsmittels beglichen.",
+    closingLine: "Vielen Dank, wir freuen uns über den nächsten Besuch auf diAIway\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
     storniertLabel: "Storniert:",
@@ -99,12 +118,16 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     title: "Gutschrift",
     documentNumberLabel: "Gutschrift-Nr.:",
     recipientLabel: "Empfänger:",
-    sectionLabel: "Details:",
+    sectionLabel: "Abrechnung",
+    subjectLine: "Gutschrift Video/Voicecall",
+    introductionText: "",
+    signatureNote:
+      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
     walletLineText: "",
     serviceName: "Expertensitzung",
     customerNumberLabel: "Kundennummer:",
     paymentNote: "",
-    closingLine: "Dieser Betrag wurde Ihrem Wallet-Guthaben gutgeschrieben. — diAiway",
+    closingLine: "Dieser Betrag wurde Ihrem Wallet-Guthaben gutgeschrieben.\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
     storniertLabel: "Storniert:",
@@ -118,12 +141,17 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     title: "Storno-Rechnung",
     documentNumberLabel: "Rechnungsnummer:",
     recipientLabel: "Rechnungsempfänger:",
-    sectionLabel: "Stornierte Position:",
+    sectionLabel: "Stornierte Position",
+    subjectLine: "Storno-Rechnung",
+    introductionText: "",
+    signatureNote:
+      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
     walletLineText: "",
-    serviceName: "Expertensitzung",
+    serviceName: "Video/Voicecall mit Takumi",
     customerNumberLabel: "Kundennummer:",
     paymentNote: "",
-    closingLine: "Diese Storno-Rechnung hebt die Rechnung o.g. Rechnungsnummer auf. — diAiway",
+    closingLine:
+      "Diese Storno-Rechnung hebt die Rechnung mit der o. g. Rechnungsnummer auf.\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
     storniertLabel: "Storniert:",
@@ -137,12 +165,17 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     title: "Storno-Gutschrift",
     documentNumberLabel: "Gutschrift-Nr.:",
     recipientLabel: "Empfänger:",
-    sectionLabel: "Stornierte Gutschrift:",
+    sectionLabel: "Stornierte Abrechnung",
+    subjectLine: "Storno-Gutschrift",
+    introductionText: "",
+    signatureNote:
+      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
     walletLineText: "",
     serviceName: "Expertensitzung",
     customerNumberLabel: "Kundennummer:",
     paymentNote: "",
-    closingLine: "Diese Storno-Gutschrift hebt die Gutschrift o.g. Nummer auf. — diAiway",
+    closingLine:
+      "Diese Storno-Gutschrift hebt die Gutschrift mit der o. g. Nummer auf.\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
     storniertLabel: "Storniert:",
@@ -232,6 +265,9 @@ export function resolveInvoiceDocTemplate(
     documentNumberLabel: ov(patch, "documentNumberLabel", base.documentNumberLabel),
     recipientLabel: ov(patch, "recipientLabel", base.recipientLabel),
     sectionLabel: ov(patch, "sectionLabel", base.sectionLabel),
+    subjectLine: ov(patch, "subjectLine", base.subjectLine),
+    introductionText: ov(patch, "introductionText", base.introductionText),
+    signatureNote: ov(patch, "signatureNote", base.signatureNote),
     walletLineText: ov(patch, "walletLineText", base.walletLineText),
     serviceName: ov(patch, "serviceName", base.serviceName),
     customerNumberLabel: ov(patch, "customerNumberLabel", base.customerNumberLabel),
@@ -262,6 +298,9 @@ export const DOC_TEMPLATE_FIELD_ORDER: (keyof InvoiceDocTemplatePatch)[] = [
   "recipientLabel",
   "customerNumberLabel",
   "sectionLabel",
+  "subjectLine",
+  "introductionText",
+  "signatureNote",
   "walletLineText",
   "serviceName",
   "paymentNote",
@@ -282,9 +321,12 @@ export const DOC_TEMPLATE_FIELD_LABELS: Record<keyof InvoiceDocTemplatePatch, st
   dateLabel: "Label Datum",
   recipientLabel: "Label Empfänger",
   customerNumberLabel: "Label Kundennummer",
-  sectionLabel: "Label Abschnitt (Positionen / Details / …)",
+  sectionLabel: "Überschrift Leistungsblock (z. B. Erhaltene Dienstleistungen)",
+  subjectLine: "Betreff (eine Zeile unter Adresse)",
+  introductionText: "Einleitungstext (vor der Tabelle)",
+  signatureNote: "Hinweis maschinelle Erstellung / ohne Unterschrift",
   walletLineText: "Text Positionszeile Wallet-Aufladung",
-  serviceName: "Name Leistung (Expertensitzung)",
+  serviceName: "Leistungstext vor Takumi-Name (z. B. Video/Voicecall mit Takumi)",
   paymentNote: "Zahlungshinweis (nur RE / Wallet-RE)",
   detailBruttoPrefix: "Zeile Bruttobetrag (Präfix)",
   detailFeePrefix: "Zeile Plattformgebühr (Präfix)",
@@ -303,8 +345,11 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "recipientLabel",
     "customerNumberLabel",
     "sectionLabel",
+    "subjectLine",
+    "introductionText",
     "serviceName",
     "paymentNote",
+    "signatureNote",
     "closingLine",
     "footerText",
   ],
@@ -315,8 +360,11 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "recipientLabel",
     "customerNumberLabel",
     "sectionLabel",
+    "subjectLine",
+    "introductionText",
     "walletLineText",
     "paymentNote",
+    "signatureNote",
     "closingLine",
     "footerText",
   ],
@@ -330,6 +378,7 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "detailBruttoPrefix",
     "detailFeePrefix",
     "detailNetPrefix",
+    "signatureNote",
     "closingLine",
     "footerText",
   ],
@@ -343,6 +392,7 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "sectionLabel",
     "serviceName",
     "stornoBetragPrefix",
+    "signatureNote",
     "closingLine",
     "footerText",
   ],
@@ -357,6 +407,7 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "detailBruttoPrefix",
     "detailFeePrefix",
     "detailNetPrefix",
+    "signatureNote",
     "closingLine",
     "footerText",
   ],

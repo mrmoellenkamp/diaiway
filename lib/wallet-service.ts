@@ -2,7 +2,11 @@
 
 import { put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
-import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
+import {
+  greetingPartsFromInvoiceData,
+  invoiceDataCountry,
+  validateInvoiceDataForPayment,
+} from "@/lib/invoice-requirements"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
 import { markVerified } from "@/lib/verification-service"
 import {
@@ -68,19 +72,23 @@ export async function creditWalletTopup(
       const [user, invoiceNumber] = await Promise.all([
         prisma.user.findUnique({
           where: { id: userId },
-          select: { name: true, email: true, customerNumber: true },
+          select: { name: true, email: true, customerNumber: true, invoiceData: true, username: true },
         }),
         getNextDocumentNumber("RE"),
       ])
       if (user) {
         const now = new Date()
+        const introGreeting = greetingPartsFromInvoiceData(user.invoiceData, user.name, user.username)
         const buf = await generateWalletTopupInvoicePdf({
           invoiceNumber,
           recipientName: user.name,
           recipientEmail: user.email,
           recipientCustomerNumber: user.customerNumber,
+          recipientCountry: invoiceDataCountry(user.invoiceData),
+          recipientInvoiceData: user.invoiceData,
           amountCents,
           date: now,
+          introGreeting,
         })
         const blob = await put(`invoices/wallet-${wtId}-${invoiceNumber}.pdf`, Buffer.from(buf), {
           access: "public",
@@ -140,7 +148,7 @@ export async function creditWalletAdmin(
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, email: true, invoiceData: true, customerNumber: true },
+        select: { name: true, email: true, invoiceData: true, customerNumber: true, username: true },
       })
       if (user) {
         const invData = user.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
@@ -151,13 +159,17 @@ export async function creditWalletAdmin(
 
         const invoiceNumber = await getNextDocumentNumber("RE")
         const now = new Date()
+        const introGreeting = greetingPartsFromInvoiceData(user.invoiceData, user.name, user.username)
         const buf = await generateWalletTopupInvoicePdf({
           invoiceNumber,
           recipientName,
           recipientEmail: user.email ?? "",
           recipientCustomerNumber: user.customerNumber,
+          recipientCountry: invoiceDataCountry(user.invoiceData),
+          recipientInvoiceData: user.invoiceData,
           amountCents,
           date: now,
+          introGreeting,
         })
         const blob = await put(`invoices/wallet-${wtId}-${invoiceNumber}.pdf`, Buffer.from(buf), {
           access: "public",
@@ -530,6 +542,8 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
         recipientName: shugyoRealName,
         recipientEmail: t.booking.userEmail,
         recipientCustomerNumber: t.user?.customerNumber ?? null,
+        recipientCountry: invoiceDataCountry(t.user?.invoiceData),
+        recipientInvoiceData: t.user?.invoiceData,
         bookingId: t.bookingId,
         expertName: t.booking.expertName,
         totalAmountCents: t.totalAmount,
@@ -541,6 +555,8 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
         recipientName: takumiRealName,
         recipientEmail: t.expert?.email ?? "",
         recipientCustomerNumber: t.expert?.user?.customerNumber ?? null,
+        recipientCountry: invoiceDataCountry(t.expert?.user?.invoiceData),
+        recipientInvoiceData: t.expert?.user?.invoiceData,
         bookingId: t.bookingId,
         netPayoutCents: t.netPayout,
         platformFeeCents: t.platformFee,
@@ -645,6 +661,8 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
         recipientName: shugyoRealName,
         recipientEmail: t.booking.userEmail,
         recipientCustomerNumber: t.user?.customerNumber ?? null,
+        recipientCountry: invoiceDataCountry(t.user?.invoiceData),
+        recipientInvoiceData: t.user?.invoiceData,
         bookingId: t.bookingId,
         expertName: t.booking.expertName,
         totalAmountCents: t.totalAmount,
@@ -656,6 +674,8 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
         recipientName: takumiRealName,
         recipientEmail: t.expert?.email ?? "",
         recipientCustomerNumber: t.expert?.user?.customerNumber ?? null,
+        recipientCountry: invoiceDataCountry(t.expert?.user?.invoiceData),
+        recipientInvoiceData: t.expert?.user?.invoiceData,
         bookingId: t.bookingId,
         netPayoutCents: t.netPayout,
         platformFeeCents: t.platformFee,

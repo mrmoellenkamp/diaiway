@@ -159,7 +159,9 @@ export default authMiddleware((req) => {
   }
 
   // ── Security headers ──────────────────────────────────────────────────────
-  response.headers.set("X-Frame-Options", "DENY")
+  // PDF-Vorschau im Admin: iframe src = dieselbe Origin → DENY blockiert die Einbettung komplett
+  const isInvoicePdfPreviewApi = pathname === "/api/admin/invoice-branding/preview"
+  response.headers.set("X-Frame-Options", isInvoicePdfPreviewApi ? "SAMEORIGIN" : "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
   response.headers.set("X-XSS-Protection", "1; mode=block")

@@ -1,16 +1,33 @@
 import { jsPDF } from "jspdf"
 import { BILLING_SENDER } from "./billing-config"
 import { getInvoiceBrandingCached } from "./invoice-branding"
+import {
+  invoiceDataAddressLines,
+  invoiceDataCountry,
+  type InvoiceIntroGreeting,
+} from "./invoice-requirements"
 import { resolveInvoiceDocTemplate } from "./invoice-doc-templates"
 import {
-  drawClosingAndFooter,
+  INV_DE_COLORS,
+  INV_DE_LAYOUT,
+  drawHtmlTemplateDetailRowsBlock,
+  drawHtmlTemplateInvoiceHeader,
+  drawHtmlTemplateInvoiceTableAndTotals,
+  drawMwStTripleColumnPageFooter,
   drawPaymentClosingAndFooter,
-  drawPdfHeader,
+  grossToNetAndVatCents,
 } from "./pdf-invoice-branding"
 import { buildFacturXXml, embedFacturXInPdf } from "./zugferd"
 
 function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",") + " €"
+}
+
+/** Text vor dem Takumi-Namen in RE/SR; altes Default „Expertensitzung“ → „Video/Voicecall mit Takumi“. */
+function sessionServiceLeadPhrase(serviceName: string): string {
+  const s = serviceName.trim()
+  if (!s || s === "Expertensitzung") return "Video/Voicecall mit Takumi"
+  return s
 }
 
 function formatDateYyyyMmDd(d: Date): string {
@@ -20,17 +37,61 @@ function formatDateYyyyMmDd(d: Date): string {
   return `${y}${m}${day}`
 }
 
-/** X-Position für Kundennummer im Kopf (neben Beleg-/Storno-Nummer) */
-const KD_HEADER_X = 108
+/** Anzeige auf Belegen: dd.mm.yyyy (führende Nullen) */
+function formatInvoiceDateDdMmYyyy(d: Date): string {
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const year = d.getFullYear()
+  return `${day}.${month}.${year}`
+}
 
-function drawCustomerNumberHeader(
-  doc: InstanceType<typeof jsPDF>,
+function pdfLineHeightMm(fontPt: number): number {
+  return (fontPt * 1.4 * 25.4) / 72
+}
+
+function fillInvoiceIntroductionPlaceholders(intro: string, greeting: InvoiceIntroGreeting | undefined): string {
+  if (!intro.includes("{{")) return intro
+  const g = greeting ?? { firstName: "", lastName: "", username: "—" }
+  let s = intro
+    .replace(/\{\{firstName\}\}/g, g.firstName)
+    .replace(/\{\{lastName\}\}/g, g.lastName)
+    .replace(/\{\{username\}\}/g, g.username)
+  s = s
+    .split("\n")
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").trimEnd())
+    .join("\n")
+  s = s.replace(/Guten Tag\s+\(/g, "Guten Tag (")
+  return s
+}
+
+/** Absätze durch Leerzeile getrennt; innerhalb eines Absatzes erzeugt ein einzelnes \n eine neue Zeile. */
+function drawIntroductionBlocks(
+  doc: jsPDF,
+  x0: number,
   y: number,
-  customerLabel: string,
-  kd: string | undefined
-): void {
-  if (!kd) return
-  doc.text(`${customerLabel} ${kd}`, KD_HEADER_X, y)
+  textW: number,
+  intro: string,
+  bodyPt: number
+): number {
+  const lh = pdfLineHeightMm(bodyPt)
+  const paraGap = lh * 0.35
+  const [tx, ty, tz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(bodyPt)
+  doc.setTextColor(tx, ty, tz)
+  const blocks = intro.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean)
+  if (blocks.length === 0) return y
+  let yy = y
+  for (let i = 0; i < blocks.length; i++) {
+    const physicalLines = blocks[i].split(/\n/)
+    for (let li = 0; li < physicalLines.length; li++) {
+      const wrapped = doc.splitTextToSize(physicalLines[li].trimEnd(), textW)
+      doc.text(wrapped, x0, yy)
+      yy += wrapped.length * lh
+    }
+    if (i < blocks.length - 1) yy += paraGap
+  }
+  return yy + INV_DE_LAYOUT.introMarginBottom
 }
 
 /**
@@ -43,6 +104,8 @@ export async function generateInvoicePdf(opts: {
   recipientEmail: string
   /** Kundennummer (KD-…) des Rechnungsempfängers */
   recipientCustomerNumber?: string | null
+  /** Land des Kunden (Rechnungsdaten); sonst „—“ */
+  recipientCountry?: string | null
   bookingId: string
   expertName: string
   totalAmountCents: number
@@ -51,62 +114,89 @@ export async function generateInvoicePdf(opts: {
   durationMinutes?: number
   /** ZUGFeRD einbetten (nur für Geschäftskunden) */
   useZugferd?: boolean
+  /** Platzhalter {{firstName}}, {{lastName}}, {{username}} in introductionText */
+  introGreeting?: InvoiceIntroGreeting | null
+  /** Rechnungsdaten des Empfängers (Straße/PLZ im Kopf) */
+  recipientInvoiceData?: unknown | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
   const t = resolveInvoiceDocTemplate("re_session", branding)
-  await drawPdfHeader(doc, t.title, branding)
 
   const {
     invoiceNumber,
     recipientName,
     recipientEmail,
     recipientCustomerNumber,
+    recipientCountry,
     bookingId,
     expertName,
     totalAmountCents,
     date,
     durationMinutes = 30,
     useZugferd = false,
+    introGreeting = undefined,
+    recipientInvoiceData = null,
   } = opts
 
+  const { streetLine: recipientStreetLine, cityLine: recipientCityLine } =
+    invoiceDataAddressLines(recipientInvoiceData)
+
   const quantitySlots15 = Math.max(1, Math.round(durationMinutes / 15))
-  const lineDesc = `${t.serviceName} mit ${expertName} (Buchung ${bookingId}), ${quantitySlots15} × 15 Min`
-  const kd = recipientCustomerNumber?.trim()
+  const lineDesc = `${sessionServiceLeadPhrase(t.serviceName)} ${expertName} (Buchung ${bookingId}), ${quantitySlots15} × 15 Min`
+  const kd = recipientCustomerNumber?.trim() ?? null
+  const dateStr = formatInvoiceDateDdMmYyyy(date)
 
-  doc.setFontSize(10)
-  doc.text(`${t.documentNumberLabel} ${invoiceNumber}`, 20, 35)
-  drawCustomerNumberHeader(doc, 35, t.customerNumberLabel, kd)
-  doc.text(`${t.dateLabel} ${date.toLocaleDateString("de-DE")}`, 20, 42)
+  const land = recipientCountry?.trim() || "—"
+  let y = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine,
+    recipientCityLine,
+    recipientCountry: land,
+    customerNumber: kd,
+    invoiceNumber,
+    dateStr,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.documentNumberLabel,
+  })
 
-  doc.text(BILLING_SENDER.name, 20, 55)
-  doc.setFontSize(9)
-  doc.text(
-    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
-    20,
-    62
-  )
-  if (BILLING_SENDER.vatId) doc.text(`USt-IdNr.: ${BILLING_SENDER.vatId}`, 20, 68)
+  const x0 = INV_DE_LAYOUT.marginH
+  const textW = INV_DE_LAYOUT.contentWidthMm
+  const [tx, ty, tz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(tx, ty, tz)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0, y)
+  y += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
 
-  doc.setFontSize(10)
-  doc.text(t.recipientLabel, 20, 78)
-  doc.text(recipientName, 20, 85)
-  doc.text(recipientEmail, 20, 92)
-  const yAfterRecipient = 99
-  const positionsY = yAfterRecipient + 11
-  doc.text(t.sectionLabel, 20, positionsY)
-  doc.text(lineDesc, 20, positionsY + 10)
-  doc.text(
-    `Menge: ${quantitySlots15} × 15 Min · Gesamtbetrag: ${formatCents(totalAmountCents)}`,
-    20,
-    positionsY + 18
-  )
+  const introFilled = fillInvoiceIntroductionPlaceholders(t.introductionText.trim(), introGreeting ?? undefined)
+  if (introFilled.trim()) {
+    y = drawIntroductionBlocks(doc, x0, y, textW, introFilled, INV_DE_LAYOUT.bodyPt)
+  }
+
+  const { netCents, vatCents } = grossToNetAndVatCents(totalAmountCents, 19)
+  y = drawHtmlTemplateInvoiceTableAndTotals(doc, y, {
+    sectionTitle: null,
+    lineDescription: lineDesc,
+    netCents,
+    vatCents,
+    grossCents: totalAmountCents,
+    vatPercent: 19,
+  })
 
   drawPaymentClosingAndFooter(
     doc,
-    { paymentNote: t.paymentNote, closingLine: t.closingLine, footerText: t.footerText },
-    150
+    {
+      paymentNote: t.paymentNote,
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    y
   )
+  drawMwStTripleColumnPageFooter(doc)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
   if (useZugferd) {
@@ -145,6 +235,9 @@ export async function generateCreditNotePdf(opts: {
   recipientName: string
   recipientEmail: string
   recipientCustomerNumber?: string | null
+  /** Land / Anschrift aus Rechnungsdaten */
+  recipientCountry?: string | null
+  recipientInvoiceData?: unknown | null
   bookingId: string
   netPayoutCents: number
   platformFeeCents: number
@@ -156,13 +249,14 @@ export async function generateCreditNotePdf(opts: {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
   const t = resolveInvoiceDocTemplate("gs", branding)
-  await drawPdfHeader(doc, t.title, branding)
 
   const {
     creditNumber,
     recipientName,
     recipientEmail,
     recipientCustomerNumber,
+    recipientCountry,
+    recipientInvoiceData = null,
     bookingId,
     netPayoutCents,
     platformFeeCents,
@@ -171,35 +265,58 @@ export async function generateCreditNotePdf(opts: {
     useZugferd = false,
   } = opts
 
-  const kdCredit = recipientCustomerNumber?.trim()
+  const kdCredit = recipientCustomerNumber?.trim() ?? null
+  const dateStrGs = formatInvoiceDateDdMmYyyy(date)
+  const { streetLine: recipientStreetLine, cityLine: recipientCityLine } =
+    invoiceDataAddressLines(recipientInvoiceData)
+  const landGs = recipientCountry?.trim() || invoiceDataCountry(recipientInvoiceData) || "—"
 
-  doc.setFontSize(10)
-  doc.text(`${t.documentNumberLabel} ${creditNumber}`, 20, 35)
-  drawCustomerNumberHeader(doc, 35, t.customerNumberLabel, kdCredit)
-  doc.text(`${t.dateLabel} ${date.toLocaleDateString("de-DE")}`, 20, 42)
+  let yGs = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine,
+    recipientCityLine,
+    recipientCountry: landGs,
+    customerNumber: kdCredit,
+    invoiceNumber: creditNumber,
+    dateStr: dateStrGs,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.documentNumberLabel,
+  })
 
-  doc.text(BILLING_SENDER.name, 20, 55)
-  doc.setFontSize(9)
-  doc.text(
-    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
-    20,
-    62
+  const x0Gs = INV_DE_LAYOUT.marginH
+  const textWGs = INV_DE_LAYOUT.contentWidthMm
+  const [gx, gy, gz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(gx, gy, gz)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0Gs, yGs)
+  yGs += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
+
+  const introGs = fillInvoiceIntroductionPlaceholders(t.introductionText.trim(), undefined)
+  if (introGs.trim()) {
+    yGs = drawIntroductionBlocks(doc, x0Gs, yGs, textWGs, introGs, INV_DE_LAYOUT.bodyPt)
+  }
+
+  yGs = drawHtmlTemplateDetailRowsBlock(doc, yGs, t.sectionLabel, [
+    { left: `Buchung ${bookingId}`, right: "" },
+    { left: t.detailBruttoPrefix.trim(), right: formatCents(totalAmountCents) },
+    { left: t.detailFeePrefix.trim(), right: `-${formatCents(platformFeeCents)}` },
+    { left: t.detailNetPrefix.trim(), right: formatCents(netPayoutCents) },
+  ])
+
+  drawPaymentClosingAndFooter(
+    doc,
+    {
+      paymentNote: t.paymentNote?.trim() ?? "",
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    yGs
   )
-
-  doc.setFontSize(10)
-  doc.text(t.recipientLabel, 20, 78)
-  doc.text(recipientName, 20, 85)
-  doc.text(recipientEmail, 20, 92)
-  const yAfterEmpf = 99
-  const detailsY = yAfterEmpf + 11
-  doc.setFontSize(10)
-  doc.text(t.sectionLabel, 20, detailsY)
-  doc.text(`Buchung ${bookingId}`, 20, detailsY + 10)
-  doc.text(`${t.detailBruttoPrefix} ${formatCents(totalAmountCents)}`, 20, detailsY + 20)
-  doc.text(`${t.detailFeePrefix} -${formatCents(platformFeeCents)}`, 20, detailsY + 28)
-  doc.text(`${t.detailNetPrefix} ${formatCents(netPayoutCents)}`, 20, detailsY + 36)
-
-  drawClosingAndFooter(doc, { closingLine: t.closingLine, footerText: t.footerText })
+  drawMwStTripleColumnPageFooter(doc)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
   if (useZugferd) {
@@ -236,47 +353,84 @@ export async function generateWalletTopupInvoicePdf(opts: {
   recipientName: string
   recipientEmail: string
   recipientCustomerNumber?: string | null
+  /** Land des Kunden (Rechnungsdaten); sonst „—“ */
+  recipientCountry?: string | null
   amountCents: number
   date: Date
+  introGreeting?: InvoiceIntroGreeting | null
+  recipientInvoiceData?: unknown | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
   const t = resolveInvoiceDocTemplate("re_wallet", branding)
-  await drawPdfHeader(doc, t.title, branding)
 
-  const { invoiceNumber, recipientName, recipientEmail, recipientCustomerNumber, amountCents, date } = opts
-  const kdWallet = recipientCustomerNumber?.trim()
+  const {
+    invoiceNumber,
+    recipientName,
+    recipientEmail,
+    recipientCustomerNumber,
+    recipientCountry,
+    amountCents,
+    date,
+    introGreeting = undefined,
+    recipientInvoiceData = null,
+  } = opts
+  const { streetLine: recipientStreetLineW, cityLine: recipientCityLineW } =
+    invoiceDataAddressLines(recipientInvoiceData)
+  const kdWallet = recipientCustomerNumber?.trim() ?? null
+  const landW = recipientCountry?.trim() || "—"
+  const dateStrW = formatInvoiceDateDdMmYyyy(date)
+  const walletLine = t.walletLineText.trim() || "Wallet-Aufladung"
 
-  doc.setFontSize(10)
-  doc.text(`${t.documentNumberLabel} ${invoiceNumber}`, 20, 35)
-  drawCustomerNumberHeader(doc, 35, t.customerNumberLabel, kdWallet)
-  doc.text(`${t.dateLabel} ${date.toLocaleDateString("de-DE")}`, 20, 42)
+  let yW = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine: recipientStreetLineW,
+    recipientCityLine: recipientCityLineW,
+    recipientCountry: landW,
+    customerNumber: kdWallet,
+    invoiceNumber,
+    dateStr: dateStrW,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.documentNumberLabel,
+  })
 
-  doc.text(BILLING_SENDER.name, 20, 55)
-  doc.setFontSize(9)
-  doc.text(
-    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
-    20,
-    62
-  )
-  if (BILLING_SENDER.vatId) doc.text(`USt-IdNr.: ${BILLING_SENDER.vatId}`, 20, 68)
+  const x0W = INV_DE_LAYOUT.marginH
+  const textWW = INV_DE_LAYOUT.contentWidthMm
+  const [wx, wy, wz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(wx, wy, wz)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0W, yW)
+  yW += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
 
-  doc.setFontSize(10)
-  doc.text(t.recipientLabel, 20, 78)
-  doc.text(recipientName, 20, 85)
-  doc.text(recipientEmail, 20, 92)
-  const yWallet = 99
-  const posWalletY = yWallet + 11
-  doc.setFontSize(10)
-  doc.text(t.sectionLabel, 20, posWalletY)
-  doc.text(t.walletLineText, 20, posWalletY + 10)
-  doc.text(`Gesamtbetrag: ${formatCents(amountCents)}`, 20, posWalletY + 18)
+  const introWallet = fillInvoiceIntroductionPlaceholders(t.introductionText.trim(), introGreeting ?? undefined)
+  if (introWallet.trim()) {
+    yW = drawIntroductionBlocks(doc, x0W, yW, textWW, introWallet, INV_DE_LAYOUT.bodyPt)
+  }
+
+  const { netCents: netW, vatCents: vatW } = grossToNetAndVatCents(amountCents, 19)
+  yW = drawHtmlTemplateInvoiceTableAndTotals(doc, yW, {
+    sectionTitle: null,
+    lineDescription: walletLine,
+    netCents: netW,
+    vatCents: vatW,
+    grossCents: amountCents,
+    vatPercent: 19,
+  })
 
   drawPaymentClosingAndFooter(
     doc,
-    { paymentNote: t.paymentNote, closingLine: t.closingLine, footerText: t.footerText },
-    150
+    {
+      paymentNote: t.paymentNote,
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    yW
   )
+  drawMwStTripleColumnPageFooter(doc)
 
   return doc.output("arraybuffer") as ArrayBuffer
 }
@@ -290,6 +444,8 @@ export async function generateStornoInvoicePdf(opts: {
   recipientName: string
   recipientEmail: string
   recipientCustomerNumber?: string | null
+  recipientCountry?: string | null
+  recipientInvoiceData?: unknown | null
   bookingId: string
   expertName: string
   totalAmountCents: number
@@ -298,7 +454,6 @@ export async function generateStornoInvoicePdf(opts: {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
   const t = resolveInvoiceDocTemplate("sr", branding)
-  await drawPdfHeader(doc, t.title, branding)
 
   const {
     stornoNumber,
@@ -306,41 +461,65 @@ export async function generateStornoInvoicePdf(opts: {
     recipientName,
     recipientEmail,
     recipientCustomerNumber,
+    recipientCountry,
+    recipientInvoiceData = null,
     bookingId,
     expertName,
     totalAmountCents,
     date,
   } = opts
 
-  const kdSt = recipientCustomerNumber?.trim()
+  const kdSt = recipientCustomerNumber?.trim() ?? null
+  const dateStrSr = formatInvoiceDateDdMmYyyy(date)
+  const { streetLine: stStreet, cityLine: stCity } = invoiceDataAddressLines(recipientInvoiceData)
+  const landSr = recipientCountry?.trim() || invoiceDataCountry(recipientInvoiceData) || "—"
 
-  doc.setFontSize(10)
-  doc.text(`${t.stornoNumberLabel} ${stornoNumber}`, 20, 35)
-  drawCustomerNumberHeader(doc, 35, t.customerNumberLabel, kdSt)
-  doc.text(`${t.storniertLabel} ${originalInvoiceNumber}`, 20, 42)
-  doc.text(`${t.dateLabel} ${date.toLocaleDateString("de-DE")}`, 20, 49)
+  let ySr = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine: stStreet,
+    recipientCityLine: stCity,
+    recipientCountry: landSr,
+    customerNumber: kdSt,
+    invoiceNumber: stornoNumber,
+    dateStr: dateStrSr,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.stornoNumberLabel,
+    secondDocumentLabel: t.storniertLabel,
+    secondDocumentValue: originalInvoiceNumber,
+  })
 
-  doc.text(BILLING_SENDER.name, 20, 62)
-  doc.setFontSize(9)
-  doc.text(
-    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
-    20,
-    69
+  const x0Sr = INV_DE_LAYOUT.marginH
+  const textWSr = INV_DE_LAYOUT.contentWidthMm
+  const [sx, sy, sz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(sx, sy, sz)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0Sr, ySr)
+  ySr += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
+
+  const introSr = fillInvoiceIntroductionPlaceholders(t.introductionText.trim(), undefined)
+  if (introSr.trim()) {
+    ySr = drawIntroductionBlocks(doc, x0Sr, ySr, textWSr, introSr, INV_DE_LAYOUT.bodyPt)
+  }
+
+  ySr = drawHtmlTemplateDetailRowsBlock(doc, ySr, t.sectionLabel, [
+    { left: `${sessionServiceLeadPhrase(t.serviceName)} ${expertName} (Buchung ${bookingId})`, right: "" },
+    { left: t.stornoBetragPrefix.trim(), right: `-${formatCents(totalAmountCents)}` },
+  ])
+
+  drawPaymentClosingAndFooter(
+    doc,
+    {
+      paymentNote: t.paymentNote?.trim() ?? "",
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    ySr
   )
-  if (BILLING_SENDER.vatId) doc.text(`USt-IdNr.: ${BILLING_SENDER.vatId}`, 20, 75)
-
-  doc.setFontSize(10)
-  doc.text(t.recipientLabel, 20, 85)
-  doc.text(recipientName, 20, 92)
-  doc.text(recipientEmail, 20, 99)
-  const ySt = 106
-  const stPosY = ySt + 9
-  doc.setFontSize(10)
-  doc.text(t.sectionLabel, 20, stPosY)
-  doc.text(`${t.serviceName} mit ${expertName} (Buchung ${bookingId})`, 20, stPosY + 10)
-  doc.text(`${t.stornoBetragPrefix} -${formatCents(totalAmountCents)}`, 20, stPosY + 20)
-
-  drawClosingAndFooter(doc, { closingLine: t.closingLine, footerText: t.footerText })
+  drawMwStTripleColumnPageFooter(doc)
 
   return doc.output("arraybuffer") as ArrayBuffer
 }
@@ -355,6 +534,8 @@ export async function generateStornoCreditNotePdf(opts: {
   recipientEmail: string
   /** Kundennummer des Gutschrift-Empfängers (Takumi) */
   recipientCustomerNumber?: string | null
+  recipientCountry?: string | null
+  recipientInvoiceData?: unknown | null
   bookingId: string
   netPayoutCents: number
   platformFeeCents: number
@@ -364,7 +545,6 @@ export async function generateStornoCreditNotePdf(opts: {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
   const t = resolveInvoiceDocTemplate("sg", branding)
-  await drawPdfHeader(doc, t.title, branding)
 
   const {
     stornoNumber,
@@ -372,6 +552,8 @@ export async function generateStornoCreditNotePdf(opts: {
     recipientName,
     recipientEmail,
     recipientCustomerNumber,
+    recipientCountry,
+    recipientInvoiceData = null,
     bookingId,
     netPayoutCents,
     platformFeeCents,
@@ -379,34 +561,71 @@ export async function generateStornoCreditNotePdf(opts: {
     date,
   } = opts
 
-  const kdSg = recipientCustomerNumber?.trim()
+  const kdSg = recipientCustomerNumber?.trim() ?? null
+  const dateStrSg = formatInvoiceDateDdMmYyyy(date)
+  const { streetLine: sgStreet, cityLine: sgCity } = invoiceDataAddressLines(recipientInvoiceData)
+  const landSg = recipientCountry?.trim() || invoiceDataCountry(recipientInvoiceData) || "—"
 
-  doc.setFontSize(10)
-  doc.text(`${t.stornoNumberLabel} ${stornoNumber}`, 20, 35)
-  drawCustomerNumberHeader(doc, 35, t.customerNumberLabel, kdSg)
-  doc.text(`${t.storniertLabel} ${originalCreditNoteNumber}`, 20, 42)
-  doc.text(`${t.dateLabel} ${date.toLocaleDateString("de-DE")}`, 20, 49)
+  let ySg = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine: sgStreet,
+    recipientCityLine: sgCity,
+    recipientCountry: landSg,
+    customerNumber: kdSg,
+    invoiceNumber: stornoNumber,
+    dateStr: dateStrSg,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.stornoNumberLabel,
+    secondDocumentLabel: t.storniertLabel,
+    secondDocumentValue: originalCreditNoteNumber,
+  })
 
-  doc.text(BILLING_SENDER.name, 20, 62)
-  doc.setFontSize(9)
-  doc.text(
-    `${BILLING_SENDER.address.street}, ${BILLING_SENDER.address.zip} ${BILLING_SENDER.address.city}`,
-    20,
-    69
+  const x0Sg = INV_DE_LAYOUT.marginH
+  const textWSg = INV_DE_LAYOUT.contentWidthMm
+  const [qx, qy, qz] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(qx, qy, qz)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0Sg, ySg)
+  ySg += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
+
+  const introSg = fillInvoiceIntroductionPlaceholders(t.introductionText.trim(), undefined)
+  if (introSg.trim()) {
+    ySg = drawIntroductionBlocks(doc, x0Sg, ySg, textWSg, introSg, INV_DE_LAYOUT.bodyPt)
+  }
+
+  ySg = drawHtmlTemplateDetailRowsBlock(doc, ySg, t.sectionLabel, [
+    { left: `Buchung ${bookingId}`, right: "" },
+    { left: t.detailBruttoPrefix.trim(), right: `-${formatCents(totalAmountCents)}` },
+    { left: t.detailFeePrefix.trim(), right: `+${formatCents(platformFeeCents)}` },
+    { left: t.detailNetPrefix.trim(), right: `-${formatCents(netPayoutCents)}` },
+  ])
+
+  drawPaymentClosingAndFooter(
+    doc,
+    {
+      paymentNote: t.paymentNote?.trim() ?? "",
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    ySg
   )
-
-  doc.setFontSize(10)
-  doc.text(t.recipientLabel, 20, 85)
-  doc.text(recipientName, 20, 92)
-  doc.text(recipientEmail, 20, 99)
-
-  doc.text(t.sectionLabel, 20, 115)
-  doc.text(`Buchung ${bookingId}`, 20, 125)
-  doc.text(`${t.detailBruttoPrefix} -${formatCents(totalAmountCents)}`, 20, 133)
-  doc.text(`${t.detailFeePrefix} +${formatCents(platformFeeCents)}`, 20, 141)
-  doc.text(`${t.detailNetPrefix} -${formatCents(netPayoutCents)}`, 20, 151)
-
-  drawClosingAndFooter(doc, { closingLine: t.closingLine, footerText: t.footerText })
+  drawMwStTripleColumnPageFooter(doc)
 
   return doc.output("arraybuffer") as ArrayBuffer
+}
+
+/** Demo-`invoiceData` für PDF-Vorschau und Test-Routen (Adresszeilen im Kopf). */
+export const pdfDemoRecipientInvoiceData = {
+  type: "unternehmen" as const,
+  companyName: "Musterfirma GmbH",
+  street: "Musterstraße",
+  houseNumber: "42",
+  zip: "10115",
+  city: "Berlin",
+  country: "Germany",
+  email: "rechnung@beispiel.de",
 }

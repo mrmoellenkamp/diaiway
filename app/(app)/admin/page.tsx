@@ -2053,18 +2053,72 @@ function AdminDashboardContent() {
             </span>
           </button>
 
-          {/* Tabs — horizontal scroll, damit „System“ auf schmalen Viewports immer erreichbar ist */}
+          {/* Tabs — immer zweireihig (5 + 4), kein lg:9-Spalten (sonst eine Zeile → Überlappung) */}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="flex h-auto w-full max-w-full flex-nowrap gap-1 overflow-x-auto overflow-y-hidden rounded-xl bg-muted p-1 pb-1.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5">
-              <TabsTrigger value="overview"  className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
-              <TabsTrigger value="analytics" className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><LineChart className="size-3.5 mr-1 shrink-0" />Statistik</TabsTrigger>
-              <TabsTrigger value="users"     className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
-              <TabsTrigger value="bookings"  className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
-              <TabsTrigger value="takumis"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>
-              <TabsTrigger value="finance"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><CreditCard className="size-3.5 mr-1" /><span className="hidden xs:inline">Finanzen</span><span className="xs:hidden">Fin.</span></TabsTrigger>
-              <TabsTrigger value="safety"    className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Shield     className="size-3.5 mr-1" /><span className="hidden xs:inline">Sicherheit</span><span className="xs:hidden">Safe</span></TabsTrigger>
-              <TabsTrigger value="scanner"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Scan       className="size-3.5 mr-1" />Scanner</TabsTrigger>
-              <TabsTrigger value="system"    className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Database   className="size-3.5 mr-1" />System</TabsTrigger>
+            <TabsList className="grid h-auto w-full max-w-full grid-cols-5 gap-1.5 rounded-xl bg-muted p-1.5">
+              <TabsTrigger
+                value="overview"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <BarChart3 className="size-3.5 shrink-0" />
+                <span className="text-center">Übersicht</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="analytics"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <LineChart className="size-3.5 shrink-0" />
+                <span className="text-center">Statistik</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="users"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <Users className="size-3.5 shrink-0" />
+                <span className="text-center">Nutzer</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="bookings"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <CalendarDays className="size-3.5 shrink-0" />
+                <span className="text-center">Buchungen</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="takumis"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <Star className="size-3.5 shrink-0" />
+                <span className="text-center">Takumis</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="finance"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <CreditCard className="size-3.5 shrink-0" />
+                <span className="text-center">Finanzen</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="safety"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <Shield className="size-3.5 shrink-0" />
+                <span className="text-center">Sicherheit</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="scanner"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <Scan className="size-3.5 shrink-0" />
+                <span className="text-center">Scanner</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="system"
+                className="col-span-1 flex w-full min-w-0 flex-col items-center justify-center gap-0.5 whitespace-normal px-1 py-2 text-[10px] leading-tight sm:text-xs"
+              >
+                <Database className="size-3.5 shrink-0" />
+                <span className="text-center">System</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-4">

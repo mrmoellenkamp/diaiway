@@ -43,8 +43,19 @@ export function BetaGermanLanding() {
           stolz darauf sein, was man selbst geschaffen hat.
         </p>
         <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
-          <strong>ABER:</strong> Wie viel Zeit und Mühe musste ich dabei bitte mit endlosen Recherchen und unsinnigen
-          Forenbeiträgen verschwenden? Irre!!! Bestimmt hast du diese Erfahrung auch schon gemacht.
+          <strong>ABER:</strong> Wie viel Zeit habe ich bitte mit endlosen Recherchen und unsinnigen Forenbeiträgen
+          verschwendet? Irre!!! Bestimmt hast du das auch schon mal erlebt. Versteht mich nicht falsch: Es gehört dazu,
+          sich durchzukämpfen und Hürden zu meistern. Das macht ein DIY-Projekt aus.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Die Frage ist nur: Wie sehr muss man sich quälen? Viel zu viele Projekte scheitern, weil der Zugang zu
+          Fachwissen fehlt, zu teuer ist oder einfach nicht im Verhältnis zum Projekt steht. Der Frust wächst, der
+          Haussegen hängt schief, weil das Boot seit fünf Jahren im Garten steht, und eh man sich versieht, landet die
+          „Projektleiche“ als Notverkauf zum Ramschpreis bei Kleinanzeigen.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
+          Und das nur, weil man nicht weiterwusste? Weil niemand da war, mit dem man sich fachlich austauschen konnte
+          oder der einem Mut zugesprochen hat? Das ist doch Mist.
         </p>
         <p className="mt-4 text-base leading-relaxed text-stone-700 md:text-[17px]">
           Seit ein paar Jahren geistert mir daher eine Idee durch den Kopf: Eine Plattform, auf der ich zielgerichtet

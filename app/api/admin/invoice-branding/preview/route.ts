@@ -8,6 +8,7 @@ import {
   generateStornoCreditNotePdf,
   generateStornoInvoicePdf,
   generateWalletTopupInvoicePdf,
+  pdfDemoRecipientInvoiceData,
 } from "@/lib/pdf-invoice"
 
 export const runtime = "nodejs"
@@ -59,8 +60,11 @@ export async function GET(req: NextRequest) {
           recipientName: "Musterfirma GmbH",
           recipientEmail: "rechnung@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
+          recipientCountry: "Germany",
+          recipientInvoiceData: pdfDemoRecipientInvoiceData,
           amountCents: 10000,
           date: demoDate,
+          introGreeting: { firstName: "Max", lastName: "Mustermann", username: "muster_max" },
         })
         break
       case "gs":
@@ -69,6 +73,12 @@ export async function GET(req: NextRequest) {
           recipientName: "Expertin Muster",
           recipientEmail: "expert@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
+          recipientCountry: "Germany",
+          recipientInvoiceData: {
+            ...pdfDemoRecipientInvoiceData,
+            companyName: "Expertin Muster",
+            email: "expert@beispiel.de",
+          },
           bookingId: "bkl-vorschau-demo",
           netPayoutCents: 4250,
           platformFeeCents: 750,
@@ -84,6 +94,8 @@ export async function GET(req: NextRequest) {
           recipientName: "Musterfirma GmbH",
           recipientEmail: "rechnung@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
+          recipientCountry: "Germany",
+          recipientInvoiceData: pdfDemoRecipientInvoiceData,
           bookingId: "bkl-vorschau-demo",
           expertName: "Expertin Muster",
           totalAmountCents: 5950,
@@ -97,6 +109,12 @@ export async function GET(req: NextRequest) {
           recipientName: "Expertin Muster",
           recipientEmail: "expert@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
+          recipientCountry: "Germany",
+          recipientInvoiceData: {
+            ...pdfDemoRecipientInvoiceData,
+            companyName: "Expertin Muster",
+            email: "expert@beispiel.de",
+          },
           bookingId: "bkl-vorschau-demo",
           netPayoutCents: 4250,
           platformFeeCents: 750,
@@ -111,12 +129,15 @@ export async function GET(req: NextRequest) {
           recipientName: "Musterfirma GmbH",
           recipientEmail: "rechnung@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
+          recipientCountry: "Germany",
+          recipientInvoiceData: pdfDemoRecipientInvoiceData,
           bookingId: "bkl-vorschau-demo",
           expertName: "Expertin Muster",
           totalAmountCents: 5950,
           date: demoDate,
           durationMinutes: 30,
           useZugferd: false,
+          introGreeting: { firstName: "Max", lastName: "Mustermann", username: "muster_max" },
         })
         break
     }

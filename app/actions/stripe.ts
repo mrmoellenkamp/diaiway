@@ -75,7 +75,6 @@ export async function startBookingCheckout(
     return { ok: false, error: "Keine Berechtigung für diese Buchung", code: "FORBIDDEN" }
   }
 
-  const serviceLabel = "Expertensitzung"
   const durationMin = (() => {
     if (booking.startTime && booking.endTime) {
       const [sh, sm] = booking.startTime.split(":").map(Number)
@@ -94,7 +93,7 @@ export async function startBookingCheckout(
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Buchung ${serviceLabel} mit ${takumiName}`,
+            name: `Buchung Video/Voicecall mit Takumi ${takumiName}`,
             description: `${durationMin} Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr`,
           },
           unit_amount: priceInCents,
@@ -167,8 +166,6 @@ export async function startSessionCheckout(
     return { ok: false, error: "Keine Berechtigung", code: "FORBIDDEN" }
   }
 
-  const serviceLabel = "Expertensitzung"
-
   const sessionData = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
@@ -178,7 +175,7 @@ export async function startSessionCheckout(
         price_data: {
           currency: "eur",
           product_data: {
-            name: `${serviceLabel} mit ${takumiName}`,
+            name: `Video/Voicecall mit Takumi ${takumiName}`,
             description: `${duration} Minuten Beratung`,
           },
           unit_amount: priceInCents,
