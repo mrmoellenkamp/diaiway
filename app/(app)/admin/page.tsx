@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react"
 import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { PageContainer } from "@/components/page-container"
@@ -1946,31 +1947,32 @@ function isAdminTabId(v: string): v is AdminTabId {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
-export default function AdminPage() {
+function AdminDashboardContent() {
   const { data: session } = useSession()
   const categories = useCategories()
   const adminName = session?.user?.name || "Admin"
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<AdminTabId>("overview")
   const [dataRefreshKey, setDataRefreshKey] = useState(0)
 
-  /** Tab aus URL (?tab=analytics) beim Öffnen — z. B. /admin?tab=analytics */
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const raw = params.get("tab")
-    if (raw && isAdminTabId(raw)) setActiveTab(raw)
-  }, [])
+  /** Tab immer aus der URL (Deep-Link /admin?tab=system, Teilen, Reload). */
+  const activeTab = useMemo((): AdminTabId => {
+    const raw = searchParams.get("tab")
+    if (raw && isAdminTabId(raw)) return raw
+    return "overview"
+  }, [searchParams])
 
   function handleTabChange(v: string) {
     if (!isAdminTabId(v)) return
-    setActiveTab(v)
-    if (typeof window !== "undefined") {
-      const u = new URL(window.location.href)
-      u.searchParams.set("tab", v)
-      window.history.replaceState(null, "", u.pathname + u.search)
-    }
+    const params = new URLSearchParams(searchParams.toString())
+    if (v === "overview") params.delete("tab")
+    else params.set("tab", v)
+    const q = params.toString()
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false })
   }
 
   async function loadStats() {
@@ -2051,18 +2053,18 @@ export default function AdminPage() {
             </span>
           </button>
 
-          {/* Tabs — horizontal scrollbar auf Mobile */}
+          {/* Tabs — horizontal scroll, damit „System“ auf schmalen Viewports immer erreichbar ist */}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
-              <TabsTrigger value="overview"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
-              <TabsTrigger value="analytics" className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><LineChart className="size-3.5 mr-1 shrink-0" />Statistik</TabsTrigger>
-              <TabsTrigger value="users"     className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
-              <TabsTrigger value="bookings"  className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
-              <TabsTrigger value="takumis"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>
-              <TabsTrigger value="finance"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><CreditCard className="size-3.5 mr-1" /><span className="hidden xs:inline">Finanzen</span><span className="xs:hidden">Fin.</span></TabsTrigger>
-              <TabsTrigger value="safety"    className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Shield     className="size-3.5 mr-1" /><span className="hidden xs:inline">Sicherheit</span><span className="xs:hidden">Safe</span></TabsTrigger>
-              <TabsTrigger value="scanner"   className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Scan       className="size-3.5 mr-1" />Scanner</TabsTrigger>
-              <TabsTrigger value="system"    className="flex-1 basis-[calc(25%-4px)] text-xs px-2 py-1.5 sm:flex-none sm:px-3"><Database   className="size-3.5 mr-1" />System</TabsTrigger>
+            <TabsList className="flex h-auto w-full max-w-full flex-nowrap gap-1 overflow-x-auto overflow-y-hidden rounded-xl bg-muted p-1 pb-1.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5">
+              <TabsTrigger value="overview"  className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><BarChart3  className="size-3.5 mr-1" /><span className="hidden xs:inline">Übersicht</span><span className="xs:hidden">Über.</span></TabsTrigger>
+              <TabsTrigger value="analytics" className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><LineChart className="size-3.5 mr-1 shrink-0" />Statistik</TabsTrigger>
+              <TabsTrigger value="users"     className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Users      className="size-3.5 mr-1" />Nutzer</TabsTrigger>
+              <TabsTrigger value="bookings"  className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><CalendarDays className="size-3.5 mr-1" /><span className="hidden xs:inline">Buchungen</span><span className="xs:hidden">Buch.</span></TabsTrigger>
+              <TabsTrigger value="takumis"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Star       className="size-3.5 mr-1" />Takumis</TabsTrigger>
+              <TabsTrigger value="finance"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><CreditCard className="size-3.5 mr-1" /><span className="hidden xs:inline">Finanzen</span><span className="xs:hidden">Fin.</span></TabsTrigger>
+              <TabsTrigger value="safety"    className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Shield     className="size-3.5 mr-1" /><span className="hidden xs:inline">Sicherheit</span><span className="xs:hidden">Safe</span></TabsTrigger>
+              <TabsTrigger value="scanner"   className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Scan       className="size-3.5 mr-1" />Scanner</TabsTrigger>
+              <TabsTrigger value="system"    className="shrink-0 text-xs px-2 py-1.5 sm:px-3"><Database   className="size-3.5 mr-1" />System</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-4">
@@ -2103,17 +2105,6 @@ export default function AdminPage() {
                     </div>
                     <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
                       <Link href="/admin/finance"><ExternalLink className="size-3.5" />Öffnen</Link>
-                    </Button>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-border/50 bg-card p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Rechnungs-PDF</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Logo, Farben, Texte für PDF-Belege</p>
-                    </div>
-                    <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
-                      <Link href="/admin/invoice-branding"><ExternalLink className="size-3.5" />Öffnen</Link>
                     </Button>
                   </div>
                 </div>
@@ -2166,6 +2157,42 @@ export default function AdminPage() {
 
             <TabsContent value="system" className="mt-4">
               <div className="flex flex-col gap-4">
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <p className="text-sm font-semibold text-foreground">Templates</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                    Kommunikationsvorlagen (Waymail), PDF-Rechnungen & Belegtexte — zentral verknüpft
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-border/60 bg-card p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                          <Mail className="size-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">Kommunikations-Templates</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Waymail, Gast-Call-E-Mails, DE/EN/ES</p>
+                          <Button asChild variant="outline" size="sm" className="mt-2 gap-1.5 h-8 text-xs">
+                            <Link href="/admin/templates"><ExternalLink className="size-3" />Öffnen</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-card p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                          <FileText className="size-4 text-emerald-700" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground">Rechnungs-PDF & Belege</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Logo, Farben, Texte — Vorschau pro Belegtyp</p>
+                          <Button asChild variant="outline" size="sm" className="mt-2 gap-1.5 h-8 text-xs">
+                            <Link href="/admin/invoice-branding"><ExternalLink className="size-3" />Öffnen</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-col gap-3">
                   <div className="rounded-xl border border-border/50 bg-card p-4">
                     <div className="flex items-start gap-3">
@@ -2284,20 +2311,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
-                        <Mail className="size-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">Waymail Templates</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Nachrichtenvorlagen verwalten, Testmails senden (DE/EN/ES)</p>
-                        <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5 h-8 text-xs">
-                          <Link href="/admin/templates"><ExternalLink className="size-3" />Öffnen</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <DatabaseTab categories={categories} />
               </div>
@@ -2306,5 +2319,25 @@ export default function AdminPage() {
         </div>
       </PageContainer>
     </div>
+  )
+}
+
+function AdminPageFallback() {
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <PageContainer>
+        <div className="flex justify-center py-24">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </div>
+      </PageContainer>
+    </div>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<AdminPageFallback />}>
+      <AdminDashboardContent />
+    </Suspense>
   )
 }
