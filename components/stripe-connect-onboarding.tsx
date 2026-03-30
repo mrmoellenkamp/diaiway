@@ -7,7 +7,7 @@ import {
   ConnectAccountOnboarding,
   ConnectAccountManagement,
   ConnectNotificationBanner,
-} from "@stripe/react-stripe-js"
+} from "@stripe/react-connect-js"
 import { Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
