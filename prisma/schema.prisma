@@ -743,15 +743,15 @@ model InvoiceBranding {
   footerText         String?  @db.Text
   paymentNote        String?  @db.Text
   closingLine        String?  @db.Text
-  /// Pro Belegtyp (re_session, re_wallet, gs, sr, sg): optionale Text-Overrides
+  /// Pro Belegtyp (re_session, gbl, gs, sr, sg, re_commission): optionale Text-Overrides
   documentTemplates  Json?
   updatedAt          DateTime @updatedAt
 }
 
-// Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG) und Kundennummern (KD)
+// Atomare Vergabe fortlaufender Belegnummern (RE, GS, SR, SG, PR, GBL) und Kundennummern (KD)
 model InvoiceCounter {
   id    String   @id @default(cuid())
-  type  String   @unique  // "RE" | "GS" | "SR" | "SG" | "KD"
+  type  String   @unique  // "RE" | "GS" | "SR" | "SG" | "PR" | "GBL" | "KD"
   value Int      @default(0)
   updatedAt DateTime @updatedAt
 }

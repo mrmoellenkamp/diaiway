@@ -17,6 +17,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **Beta: Registrierung & Onboarding** | [BETA-TESTER-ONBOARDING-FLOW.md](BETA-TESTER-ONBOARDING-FLOW.md) |
 | **Registrierung: Einwilligungen (DSGVO)** | [REGISTRATION-CONSENTS.md](REGISTRATION-CONSENTS.md) |
 | **Admin** | [ADMIN.md](ADMIN.md) |
+| **Belege, Zahlungen, Stripe, Wallet-PDFs** | [BILLING-DOCUMENTS-AND-PAYMENTS.md](BILLING-DOCUMENTS-AND-PAYMENTS.md) |
 | **Umgebungsvariablen** | [ENV.md](ENV.md) |
 | **Production-Login / Safari** | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) |
 | **Beitragen (i18n, Stil)** | [CONTRIBUTING.md](CONTRIBUTING.md) |
@@ -68,6 +69,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | [EMAIL-VERIFICATION-MIGRATION.md](EMAIL-VERIFICATION-MIGRATION.md) | E-Mail-Verifizierung |
 | [PREFLIGHT-AUDIT.md](PREFLIGHT-AUDIT.md) | Preflight-Audit |
 | [kundennummer-zaehler.md](kundennummer-zaehler.md) | KD-Nummern / InvoiceCounter |
+| [BILLING-DOCUMENTS-AND-PAYMENTS.md](BILLING-DOCUMENTS-AND-PAYMENTS.md) | RE/GS/PR/SR/SG/GBL, Gutschriftverfahren, MwSt-Takumi, Admin-Vorschau, Webhooks, iOS-Hinweise |
 
 ---
 
@@ -79,7 +81,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | Buchungen | `/api/bookings`, instant-*, pay-with-wallet |
 | Gast-Calls | `/api/guest/checkout`, `meeting`, `snapshot`, `auto-login`, `signin`; Takumi: `POST/GET /api/expert/guest-bookings` |
 | Sessions | `/api/daily/meeting`, `/api/sessions/*/terminate` |
-| Admin | `/api/admin/stats`, `/api/admin/analytics`, `/api/admin/users`, `/api/admin/finance/*`, `/api/admin/home-news`, `/api/admin/taxonomy/*`, `/api/admin/guest-bookings`, `/api/admin/takumi-profile-reviews`, `/api/admin/takumi-profile-revocations`, … |
+| Admin | `/api/admin/stats`, `/api/admin/analytics`, `/api/admin/users`, `/api/admin/finance/*`, `/api/admin/invoice-branding/*`, `/api/admin/home-news`, `/api/admin/taxonomy/*`, `/api/admin/guest-bookings`, `/api/admin/takumi-profile-reviews`, `/api/admin/takumi-profile-revocations`, … |
 | Öffentlich | `/api/home-news`, `/api/taxonomy/categories`, `/api/takumis` |
 | Analytics | `POST /api/analytics/beacon` (öffentlich, kein `/admin`-Tracking) |
 | Cron | `/api/cron/release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders` (Header `CRON_SECRET`) |

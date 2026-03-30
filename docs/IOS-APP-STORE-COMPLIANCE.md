@@ -137,7 +137,24 @@ Apple erwartet, dass Icons nicht 1:1 wie SF Symbols wirken. Lucide-Icons (Home, 
 
 ---
 
+## 6. Guthaben (Wallet), IAP und Marktplatz-Zahlung (Apple)
+
+**Kontext:** Apple **Guideline 3.1.1** verbietet typischerweise den Kauf digitaler Güter/Leistungen **in der App** über Zahlungsmethoden außerhalb von In-App Purchase. **Guideline 3.1.3(d)** erlaubt für **Peer-to-Peer-Dienste** (reale Dienstleistungen zwischen Personen) die Abwicklung **außerhalb** von IAP.
+
+**Umsetzung im Projekt (technisch, Stand Doku):**
+
+| Thema | Verhalten |
+|-------|-----------|
+| **Guthaben aufladen** | Auf **nativer iOS** wird die **in-App-Aufladung** des Guthabens über externe Zahlung **nicht** angeboten; Nutzer werden auf die **Website** verwiesen (siehe Booking/Wallet-UI, `Capacitor.isNativePlatform()`). |
+| **Guthaben **verbrauchen**** | Wenn bereits Guthaben besteht, kann die **Buchungszahlung** mit Wallet in der App erfolgen — Kontext: reale Dienstleistung Takumi↔Shugyo, nicht Kauf virtueller Währung als Produkt. |
+| **Neue Zahlung für Buchung** | Native Flow nutzt Stripe wie dokumentiert; Einhaltung 3.1.3(d) obliegt der finalen **App-Review**-Argumentation (Marktplatz, physische/reale Dienstleistung). |
+
+Ausführliche Beleg- und Zahlungsarchitektur: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
+
+---
+
 ## Referenzen
 
 - [MOBILE-READINESS.md](./MOBILE-READINESS.md) – Allgemeine Mobile-Richtlinien
 - [STORE-COMPLIANCE-CHECKLIST.md](./STORE-COMPLIANCE-CHECKLIST.md) – Info.plist, Permissions, DSGVO
+- [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md) – Belege, Stripe, Wallet-GBL

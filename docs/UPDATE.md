@@ -18,12 +18,14 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 | GitHub Actions, Secrets, .gitignore-Politik | `docs/GITHUB.md` |
 | Neue Env-Variablen | `docs/ENV.md`, `.env.example` |
 | API-Routen, Datenflüsse, Taxonomie, News, Analytics | `docs/ARCHITECTURE.md` |
+| Belege, Stripe Connect, Wallet-GBL, PDF-Vorlagen, `InvoiceCounter` | `docs/BILLING-DOCUMENTS-AND-PAYMENTS.md`, `docs/kundennummer-zaehler.md`, `prisma/schema.prisma` (Kommentare `InvoiceBranding` / `InvoiceCounter`) |
 | Gast-Calls, Profil-Moderation, Safety (Gast) | `README.md`, `docs/INDEX.md`, `docs/ARCHITECTURE.md`, `docs/HIDDEN-MECHANICS.md` |
-| Admin-UI, Tabs, Unterseiten, Statistik | `docs/ADMIN.md` |
+| Admin-UI, Tabs, Unterseiten, Statistik, Rechnungs-PDF | `docs/ADMIN.md`, `docs/INDEX.md` |
 | Unsichtbare Logik (degraded Responses, Beacon, …) | `docs/HIDDEN-MECHANICS.md` |
 | i18n-Regeln | `docs/CONTRIBUTING.md` |
 | Capacitor / Android Signing | `docs/MOBILE-BUILD.md` |
 | Dokumentations-Index | `docs/INDEX.md` |
+| iOS Wallet/IAP vs. Marktplatz-Zahlung | `docs/IOS-APP-STORE-COMPLIANCE.md`, `docs/STORE-COMPLIANCE-CHECKLIST.md` |
 | Diese Checkliste selbst | `docs/UPDATE.md` |
 
 ## Automatisierte Prüfung

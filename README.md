@@ -2,7 +2,7 @@
 
 **DIY-Hilfe auf Knopfdruck. Sicher. Schnell. Überall.**
 
-diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die Plattform bietet einen AI-Guide (diAIway intelligence), Buchungen, Sessions via Daily.co, Escrow-Zahlungen mit Stripe (Hold & Capture), internes Wallet, und mehrsprachige Unterstützung (DE, EN, ES).
+diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die Plattform bietet einen AI-Guide (diAIway intelligence), Buchungen, Sessions via Daily.co, Zahlungen mit **Stripe** (Hold & Capture, **Connect** für Marktplatz-Splits), internes **Guthaben (Wallet)** mit **GBL-Beleg** bei Aufladung, und mehrsprachige Unterstützung (DE, EN, ES).
 
 **Hybrid App:** Die Web-App läuft auch als native iOS- und Android-App über **Capacitor 8**.
 
@@ -33,7 +33,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Sessions (Scheduled)**: Daily.co Video/Voice; 5 Min Handshake gratis, danach Capture (Stripe oder Wallet)
 - **Handshake-Logik**: \< 5 Min → automatische Rückerstattung / Hold-Freigabe; ≥ 5 Min → Capture
 - **Instant-Call-Abrechnung**: Wallet post-session; **Erstkontakt: 5 Min gratis**, **Zweitkontakt: 30 Sek gratis** (`hasPaidBefore`-Logik)
-- **Wallet**: Guthaben aufladen (Stripe), mit Wallet bei Buchung zahlen; atomare Abzüge mit Balance-Guard
+- **Wallet (Guthaben)**: Aufladen per Stripe (PDF-**Guthabenbeleg GBL**, keine Umsatzsteuer-Rechnung); Zahlung bei Buchung mit Balance-Guard; atomare Abzüge
 - **Benachrichtigungen**: Buchungsbestätigungen; **löschbar mit Bestätigungsdialog**
 - **Nachrichten (Postfach)**: **Chat** (Direktnachrichten) und **Waymails** (E-Mail-ähnlich mit Betreff); **Posteingang** und **Postausgang**; Waymails/Chats/Nachrichten **löschbar mit Bestätigungsdialog**; Anhänge (Bilder, PDF) via Secure Upload; Waymail-Deep-Links (`/messages?waymail={id}`) mit callbackUrl nach Login; **serverseitig keine externen Links/Kontaktdaten** in Chat, Waymail-Betreifen und relevanten Freitextfeldern (`lib/contact-leak-validation.ts`)
 - **Profil**: **Username** als Profilname (optional, eindeutig); Favoriten, Sessions; **Konto pausieren** (sofort offline als Takumi); **Konto löschen** (DSGVO-Anonymisierung)
@@ -56,8 +56,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Statistik-Tab**: Besuche, Unique Visitor, Verweildauer (aktive Zeit), Bounce, Top-Pfade; Daten aus `SiteAnalyticsSession` / `SiteAnalyticsPageView` (Migration erforderlich); öffentlicher Beacon `POST /api/analytics/beacon` (kein Tracking von `/admin`)
 - **Vision-Scanner** (Tab): Google Cloud Vision – Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web; Bild-Upload oder Kamera; Ergebnisse direkt unter dem Analyse-Button
 - **Sicherheit-Tab**: Safety Reports, KI-Incidents; Links zu `/admin/safety` und `/admin/safety/incidents`
-- **System-Tab**: Links zu **Taxonomie** (`/admin/taxonomy`), **Startseiten-News** (`/admin/home-news`), Health-Check, Waymail-Templates, DB-Tools
-- **Eigene Seiten** (zusätzlich zum Dashboard): `/admin/health-check`, `/admin/finance`, `/admin/templates`, `/admin/taxonomy`, `/admin/home-news`, `/admin/safety`, `/admin/safety/incidents`, `/admin/takumi-profile-reviews`, `/admin/takumi-profile-revocations`, `/admin/guest-bookings` (Gast-Call-Einladungen: Liste, Stornieren, Löschen, Link kopieren); `/admin/scanner` → Redirect ins Dashboard (Scanner-Tab)
+- **System-Tab**: Links zu **Taxonomie** (`/admin/taxonomy`), **Startseiten-News** (`/admin/home-news`), **Rechnungs-PDF** (`/admin/invoice-branding`), Health-Check, Waymail-Templates, DB-Tools
+- **Eigene Seiten** (zusätzlich zum Dashboard): `/admin/health-check`, `/admin/finance`, `/admin/invoice-branding` (PDF-Branding, Vorschau, Test-E-Mail), `/admin/templates`, `/admin/taxonomy`, `/admin/home-news`, `/admin/safety`, `/admin/safety/incidents`, `/admin/takumi-profile-reviews`, `/admin/takumi-profile-revocations`, `/admin/guest-bookings` (Gast-Call-Einladungen: Liste, Stornieren, Löschen, Link kopieren); `/admin/scanner` → Redirect ins Dashboard (Scanner-Tab)
 - **Health-Check** (`/admin/health-check`): Live-Monitoring – Cron-Laufzeiten, Stripe-Escrow-Risiken (6+ Tage), Wallet-Integrität, Push-Reachability; Force-Capture pro Buchung
 - **Finance Monitoring** (`/admin/finance`): Escrow-Holds, Stripe-Expiry (7 Tage), Shugyo-Wallet-Liability; Force Capture, Manual Release mit Doppelbestätigung
 - **Transaction Audit Log**: Stripe, Wallet, Admin-Aktionen; alle Finanz-Ops in `prisma.$transaction`
@@ -73,8 +73,8 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **i18n**: Deutsch (Master), Englisch, Spanisch; Sprachenauswahl im Header (Länderkürzel: DE, EN, ES)
 - **Beta-Landing**: `/beta` → Redirect `/beta/de`; statische Seiten `/beta/de`, `/beta/en`, `/beta/es` (Founder-Karte, CTA, Hero-Visuals)
 - **Vercel Analytics**: `@vercel/analytics` im Root-Layout (anbieterseitige Metriken); **eigene** Statistik zusätzlich in Admin-Tab (siehe oben)
-- **Zahlung**: Stripe Hold & Capture (manual capture); Wallet mit atomarem `updateMany` + Balance-Guard; 7-Tage-Stripe-Hold-Fenster
-- **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
+- **Zahlung**: Stripe Hold & Capture (manual capture) wo vorgesehen; **Stripe Connect** für Buchungszahlungen an Takumi; Wallet mit atomarem Abzug + Balance-Guard; 7-Tage-Stripe-Hold-Fenster; **Belege** (RE/GS/PR/SR/SG/GBL): siehe [docs/BILLING-DOCUMENTS-AND-PAYMENTS.md](docs/BILLING-DOCUMENTS-AND-PAYMENTS.md)
+- **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; **Kategorien** (`pushType`) für Android-Kanäle / iOS-Categories; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
 - **Safety**: Google Vision API (Pre-Check + Live-Monitoring); bei Verstoß **sofortige Verbindungstrennung**; Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
 - **E2EE**: Video-Calls end-to-end verschlüsselt (P2P-Modus via `sfu_switchover: 2`); Medien fließen direkt zwischen Geräten, Daily.co sieht keine Klartext-Streams
 - **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers; **Cache-Control: no-store** für geschützte Seiten (kein BFCache); **LogoutBackGuard** verhindert Zurück-Button-Cache nach Logout
@@ -92,7 +92,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 | Framework | Next.js 16 (App Router) |
 | Datenbank | PostgreSQL (Prisma ORM, provider-unabhaengig) |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
-| Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks) |
+| Zahlung | Stripe (Embedded Checkout, Hold & Capture, Webhooks, **Connect** für Splits) |
 | Video/Voice | Daily.co (`@daily-co/daily-js`), E2EE (P2P) |
 | Mobile | Capacitor 8 (iOS, Android) |
 | AI | Vercel AI SDK (Gemini) |
@@ -295,7 +295,8 @@ npx prisma studio
 | [README.md](README.md) | Übersicht, Setup, Features |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API-Übersicht |
 | [docs/HIDDEN-MECHANICS.md](docs/HIDDEN-MECHANICS.md) | Verborgene Mechaniken: Idempotenz, Revocation, Optimistic UI, RBAC, Admin-Stats „degraded“ (HTTP 200), Site-Analytics-Beacon, Capacitor-`out/`, Session Activity, LogoutBackGuard, … |
-| [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik |
+| [docs/ADMIN.md](docs/ADMIN.md) | Admin-Layout, Health-Check, DSGVO-Kontoverwaltung, Pause-Logik, Rechnungs-PDF |
+| [docs/BILLING-DOCUMENTS-AND-PAYMENTS.md](docs/BILLING-DOCUMENTS-AND-PAYMENTS.md) | **Belege & Zahlungen:** RE/GS/PR/SR/SG/GBL, Nummernkreise, Gutschriftverfahren, MwSt-Takumi, Webhooks, iOS-Hinweise |
 | [docs/ENV.md](docs/ENV.md) | Umgebungsvariablen |
 | [docs/DEPLOYMENT-AUTH.md](docs/DEPLOYMENT-AUTH.md) | **Production-Login:** `NEXTAUTH_URL`, www→apex, Safari/WebKit |
 | [docs/MOBILE-READINESS.md](docs/MOBILE-READINESS.md) | Mobile-Richtlinien (Capacitor integriert) |

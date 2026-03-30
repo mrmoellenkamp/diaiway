@@ -623,11 +623,14 @@ Details: [docs/ENV.md](./ENV.md)
 | Ereignis | Empfänger | Kanal |
 |---|---|---|
 | Buchung bezahlt | Takumi | E-Mail (Accept/Decline-Links) + In-App + Push |
-| Takumi bestätigt | Shugyo | E-Mail + In-App + Push |
-| Takumi lehnt ab | Shugyo | E-Mail + In-App + Push |
+| Instant-Anfrage (`POST /api/bookings/instant`) | Takumi | In-App + E-Mail (`sendBookingRequestEmail`) + Push (`pushType: BOOKING_REQUEST`) |
+| Takumi bestätigt / lehnt ab (Dashboard **oder** E-Mail-Link `GET/PATCH /api/bookings/[id]/status`) | Shugyo | E-Mail + In-App + Push (`BOOKING_UPDATE`); alte `booking_request`-Notifications beim Takumi werden bereinigt |
 | Takumi stellt Rückfrage | Shugyo | E-Mail + In-App + Push |
 | Buchung storniert (von Shugyo) | Takumi | E-Mail + In-App + Push |
 | Buchung storniert (von Takumi) | Shugyo | E-Mail + In-App + Push |
+| Session abgeschlossen (`processCompletion`) | Shugyo | In-App + Push (Session completed) |
+| Zahlung fehlgeschlagen (Stripe Webhook) | Shugyo | In-App + Push (`PAYMENT`) |
+| Wallet-Aufladung erfolgreich (Webhook) | Nutzer | In-App + Push (`PAYMENT`) |
 | 30 Min vor Session | Shugyo + Takumi | Lokale Geräteerinnerung (Capacitor, nur Native-App) |
 
 ### Implementierung
@@ -635,6 +638,8 @@ Details: [docs/ENV.md](./ENV.md)
 - **`lib/notification-service.ts`**: `notifyAfterPayment()` (Buchung bezahlt → Takumi), `notifyAfterCancellation()` (Stornierung → andere Partei)
 - **`app/api/booking-respond/[id]/route.ts`**: Bestätigung/Ablehnung/Rückfrage → Shugyo-Benachrichtigung
 - **`app/(app)/sessions/page.tsx`**: Lokale Erinnerungen via Capacitor Local Notifications
+- **`lib/push.ts` / `lib/push-fcm.ts`**: Payload-Feld **`pushType`** → natives Routing (Android `channelId`, iOS `aps.category`)
+- **`lib/system-waymail.ts`**: System-Waymails erzeugen **keine** zusätzlichen In-App-Notifications/Pushes mehr (vermeidet Doppelungen); der aufrufende Code ist dafür zuständig
 
 ### Wichtig: `deferNotification`
 
@@ -642,4 +647,4 @@ Der Buchungsflow setzt immer `deferNotification: true` — Takumi-Benachrichtigu
 
 ---
 
-*Letzte Aktualisierung: März 2026 – Abrechnungslogik überarbeitet (Handshake-Grenzen, Viertelstunden-Rundung, Mindestabrechnung)*
+*Letzte Aktualisierung: März 2026 – Benachrichtigungen (Instant, Status-Links, Session, Zahlung, Wallet-Topup, pushType, Waymail-Dedup); Abrechnungs- und Belegdoku: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md)*

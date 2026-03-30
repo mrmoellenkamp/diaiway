@@ -37,6 +37,7 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 |----------|--------------|
 | `STRIPE_SECRET_KEY` | Stripe Secret Key |
 | `STRIPE_WEBHOOK_SECRET` | Webhook-Signatur (für `/api/webhooks/stripe`) |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Optional: eigene Signatur für **`/api/webhooks/stripe-connect`** (Connect-Konto-Events). Wenn nicht gesetzt, kann `STRIPE_WEBHOOK_SECRET` als Fallback dienen — nur sinnvoll, wenn derselbe Secret im Dashboard für beide Endpunkte verwendet wird. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Publishable Key (Client) |
 
 **Stripe Webhook Events** (im Dashboard konfigurieren):
@@ -45,6 +46,8 @@ Unterstützt `EMAIL_SERVER_*` (Vercel) und `SMTP_*` (Legacy):
 - `payment_intent.payment_failed`
 
 **Gast-Calls:** Embedded Checkout setzt in den Session-Metadaten u. a. `type: guest_call_payment` und `bookingId`; der Webhook-Handler in `app/api/webhooks/stripe/route.ts` verarbeitet diesen Pfad gesondert (Sofortzahlung, optional Shugyo-Konto).
+
+**Stripe Connect:** Zusätzlicher Endpoint `POST /api/webhooks/stripe-connect` — Events für verbundene Konten (z. B. Onboarding/Verifizierung). Konfiguration im Stripe-Dashboard; Secret siehe `STRIPE_CONNECT_WEBHOOK_SECRET`. Zahlungs- und Checkout-Logik bleibt in `app/api/webhooks/stripe/route.ts`; Beleg- und Marktplatz-Details: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
 
 ## AI (diAIway intelligence)
 

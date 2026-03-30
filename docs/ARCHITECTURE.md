@@ -15,7 +15,7 @@ diAIway ist eine **Hybrid-App**:
 | Framework | Next.js 16 (App Router) |
 | Datenbank | PostgreSQL + Prisma |
 | Auth | NextAuth.js v5 (Credentials, JWT) |
-| Zahlung | Stripe (Hold & Capture, Webhooks) |
+| Zahlung | Stripe (Hold & Capture, Webhooks, **Connect** für Marktplatz-Splits), Wallet |
 | Video/Voice | Daily.co (`@daily-co/daily-js`) |
 | Mobile | Capacitor 8 (ios/, android/) |
 | Push | web-push (VAPID), Firebase Admin (FCM), @capacitor/push-notifications |
@@ -111,9 +111,13 @@ diAIway ist eine **Hybrid-App**:
   - UI-Countdown in `DailyCallContainer` spiegelt exakt diese Logik wider
 
 ### Zahlung
-- **Stripe**: Hold & Capture (manual capture); **7-Tage-Hold-Fenster** (nicht 24h); Capture nach Session oder via Cron
-- **Wallet**: Atomare Abzüge via `prisma.$transaction` mit Balance-Guard (`user.balance >= amountCents` vor `decrement`); `WalletTransaction`-Audit; Balance nie negativ
+- **Stripe**: Hold & Capture (manual capture) wo vorgesehen; **7-Tage-Hold-Fenster**; Capture nach Session oder via Cron. **Stripe Connect (Express)** für Buchungszahlungen: Zahlung wird mit **Destination/Transfer** zum Connected Account des Takumi verknüpft; Plattform erhält **Application Fee** (Provision, 15 %). Details und Beleglogik: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
+- **Wallet**: Atomare Abzüge via `prisma.$transaction` mit Balance-Guard (`user.balance >= amountCents` vor `decrement`); `WalletTransaction`-Audit; Balance nie negativ. **Aufladung:** PDF ist **GBL** (Guthabenbeleg), keine RE — siehe Billing-Doku.
 - **Admin Finance**: Force Capture, Manual Release mit Doppelbestätigung; Audit-Log, CSV-Export, DATEV
+
+### Belege & PDFs (RE, GS, PR, SR, SG, GBL)
+
+Nach Session-Abschluss (`processCompletion`) u. a.: Rechnung an Shugyo (**RE**, Gutschriftverfahren mit Takumi als Aussteller-Zeile), Gutschrift an Takumi (**GS**), Provisionsrechnung (**PR**). Stornos: **SR**/**SG**. Wallet-Topup: **GBL**. Implementierung: `lib/pdf-invoice.ts`, `lib/pdf-invoice-branding.ts`, Nummern `lib/billing.ts`. **Vollständige Spezifikation:** [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
 
 ### Rechnungsdaten vs. Zahlungsvorgang (fachliche Trennung)
 
@@ -133,7 +137,7 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 - **Web**: Web Push (VAPID) via `web-push`; `POST /api/push/subscribe` speichert `PushSubscription`; `public/sw.js` zeigt Notifications mit Quick Actions
 - **Native**: Capacitor `@capacitor/push-notifications`; Token via `POST /api/push/fcm-token`; Firebase Admin für FCM
 - **Quick Actions (Instant Connect)**: `BOOKING_REQUEST` mit `bookingId`, `statusToken`; Web: ACCEPT → `/api/bookings/[id]/instant-accept?token=`, DECLINE → `/api/bookings/[id]/instant-decline?token=`; Native: `pushNotificationActionPerformed` in `quick-action-push-handler.ts`
-- `sendPushToUser()` versucht Web Push + FCM parallel; `lib/push.ts`, `lib/push-fcm.ts`
+- `sendPushToUser()` versucht Web Push + FCM parallel; `lib/push.ts`, `lib/push-fcm.ts`; optional **`pushType`** (`BOOKING_REQUEST`, `BOOKING_UPDATE`, `MESSAGE`, `REMINDER`, `PAYMENT`, `GENERAL`) → Android `channelId` / iOS `category`
 - **Sprache**: `User.preferredLocale` (`de` \| `en` \| `es`) steuert Titel/Texte für serverseitige Pushes (Cron-Terminerinnerung, Buchungen, Messages, Waymail-Hinweis). Wird beim Sprachwechsel in der App mit `PATCH /api/user/profile` (`preferredLocale`) und beim Login aus dem Profil geladen (`lib/push-strings.ts`, `lib/user-preferred-locale.ts`).
 
 ### Safety Enforcement
@@ -239,7 +243,7 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/wallet/topup` | POST | Wallet aufladen (Stripe Session) |
 | `/api/wallet/topup/confirm` | POST | Topup bestätigen |
 | `/api/webhooks/stripe` | POST | checkout.session.completed, payment_intent.* |
-| `/api/billing/download/[transactionId]` | GET | Rechnung/CreditNote als PDF |
+| `/api/billing/download/[transactionId]` | GET | Gespeicherte Buchungs-PDFs (RE/GS/PR …) zur Transaction |
 
 ### Push & Notifications
 | Route | Methode | Beschreibung |
@@ -273,7 +277,6 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | Route | Methode | Beschreibung |
 |-------|---------|--------------|
 | `/api/admin/stats` | GET | Statistiken |
-| `/api/admin/verify` | GET | Admin-Check |
 | `/api/admin/health-check` | GET | Cron-Logs, Stripe-Escrow-Risiken, Wallet-Integrität, Push-Reachability |
 | `/api/admin/users` | GET | Nutzer-Liste (inkl. Anonymisierte: `@anonymized.local`) |
 | `/api/admin/users/[id]` | GET, PATCH | Nutzer-Detail |
@@ -307,7 +310,10 @@ Diese Trennung ist **bewusst** und soll Verwechslungen zwischen Steuer-/Rechnung
 | `/api/admin/finance/export` | GET | CSV (format=csv), ZIP (PDFs) |
 | `/api/admin/finance/datev` | GET | DATEV-Export |
 | `/api/admin/finance/resend-invoice` | POST | Rechnung erneut senden |
-| `/api/admin/wallet/refund` | POST | Wallet-Refund |
+| `/api/admin/invoice-branding` | GET, PATCH | PDF-Branding & Textvorlagen |
+| `/api/admin/invoice-branding/logo` | POST | Logo-Upload |
+| `/api/admin/invoice-branding/preview` | GET | PDF-Vorschau (`?doc=…`) |
+| `/api/admin/invoice-branding/test-email` | POST | Test-PDF per E-Mail |
 
 ### Cron (Bearer CRON_SECRET)
 | Route | Methode | Beschreibung |

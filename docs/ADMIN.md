@@ -51,7 +51,7 @@ app/(app)/admin/
 | **Finanzen** | FinanceTab + Link zu Finance Monitoring (`/admin/finance`) |
 | **Sicherheit** | Safety Reports, KI-Incidents; Links zu `/admin/safety`, `/admin/safety/incidents` |
 | **Scanner** | Vision-Scanner (Google Cloud Vision); Labels, Objekte, OCR, Safe Search, Farben, Gesichter, Web |
-| **System** | Verweise: Taxonomie (`/admin/taxonomy`), Startseiten-News (`/admin/home-news`), Health-Check, Waymail-Templates, DB-Tools |
+| **System** | Verweise: Taxonomie (`/admin/taxonomy`), Startseiten-News (`/admin/home-news`), **Rechnungs-PDF** (`/admin/invoice-branding`), Health-Check, Waymail-Templates, DB-Tools |
 
 - **Tab-Leiste**: `flex-wrap` – umbricht auf Mobile
 - **Quick-KPI-Bar**: Nutzer, Takumis, Buchungen, Umsatz – klickbar für Tab-Wechsel (setzt URL-Query `?tab=…`)
@@ -232,6 +232,7 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 | `/admin/takumi-profile-revocations` | Manuelles Entziehen der Freigabe (nur bei `approved`), wählbare Benachrichtigungs-Textbausteine (`TakumiProfileRevokeSnippet`) |
 | `/admin/guest-bookings` | Alle Gast-Call-Buchungen: Filter, Takumi-Zuordnung, Link kopieren, **Stornieren** (nur unbezahlt), **Löschen** (hart) |
 | `/admin/scanner` | Redirect → `/admin` (Scanner nur als Tab) |
+| `/admin/invoice-branding` | PDF-Branding: Logo, Akzentfarbe, globale Texte, **pro Belegtyp** editierbare Vorlagen; eingebettete Vorschau; Test-E-Mail (SMTP) |
 
 ### Gast-Buchungen (Admin-Steuerung)
 
@@ -283,6 +284,45 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 - Vercel Hobby: Crons maximal **1× täglich**
 - `instant-request-cleanup` läuft um **8:00** statt alle 2 Minuten
 - **Für Instant Connect mit 60s-Expiry**: Externer Cron (z.B. cron-job.org) oder Vercel Pro
+
+---
+
+## 10. Rechnungs-PDF & Belegvorlagen (`/admin/invoice-branding`)
+
+**Zweck:** Steuerung von Logo, Farben und **Textbausteinen** für alle automatisch erzeugten PDF-Belege (jsPDF). Gilt für **neu** erzeugte Dateien nach Speichern.
+
+### Datenhaltung
+
+- Tabelle **`InvoiceBranding`** (Prisma): eine Zeile `id = default`; Felder u. a. `logoUrl`, `accentHex`, `footerText`, `paymentNote`, `closingLine`, `documentTemplates` (JSON mit Overrides pro Belegtyp).
+
+### Belegtypen (Schlüssel `documentTemplates`)
+
+Entspricht `INVOICE_DOC_KEYS` in `lib/invoice-doc-templates.ts`:
+
+| Schlüssel | Kurzbeschreibung |
+|-----------|------------------|
+| `re_session` | Rechnung an Shugyo (Session); **Gutschriftverfahren**: Takumi als Aussteller-Zeile + Hinweis „Ausgestellt durch diAiway…“ |
+| `gbl` | **Guthabenbeleg** (Wallet-Aufladung) — kein §14-UStG-Rechnungsdokument |
+| `gs` | Gutschrift an Takumi |
+| `sr` | Storno-Rechnung an Shugyo |
+| `sg` | Storno-Gutschrift an Takumi |
+| `re_commission` | Provisionsrechnung (Plattform → Takumi) |
+
+### API (nur Admin)
+
+| Route | Methode | Zweck |
+|-------|---------|--------|
+| `/api/admin/invoice-branding` | GET | Branding + Templates laden |
+| `/api/admin/invoice-branding` | PATCH | Speichern |
+| `/api/admin/invoice-branding/logo` | POST | Logo-Upload (Vercel Blob) |
+| `/api/admin/invoice-branding/preview` | GET | `?doc=re_session\|gbl\|gs\|sr\|sg\|re_commission` — PDF inline (gespeichertes Branding) |
+| `/api/admin/invoice-branding/test-email` | POST | JSON `{ "email", "doc": "re_session"\|"gbl"\|"gs_session", "zugferd"?: boolean }` — Muster-PDF per SMTP |
+
+**Hinweis:** `zugferd` wirkt nur bei `re_session`. Vorschau/Test für Session-Rechnung und Storno-Rechnung setzen Demo-`takumiSenderName`, damit der **Takumi-Aussteller** im Layout sichtbar ist.
+
+### Fachdokumentation
+
+Ausführlich: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
 
 ---
 

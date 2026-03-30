@@ -85,6 +85,16 @@
 
 ---
 
+## 6. Zahlungen & App Review (Marktplatz / IAP)
+
+| Aspekt | Hinweis für Einreichung |
+|--------|-------------------------|
+| **Peer-to-Peer / reale Dienste** | diAiway vermittelt **Live-Beratung** zwischen Personen — Argumentationslinie zu **Apple Guideline 3.1.3(d)** (nicht 1:1 rechtlicher Rat). |
+| **Wallet / Guthaben** | **Aufladung** in der nativen iOS-App vermeiden bzw. auf Web verweisen (**3.1.1**); **Verbrauch** für bezahlte Buchungen separat dokumentieren (siehe [IOS-APP-STORE-COMPLIANCE.md](./IOS-APP-STORE-COMPLIANCE.md) Abschnitt 6). |
+| **Belege** | Wallet-Aufladung = **GBL** (Guthabenbeleg), keine §14-UStG-Rechnung; Session-Ende = RE/GS/PR — siehe [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md). |
+
+---
+
 ## Pre-Submission
 
 - [ ] Replace placeholder/custom icons and splash with final brand assets
