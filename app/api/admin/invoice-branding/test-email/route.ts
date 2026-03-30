@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { transporter, smtpFrom } from "@/lib/email"
 import {
   generateInvoicePdf,
+  generateCreditNotePdf,
   generateWalletTopupInvoicePdf,
   pdfDemoRecipientInvoiceData,
 } from "@/lib/pdf-invoice"
@@ -13,8 +14,8 @@ export const runtime = "nodejs"
 
 const bodySchema = z.object({
   email: z.string().email(),
-  doc: z.enum(["re_session", "re_wallet"]).default("re_session"),
-  /** Nur bei re_session; bei re_wallet wird ignoriert */
+  doc: z.enum(["re_session", "re_wallet", "gs_session"]).default("re_session"),
+  /** Nur bei re_session; bei re_wallet/gs_session wird ignoriert */
   zugferd: z.boolean().optional().default(false),
 })
 
@@ -81,6 +82,23 @@ export async function POST(req: Request) {
       })
       filename = "diaiway-test-wallet-rechnung.pdf"
       subject = "diAiway – Test-Rechnung (Wallet-Aufladung)"
+    } else if (doc === "gs_session") {
+      pdfBuf = await generateCreditNotePdf({
+        creditNumber: "GS-TEST-SESSION",
+        recipientName: "Max Muster-Takumi",
+        recipientEmail: "takumi@beispiel.de",
+        recipientCustomerNumber: "KD-TEST-T",
+        recipientCountry: "Germany",
+        recipientInvoiceData: pdfDemoRecipientInvoiceData,
+        bookingId: "bkl-test-demo",
+        totalAmountCents: 5950,
+        platformFeeCents: 595,
+        netPayoutCents: 5355,
+        date: demoDate,
+        useZugferd: false,
+      })
+      filename = "diaiway-test-gutschrift.pdf"
+      subject = "diAiway – Test-Gutschrift (Session)"
     } else {
       const useZug = Boolean(zugferd)
       pdfBuf = await generateInvoicePdf({

@@ -475,6 +475,10 @@ export async function generateStornoInvoicePdf(opts: {
   expertName: string
   totalAmountCents: number
   date: Date
+  /** Gutschriftverfahren: Takumi als Aussteller der Storno-Rechnung */
+  takumiSenderName?: string | null
+  /** MwSt-Status des Takumis — steuert Hinweistext auf der Storno-Rechnung */
+  takumiVatStatus?: TakumiVatStatus | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
@@ -492,6 +496,8 @@ export async function generateStornoInvoicePdf(opts: {
     expertName,
     totalAmountCents,
     date,
+    takumiSenderName = null,
+    takumiVatStatus = "standard",
   } = opts
 
   const kdSt = recipientCustomerNumber?.trim() ?? null
@@ -513,6 +519,7 @@ export async function generateStornoInvoicePdf(opts: {
     documentNumberLabel: t.stornoNumberLabel,
     secondDocumentLabel: t.storniertLabel,
     secondDocumentValue: originalInvoiceNumber,
+    senderOverride: takumiSenderName ? { name: takumiSenderName } : null,
   })
 
   const x0Sr = INV_DE_LAYOUT.marginH
@@ -529,10 +536,13 @@ export async function generateStornoInvoicePdf(opts: {
     ySr = drawIntroductionBlocks(doc, x0Sr, ySr, textWSr, introSr, INV_DE_LAYOUT.bodyPt)
   }
 
-  ySr = drawHtmlTemplateDetailRowsBlock(doc, ySr, t.sectionLabel, [
+  const srVatNote = vatNoteForStatus(takumiVatStatus ?? "standard")
+  const srRows: { left: string; right: string }[] = [
     { left: `${sessionServiceLeadPhrase(t.serviceName)} ${expertName} (Buchung ${bookingId})`, right: "" },
     { left: t.stornoBetragPrefix.trim(), right: `-${formatCents(totalAmountCents)}` },
-  ])
+  ]
+  if (srVatNote) srRows.push({ left: srVatNote, right: "" })
+  ySr = drawHtmlTemplateDetailRowsBlock(doc, ySr, t.sectionLabel, srRows)
 
   drawPaymentClosingAndFooter(
     doc,
@@ -566,6 +576,8 @@ export async function generateStornoCreditNotePdf(opts: {
   platformFeeCents: number
   totalAmountCents: number
   date: Date
+  /** MwSt-Status des Takumis — steuert Hinweistext auf der Storno-Gutschrift */
+  takumiVatStatus?: TakumiVatStatus | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
@@ -584,6 +596,7 @@ export async function generateStornoCreditNotePdf(opts: {
     platformFeeCents,
     totalAmountCents,
     date,
+    takumiVatStatus = "standard",
   } = opts
 
   const kdSg = recipientCustomerNumber?.trim() ?? null
@@ -621,12 +634,15 @@ export async function generateStornoCreditNotePdf(opts: {
     ySg = drawIntroductionBlocks(doc, x0Sg, ySg, textWSg, introSg, INV_DE_LAYOUT.bodyPt)
   }
 
-  ySg = drawHtmlTemplateDetailRowsBlock(doc, ySg, t.sectionLabel, [
+  const sgVatNote = vatNoteForStatus(takumiVatStatus ?? "standard")
+  const sgRows: { left: string; right: string }[] = [
     { left: `Buchung ${bookingId}`, right: "" },
     { left: t.detailBruttoPrefix.trim(), right: `-${formatCents(totalAmountCents)}` },
     { left: t.detailFeePrefix.trim(), right: `+${formatCents(platformFeeCents)}` },
     { left: t.detailNetPrefix.trim(), right: `-${formatCents(netPayoutCents)}` },
-  ])
+  ]
+  if (sgVatNote) sgRows.push({ left: sgVatNote, right: "" })
+  ySg = drawHtmlTemplateDetailRowsBlock(doc, ySg, t.sectionLabel, sgRows)
 
   drawPaymentClosingAndFooter(
     doc,

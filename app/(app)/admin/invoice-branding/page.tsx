@@ -72,7 +72,7 @@ export default function AdminInvoiceBrandingPage() {
   const [docTemplates, setDocTemplates] = useState(initialDocTemplatesState)
   const [activeDocTab, setActiveDocTab] = useState<InvoiceDocKey>("re_session")
   const [testEmail, setTestEmail] = useState("")
-  const [testDoc, setTestDoc] = useState<"re_session" | "re_wallet">("re_session")
+  const [testDoc, setTestDoc] = useState<"re_session" | "re_wallet" | "gs_session">("re_session")
   const [testZugferd, setTestZugferd] = useState(false)
   const [testSending, setTestSending] = useState(false)
   /** Eingebettete PDF-Vorschau (API = gespeichertes Branding) */
@@ -526,8 +526,8 @@ export default function AdminInvoiceBrandingPage() {
                     <Select
                       value={testDoc}
                       onValueChange={(v) => {
-                        setTestDoc(v as "re_session" | "re_wallet")
-                        if (v === "re_wallet") setTestZugferd(false)
+                        setTestDoc(v as "re_session" | "re_wallet" | "gs_session")
+                        if (v !== "re_session") setTestZugferd(false)
                       }}
                     >
                       <SelectTrigger className="w-full max-w-md">
@@ -536,6 +536,7 @@ export default function AdminInvoiceBrandingPage() {
                       <SelectContent>
                         <SelectItem value="re_session">Rechnung (Session)</SelectItem>
                         <SelectItem value="re_wallet">Rechnung (Wallet-Aufladung)</SelectItem>
+                        <SelectItem value="gs_session">Gutschrift (Session, an Takumi)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -552,7 +553,7 @@ export default function AdminInvoiceBrandingPage() {
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         Nur bei „Rechnung (Session)“. Erzeugt ein PDF mit eingebetteter XML-Rechnung für
-                        Geschäftskunden-Workflows.
+                        Geschäftskunden-Workflows. Bei Gutschrift und Wallet nicht verfügbar.
                       </p>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import {
   greetingPartsFromInvoiceData,
   invoiceDataCountry,
+  resolveTakumiVatStatus,
   validateInvoiceDataForPayment,
 } from "@/lib/invoice-requirements"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
@@ -529,6 +530,7 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
       : null
     const shugyoRealName = getRealNameForInvoice(shugyoInv, t.user?.name ?? t.booking.userName)
     const takumiRealName = getRealNameForInvoice(takumiInv, t.expert?.name ?? "")
+    const takumiVatStatus = resolveTakumiVatStatus(t.expert?.user?.invoiceData)
 
     const [srNum, sgNum] = await Promise.all([
       getNextDocumentNumber("SR"),
@@ -548,6 +550,8 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
         expertName: t.booking.expertName,
         totalAmountCents: t.totalAmount,
         date: now,
+        takumiSenderName: takumiRealName,
+        takumiVatStatus,
       }),
       generateStornoCreditNotePdf({
         stornoNumber: sgNum,
@@ -562,6 +566,7 @@ export async function creditRefundToShugyoWallet(bookingId: string): Promise<{ o
         platformFeeCents: t.platformFee,
         totalAmountCents: t.totalAmount,
         date: now,
+        takumiVatStatus,
       }),
     ])
     const [srBlob, sgBlob] = await Promise.all([
@@ -648,6 +653,7 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
       : null
     const shugyoRealName = getRealNameForInvoice(shugyoInv, t.user?.name ?? t.booking.userName)
     const takumiRealName = getRealNameForInvoice(takumiInv, t.expert?.name ?? "")
+    const takumiVatStatus = resolveTakumiVatStatus(t.expert?.user?.invoiceData)
 
     const [srNum, sgNum] = await Promise.all([
       getNextDocumentNumber("SR"),
@@ -667,6 +673,8 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
         expertName: t.booking.expertName,
         totalAmountCents: t.totalAmount,
         date: now,
+        takumiSenderName: takumiRealName,
+        takumiVatStatus,
       }),
       generateStornoCreditNotePdf({
         stornoNumber: sgNum,
@@ -681,6 +689,7 @@ export async function refundTransactionForBooking(bookingId: string): Promise<{ 
         platformFeeCents: t.platformFee,
         totalAmountCents: t.totalAmount,
         date: now,
+        takumiVatStatus,
       }),
     ])
     const [srBlob, sgBlob] = await Promise.all([
