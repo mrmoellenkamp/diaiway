@@ -6,7 +6,7 @@ import { transporter, smtpFrom } from "@/lib/email"
 import {
   generateInvoicePdf,
   generateCreditNotePdf,
-  generateWalletTopupInvoicePdf,
+  generateWalletTopupReceiptPdf,
   pdfDemoRecipientInvoiceData,
 } from "@/lib/pdf-invoice"
 
@@ -14,8 +14,8 @@ export const runtime = "nodejs"
 
 const bodySchema = z.object({
   email: z.string().email(),
-  doc: z.enum(["re_session", "re_wallet", "gs_session"]).default("re_session"),
-  /** Nur bei re_session; bei re_wallet/gs_session wird ignoriert */
+  doc: z.enum(["re_session", "gbl", "gs_session"]).default("re_session"),
+  /** Nur bei re_session; bei gbl/gs_session wird ignoriert */
   zugferd: z.boolean().optional().default(false),
 })
 
@@ -68,9 +68,9 @@ export async function POST(req: Request) {
     let filename: string
     let subject: string
 
-    if (doc === "re_wallet") {
-      pdfBuf = await generateWalletTopupInvoicePdf({
-        invoiceNumber: "RE-TEST-WALLET",
+    if (doc === "gbl") {
+      pdfBuf = await generateWalletTopupReceiptPdf({
+        receiptNumber: "GBL-TEST",
         recipientName: "Musterfirma GmbH",
         recipientEmail: "rechnung@beispiel.de",
         recipientCustomerNumber: "KD-TEST",
@@ -80,8 +80,8 @@ export async function POST(req: Request) {
         date: demoDate,
         introGreeting: { firstName: "Max", lastName: "Mustermann", username: "muster_max" },
       })
-      filename = "diaiway-test-wallet-rechnung.pdf"
-      subject = "diAiway – Test-Rechnung (Wallet-Aufladung)"
+      filename = "diaiway-test-guthabenbeleg.pdf"
+      subject = "diAiway – Test-Guthabenbeleg (Wallet-Aufladung)"
     } else if (doc === "gs_session") {
       pdfBuf = await generateCreditNotePdf({
         creditNumber: "GS-TEST-SESSION",
@@ -115,6 +115,8 @@ export async function POST(req: Request) {
         durationMinutes: 30,
         useZugferd: useZug,
         introGreeting: { firstName: "Max", lastName: "Mustermann", username: "muster_max" },
+        takumiSenderName: "Expertin Muster",
+        takumiVatStatus: "standard",
       })
       filename = useZug
         ? "diaiway-test-session-zugferd.pdf"

@@ -507,15 +507,17 @@ export async function drawHtmlTemplateInvoiceHeader(
   doc.setDrawColor(0, 0, 0)
 
   if (so) {
-    const notePt = d.returnAddressPt - 0.5
+    const notePt = INV_DE_LAYOUT.disclaimerPt
     const noteY = underlineY + 3.5
+    doc.setFont("helvetica", "normal")
     doc.setFontSize(notePt)
     doc.setTextColor(fr, fg, fb)
-    doc.text(
-      "Ausgestellt durch diAiway (JM faircharge UG) gemäß §\u202f14 Abs.\u202f2 UStG (Gutschriftverfahren)",
-      x0,
-      noteY
-    )
+    const gutschriftText = "Ausgestellt durch diAiway (JM faircharge UG) gem\u00e4\u00df \u00a714 Abs.\u202f2 UStG (Gutschriftverfahren)"
+    const gutschriftLines = doc.splitTextToSize(gutschriftText, addrW) as string[]
+    const gblLh = (notePt * 1.4 * 25.4) / 72
+    for (let i = 0; i < gutschriftLines.length; i++) {
+      doc.text(gutschriftLines[i], x0, noteY + i * gblLh)
+    }
     doc.setTextColor(tr, tg, tb)
   }
 
@@ -721,12 +723,24 @@ export function drawHtmlTemplateInvoiceTableAndTotals(
 
     const noteText = opts.vatNote?.trim() ?? ""
     if (noteText) {
+      const notePt = INV_DE_LAYOUT.disclaimerPt
+      const noteLh = cssLineHeightMm(doc, notePt)
       doc.setFont("helvetica", "normal")
-      doc.setFontSize(INV_DE_LAYOUT.disclaimerPt)
+      doc.setFontSize(notePt)
       doc.setTextColor(dr, dg, db)
-      const noteLines = doc.splitTextToSize(noteText, INV_DE_LAYOUT.contentWidthMm)
-      doc.text(noteLines, x0, y)
-      y += noteLines.length * cssLineHeightMm(doc, INV_DE_LAYOUT.disclaimerPt) + rowPad
+      const noteMaxW = rightX - x0
+      // \n manuell aufteilen, dann jede Zeile einzeln wrappen und rendern
+      // (verhindert den jsPDF-Bug mit gesperrter Schrift bei Array-Text)
+      const noteParagraphs = noteText.split("\n")
+      let totalLines = 0
+      for (const para of noteParagraphs) {
+        const wrapped = doc.splitTextToSize(para.trim(), noteMaxW) as string[]
+        for (const line of wrapped) {
+          doc.text(line, x0, y + totalLines * noteLh)
+          totalLines++
+        }
+      }
+      y += totalLines * noteLh + rowPad
       doc.setTextColor(tr, tg, tb)
     }
   } else {

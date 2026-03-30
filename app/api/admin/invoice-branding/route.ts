@@ -39,7 +39,7 @@ const docTemplatePatchSchema = z
 const documentTemplatesSchema = z
   .object({
     re_session: docTemplatePatchSchema,
-    re_wallet: docTemplatePatchSchema,
+    gbl: docTemplatePatchSchema,
     gs: docTemplatePatchSchema,
     sr: docTemplatePatchSchema,
     sg: docTemplatePatchSchema,

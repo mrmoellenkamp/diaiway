@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db"
 
-export type DocType = "RE" | "GS" | "SR" | "SG" | "KD" | "PR"
+export type DocType = "RE" | "GS" | "SR" | "SG" | "KD" | "PR" | "GBL"
 
 const INITIAL_VALUES: Record<DocType, number> = {
   /**
@@ -18,6 +18,8 @@ const INITIAL_VALUES: Record<DocType, number> = {
   SR: 100000,
   SG: 100000,
   PR: 100000,
+  /** Guthaben-Einzahlungsbeleg (ersetzt die frühere Wallet-Rechnung RE-WALLET) */
+  GBL: 100000,
 }
 
 /** Atomare Vergabe der nächsten Belegnummer (RE-100001, GS-100001, KD-00001, …) */

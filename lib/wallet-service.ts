@@ -13,7 +13,7 @@ import { markVerified } from "@/lib/verification-service"
 import {
   generateStornoCreditNotePdf,
   generateStornoInvoicePdf,
-  generateWalletTopupInvoicePdf,
+  generateWalletTopupReceiptPdf,
 } from "@/lib/pdf-invoice"
 
 const PLATFORM_FEE_PERCENT = 15
@@ -75,13 +75,13 @@ export async function creditWalletTopup(
           where: { id: userId },
           select: { name: true, email: true, customerNumber: true, invoiceData: true, username: true },
         }),
-        getNextDocumentNumber("RE"),
+        getNextDocumentNumber("GBL"),
       ])
       if (user) {
         const now = new Date()
         const introGreeting = greetingPartsFromInvoiceData(user.invoiceData, user.name, user.username)
-        const buf = await generateWalletTopupInvoicePdf({
-          invoiceNumber,
+        const buf = await generateWalletTopupReceiptPdf({
+          receiptNumber: invoiceNumber,
           recipientName: user.name,
           recipientEmail: user.email,
           recipientCustomerNumber: user.customerNumber,
@@ -97,12 +97,12 @@ export async function creditWalletTopup(
         await prisma.walletTransaction.update({
           where: { id: wtId },
           data: {
-            metadata: { invoiceNumber, invoicePdfUrl: blob.url },
+            metadata: { receiptNumber: invoiceNumber, receiptPdfUrl: blob.url },
           },
         })
       }
     } catch (err) {
-      console.error("[creditWalletTopup] Invoice generation failed:", err)
+      console.error("[creditWalletTopup] Receipt generation failed:", err)
       // Topup war erfolgreich, Rechnung fehlgeschlagen — loggen, aber nicht fehlschlagen
     }
 
@@ -158,11 +158,11 @@ export async function creditWalletAdmin(
             ? invData?.companyName?.trim()
             : invData?.fullName?.trim()) || user.name
 
-        const invoiceNumber = await getNextDocumentNumber("RE")
+        const receiptNumber = await getNextDocumentNumber("GBL")
         const now = new Date()
         const introGreeting = greetingPartsFromInvoiceData(user.invoiceData, user.name, user.username)
-        const buf = await generateWalletTopupInvoicePdf({
-          invoiceNumber,
+        const buf = await generateWalletTopupReceiptPdf({
+          receiptNumber,
           recipientName,
           recipientEmail: user.email ?? "",
           recipientCustomerNumber: user.customerNumber,
@@ -172,7 +172,7 @@ export async function creditWalletAdmin(
           date: now,
           introGreeting,
         })
-        const blob = await put(`invoices/wallet-${wtId}-${invoiceNumber}.pdf`, Buffer.from(buf), {
+        const blob = await put(`invoices/wallet-${wtId}-${receiptNumber}.pdf`, Buffer.from(buf), {
           access: "public",
         })
         await prisma.walletTransaction.update({
@@ -182,15 +182,15 @@ export async function creditWalletAdmin(
               adminId,
               reason: reason ?? null,
               source: "admin",
-              invoiceNumber,
-              invoicePdfUrl: blob.url,
+              receiptNumber,
+              receiptPdfUrl: blob.url,
             },
           },
         })
       }
     } catch (err) {
-      console.error("[creditWalletAdmin] Invoice generation failed:", err)
-      // Gutschrift war erfolgreich, Rechnung fehlgeschlagen — loggen, aber nicht fehlschlagen
+      console.error("[creditWalletAdmin] Receipt generation failed:", err)
+      // Gutschrift war erfolgreich, Beleg fehlgeschlagen — loggen, aber nicht fehlschlagen
     }
 
     return { ok: true, walletTransactionId: wtId }

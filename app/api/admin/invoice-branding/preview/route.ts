@@ -7,7 +7,7 @@ import {
   generateInvoicePdf,
   generateStornoCreditNotePdf,
   generateStornoInvoicePdf,
-  generateWalletTopupInvoicePdf,
+  generateWalletTopupReceiptPdf,
   pdfDemoRecipientInvoiceData,
 } from "@/lib/pdf-invoice"
 
@@ -19,7 +19,7 @@ function isDocKey(s: string): s is InvoiceDocKey {
 
 const filenames: Record<InvoiceDocKey, string> = {
   re_session: "diaiway-vorschau-re-session.pdf",
-  re_wallet: "diaiway-vorschau-re-wallet.pdf",
+  gbl: "diaiway-vorschau-guthabenbeleg.pdf",
   gs: "diaiway-vorschau-gutschrift.pdf",
   sr: "diaiway-vorschau-storno-re.pdf",
   sg: "diaiway-vorschau-storno-gutschrift.pdf",
@@ -55,9 +55,9 @@ export async function GET(req: NextRequest) {
     let pdfBuf: ArrayBuffer
 
     switch (doc) {
-      case "re_wallet":
-        pdfBuf = await generateWalletTopupInvoicePdf({
-          invoiceNumber: "RE-WALLET-VORSCHAU",
+      case "gbl":
+        pdfBuf = await generateWalletTopupReceiptPdf({
+          receiptNumber: "GBL-VORSCHAU",
           recipientName: "Musterfirma GmbH",
           recipientEmail: "rechnung@beispiel.de",
           recipientCustomerNumber: "KD-VORSCHAU",
@@ -101,6 +101,8 @@ export async function GET(req: NextRequest) {
           expertName: "Expertin Muster",
           totalAmountCents: 5950,
           date: demoDate,
+          takumiSenderName: "Expertin Muster",
+          takumiVatStatus: "standard",
         })
         break
       case "sg":
@@ -139,6 +141,8 @@ export async function GET(req: NextRequest) {
           durationMinutes: 30,
           useZugferd: false,
           introGreeting: { firstName: "Max", lastName: "Mustermann", username: "muster_max" },
+          takumiSenderName: "Expertin Muster",
+          takumiVatStatus: "standard",
         })
         break
     }

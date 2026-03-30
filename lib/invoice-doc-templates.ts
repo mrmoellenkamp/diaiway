@@ -2,12 +2,12 @@
  * Pro Belegtyp editierbare PDF-Texte (Admin). Merge: Patch aus DB → globale Fallbacks → Code-Defaults.
  */
 
-export const INVOICE_DOC_KEYS = ["re_session", "re_wallet", "gs", "sr", "sg", "re_commission"] as const
+export const INVOICE_DOC_KEYS = ["re_session", "gbl", "gs", "sr", "sg", "re_commission"] as const
 export type InvoiceDocKey = (typeof INVOICE_DOC_KEYS)[number]
 
 export const DOC_TYPE_LABELS: Record<InvoiceDocKey, string> = {
   re_session: "Rechnung (Session)",
-  re_wallet: "Rechnung (Wallet)",
+  gbl: "Guthabenbeleg (Wallet-Einzahlung)",
   gs: "Gutschrift",
   sr: "Storno-Rechnung",
   sg: "Storno-Gutschrift",
@@ -97,20 +97,20 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     detailNetPrefix: "Netto-Auszahlung:",
     stornoBetragPrefix: "Storno-Betrag:",
   },
-  re_wallet: {
-    title: "Rechnung",
-    documentNumberLabel: "Rechnungsnummer:",
-    recipientLabel: "Rechnungsempfänger:",
-    sectionLabel: "Block erhaltene Dienstleistungen",
-    subjectLine: "Rechnung — Wallet-Aufladung",
+  gbl: {
+    title: "Guthabenbeleg",
+    documentNumberLabel: "Belegnummer:",
+    recipientLabel: "Empfänger:",
+    sectionLabel: "Einzahlungsdetails",
+    subjectLine: "Einzahlungsbeleg — Guthaben-Aufladung",
     introductionText:
-      "Guten Tag {{firstName}} {{lastName}} ({{username}}),\nfolgende erbrachte Leistung dürfen wir in Rechnung stellen:",
+      "Guten Tag {{firstName}} {{lastName}} ({{username}}),\nIhr Guthaben wurde um den folgenden Betrag aufgeladen:",
     signatureNote:
-      "Hinweis: Dieses Schreiben würde maschinell unterschrieben und ist daher ohne Unterschrift gültig.",
-    walletLineText: "Wallet-Aufladung",
-    serviceName: "Expertensitzung",
+      "Dieser Beleg wurde maschinell erstellt und ist ohne Unterschrift gültig.",
+    walletLineText: "Guthaben-Aufladung",
+    serviceName: "",
     customerNumberLabel: "Kundennummer:",
-    paymentNote: "Der Betrag wird entsprechend des gewählten Zahlungsmittels beglichen.",
+    paymentNote: "Der Betrag wurde Ihrem Guthaben gutgeschrieben und steht ab sofort zur Verfügung.",
     closingLine: "Vielen Dank, wir freuen uns über den nächsten Besuch auf diAIway\n\nTeam - diAiway",
     footerText: null,
     stornoNumberLabel: "Storno-Nr.:",
@@ -287,7 +287,7 @@ export function resolveInvoiceDocTemplate(
   const patch = parseStoredTemplates(branding.documentTemplates)[key] ?? {}
 
   const paymentNote =
-    key === "re_session" || key === "re_wallet"
+    key === "re_session" || key === "gbl"
       ? pickStr(patch.paymentNote, branding.paymentNote, base.paymentNote)
       : base.paymentNote
 
@@ -384,7 +384,7 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "closingLine",
     "footerText",
   ],
-  re_wallet: [
+  gbl: [
     "title",
     "documentNumberLabel",
     "dateLabel",

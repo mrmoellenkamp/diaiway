@@ -371,10 +371,12 @@ export async function generateCreditNotePdf(opts: {
 }
 
 /**
- * Rechnung für Wallet-Aufladung (RE): Von diaiway an den Shugyo über den Aufladebetrag.
+ * Guthaben-Einzahlungsbeleg (GBL): Bestätigt die Wallet-Aufladung.
+ * Kein steuerliches Dokument im Sinne von §14 UStG — noch keine Leistung erbracht.
+ * MwSt wird nicht ausgewiesen.
  */
-export async function generateWalletTopupInvoicePdf(opts: {
-  invoiceNumber: string
+export async function generateWalletTopupReceiptPdf(opts: {
+  receiptNumber: string
   recipientName: string
   recipientEmail: string
   recipientCustomerNumber?: string | null
@@ -387,10 +389,10 @@ export async function generateWalletTopupInvoicePdf(opts: {
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
-  const t = resolveInvoiceDocTemplate("re_wallet", branding)
+  const t = resolveInvoiceDocTemplate("gbl", branding)
 
   const {
-    invoiceNumber,
+    receiptNumber,
     recipientName,
     recipientEmail,
     recipientCustomerNumber,
@@ -405,7 +407,7 @@ export async function generateWalletTopupInvoicePdf(opts: {
   const kdWallet = recipientCustomerNumber?.trim() ?? null
   const landW = recipientCountry?.trim() || "—"
   const dateStrW = formatInvoiceDateDdMmYyyy(date)
-  const walletLine = t.walletLineText.trim() || "Wallet-Aufladung"
+  const walletLine = t.walletLineText.trim() || "Guthaben-Aufladung"
 
   let yW = await drawHtmlTemplateInvoiceHeader(doc, branding, {
     recipientName,
@@ -414,7 +416,7 @@ export async function generateWalletTopupInvoicePdf(opts: {
     recipientCityLine: recipientCityLineW,
     recipientCountry: landW,
     customerNumber: kdWallet,
-    invoiceNumber,
+    invoiceNumber: receiptNumber,
     dateStr: dateStrW,
     customerNumberLabel: t.customerNumberLabel,
     dateLabel: t.dateLabel,
@@ -435,14 +437,18 @@ export async function generateWalletTopupInvoicePdf(opts: {
     yW = drawIntroductionBlocks(doc, x0W, yW, textWW, introWallet, INV_DE_LAYOUT.bodyPt)
   }
 
-  const { netCents: netW, vatCents: vatW } = grossToNetAndVatCents(amountCents, 19)
+  // Kein MwSt-Ausweis — Anzahlung auf künftige Leistungen, keine erbrachte Leistung
   yW = drawHtmlTemplateInvoiceTableAndTotals(doc, yW, {
     sectionTitle: null,
     lineDescription: walletLine,
-    netCents: netW,
-    vatCents: vatW,
+    netCents: amountCents,
+    vatCents: 0,
     grossCents: amountCents,
-    vatPercent: 19,
+    vatPercent: 0,
+    vatNote: [
+      "Kein steuerliches Dokument gem. \u00a714 UStG \u2013 noch keine Leistung erbracht.",
+      "Die MwSt. wird mit der jeweiligen Leistungsabrechnung ausgewiesen.",
+    ].join("\n"),
   })
 
   drawPaymentClosingAndFooter(
@@ -458,6 +464,21 @@ export async function generateWalletTopupInvoicePdf(opts: {
   drawMwStTripleColumnPageFooter(doc)
 
   return doc.output("arraybuffer") as ArrayBuffer
+}
+
+/** @deprecated Verwende generateWalletTopupReceiptPdf */
+export async function generateWalletTopupInvoicePdf(opts: {
+  invoiceNumber: string
+  recipientName: string
+  recipientEmail: string
+  recipientCustomerNumber?: string | null
+  recipientCountry?: string | null
+  amountCents: number
+  date: Date
+  introGreeting?: InvoiceIntroGreeting | null
+  recipientInvoiceData?: unknown | null
+}): Promise<ArrayBuffer> {
+  return generateWalletTopupReceiptPdf({ ...opts, receiptNumber: opts.invoiceNumber })
 }
 
 /**

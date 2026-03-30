@@ -72,7 +72,7 @@ export default function AdminInvoiceBrandingPage() {
   const [docTemplates, setDocTemplates] = useState(initialDocTemplatesState)
   const [activeDocTab, setActiveDocTab] = useState<InvoiceDocKey>("re_session")
   const [testEmail, setTestEmail] = useState("")
-  const [testDoc, setTestDoc] = useState<"re_session" | "re_wallet" | "gs_session">("re_session")
+  const [testDoc, setTestDoc] = useState<"re_session" | "gbl" | "gs_session">("re_session")
   const [testZugferd, setTestZugferd] = useState(false)
   const [testSending, setTestSending] = useState(false)
   /** Eingebettete PDF-Vorschau (API = gespeichertes Branding) */
@@ -245,7 +245,7 @@ export default function AdminInvoiceBrandingPage() {
     if (typeof d === "string" && d !== "") {
       return `Standard: ${d}`
     }
-    if (field === "paymentNote" && (key === "re_session" || key === "re_wallet")) {
+                    if (field === "paymentNote" && (key === "re_session" || key === "gbl")) {
       const g = form.paymentNote?.trim()
       if (g) return `Aus global: ${g}`
     }
@@ -526,7 +526,7 @@ export default function AdminInvoiceBrandingPage() {
                     <Select
                       value={testDoc}
                       onValueChange={(v) => {
-                        setTestDoc(v as "re_session" | "re_wallet" | "gs_session")
+                        setTestDoc(v as "re_session" | "gbl" | "gs_session")
                         if (v !== "re_session") setTestZugferd(false)
                       }}
                     >
@@ -535,7 +535,7 @@ export default function AdminInvoiceBrandingPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="re_session">Rechnung (Session)</SelectItem>
-                        <SelectItem value="re_wallet">Rechnung (Wallet-Aufladung)</SelectItem>
+                        <SelectItem value="gbl">Guthabenbeleg (Wallet-Aufladung)</SelectItem>
                         <SelectItem value="gs_session">Gutschrift (Session, an Takumi)</SelectItem>
                       </SelectContent>
                     </Select>
