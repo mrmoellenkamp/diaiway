@@ -2,7 +2,7 @@
  * Pro Belegtyp editierbare PDF-Texte (Admin). Merge: Patch aus DB → globale Fallbacks → Code-Defaults.
  */
 
-export const INVOICE_DOC_KEYS = ["re_session", "re_wallet", "gs", "sr", "sg"] as const
+export const INVOICE_DOC_KEYS = ["re_session", "re_wallet", "gs", "sr", "sg", "re_commission"] as const
 export type InvoiceDocKey = (typeof INVOICE_DOC_KEYS)[number]
 
 export const DOC_TYPE_LABELS: Record<InvoiceDocKey, string> = {
@@ -11,6 +11,7 @@ export const DOC_TYPE_LABELS: Record<InvoiceDocKey, string> = {
   gs: "Gutschrift",
   sr: "Storno-Rechnung",
   sg: "Storno-Gutschrift",
+  re_commission: "Provisionsrechnung (diAiway → Takumi)",
 }
 
 /** In documentTemplates JSON gespeicherte Overrides (alle optional) */
@@ -63,6 +64,12 @@ export type ResolvedInvoiceDocTemplate = {
   detailFeePrefix: string
   detailNetPrefix: string
   stornoBetragPrefix: string
+}
+
+/** Zusatzfelder nur für Provisionsrechnung */
+export type InvoiceDocTemplatePatchExtended = InvoiceDocTemplatePatch & {
+  commissionRateLabel?: string | null
+  commissionNoteText?: string | null
 }
 
 const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
@@ -183,6 +190,30 @@ const BASE: Record<InvoiceDocKey, ResolvedInvoiceDocTemplate> = {
     detailBruttoPrefix: "Bruttobetrag:",
     detailFeePrefix: "Plattformgebühr (15%):",
     detailNetPrefix: "Netto-Storno:",
+    stornoBetragPrefix: "Storno-Betrag:",
+  },
+  re_commission: {
+    title: "Provisionsrechnung",
+    documentNumberLabel: "Rechnungsnummer:",
+    recipientLabel: "Rechnungsempfänger:",
+    sectionLabel: "Vermittlungsprovision",
+    subjectLine: "Provisionsrechnung — Vermittlungsgebühr diAiway",
+    introductionText:
+      "gemäß unserer Vereinbarung (AGB diAiway) stellen wir Ihnen folgende Vermittlungsprovision in Rechnung:",
+    signatureNote:
+      "Hinweis: Dieses Schreiben wurde maschinell erstellt und ist daher ohne Unterschrift gültig.",
+    walletLineText: "",
+    serviceName: "Vermittlungsprovision (15 %)",
+    customerNumberLabel: "Kundennummer:",
+    paymentNote: "Die Provision wurde bereits durch Stripe direkt vom Zahlungseingang einbehalten.",
+    closingLine: "Vielen Dank für Ihre Zusammenarbeit mit diAiway.\n\nTeam - diAiway",
+    footerText: null,
+    stornoNumberLabel: "Storno-Nr.:",
+    storniertLabel: "Storniert:",
+    dateLabel: "Datum:",
+    detailBruttoPrefix: "Bruttobetrag (Kundenzahlung):",
+    detailFeePrefix: "Vermittlungsprovision (15 %):",
+    detailNetPrefix: "Ihr Auszahlungsbetrag:",
     stornoBetragPrefix: "Storno-Betrag:",
   },
 }
@@ -404,6 +435,22 @@ export const DOC_TEMPLATE_FIELDS_BY_KEY: Record<InvoiceDocKey, (keyof InvoiceDoc
     "recipientLabel",
     "customerNumberLabel",
     "sectionLabel",
+    "detailBruttoPrefix",
+    "detailFeePrefix",
+    "detailNetPrefix",
+    "signatureNote",
+    "closingLine",
+    "footerText",
+  ],
+  re_commission: [
+    "title",
+    "documentNumberLabel",
+    "dateLabel",
+    "recipientLabel",
+    "customerNumberLabel",
+    "sectionLabel",
+    "subjectLine",
+    "introductionText",
     "detailBruttoPrefix",
     "detailFeePrefix",
     "detailNetPrefix",

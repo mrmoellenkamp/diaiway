@@ -1,5 +1,32 @@
 type InvoiceType = "privat" | "unternehmen"
 
+/**
+ * MwSt-Status des Takumis (Aussteller der Leistung).
+ * - standard: Regelbesteuerung 19 %
+ * - kleinunternehmer: §19 UStG, 0 % + Pflichthinweis
+ * - privat: Privatperson, 0 % + Hinweis
+ */
+export type TakumiVatStatus = "standard" | "kleinunternehmer" | "privat"
+
+/** Leitet den MwSt-Status aus den Rechnungsdaten des Takumis ab. */
+export function resolveTakumiVatStatus(invoiceDataRaw: unknown): TakumiVatStatus {
+  const d = toInvoiceData(invoiceDataRaw)
+  if (d.type === "privat") return "privat"
+  if (d.type === "unternehmen" && d.kleinunternehmer === true) return "kleinunternehmer"
+  return "standard"
+}
+
+/** Hinweistext für die Rechnung je nach MwSt-Status des Takumis. */
+export function vatNoteForStatus(status: TakumiVatStatus): string | null {
+  if (status === "kleinunternehmer") {
+    return "Gemäß §\u202f19 UStG (Kleinunternehmerregelung) wird keine Umsatzsteuer berechnet und ausgewiesen."
+  }
+  if (status === "privat") {
+    return "Leistungserbringer ist eine Privatperson – keine Umsatzsteuer ausgewiesen."
+  }
+  return null
+}
+
 type InvoiceData = {
   type?: InvoiceType
   fullName?: string

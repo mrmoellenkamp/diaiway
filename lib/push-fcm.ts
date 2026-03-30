@@ -29,10 +29,20 @@ async function initFcm() {
   }
 }
 
+export type FcmPushType =
+  | "BOOKING_REQUEST"   // Neue Buchungsanfrage / Instant-Anklopf (Quick-Action-fähig)
+  | "BOOKING_UPDATE"    // Bestätigung, Ablehnung, Rückfrage, Storno
+  | "MESSAGE"           // Chat-/Waymail-Nachricht
+  | "REMINDER"          // Session-Erinnerung
+  | "PAYMENT"           // Zahlung erfolgreich / Fehler / Wallet-Topup
+  | "GENERAL"           // Sonstige System-Benachrichtigungen
+
 export interface FcmPayload {
   title: string
   body?: string
   data?: Record<string, string>
+  /** Push-Typ für korrekte Android-Channel-ID und iOS-Kategorie. Standard: GENERAL */
+  pushType?: FcmPushType
 }
 
 export async function sendFcmToUser(
@@ -49,6 +59,8 @@ export async function sendFcmToUser(
     })
     if (tokens.length === 0) return
 
+    const pushType: FcmPushType = payload.pushType ?? "GENERAL"
+
     const message = {
       notification: {
         title: payload.title,
@@ -62,14 +74,14 @@ export async function sendFcmToUser(
       android: {
         priority: "high" as const,
         notification: {
-          channelId: "BOOKING_REQUEST",
+          channelId: pushType,
           priority: "high" as const,
         },
       },
       apns: {
         payload: {
           aps: {
-            category: "BOOKING_REQUEST",
+            category: pushType,
             sound: "default",
             "mutable-content": 1,
           },

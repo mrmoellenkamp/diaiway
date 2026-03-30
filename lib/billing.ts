@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db"
 
-export type DocType = "RE" | "GS" | "SR" | "SG" | "KD"
+export type DocType = "RE" | "GS" | "SR" | "SG" | "KD" | "PR"
 
 const INITIAL_VALUES: Record<DocType, number> = {
   /**
@@ -17,6 +17,7 @@ const INITIAL_VALUES: Record<DocType, number> = {
   GS: 100000,
   SR: 100000,
   SG: 100000,
+  PR: 100000,
 }
 
 /** Atomare Vergabe der nächsten Belegnummer (RE-100001, GS-100001, KD-00001, …) */

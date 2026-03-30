@@ -23,6 +23,7 @@ const filenames: Record<InvoiceDocKey, string> = {
   gs: "diaiway-vorschau-gutschrift.pdf",
   sr: "diaiway-vorschau-storno-re.pdf",
   sg: "diaiway-vorschau-storno-gutschrift.pdf",
+  re_commission: "diaiway-vorschau-provisionsrechnung.pdf",
 }
 
 /**

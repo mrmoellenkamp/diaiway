@@ -581,6 +581,9 @@ model Transaction {
   creditNoteNumber String?    // GS-100001 (Gutschrift an Takumi)
   invoicePdfUrl    String?    // Rechnung diaiway → Shugyo
   creditNotePdfUrl String?    // Gutschrift diaiway → Takumi
+  // Provisionsrechnung (nur bei Stripe Connect): JM faircharge → Takumi
+  commissionInvoiceNumber  String?   // PR-100001
+  commissionInvoicePdfUrl  String?
   // Storno-Belege bei REFUNDED
   stornoInvoiceNumber    String?  // SR-100001
   stornoCreditNoteNumber String?  // SG-100001
@@ -589,6 +592,7 @@ model Transaction {
   completedAt      DateTime?  // Capture-Zeitpunkt
   invoiceEmailSentAt    DateTime?  // Wann Rechnungs-Mail an Shugyo
   creditNoteEmailSentAt DateTime? // Wann Gutschriften-Mail an Takumi
+  commissionInvoiceEmailSentAt DateTime? // Wann Provisionsrechnung-Mail an Takumi
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

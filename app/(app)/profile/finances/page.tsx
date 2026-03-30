@@ -35,6 +35,8 @@ type TxItem = {
   creditNotePdfUrl?: string | null
   stornoCreditNoteNumber?: string | null
   stornoCreditNotePdfUrl?: string | null
+  commissionInvoiceNumber?: string | null
+  commissionInvoicePdfUrl?: string | null
 }
 
 export default function FinancesPage() {
@@ -549,6 +551,19 @@ export default function FinancesPage() {
                                       title={tx.creditNoteNumber ?? t("finances.downloadCreditNote")}
                                     >
                                       <Download className="size-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {tx.commissionInvoicePdfUrl && (
+                                  <Button variant="ghost" size="icon" className="size-8" asChild>
+                                    <a
+                                      href={`/api/billing/download/${tx.id}?type=commission`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label="Provisionsrechnung herunterladen"
+                                      title={tx.commissionInvoiceNumber ?? "Provisionsrechnung"}
+                                    >
+                                      <Receipt className="size-4 text-muted-foreground" />
                                     </a>
                                   </Button>
                                 )}

@@ -43,6 +43,7 @@ const documentTemplatesSchema = z
     gs: docTemplatePatchSchema,
     sr: docTemplatePatchSchema,
     sg: docTemplatePatchSchema,
+    re_commission: docTemplatePatchSchema,
   })
   .strict()
   .optional()

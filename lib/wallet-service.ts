@@ -875,6 +875,8 @@ export async function getWalletHistory(userId: string, limit = 50) {
       creditNotePdfUrl: t.creditNotePdfUrl,
       stornoCreditNoteNumber: t.stornoCreditNoteNumber,
       stornoCreditNotePdfUrl: t.stornoCreditNotePdfUrl,
+      commissionInvoiceNumber: t.commissionInvoiceNumber ?? null,
+      commissionInvoicePdfUrl: t.commissionInvoicePdfUrl ?? null,
     })),
     ...walletItems,
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

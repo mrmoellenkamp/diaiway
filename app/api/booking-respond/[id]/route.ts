@@ -196,6 +196,7 @@ export async function POST(
         title,
         body,
         url: waymailUrl,
+        pushType: "BOOKING_UPDATE",
       }).catch(() => {})
     } catch { /* notification errors must not block */ }
 
@@ -286,6 +287,7 @@ export async function POST(
         title: qTitle,
         body: notifBody,
         url: waymailUrl,
+        pushType: "BOOKING_UPDATE",
       }).catch(() => {})
     } catch { /* notification errors must not block */ }
 

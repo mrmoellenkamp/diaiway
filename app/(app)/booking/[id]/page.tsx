@@ -199,8 +199,8 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         const newBookingId: string = data.bookingId
         setBookingIdForPayment(newBookingId)
 
-        if (Capacitor.isNativePlatform()) {
-          // Auf iOS: Pay-Token holen und Stripe im In-App-Browser öffnen
+        if (Capacitor.isNativePlatform() && walletBalanceCents < Math.round(totalPrice * 100)) {
+          // iOS ohne ausreichendes Guthaben: nativer Stripe-Flow
           try {
             const tokenRes = await fetch(`/api/bookings/${newBookingId}/pay-token`, { method: "POST" })
             const tokenData = await tokenRes.json()
@@ -208,15 +208,14 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               const { openNativeStripePayUrl } = await import("@/lib/native-pay-navigation")
               const payPath = `/pay/${newBookingId}?token=${encodeURIComponent(tokenData.token)}`
               await openNativeStripePayUrl(payPath)
-              // Nach Erfolg: Deep Link diaiway://booking-confirmed — DeepLinkHandler (Android: Zahlung in WebView)
             } else {
-              // Fallback: normaler Checkout in der App
               setStep("checkout")
             }
           } catch {
             setStep("checkout")
           }
         } else {
+          // Web, Android, oder iOS mit ausreichendem Guthaben → In-App-Checkout
           setStep("checkout")
         }
       } else {

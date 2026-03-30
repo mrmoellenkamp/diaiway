@@ -461,6 +461,17 @@ export async function drawHtmlTemplateInvoiceHeader(
     /** Optional zweite Zeile rechts (z. B. Storniert: RE-…) */
     secondDocumentLabel?: string | null
     secondDocumentValue?: string | null
+    /**
+     * Gutschriftverfahren §14 Abs. 2 UStG: Abweichender Aussteller (Takumi).
+     * Wird als Absender-Oneliner angezeigt statt JM faircharge.
+     * Zusätzlich erscheint ein Hinweis "Erstellt durch diAiway im Auftrag des Ausstellers".
+     */
+    senderOverride?: {
+      name: string
+      street?: string | null
+      city?: string | null
+      country?: string | null
+    } | null
   }
 ): Promise<number> {
   const s = BILLING_SENDER
@@ -471,9 +482,15 @@ export async function drawHtmlTemplateInvoiceHeader(
 
   await drawLogo(doc, branding.logoUrl, rightX - 42, 10, 40)
 
-  const senderOneLiner =
-    `${s.name} · ${s.address.street} · ${s.address.zip} ${s.address.city} · ${s.address.country || "Germany"}`.trim()
+  const so = meta.senderOverride
+  const senderOneLiner = so
+    ? [so.name, so.street, so.city ? `${so.city}` : null, so.country]
+        .filter(Boolean)
+        .join(" · ")
+        .trim()
+    : `${s.name} · ${s.address.street} · ${s.address.zip} ${s.address.city} · ${s.address.country || "Germany"}`.trim()
   const [tr, tg, tb] = INV_DE_COLORS.text
+  const [fr, fg, fb] = INV_DE_COLORS.footer
   doc.setFont("helvetica", "normal")
   doc.setFontSize(d.returnAddressPt)
   doc.setTextColor(tr, tg, tb)
@@ -489,6 +506,19 @@ export async function drawHtmlTemplateInvoiceHeader(
   doc.line(x0, underlineY, x0 + addrW, underlineY)
   doc.setDrawColor(0, 0, 0)
 
+  if (so) {
+    const notePt = d.returnAddressPt - 0.5
+    const noteY = underlineY + 3.5
+    doc.setFontSize(notePt)
+    doc.setTextColor(fr, fg, fb)
+    doc.text(
+      "Ausgestellt durch diAiway (JM faircharge UG) gemäß §\u202f14 Abs.\u202f2 UStG (Gutschriftverfahren)",
+      x0,
+      noteY
+    )
+    doc.setTextColor(tr, tg, tb)
+  }
+
   let y = d.recipientFirstBaseline
   const blockTopY = y
   doc.setFontSize(INV_DE_LAYOUT.bodyPt)
@@ -501,7 +531,6 @@ export async function drawHtmlTemplateInvoiceHeader(
   doc.text(meta.recipientCountry, x0, y)
   y += d.addressLineStep
   doc.setFontSize(INV_DE_LAYOUT.senderPt)
-  const [fr, fg, fb] = INV_DE_COLORS.footer
   doc.setTextColor(fr, fg, fb)
   doc.text(meta.recipientEmail, x0, y)
   y += d.addressLineStep
@@ -611,6 +640,12 @@ export function drawHtmlTemplateInvoiceTableAndTotals(
     vatCents: number
     grossCents: number
     vatPercent: number
+    /**
+     * Hinweistext statt MwSt-Zeile (bei 0 % MwSt).
+     * z. B. „Gemäß §19 UStG wird keine Umsatzsteuer berechnet." oder
+     * „Privatperson – keine Umsatzsteuer ausgewiesen."
+     */
+    vatNote?: string | null
   }
 ): number {
   const x0 = INV_DE_LAYOUT.marginLeft
@@ -637,12 +672,15 @@ export function drawHtmlTemplateInvoiceTableAndTotals(
   const xNetColLeft = innerRight - netColW
   const leistW = Math.max(42, xNetColLeft - xLeist - pad)
 
+  const noVat = opts.vatPercent === 0 || !!opts.vatNote
+  const [dr, dg, db] = INV_DE_COLORS.disclaimer
+
   doc.setFont("helvetica", "bold")
   doc.setFontSize(INV_DE_LAYOUT.bodyPt)
   doc.setTextColor(tr, tg, tb)
   doc.text("Lfd. Nr.", xLfd, y)
   doc.text("Erhaltene Leistung", xLeist, y)
-  textRight(doc, "Betrag (netto):", rightX - pad, y)
+  textRight(doc, noVat ? "Betrag:" : "Betrag (netto):", rightX - pad, y)
   y += pad * 0.35
   doc.setDrawColor(0, 0, 0)
   doc.setLineWidth(0.55)
@@ -654,7 +692,7 @@ export function drawHtmlTemplateInvoiceTableAndTotals(
   doc.text("1", xLfd, y)
   const descLines = doc.splitTextToSize(opts.lineDescription, leistW)
   doc.text(descLines, xLeist, y)
-  textRight(doc, formatEuroDe(opts.netCents), rightX - pad, y)
+  textRight(doc, formatEuroDe(opts.grossCents), rightX - pad, y)
   const lh = cssLineHeightMm(doc, INV_DE_LAYOUT.bodyPt)
   const rowH = Math.max(pad + lh, (descLines.length - 1) * lh + pad + lh * 0.5)
   y += rowH
@@ -670,20 +708,44 @@ export function drawHtmlTemplateInvoiceTableAndTotals(
   const amtRight = rightX - pad
   /** Summen-Labels ab Mitte der Inhaltsbreite (nicht am linken Rand) */
   const totalsLabelX = x0 + INV_DE_LAYOUT.contentWidthMm / 2
-  doc.text("Betrag ohne Mwst:", totalsLabelX, y)
-  textRight(doc, formatEuroDe(opts.netCents), amtRight, y)
-  y += rowPad + lh
-  doc.text(`MwSt. ${opts.vatPercent} %:`, totalsLabelX, y)
-  textRight(doc, formatEuroDe(opts.vatCents), amtRight, y)
-  y += rowPad + lh * 0.4
-  doc.setDrawColor(0, 0, 0)
-  doc.setLineWidth(0.4)
-  doc.line(x0, y, rightX, y)
-  y += lh * 1.5
-  doc.setFont("helvetica", "bold")
-  doc.text("Gesamtbetrag (brutto):", totalsLabelX, y)
-  textRight(doc, formatEuroDe(opts.grossCents), amtRight, y)
-  y += lh
+
+  if (noVat) {
+    doc.setDrawColor(0, 0, 0)
+    doc.setLineWidth(0.4)
+    doc.line(x0, y, rightX, y)
+    y += lh * 1.5
+    doc.setFont("helvetica", "bold")
+    doc.text("Gesamtbetrag:", totalsLabelX, y)
+    textRight(doc, formatEuroDe(opts.grossCents), amtRight, y)
+    y += lh + rowPad
+
+    const noteText = opts.vatNote?.trim() ?? ""
+    if (noteText) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(INV_DE_LAYOUT.disclaimerPt)
+      doc.setTextColor(dr, dg, db)
+      const noteLines = doc.splitTextToSize(noteText, INV_DE_LAYOUT.contentWidthMm)
+      doc.text(noteLines, x0, y)
+      y += noteLines.length * cssLineHeightMm(doc, INV_DE_LAYOUT.disclaimerPt) + rowPad
+      doc.setTextColor(tr, tg, tb)
+    }
+  } else {
+    doc.text("Betrag ohne Mwst:", totalsLabelX, y)
+    textRight(doc, formatEuroDe(opts.netCents), amtRight, y)
+    y += rowPad + lh
+    doc.text(`MwSt. ${opts.vatPercent} %:`, totalsLabelX, y)
+    textRight(doc, formatEuroDe(opts.vatCents), amtRight, y)
+    y += rowPad + lh * 0.4
+    doc.setDrawColor(0, 0, 0)
+    doc.setLineWidth(0.4)
+    doc.line(x0, y, rightX, y)
+    y += lh * 1.5
+    doc.setFont("helvetica", "bold")
+    doc.text("Gesamtbetrag (brutto):", totalsLabelX, y)
+    textRight(doc, formatEuroDe(opts.grossCents), amtRight, y)
+    y += lh
+  }
+
   return y + INV_DE_LAYOUT.tableMarginV * 0.6
 }
 

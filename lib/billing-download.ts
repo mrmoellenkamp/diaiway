@@ -6,7 +6,7 @@
 
 const BASE_PATH = "/api/billing/download"
 
-export type DownloadType = "invoice" | "credit" | "storno-invoice" | "storno-credit"
+export type DownloadType = "invoice" | "credit" | "storno-invoice" | "storno-credit" | "commission"
 
 function getBaseUrl(): string {
   if (typeof window !== "undefined") return window.location.origin

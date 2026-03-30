@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-const VALID_TYPES = ["invoice", "credit", "storno-invoice", "storno-credit"] as const
+const VALID_TYPES = ["invoice", "credit", "storno-invoice", "storno-credit", "commission"] as const
 
 /**
- * GET /api/billing/download/[transactionId]?type=invoice|credit|storno-invoice|storno-credit
+ * GET /api/billing/download/[transactionId]?type=invoice|credit|storno-invoice|storno-credit|commission
  *
  * Liefert den Beleg (PDF) nur wenn der Nutzer berechtigt ist:
  * - Rechnung / Storno-Rechnung: Shugyo (Zahler / booking.userId)
- * - Gutschrift / Storno-Gutschrift: Takumi (Expert)
+ * - Gutschrift / Storno-Gutschrift / Provisionsrechnung: Takumi (Expert)
  */
 export async function GET(
   req: NextRequest,
@@ -73,6 +73,12 @@ export async function GET(
     }
     pdfUrl = tx.stornoCreditNotePdfUrl
     filename = tx.stornoCreditNoteNumber ? `Storno-Gutschrift-${tx.stornoCreditNoteNumber}.pdf` : "Storno-Gutschrift.pdf"
+  } else if (type === "commission") {
+    if (!isTakumi) {
+      return NextResponse.json({ error: "Keine Berechtigung für diese Provisionsrechnung." }, { status: 403 })
+    }
+    pdfUrl = tx.commissionInvoicePdfUrl
+    filename = tx.commissionInvoiceNumber ? `Provisionsrechnung-${tx.commissionInvoiceNumber}.pdf` : "Provisionsrechnung.pdf"
   }
 
   if (!pdfUrl) {

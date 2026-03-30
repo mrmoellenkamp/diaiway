@@ -10,6 +10,7 @@ import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import type { WeeklySlots } from "@/lib/availability-utils"
 import { communicationUsername } from "@/lib/communication-display"
 import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
+import { sendBookingRequestEmail } from "@/lib/email"
 
 /**
  * POST /api/bookings/instant
@@ -133,17 +134,52 @@ export async function POST(req: Request) {
     if (takumiUserId) {
       const tloc = await getUserPreferredLocale(takumiUserId)
       const userLabel = communicationUsername((user as { username?: string | null }).username, "Ein Nutzer")
+      const pushTitle = pushT(tloc, "instantRequestTitle")
+      const pushBody = pushT(tloc, "instantRequestBody", { userName: userLabel })
+
+      // DB-Notification für Takumi (In-App-Glocke)
+      prisma.notification.create({
+        data: {
+          userId: takumiUserId,
+          type: "booking_request",
+          bookingId: booking.id,
+          title: pushTitle,
+          body: pushBody,
+        },
+      }).catch(() => {})
+
       sendPushToUser(takumiUserId, {
-        title: pushT(tloc, "instantRequestTitle"),
-        body: pushT(tloc, "instantRequestBody", { userName: userLabel }),
+        title: pushTitle,
+        body: pushBody,
         url: `/session/${booking.id}`,
         tag: `instant-${booking.id}`,
+        pushType: "BOOKING_REQUEST",
         data: {
           type: "BOOKING_REQUEST",
           bookingId: booking.id,
           statusToken,
         },
       }).catch(() => {})
+
+      // E-Mail-Benachrichtigung an den Takumi (best effort)
+      if (expert.email) {
+        const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
+        sendBookingRequestEmail({
+          to: expert.email,
+          takumiName: communicationUsername(expert.user?.username, expert.name),
+          userName: userLabel,
+          userEmail: user.email ?? "",
+          date: booking.date,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          price: Number(booking.totalPrice ?? 0),
+          note: "",
+          acceptUrl: `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}&action=confirmed`,
+          declineUrl: `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}&action=declined`,
+          askUrl: `${baseUrl}/booking/respond/${booking.id}?token=${statusToken}&action=ask`,
+          dashboardUrl: `${baseUrl}/sessions`,
+        }).catch(() => {})
+      }
     }
 
     return NextResponse.json({

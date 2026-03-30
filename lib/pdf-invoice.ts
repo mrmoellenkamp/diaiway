@@ -4,7 +4,9 @@ import { getInvoiceBrandingCached } from "./invoice-branding"
 import {
   invoiceDataAddressLines,
   invoiceDataCountry,
+  vatNoteForStatus,
   type InvoiceIntroGreeting,
+  type TakumiVatStatus,
 } from "./invoice-requirements"
 import { resolveInvoiceDocTemplate } from "./invoice-doc-templates"
 import {
@@ -118,6 +120,13 @@ export async function generateInvoicePdf(opts: {
   introGreeting?: InvoiceIntroGreeting | null
   /** Rechnungsdaten des Empfängers (Straße/PLZ im Kopf) */
   recipientInvoiceData?: unknown | null
+  /**
+   * Gutschriftverfahren §14 Abs. 2 UStG: Name des Takumis als Aussteller im Absender-Oneliner.
+   * Zeigt zusätzlich „Ausgestellt durch diAiway … Gutschriftverfahren" klein darunter.
+   */
+  takumiSenderName?: string | null
+  /** MwSt-Status des Takumis — steuert ob 19 % oder 0 % + Hinweistext erscheint */
+  takumiVatStatus?: TakumiVatStatus | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
@@ -137,6 +146,8 @@ export async function generateInvoicePdf(opts: {
     useZugferd = false,
     introGreeting = undefined,
     recipientInvoiceData = null,
+    takumiSenderName = null,
+    takumiVatStatus = "standard",
   } = opts
 
   const { streetLine: recipientStreetLine, cityLine: recipientCityLine } =
@@ -160,6 +171,7 @@ export async function generateInvoicePdf(opts: {
     customerNumberLabel: t.customerNumberLabel,
     dateLabel: t.dateLabel,
     documentNumberLabel: t.documentNumberLabel,
+    senderOverride: takumiSenderName ? { name: takumiSenderName } : null,
   })
 
   const x0 = INV_DE_LAYOUT.marginH
@@ -176,14 +188,18 @@ export async function generateInvoicePdf(opts: {
     y = drawIntroductionBlocks(doc, x0, y, textW, introFilled, INV_DE_LAYOUT.bodyPt)
   }
 
-  const { netCents, vatCents } = grossToNetAndVatCents(totalAmountCents, 19)
+  const vatStatus = takumiVatStatus ?? "standard"
+  const vatNote = vatNoteForStatus(vatStatus)
+  const vatPct = vatStatus === "standard" ? 19 : 0
+  const { netCents, vatCents } = grossToNetAndVatCents(totalAmountCents, vatPct)
   y = drawHtmlTemplateInvoiceTableAndTotals(doc, y, {
     sectionTitle: null,
     lineDescription: lineDesc,
     netCents,
     vatCents,
     grossCents: totalAmountCents,
-    vatPercent: 19,
+    vatPercent: vatPct,
+    vatNote,
   })
 
   drawPaymentClosingAndFooter(
@@ -199,7 +215,7 @@ export async function generateInvoicePdf(opts: {
   drawMwStTripleColumnPageFooter(doc)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
-  if (useZugferd) {
+  if (useZugferd && vatStatus === "standard") {
     const unitPriceCents = Math.round(totalAmountCents / quantitySlots15)
     const xml = buildFacturXXml({
       invoiceNumber,
@@ -219,7 +235,7 @@ export async function generateInvoicePdf(opts: {
       lineAmountCents: totalAmountCents,
       totalAmountCents,
       currency: "EUR",
-      vatPercent: 19,
+      vatPercent: vatPct,
     })
     buf = await embedFacturXInPdf(buf, xml)
   }
@@ -245,6 +261,8 @@ export async function generateCreditNotePdf(opts: {
   date: Date
   /** ZUGFeRD einbetten (nur für Geschäftskunden) */
   useZugferd?: boolean
+  /** MwSt-Status des Takumis — steuert Hinweistext auf der Gutschrift */
+  takumiVatStatus?: TakumiVatStatus | null
 }): Promise<ArrayBuffer> {
   const doc = new jsPDF()
   const branding = await getInvoiceBrandingCached()
@@ -263,7 +281,10 @@ export async function generateCreditNotePdf(opts: {
     totalAmountCents,
     date,
     useZugferd = false,
+    takumiVatStatus = "standard",
   } = opts
+
+  const gsVatNote = vatNoteForStatus(takumiVatStatus ?? "standard")
 
   const kdCredit = recipientCustomerNumber?.trim() ?? null
   const dateStrGs = formatInvoiceDateDdMmYyyy(date)
@@ -299,12 +320,16 @@ export async function generateCreditNotePdf(opts: {
     yGs = drawIntroductionBlocks(doc, x0Gs, yGs, textWGs, introGs, INV_DE_LAYOUT.bodyPt)
   }
 
-  yGs = drawHtmlTemplateDetailRowsBlock(doc, yGs, t.sectionLabel, [
+  const gsRows: { left: string; right: string }[] = [
     { left: `Buchung ${bookingId}`, right: "" },
     { left: t.detailBruttoPrefix.trim(), right: formatCents(totalAmountCents) },
     { left: t.detailFeePrefix.trim(), right: `-${formatCents(platformFeeCents)}` },
     { left: t.detailNetPrefix.trim(), right: formatCents(netPayoutCents) },
-  ])
+  ]
+  if (gsVatNote) {
+    gsRows.push({ left: gsVatNote, right: "" })
+  }
+  yGs = drawHtmlTemplateDetailRowsBlock(doc, yGs, t.sectionLabel, gsRows)
 
   drawPaymentClosingAndFooter(
     doc,
@@ -319,7 +344,7 @@ export async function generateCreditNotePdf(opts: {
   drawMwStTripleColumnPageFooter(doc)
 
   let buf = doc.output("arraybuffer") as ArrayBuffer
-  if (useZugferd) {
+  if (useZugferd && (takumiVatStatus ?? "standard") === "standard") {
     const xml = buildFacturXXml({
       invoiceNumber: creditNumber,
       issueDate: formatDateYyyyMmDd(date),
@@ -612,6 +637,109 @@ export async function generateStornoCreditNotePdf(opts: {
       signatureNote: t.signatureNote,
     },
     ySg
+  )
+  drawMwStTripleColumnPageFooter(doc)
+
+  return doc.output("arraybuffer") as ArrayBuffer
+}
+
+/**
+ * Provisionsrechnung (PR): JM faircharge UG → Takumi über die Vermittlungsprovision (15 %).
+ * Wird nur bei Stripe-Connect-Zahlungen generiert (Gutschriftverfahren nach §14 Abs. 2 UStG).
+ */
+export async function generateCommissionInvoicePdf(opts: {
+  invoiceNumber: string
+  /** Takumi als Rechnungsempfänger */
+  recipientName: string
+  recipientEmail: string
+  recipientCustomerNumber?: string | null
+  recipientCountry?: string | null
+  recipientInvoiceData?: unknown | null
+  bookingId: string
+  /** Voller Bruttobetrag der Kundenzahlung */
+  totalAmountCents: number
+  /** Provision (= platformFee), bereits von Stripe einbehalten */
+  commissionCents: number
+  /** Netto-Auszahlung an den Takumi */
+  netPayoutCents: number
+  date: Date
+  /** MwSt-Status des Takumis — steuert Hinweistext auf der Provisionsrechnung */
+  takumiVatStatus?: TakumiVatStatus | null
+}): Promise<ArrayBuffer> {
+  const doc = new jsPDF()
+  const branding = await getInvoiceBrandingCached()
+  const t = resolveInvoiceDocTemplate("re_commission", branding)
+
+  const {
+    invoiceNumber,
+    recipientName,
+    recipientEmail,
+    recipientCustomerNumber,
+    recipientCountry,
+    recipientInvoiceData = null,
+    bookingId,
+    totalAmountCents,
+    commissionCents,
+    netPayoutCents,
+    date,
+    takumiVatStatus = "standard",
+  } = opts
+
+  const { streetLine, cityLine } = invoiceDataAddressLines(recipientInvoiceData)
+  const land = recipientCountry?.trim() || invoiceDataCountry(recipientInvoiceData) || "—"
+  const kd = recipientCustomerNumber?.trim() ?? null
+  const dateStr = formatInvoiceDateDdMmYyyy(date)
+
+  let y = await drawHtmlTemplateInvoiceHeader(doc, branding, {
+    recipientName,
+    recipientEmail,
+    recipientStreetLine: streetLine,
+    recipientCityLine: cityLine,
+    recipientCountry: land,
+    customerNumber: kd,
+    invoiceNumber,
+    dateStr,
+    customerNumberLabel: t.customerNumberLabel,
+    dateLabel: t.dateLabel,
+    documentNumberLabel: t.documentNumberLabel,
+  })
+
+  const x0 = INV_DE_LAYOUT.marginH
+  const textW = INV_DE_LAYOUT.contentWidthMm
+  const [tx2, ty2, tz2] = INV_DE_COLORS.text
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(INV_DE_LAYOUT.subjectPt)
+  doc.setTextColor(tx2, ty2, tz2)
+  doc.text(`Betreff: ${t.subjectLine.trim() || t.title}`, x0, y)
+  y += pdfLineHeightMm(INV_DE_LAYOUT.subjectPt) + INV_DE_LAYOUT.subjectMarginBottom
+
+  const intro = t.introductionText.trim()
+  if (intro) {
+    y = drawIntroductionBlocks(doc, x0, y, textW, intro, INV_DE_LAYOUT.bodyPt)
+  }
+
+  // Detailzeilen: Brutto → Provision → Netto (+ optionaler MwSt-Hinweis)
+  const prVatNote = vatNoteForStatus(takumiVatStatus ?? "standard")
+  const prRows: { left: string; right: string }[] = [
+    { left: `Buchung ${bookingId}`, right: "" },
+    { left: t.detailBruttoPrefix.trim(), right: formatCents(totalAmountCents) },
+    { left: t.detailFeePrefix.trim(), right: `-${formatCents(commissionCents)}` },
+    { left: t.detailNetPrefix.trim(), right: formatCents(netPayoutCents) },
+  ]
+  if (prVatNote) {
+    prRows.push({ left: prVatNote, right: "" })
+  }
+  y = drawHtmlTemplateDetailRowsBlock(doc, y, t.sectionLabel, prRows)
+
+  drawPaymentClosingAndFooter(
+    doc,
+    {
+      paymentNote: t.paymentNote?.trim() ?? "",
+      closingLine: t.closingLine,
+      footerText: t.footerText,
+      signatureNote: t.signatureNote,
+    },
+    y
   )
   drawMwStTripleColumnPageFooter(doc)
 

@@ -374,23 +374,6 @@ export async function sendWaymailNotificationEmail(opts: {
   }
 }
 
-/* @deprecated Use sendWaymailNotificationEmail for Waymails */
-export async function sendNewMessageEmail(opts: {
-  to: string
-  recipientName: string
-  senderName: string
-  messagePreview: string
-  inboxUrl: string
-}) {
-  return sendWaymailNotificationEmail({
-    to: opts.to,
-    recipientName: opts.recipientName,
-    senderName: opts.senderName,
-    subject: opts.messagePreview.slice(0, 80) + (opts.messagePreview.length > 80 ? "…" : ""),
-    waymailUrl: opts.inboxUrl,
-  })
-}
-
 /* ----- Rechnung bereit (Shugyo) ----- */
 export async function sendInvoiceReadyEmail(opts: {
   to: string
@@ -691,6 +674,57 @@ export async function sendCreditNoteReadyEmail(opts: {
       to: opts.to,
       subject: `diAiway – Ihre Gutschrift ${opts.creditNoteNumber} ist bereit`,
       html: emailWrapper("Gutschrift bereit", body),
+    })
+    return { sent: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown"
+    return { sent: false, error: msg }
+  }
+}
+
+export async function sendCommissionInvoiceEmail(opts: {
+  to: string
+  takumiName: string
+  downloadUrl: string
+  invoiceNumber: string
+  userName: string
+  date: string
+  commissionCents: number
+  netPayoutCents: number
+}): Promise<{ sent: boolean; error?: string }> {
+  const formatEur = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")} €`
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#78716c;">
+      Hallo <strong style="color:#1c1917;">${opts.takumiName}</strong>,<br/>
+      für die Session mit <strong style="color:#1c1917;">${opts.userName}</strong> (${opts.date}) haben wir die Provisionsrechnung erstellt.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#78716c;">
+      Die Vermittlungsprovision von <strong>${formatEur(opts.commissionCents)}</strong> wurde bereits durch Stripe direkt vom Zahlungseingang einbehalten.
+      Ihr Auszahlungsbetrag beträgt <strong>${formatEur(opts.netPayoutCents)}</strong>.
+    </p>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#78716c;">
+      Die Provisionsrechnung ist im diAiway-Portal für Sie abrufbar.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:8px 0 24px;">
+          <a href="${opts.downloadUrl}" target="_blank" style="display:inline-block;padding:14px 36px;background-color:#064e3b;color:#f0fdf4;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;box-shadow:0 4px 12px rgba(6,78,59,0.3);">
+            Provisionsrechnung herunterladen
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:#a8a29e;">
+      Rechnungsnummer: ${opts.invoiceNumber}
+    </p>`
+
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: opts.to,
+      subject: `diAiway – Provisionsrechnung ${opts.invoiceNumber}`,
+      html: emailWrapper("Provisionsrechnung", body),
     })
     return { sent: true }
   } catch (err) {

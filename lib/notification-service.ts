@@ -156,6 +156,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
             time: `${booking.startTime}`,
           }),
           url: waymailUrl,
+          pushType: "BOOKING_REQUEST",
         })).catch(() => {})
       }
     } else {
@@ -242,7 +243,7 @@ export async function notifyAfterCancellation(opts: {
   try {
     const waymail = await createSystemWaymail({ recipientId: recipientUserId, subject: title, body })
     const waymailUrl = waymail ? `${baseUrl}/messages?waymail=${waymail.id}` : `${baseUrl}/sessions`
-    sendPushToUser(recipientUserId, { title, body, url: waymailUrl }).catch(() => {})
+    sendPushToUser(recipientUserId, { title, body, url: waymailUrl, pushType: "BOOKING_UPDATE" }).catch(() => {})
   } catch (err) {
     console.error("[notification-service] Cancel waymail/push failed:", err)
   }

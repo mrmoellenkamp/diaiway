@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { sendBookingStatusEmail } from "@/lib/email"
 import { bookingPartyDisplayLabels } from "@/lib/booking-party-labels"
+import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import type { BookingStatus } from "@prisma/client"
 
 export const runtime = "nodejs"
@@ -53,8 +56,17 @@ export async function GET(
       data: { status: action as BookingStatus },
     })
 
+    // booking_request-Notification beim Takumi löschen (via E-Mail-Link bestätigt/abgelehnt)
+    const expert = await prisma.expert.findUnique({ where: { id: booking.expertId ?? "" }, select: { userId: true } })
+    if (expert?.userId) {
+      await prisma.notification.deleteMany({
+        where: { bookingId: id, type: "booking_request", userId: expert.userId },
+      }).catch(() => {})
+    }
+
+    const labels = await bookingPartyDisplayLabels(booking)
+
     try {
-      const labels = await bookingPartyDisplayLabels(booking)
       await sendBookingStatusEmail({
         to: booking.userEmail,
         userName: labels.shugyoLabel,
@@ -65,6 +77,24 @@ export async function GET(
         status: action,
       })
     } catch { /* email failure should not revert the status */ }
+
+    // In-App + Push für Shugyo
+    if (booking.userId) {
+      try {
+        const uloc = await getUserPreferredLocale(booking.userId)
+        const timeRange = `${booking.startTime}–${booking.endTime}`
+        const title = action === "confirmed"
+          ? pushT(uloc, "bookingConfirmedTitle")
+          : pushT(uloc, "bookingDeclinedTitle")
+        const body = action === "confirmed"
+          ? pushT(uloc, "bookingConfirmedBody", { takumiName: labels.takumiLabel, date: booking.date, timeRange })
+          : pushT(uloc, "bookingDeclinedBody", { takumiName: labels.takumiLabel, date: booking.date })
+        await prisma.notification.create({
+          data: { userId: booking.userId, type: action === "confirmed" ? "booking_confirmed" : "booking_declined", bookingId: id, title, body },
+        })
+        sendPushToUser(booking.userId, { title, body, url: "/sessions", pushType: "BOOKING_UPDATE" }).catch(() => {})
+      } catch { /* notification errors must not block */ }
+    }
 
     const msg =
       action === "confirmed"
@@ -117,8 +147,16 @@ export async function PATCH(
       })
     }
 
+    // booking_request-Notification beim Takumi löschen
+    if (booking.expert?.userId) {
+      await prisma.notification.deleteMany({
+        where: { bookingId: id, type: "booking_request", userId: booking.expert.userId },
+      }).catch(() => {})
+    }
+
+    const labels = await bookingPartyDisplayLabels(booking)
+
     try {
-      const labels = await bookingPartyDisplayLabels(booking)
       await sendBookingStatusEmail({
         to: booking.userEmail,
         userName: labels.shugyoLabel,
@@ -129,6 +167,24 @@ export async function PATCH(
         status: action,
       })
     } catch { /* ignore */ }
+
+    // In-App + Push für Shugyo
+    if (booking.userId) {
+      try {
+        const uloc = await getUserPreferredLocale(booking.userId)
+        const timeRange = `${booking.startTime}–${booking.endTime}`
+        const title = action === "confirmed"
+          ? pushT(uloc, "bookingConfirmedTitle")
+          : pushT(uloc, "bookingDeclinedTitle")
+        const body = action === "confirmed"
+          ? pushT(uloc, "bookingConfirmedBody", { takumiName: labels.takumiLabel, date: booking.date, timeRange })
+          : pushT(uloc, "bookingDeclinedBody", { takumiName: labels.takumiLabel, date: booking.date })
+        await prisma.notification.create({
+          data: { userId: booking.userId, type: action === "confirmed" ? "booking_confirmed" : "booking_declined", bookingId: id, title, body },
+        })
+        sendPushToUser(booking.userId, { title, body, url: "/sessions", pushType: "BOOKING_UPDATE" }).catch(() => {})
+      } catch { /* notification errors must not block */ }
+    }
 
     return NextResponse.json({ success: true, status: action })
   } catch (err: unknown) {

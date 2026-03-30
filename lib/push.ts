@@ -7,6 +7,7 @@ import webpush from "web-push"
 import { prisma } from "@/lib/db"
 import type { AppLocale } from "@/lib/i18n/types"
 import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
+import type { FcmPushType } from "@/lib/push-fcm"
 
 let vapidConfigured = false
 
@@ -29,6 +30,8 @@ export interface PushPayload {
   body?: string
   url?: string
   tag?: string
+  /** FCM Android channel + iOS category — determines notification tray. Default: GENERAL */
+  pushType?: FcmPushType
   /** For Quick Actions: BOOKING_REQUEST with data for instant connect */
   data?: {
     type?: string
@@ -109,6 +112,7 @@ export async function sendPushToUser(
         title: payload.title,
         body: payload.body,
         data,
+        pushType: payload.pushType,
       })
     } catch {
       /* FCM not configured */

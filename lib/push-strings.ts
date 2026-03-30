@@ -47,6 +47,12 @@ const de: Row = {
   bookingDeclinedBody: "{takumiName} hat deine Buchungsanfrage am {date} leider abgelehnt.",
   bookingQuestionTitle: "Rückfrage zu deiner Buchung",
   bookingQuestionBody: "{takumiName} hat eine Rückfrage gestellt: {snippet}",
+  sessionCompletedTitle: "Session abgeschlossen",
+  sessionCompletedBody: "Deine Session mit {takumiName} wurde abgerechnet. Deine Rechnung ist verfügbar.",
+  paymentFailedTitle: "Zahlung fehlgeschlagen",
+  paymentFailedBody: "Deine Zahlung für die Buchung konnte nicht verarbeitet werden. Bitte prüfe deine Zahlungsmethode.",
+  walletTopupTitle: "Guthaben aufgeladen",
+  walletTopupBody: "{amount} € wurden deinem Guthaben gutgeschrieben.",
 }
 
 const en: Row = {
@@ -83,6 +89,12 @@ const en: Row = {
   bookingDeclinedBody: "{takumiName} declined your booking request for {date}.",
   bookingQuestionTitle: "Question about your booking",
   bookingQuestionBody: "{takumiName} asked a question: {snippet}",
+  sessionCompletedTitle: "Session completed",
+  sessionCompletedBody: "Your session with {takumiName} has been settled. Your invoice is available.",
+  paymentFailedTitle: "Payment failed",
+  paymentFailedBody: "Your payment for the booking could not be processed. Please check your payment method.",
+  walletTopupTitle: "Credit balance topped up",
+  walletTopupBody: "{amount} € have been added to your credit balance.",
 }
 
 const es: Row = {
@@ -119,6 +131,12 @@ const es: Row = {
   bookingDeclinedBody: "{takumiName} rechazó tu solicitud de reserva del {date}.",
   bookingQuestionTitle: "Pregunta sobre tu reserva",
   bookingQuestionBody: "{takumiName} hizo una pregunta: {snippet}",
+  sessionCompletedTitle: "Sesión completada",
+  sessionCompletedBody: "Tu sesión con {takumiName} ha sido liquidada. Tu factura está disponible.",
+  paymentFailedTitle: "Pago fallido",
+  paymentFailedBody: "Tu pago para la reserva no pudo ser procesado. Por favor verifica tu método de pago.",
+  walletTopupTitle: "Saldo recargado",
+  walletTopupBody: "Se han añadido {amount} € a tu saldo.",
 }
 
 const byLocale: Record<AppLocale, Row> = { de, en, es }

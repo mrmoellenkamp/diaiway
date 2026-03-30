@@ -5,10 +5,13 @@ import { prisma } from "@/lib/db"
 import { markVerified } from "@/lib/verification-service"
 import { getNextDocumentNumber, ensureCustomerNumber } from "@/lib/billing"
 import { put } from "@vercel/blob"
-import { generateInvoicePdf, generateCreditNotePdf } from "@/lib/pdf-invoice"
-import { sendInvoiceReadyEmail, sendCreditNoteReadyEmail } from "@/lib/email"
+import { generateInvoicePdf, generateCreditNotePdf, generateCommissionInvoicePdf } from "@/lib/pdf-invoice"
+import { sendInvoiceReadyEmail, sendCreditNoteReadyEmail, sendCommissionInvoiceEmail } from "@/lib/email"
 import { getBillingDownloadUrl } from "@/lib/billing-download"
-import { greetingPartsFromInvoiceData, invoiceDataCountry } from "@/lib/invoice-requirements"
+import { greetingPartsFromInvoiceData, invoiceDataCountry, resolveTakumiVatStatus } from "@/lib/invoice-requirements"
+import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 
 const RELEASE_DELAY_HOURS = 24
 
@@ -55,10 +58,18 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     }
 
     // 2. Belegnummern vergeben
-    const [invoiceNumber, creditNoteNumber] = await Promise.all([
+    const isWalletPaymentCheck = booking.stripePaymentIntentId === "wallet"
+    const isConnectPaymentCheck = !isWalletPaymentCheck &&
+      !!(booking.expert?.stripeConnectAccountId) &&
+      booking.expert?.stripeConnectStatus === "active"
+
+    const docNumberPromises: Promise<string>[] = [
       getNextDocumentNumber("RE"),
       getNextDocumentNumber("GS"),
-    ])
+      getNextDocumentNumber("PR"),
+    ]
+    const docNumbers = await Promise.all(docNumberPromises)
+    const [invoiceNumber, creditNoteNumber, commissionInvoiceNumber] = docNumbers
 
     // 3. Kundennummern sicherstellen (Shugyo + Takumi)
     await Promise.all([
@@ -92,6 +103,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     const takumiInvoiceData = takumiUser?.invoiceData as { type?: string; fullName?: string; companyName?: string } | null
     const shugyoIsGeschaeftskunde = shugyoInvoiceData?.type === "unternehmen"
     const takumiIsGeschaeftskunde = takumiInvoiceData?.type === "unternehmen"
+    const takumiVatStatus = resolveTakumiVatStatus(takumiUser?.invoiceData)
 
     const shugyoRealName =
       (shugyoInvoiceData?.type === "unternehmen"
@@ -121,6 +133,8 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       durationMinutes: durationMin,
       useZugferd: shugyoIsGeschaeftskunde,
       introGreeting,
+      takumiSenderName: takumiRealName,
+      takumiVatStatus,
     })
     const creditBuf = await generateCreditNotePdf({
       creditNumber: creditNoteNumber,
@@ -135,22 +149,46 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       totalAmountCents: tx.totalAmount,
       date: now,
       useZugferd: takumiIsGeschaeftskunde,
+      takumiVatStatus,
     })
 
-    const [invoiceBlob, creditBlob] = await Promise.all([
+    // Provisionsrechnung immer generieren (Connect + Wallet + Fallback)
+    let commissionBuf: ArrayBuffer | null = null
+    if (commissionInvoiceNumber) {
+      commissionBuf = await generateCommissionInvoicePdf({
+        invoiceNumber: commissionInvoiceNumber,
+        recipientName: takumiRealName,
+        recipientEmail: booking.expert!.email || "",
+        recipientCustomerNumber: takumiUser?.customerNumber ?? null,
+        recipientCountry: invoiceDataCountry(takumiUser?.invoiceData),
+        recipientInvoiceData: takumiUser?.invoiceData,
+        bookingId,
+        totalAmountCents: tx.totalAmount,
+        commissionCents: tx.platformFee,
+        netPayoutCents: tx.netPayout,
+        date: now,
+        takumiVatStatus,
+      })
+    }
+
+    const blobUploads: Promise<{ url: string }>[] = [
       put(`invoices/${tx.id}-${invoiceNumber}.pdf`, Buffer.from(invoiceBuf), { access: "public" }),
       put(`invoices/${tx.id}-${creditNoteNumber}.pdf`, Buffer.from(creditBuf), { access: "public" }),
-    ])
+    ]
+    if (commissionBuf && commissionInvoiceNumber) {
+      blobUploads.push(
+        put(`invoices/${tx.id}-${commissionInvoiceNumber}.pdf`, Buffer.from(commissionBuf), { access: "public" })
+      )
+    }
+    const blobResults = await Promise.all(blobUploads)
+    const [invoiceBlob, creditBlob, commissionBlob] = blobResults
 
     // 5. DB-Update: Transaction CAPTURED, Takumi-Guthaben
     const isWalletPayment = booking.stripePaymentIntentId === "wallet"
-    // Bei Stripe Connect zahlt Stripe direkt an den Takumi aus – kein internes Wallet-Update nötig
-    const isConnectPayment = !isWalletPayment && !!(booking.expert?.stripeConnectAccountId) &&
-      booking.expert?.stripeConnectStatus === "active"
+    const isConnectPayment = isConnectPaymentCheck
 
     await prisma.$transaction(async (db) => {
       if (isWalletPayment) {
-        // Wallet-zu-Wallet: pendingBalance freigeben und balance gutschreiben
         await db.user.update({
           where: { id: expertUserId },
           data: {
@@ -159,13 +197,11 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
           },
         })
       } else if (!isConnectPayment) {
-        // Fallback Hold & Capture: Takumi-Guthaben intern gutschreiben
         await db.user.update({
           where: { id: expertUserId },
           data: { balance: { increment: tx.netPayout } },
         })
       }
-      // isConnectPayment: Stripe hat bereits direkt an Takumi ausgezahlt – kein internes Update
       await db.transaction.update({
         where: { id: tx.id },
         data: {
@@ -174,10 +210,27 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
           creditNoteNumber,
           invoicePdfUrl: invoiceBlob.url,
           creditNotePdfUrl: creditBlob.url,
+          ...(commissionInvoiceNumber && commissionBlob ? {
+            commissionInvoiceNumber,
+            commissionInvoicePdfUrl: commissionBlob.url,
+          } : {}),
           completedAt: now,
         },
       })
     })
+
+    // 6a. In-App-Notification: Session abgeschlossen (für Shugyo)
+    if (booking.userId) {
+      try {
+        const uloc = await getUserPreferredLocale(booking.userId)
+        const title = pushT(uloc, "sessionCompletedTitle")
+        const body = pushT(uloc, "sessionCompletedBody", { takumiName: booking.expertName })
+        await prisma.notification.create({
+          data: { userId: booking.userId, type: "session_completed", bookingId, title, body },
+        })
+        sendPushToUser(booking.userId, { title, body, url: "/sessions?tab=past", pushType: "GENERAL" }).catch(() => {})
+      } catch { /* notification errors must not block */ }
+    }
 
     // 6. E-Mail-Versand: Rechnung an Shugyo, Gutschrift an Takumi
     const invoiceDownloadUrl = getBillingDownloadUrl(tx.id, "invoice")
@@ -218,19 +271,38 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
         })
       : Promise.resolve({ sent: false, error: "Keine E-Mail-Adresse" })
 
-    const [invoiceEmail, creditEmail] = await Promise.all([invoiceEmailPromise, creditEmailPromise])
+    // Provisionsrechnung-E-Mail (immer)
+    const commissionEmailPromise = (commissionInvoiceNumber && commissionBlob && takumiEmail)
+      ? sendCommissionInvoiceEmail({
+          to: takumiEmail,
+          takumiName: booking.expert!.name,
+          downloadUrl: getBillingDownloadUrl(tx.id, "commission"),
+          invoiceNumber: commissionInvoiceNumber,
+          userName: shugyoRealName,
+          date: booking.date,
+          commissionCents: tx.platformFee,
+          netPayoutCents: tx.netPayout,
+        })
+      : Promise.resolve({ sent: false, error: "Kein Connect oder keine E-Mail" })
+
+    const [invoiceEmail, creditEmail, commissionEmail] = await Promise.all([
+      invoiceEmailPromise,
+      creditEmailPromise,
+      commissionEmailPromise,
+    ])
 
     if (invoiceEmail.sent) {
-      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${shugyoEmail} versendet. Link: ${invoiceDownloadUrl}`)
+      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${shugyoEmail} versendet.`)
     } else {
-      console.warn(`[processCompletion] Rechnungs-E-Mail für ${booking.userName} fehlgeschlagen (E-Mail: ${shugyoEmail || "keine"}):`, invoiceEmail.error)
+      console.warn(`[processCompletion] Rechnungs-E-Mail fehlgeschlagen (${shugyoEmail || "keine"}):`, invoiceEmail.error)
     }
     if (creditEmail.sent) {
-      console.log(`[processCompletion] Gutschrift ${creditNoteNumber} per E-Mail an ${takumiEmail} versendet. Link: ${creditDownloadUrl}`)
+      console.log(`[processCompletion] Gutschrift ${creditNoteNumber} per E-Mail an ${takumiEmail} versendet.`)
     } else if (takumiEmail) {
       console.warn(`[processCompletion] Gutschriften-E-Mail an ${takumiEmail} fehlgeschlagen:`, creditEmail.error)
-    } else {
-      console.log(`[processCompletion] Gutschrift ${creditNoteNumber}: Keine E-Mail-Adresse für Takumi, übersprungen.`)
+    }
+    if (commissionEmail.sent) {
+      console.log(`[processCompletion] Provisionsrechnung ${commissionInvoiceNumber} per E-Mail an ${takumiEmail} versendet.`)
     }
 
     await prisma.transaction.update({
@@ -238,6 +310,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       data: {
         ...(invoiceEmail.sent && { invoiceEmailSentAt: now }),
         ...(creditEmail.sent && { creditNoteEmailSentAt: now }),
+        ...(commissionEmail.sent && { commissionInvoiceEmailSentAt: now }),
       },
     })
 

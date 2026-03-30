@@ -6,6 +6,9 @@ import { onPaymentReceived, creditWalletTopup } from "@/lib/wallet-service"
 import { notifyTakumiAfterPayment } from "@/lib/notification-service"
 import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { createGuestShugyoAccount } from "@/lib/guest-onboarding"
+import { sendPushToUser } from "@/lib/push"
+import { pushT } from "@/lib/push-strings"
+import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -117,6 +120,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     } catch (err) {
       console.error("[Stripe Webhook] creditWalletTopup failed:", err)
     }
+
+    // In-App + Push: Guthaben aufgeladen
+    try {
+      const uloc = await getUserPreferredLocale(userId)
+      const amountStr = (amountTotal / 100).toFixed(2).replace(".", ",")
+      const title = pushT(uloc, "walletTopupTitle")
+      const body = pushT(uloc, "walletTopupBody", { amount: amountStr })
+      await prisma.notification.create({
+        data: { userId, type: "wallet_topup", title, body },
+      })
+      sendPushToUser(userId, { title, body, url: "/profile/finances", pushType: "PAYMENT" }).catch(() => {})
+    } catch { /* best effort */ }
+
     return
   }
 
@@ -319,14 +335,29 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
 
 async function handlePaymentFailed(pi: Stripe.PaymentIntent) {
   const bookingId = pi.metadata?.bookingId
-  if (!bookingId) {
-    return
-  }
+  if (!bookingId) return
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { userId: true },
+  })
 
   await prisma.booking.updateMany({
     where: { id: bookingId },
     data: { paymentStatus: "failed" },
   })
+
+  if (booking?.userId) {
+    try {
+      const uloc = await getUserPreferredLocale(booking.userId)
+      const title = pushT(uloc, "paymentFailedTitle")
+      const body = pushT(uloc, "paymentFailedBody")
+      await prisma.notification.create({
+        data: { userId: booking.userId, type: "payment_failed", bookingId, title, body },
+      })
+      sendPushToUser(booking.userId, { title, body, url: `/booking/${bookingId}`, pushType: "PAYMENT" }).catch(() => {})
+    } catch { /* best effort */ }
+  }
 }
 
 /** Stripe Connect: Konto-Status synchronisieren wenn Takumi Onboarding abschließt */
