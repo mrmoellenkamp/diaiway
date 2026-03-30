@@ -131,6 +131,12 @@ const en = {
     "diAiway combines artificial intelligence and people with experience to support you individually.",
   "landing.reasonLiveSessionsTitle": "Live sessions",
   "landing.reasonLiveSessionsDesc": "Help via video or voice call - instant or by appointment.",
+  "landing.reasonFlexibleTitle": "Flexible and plannable",
+  "landing.reasonFlexibleDesc":
+    "Book an appointment or use a Takumi's open office hours via instant chat or call.",
+  "landing.reasonOpenDoorTitle": "Open-door mindset",
+  "landing.reasonOpenDoorDesc":
+    "Anytime before a call you can reach out to a Takumi completely free of charge. Either via chat or send them a Waymail if they're offline right now. That way you can check in advance whether you're a good match for your project.",
   "landing.reasonExpertsTitle": "Verified experts",
   "landing.reasonExpertsDesc": "All Takumis are reviewed by us before they are approved.",
   "landing.reasonQualityTitle": "Quality",

@@ -132,6 +132,12 @@ const de = {
     "diAiway verbindet Künstliche Intelligenz und Menschen mit Erfahrung, um dich individuell zu unterstützen.",
   "landing.reasonLiveSessionsTitle": "Live Sessions",
   "landing.reasonLiveSessionsDesc": "Hilfe per Video- oder Voice-call - Instant oder nach Termin.",
+  "landing.reasonFlexibleTitle": "Flexibel und Planbar",
+  "landing.reasonFlexibleDesc":
+    "Buche einen Termin oder nutze die offene Sprechstunde eines Takumi per Instant-Chat oder Call.",
+  "landing.reasonOpenDoorTitle": "Open-Door-Mentalität",
+  "landing.reasonOpenDoorDesc":
+    "Jederzeit kannst du auch vor einem Call völlig kostenlos mit einem Takumi Kontakt aufnehmen. Entweder per Chat oder schicke ihm eine Waymail, sollte er gerade offline sein. So kannst du vorab schon mal abchecken, ob ihr ein guter Match für dein Projekt seid.",
   "landing.reasonExpertsTitle": "Verifizierte Experten",
   "landing.reasonExpertsDesc": "Alle Takumis werden von uns geprüft und erst dann freigegeben.",
   "landing.reasonQualityTitle": "Qualität",

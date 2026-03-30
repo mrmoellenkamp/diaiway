@@ -27,6 +27,8 @@ import {
   Info,
   BookOpen,
   Ban,
+  CalendarDays,
+  DoorOpen,
 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { takumiPublicLabel } from "@/lib/communication-display"
@@ -396,6 +398,8 @@ export default function LandingPage() {
           {[
             { icon: Sparkles, title: t("landing.reasonIndividualTitle"), desc: t("landing.reasonIndividualDesc") },
             { icon: Video, title: t("landing.reasonLiveSessionsTitle"), desc: t("landing.reasonLiveSessionsDesc") },
+            { icon: CalendarDays, title: t("landing.reasonFlexibleTitle"), desc: t("landing.reasonFlexibleDesc") },
+            { icon: DoorOpen, title: t("landing.reasonOpenDoorTitle"), desc: t("landing.reasonOpenDoorDesc") },
             { icon: BadgeCheck, title: t("landing.reasonExpertsTitle"), desc: t("landing.reasonExpertsDesc") },
             { icon: Star, title: t("landing.reasonQualityTitle"), desc: t("landing.reasonQualityDesc") },
             { icon: Handshake, title: t("landing.reasonHandshakeTitle"), desc: t("landing.reasonHandshakeDesc") },
