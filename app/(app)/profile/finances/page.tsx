@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { Capacitor } from "@capacitor/core"
 import { PageContainer } from "@/components/page-container"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck } from "lucide-react"
+import { Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck, ExternalLink, BadgeCheck, AlertTriangle, Clock } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -49,6 +50,12 @@ export default function FinancesPage() {
   } | null>(null)
   const [cancelFreeHours, setCancelFreeHours] = useState(24)
   const [cancelFeePercent, setCancelFeePercent] = useState(0)
+  const [connectStatus, setConnectStatus] = useState<{
+    status: "not_connected" | "pending" | "active" | "restricted" | null
+    loading: boolean
+    error: boolean
+  }>({ status: null, loading: false, error: false })
+  const [connectOnboarding, setConnectOnboarding] = useState(false)
   const [savingCancelPolicy, setSavingCancelPolicy] = useState(false)
   const [customerNumber, setCustomerNumber] = useState<string | null>(null)
 
@@ -78,6 +85,18 @@ export default function FinancesPage() {
           setCancelFreeHours(typeof cp.freeHours === "number" ? cp.freeHours : 24)
           setCancelFeePercent(typeof cp.feePercent === "number" ? cp.feePercent : 0)
         }
+        // Stripe Connect Status nur für Takumis laden
+        if (profileData?.appRole === "takumi") {
+          setConnectStatus(s => ({ ...s, loading: true }))
+          fetch("/api/stripe/connect/status", { credentials: "include" })
+            .then(r => r.json())
+            .then(data => {
+              if (!cancelled) setConnectStatus({ status: data.status ?? "not_connected", loading: false, error: false })
+            })
+            .catch(() => {
+              if (!cancelled) setConnectStatus({ status: null, loading: false, error: true })
+            })
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -101,6 +120,31 @@ export default function FinancesPage() {
       if (profileData?.appRole) setAppRole(profileData.appRole)
     } catch { /* ignore */ }
   }, [])
+
+  const startConnectOnboarding = useCallback(async () => {
+    setConnectOnboarding(true)
+    try {
+      const res = await fetch("/api/stripe/connect/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          returnUrl: `${window.location.origin}/profile/finances?connect=success`,
+          refreshUrl: `${window.location.origin}/profile/finances?connect=refresh`,
+        }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.error || t("finances.connectError"))
+      }
+    } catch {
+      toast.error(t("finances.connectError"))
+    } finally {
+      setConnectOnboarding(false)
+    }
+  }, [t])
 
   // Bei Rückkehr zur App/Tab: Wallet neu laden (z.B. nach Webhook-Gutschrift)
   useEffect(() => {
@@ -156,15 +200,27 @@ export default function FinancesPage() {
                       <p className="text-xl font-bold text-foreground">
                         {wallet ? formatCents(wallet.balance) : "€0,00"}
                       </p>
-                      <Button
-                        onClick={() => openWalletTopup(refetchWallet)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Plus className="size-3.5" />
-                        <span className="text-xs">{t("finances.topup")}</span>
-                      </Button>
+                      {Capacitor.isNativePlatform() ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                          onClick={() => window.open("https://diaiway.com/profile/finances", "_blank")}
+                        >
+                          <ExternalLink className="size-3.5" />
+                          <span className="text-xs">{t("wallet.iosHintAction")}</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => openWalletTopup(refetchWallet)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Plus className="size-3.5" />
+                          <span className="text-xs">{t("finances.topup")}</span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="rounded-lg border border-border/60 bg-background p-3">
@@ -179,6 +235,73 @@ export default function FinancesPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Stripe Connect Auszahlungskonto (nur Takumi) */}
+            {appRole === "takumi" && (
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Wallet className="size-4 text-primary" />
+                    {t("finances.connectTitle")}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">{t("finances.connectDesc")}</p>
+                </CardHeader>
+                <CardContent>
+                  {connectStatus.loading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      {t("finances.connectLoading")}
+                    </div>
+                  ) : connectStatus.error ? (
+                    <p className="text-sm text-destructive">{t("finances.connectError")}</p>
+                  ) : connectStatus.status === "active" ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3">
+                        <BadgeCheck className="size-4 shrink-0 text-green-600" />
+                        <p className="text-sm text-green-700 dark:text-green-400">{t("finances.connectActive")}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-fit gap-2"
+                        onClick={startConnectOnboarding}
+                        disabled={connectOnboarding}
+                      >
+                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                        {t("finances.connectManage")}
+                      </Button>
+                    </div>
+                  ) : connectStatus.status === "restricted" ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 p-3">
+                        <AlertTriangle className="size-4 shrink-0 text-yellow-600" />
+                        <p className="text-sm text-yellow-700 dark:text-yellow-400">{t("finances.connectRestricted")}</p>
+                      </div>
+                      <Button size="sm" className="w-fit gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
+                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                        {t("finances.connectManage")}
+                      </Button>
+                    </div>
+                  ) : connectStatus.status === "pending" ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                        <Clock className="size-4 shrink-0 text-blue-600" />
+                        <p className="text-sm text-blue-700 dark:text-blue-400">{t("finances.connectPending")}</p>
+                      </div>
+                      <Button size="sm" className="w-fit gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
+                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                        {t("finances.connectSetup")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
+                      {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                      {t("finances.connectSetup")}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stornierungsrichtlinie (nur Takumi) */}
             {appRole === "takumi" && (

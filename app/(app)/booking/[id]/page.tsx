@@ -264,7 +264,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               </Button>
             )}
           <h1 className="text-lg font-bold text-foreground">
-            {step === "checkout" ? t("handshake.paymentTitle") : t("booking.title")}
+            {step === "checkout" ? t("handshake.paymentTitle", { name: takumiPublicName }) : t("booking.title")}
           </h1>
         </div>
 
@@ -294,7 +294,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 setStep("form")
               }}
             />
-            <p className="mt-4 text-center text-xs text-muted-foreground">
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground/70">
+              {t("handshake.p2pNotice")}
+            </p>
+            <p className="mt-1 text-center text-xs text-muted-foreground">
               {t("booking.redirectFallback")}{" "}
               <Link href="/sessions?tab=upcoming" className="font-medium text-primary underline underline-offset-2">
                 {t("booking.successContinue")}

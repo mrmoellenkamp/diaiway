@@ -66,7 +66,10 @@ export async function startBookingCheckout(
     }
   }
 
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { expert: { select: { stripeConnectAccountId: true, stripeConnectStatus: true } } },
+  })
   if (!booking) return { ok: false, error: "Booking not found", code: "NOT_FOUND" }
   if (booking.paymentStatus === "paid") {
     return { ok: false, error: "Buchung bereits bezahlt", code: "ALREADY_PAID" }
@@ -84,6 +87,10 @@ export async function startBookingCheckout(
     return 30
   })()
 
+  const takumiConnectAccountId = booking.expert?.stripeConnectAccountId
+  const takumiConnectActive = booking.expert?.stripeConnectStatus === "active"
+  const platformFeeCents = Math.round(priceInCents * 0.15)
+
   const sessionData = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     redirect_on_completion: "never",
@@ -93,8 +100,8 @@ export async function startBookingCheckout(
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Buchung Video/Voicecall mit Takumi ${takumiName}`,
-            description: `${durationMin} Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr`,
+            name: `Beratungssession mit ${takumiName} (vermittelt durch diAiway)`,
+            description: `${durationMin} Minuten Beratung am ${booking.date} um ${booking.startTime} Uhr – Leistung erbracht durch den Experten, Zahlungsabwicklung treuhänderisch über diAiway`,
           },
           unit_amount: priceInCents,
         },
@@ -103,11 +110,21 @@ export async function startBookingCheckout(
     ],
     mode: "payment",
     payment_intent_data: {
-      capture_method: "manual", // Hold & Capture: reserve only, capture after service
+      // Stripe Connect: Direkte Auszahlung an Takumi wenn Konto aktiv
+      ...(takumiConnectAccountId && takumiConnectActive
+        ? {
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination: takumiConnectAccountId },
+          }
+        : {
+            // Fallback: Hold & Capture wenn Takumi noch kein Connect-Konto hat
+            capture_method: "manual" as const,
+          }),
       metadata: {
         bookingId,
         shugyoId,
         type: "booking_payment",
+        ...(takumiConnectAccountId ? { takumiConnectAccountId } : {}),
       },
     },
     metadata: { bookingId, shugyoId, type: "booking_payment" },
@@ -157,7 +174,10 @@ export async function startSessionCheckout(
     }
   }
 
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { expert: { select: { stripeConnectAccountId: true, stripeConnectStatus: true } } },
+  })
   if (!booking) return { ok: false, error: "Booking not found", code: "NOT_FOUND" }
   if (booking.paymentStatus === "paid") {
     return { ok: false, error: "Session already paid", code: "ALREADY_PAID" }
@@ -165,6 +185,10 @@ export async function startSessionCheckout(
   if (booking.userId !== shugyoId) {
     return { ok: false, error: "Keine Berechtigung", code: "FORBIDDEN" }
   }
+
+  const takumiConnectAccountId = booking.expert?.stripeConnectAccountId
+  const takumiConnectActive = booking.expert?.stripeConnectStatus === "active"
+  const platformFeeCents = Math.round(priceInCents * 0.15)
 
   const sessionData = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
@@ -175,8 +199,8 @@ export async function startSessionCheckout(
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Video/Voicecall mit Takumi ${takumiName}`,
-            description: `${duration} Minuten Beratung`,
+            name: `Beratungssession mit ${takumiName} (vermittelt durch diAiway)`,
+            description: `${duration} Minuten Beratung – Leistung erbracht durch den Experten, Zahlungsabwicklung treuhänderisch über diAiway`,
           },
           unit_amount: priceInCents,
         },
@@ -185,8 +209,18 @@ export async function startSessionCheckout(
     ],
     mode: "payment",
     payment_intent_data: {
-      capture_method: "manual",
-      metadata: { bookingId, shugyoId, type: "session_payment" },
+      ...(takumiConnectAccountId && takumiConnectActive
+        ? {
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination: takumiConnectAccountId },
+          }
+        : { capture_method: "manual" as const }),
+      metadata: {
+        bookingId,
+        shugyoId,
+        type: "session_payment",
+        ...(takumiConnectAccountId ? { takumiConnectAccountId } : {}),
+      },
     },
     metadata: { bookingId, shugyoId, type: "session_payment" },
   })

@@ -24,7 +24,7 @@ const RELEASE_DELAY_HOURS = 24
 export async function processCompletion(bookingId: string): Promise<{ ok: boolean; error?: string }> {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { expert: { include: { user: true } }, user: true },
+    include: { expert: { include: { user: true } }, user: true, transaction: true },
   })
   if (!booking) return { ok: false, error: "Booking not found" }
   if (booking.status !== "completed") return { ok: false, error: "Booking ist noch nicht abgeschlossen" }
@@ -41,14 +41,17 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
   if (!booking.userId) return { ok: false, error: "Buchungsabschluss nur für registrierte Nutzer (keine Gast-Calls)" }
 
   try {
-    // 1. Stripe Capture (falls Kartenzahlung)
+    // 1. Stripe Capture – nur nötig wenn Takumi kein Connect-Konto hat (Fallback: Hold & Capture)
+    // Bei Stripe Connect (application_fee + transfer_data) ist der PaymentIntent bereits "succeeded"
     if (booking.stripePaymentIntentId && booking.stripePaymentIntentId !== "wallet") {
       const pi = await stripe.paymentIntents.retrieve(booking.stripePaymentIntentId)
       if (pi.status === "requires_capture") {
+        // Fallback: kein Connect-Konto → manuell capturen
         await stripe.paymentIntents.capture(booking.stripePaymentIntentId)
       } else if (pi.status !== "succeeded") {
         return { ok: false, error: `Stripe PaymentIntent Status: ${pi.status}` }
       }
+      // pi.status === "succeeded": Connect-Zahlung bereits verarbeitet, nichts zu tun
     }
 
     // 2. Belegnummern vergeben
@@ -141,8 +144,13 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
 
     // 5. DB-Update: Transaction CAPTURED, Takumi-Guthaben
     const isWalletPayment = booking.stripePaymentIntentId === "wallet"
+    // Bei Stripe Connect zahlt Stripe direkt an den Takumi aus – kein internes Wallet-Update nötig
+    const isConnectPayment = !isWalletPayment && !!(booking.expert?.stripeConnectAccountId) &&
+      booking.expert?.stripeConnectStatus === "active"
+
     await prisma.$transaction(async (db) => {
       if (isWalletPayment) {
+        // Wallet-zu-Wallet: pendingBalance freigeben und balance gutschreiben
         await db.user.update({
           where: { id: expertUserId },
           data: {
@@ -150,12 +158,14 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
             balance: { increment: tx.netPayout },
           },
         })
-      } else {
+      } else if (!isConnectPayment) {
+        // Fallback Hold & Capture: Takumi-Guthaben intern gutschreiben
         await db.user.update({
           where: { id: expertUserId },
           data: { balance: { increment: tx.netPayout } },
         })
       }
+      // isConnectPayment: Stripe hat bereits direkt an Takumi ausgezahlt – kein internes Update
       await db.transaction.update({
         where: { id: tx.id },
         data: {

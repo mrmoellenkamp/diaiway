@@ -107,7 +107,7 @@ export function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={disabled || isUploading}
-          className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="absolute bottom-0 right-0 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-background bg-primary shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50 touch-manipulation"
           aria-label={t("imageUpload.ariaUpload")}
         >
           {isUploading ? (

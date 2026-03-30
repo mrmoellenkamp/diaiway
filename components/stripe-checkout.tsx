@@ -147,10 +147,15 @@ export function SessionCheckout({
   }
 
   return (
-    <div id="checkout" className="w-full">
-      <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
+    <div className="flex flex-col gap-2 w-full">
+      <div id="checkout" className="w-full">
+        <EmbeddedCheckoutProvider key={clientSecret} stripe={stripePromise} options={options}>
+          <EmbeddedCheckout />
+        </EmbeddedCheckoutProvider>
+      </div>
+      <p className="text-center text-[11px] leading-relaxed text-muted-foreground/70">
+        {t("handshake.p2pNotice")}
+      </p>
     </div>
   )
 }

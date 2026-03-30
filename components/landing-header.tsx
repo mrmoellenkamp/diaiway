@@ -36,8 +36,8 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex w-full max-w-lg min-w-0 items-center justify-between py-2.5 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary-foreground/10">
+        <Link href="/" className="flex min-h-11 items-center gap-2 rounded-lg py-1 touch-manipulation">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/10">
             <span className="text-sm font-bold text-accent">di</span>
           </div>
           <span className="text-base font-bold text-primary-foreground">
@@ -51,8 +51,9 @@ export function LandingHeader() {
             <UserNav variant="landing" />
           </div>
           <button
+            type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 sm:hidden"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 touch-manipulation sm:hidden"
             aria-label="Menu"
           >
             {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}

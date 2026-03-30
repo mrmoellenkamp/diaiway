@@ -16,10 +16,9 @@ import {
 import type { Stripe } from "@stripe/stripe-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Wallet } from "lucide-react"
+import { Loader2, Wallet, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
-import { openNativeStripePayUrl } from "@/lib/native-pay-navigation"
 import { createStripeBrowserPromise } from "@/lib/stripe-client"
 const MIN_EUR = 20
 const MAX_EUR = 100
@@ -126,26 +125,6 @@ export function WalletTopupModal({
     setLoading(true)
     setError(null)
     try {
-      if (Capacitor.isNativePlatform()) {
-        // Auf iOS: Token holen und Stripe im In-App-Browser öffnen
-        const tokenRes = await fetch("/api/wallet/topup/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amountCents: Math.round(amount * 100) }),
-          credentials: "include",
-        })
-        const tokenData = await tokenRes.json()
-        if (tokenData.token) {
-          onOpenChange(false)
-          const payPath = `/pay/wallet?token=${encodeURIComponent(tokenData.token)}`
-          await openNativeStripePayUrl(payPath)
-          // Nach Erfolg: pay/wallet → diaiway://wallet-topup-confirmed (DeepLinkHandler)
-        } else {
-          setError(tokenData.error || t("wallet.checkoutError"))
-        }
-        return
-      }
-
       const res = await fetch("/api/wallet/topup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,14 +146,39 @@ export function WalletTopupModal({
     }
   }
 
+  const isNative = Capacitor.isNativePlatform()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("wallet.title")}</DialogTitle>
         </DialogHeader>
-        <div className="relative min-h-[300px]">
-          {step === "amount" && (
+        <div className="relative min-h-[200px]">
+          {/* iOS: Aufladung nur über Web möglich */}
+          {isNative ? (
+            <div className="flex flex-col items-center gap-5 py-6 text-center">
+              <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+                <Wallet className="size-6 text-primary" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-sm font-medium text-foreground">{t("wallet.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("wallet.iosHint")}</p>
+              </div>
+              <Button
+                className="gap-2"
+                onClick={() => {
+                  onOpenChange(false)
+                  window.open("https://diaiway.com/profile/finances", "_blank")
+                }}
+              >
+                <ExternalLink className="size-4" />
+                {t("wallet.iosHintAction")}
+              </Button>
+            </div>
+          ) : null}
+
+          {!isNative && step === "amount" && (
             <div className="flex flex-col gap-4 py-2">
               <p className="text-sm text-muted-foreground">
                 {t("wallet.chooseAmount", { min: MIN_EUR, max: MAX_EUR })}
@@ -229,7 +233,7 @@ export function WalletTopupModal({
             </div>
           )}
 
-          {step === "checkout" && (
+          {!isNative && step === "checkout" && (
             <>
               {loading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">

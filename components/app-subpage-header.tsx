@@ -32,7 +32,7 @@ export function AppSubpageHeader({
   return (
     <header className={cn("flex flex-col gap-1", className)}>
       <div className="flex min-h-12 items-center gap-2">
-        <Button asChild variant="ghost" size="icon" className="size-10 shrink-0 -ml-2">
+        <Button asChild variant="ghost" size="icon" className="shrink-0 -ml-2 touch-manipulation">
           <Link href={backHref} aria-label={ariaBack}>
             <ArrowLeft className="size-5" />
           </Link>

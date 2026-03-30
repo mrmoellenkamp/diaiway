@@ -18,6 +18,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/payout-takumis",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/cron/session-reminders",
       "schedule": "*/1 * * * *"
     }

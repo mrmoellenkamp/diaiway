@@ -116,10 +116,10 @@ function PendingAttachmentPreview({
         <p className="truncate text-sm font-medium text-foreground">{filename}</p>
         <p className="text-xs text-muted-foreground">{tapToConfirm}</p>
       </div>
-      <Button size="icon" className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
+      <Button size="icon" className="shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
         <Check className="size-5" />
       </Button>
-      <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onRemove} aria-label="Anhang entfernen">
+      <Button variant="ghost" size="icon" className="shrink-0" onClick={onRemove} aria-label="Anhang entfernen">
         <XCircle className="size-4" />
       </Button>
     </div>
@@ -534,10 +534,10 @@ export function UserChatBox({
             <button
               type="button"
               onClick={clearUploadError}
-              className="shrink-0 rounded p-0.5 text-destructive hover:bg-destructive/20"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-destructive hover:bg-destructive/20 touch-manipulation"
               aria-label="Fehlermeldung schließen"
             >
-              <XCircle className="size-3.5" />
+              <XCircle className="size-4" />
             </button>
           </div>
         )}
@@ -561,7 +561,7 @@ export function UserChatBox({
             onClick={handleAttach}
             disabled={sending || uploadScanning || interactionLocked}
             className={cn(
-              "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+              "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary touch-manipulation",
               (sending || uploadScanning || interactionLocked) && "pointer-events-none opacity-40"
             )}
             aria-label="Datei anhängen"
@@ -596,7 +596,7 @@ export function UserChatBox({
             onClick={handleSend}
             disabled={(!input.trim() && !pendingAttachment) || sending || interactionLocked}
             className={cn(
-              "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg transition-all",
+              "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-all touch-manipulation",
               (input.trim() || pendingAttachment) && !sending
                 ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                 : "text-muted-foreground/25"

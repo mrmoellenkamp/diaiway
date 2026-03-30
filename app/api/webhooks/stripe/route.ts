@@ -78,6 +78,13 @@ export async function POST(req: Request) {
         break
       }
 
+      case "account.updated": {
+        // Stripe Connect: Takumi-Konto Status aktualisieren
+        const account = event.data.object as Stripe.Account
+        await handleConnectAccountUpdated(account)
+        break
+      }
+
       default:
     }
 
@@ -320,4 +327,42 @@ async function handlePaymentFailed(pi: Stripe.PaymentIntent) {
     where: { id: bookingId },
     data: { paymentStatus: "failed" },
   })
+}
+
+/** Stripe Connect: Konto-Status synchronisieren wenn Takumi Onboarding abschließt */
+async function handleConnectAccountUpdated(account: Stripe.Account) {
+  const expertId = account.metadata?.expertId
+  if (!expertId) return
+
+  const isActive =
+    account.charges_enabled &&
+    account.payouts_enabled &&
+    account.details_submitted
+
+  const status = isActive
+    ? "active"
+    : account.details_submitted
+      ? "restricted"
+      : "pending"
+
+  try {
+    const expert = await prisma.expert.findUnique({
+      where: { id: expertId },
+      select: { stripeConnectOnboardedAt: true },
+    })
+
+    await prisma.expert.update({
+      where: { id: expertId },
+      data: {
+        stripeConnectStatus: status,
+        ...(isActive && !expert?.stripeConnectOnboardedAt
+          ? { stripeConnectOnboardedAt: new Date() }
+          : {}),
+      },
+    })
+
+    console.log(`[Stripe Connect] Account ${account.id} für Expert ${expertId}: ${status}`)
+  } catch (err) {
+    console.error("[Stripe Connect] handleConnectAccountUpdated:", err)
+  }
 }

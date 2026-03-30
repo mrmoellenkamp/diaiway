@@ -628,7 +628,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
           <label
             className={cn(
-              "relative mb-0.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+              "relative mb-0.5 flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary touch-manipulation",
               isStreaming && "pointer-events-none opacity-40"
             )}
             aria-label={t("mentor.attachPhoto")}
@@ -659,7 +659,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             onClick={handleSend}
             disabled={!input.trim() || isStreaming}
             className={cn(
-              "mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg transition-all",
+              "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-all touch-manipulation",
               input.trim() && !isStreaming
                 ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                 : "text-muted-foreground/25"

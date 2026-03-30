@@ -49,10 +49,10 @@ function PendingAttachmentPreview({
         <p className="truncate text-sm font-medium text-foreground">{filename}</p>
         <p className="text-xs text-muted-foreground">{tapToConfirm}</p>
       </div>
-      <Button size="icon" className="size-9 shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
+      <Button size="icon" className="shrink-0 rounded-full bg-primary text-primary-foreground" onClick={onConfirm} disabled={sending} aria-label="Anhang bestätigen und senden">
         <Check className="size-5" />
       </Button>
-      <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onRemove} aria-label="Anhang entfernen">
+      <Button variant="ghost" size="icon" className="shrink-0" onClick={onRemove} aria-label="Anhang entfernen">
         <XCircle className="size-4" />
       </Button>
     </div>
@@ -140,7 +140,7 @@ export function MessageComposeModal({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full text-primary-foreground/90 hover:bg-white/20 transition-colors"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-primary-foreground/90 hover:bg-white/20 transition-colors touch-manipulation"
             aria-label={t("common.close")}
           >
             <XCircle className="size-5" />

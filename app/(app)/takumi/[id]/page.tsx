@@ -91,7 +91,7 @@ function SocialBar({ links }: { links: SocialLinks }) {
             target="_blank"
             rel="noopener noreferrer"
             title={label}
-            className="flex size-9 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md"
+            className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md touch-manipulation"
             style={{ color }}
           >
             {icon}
@@ -199,7 +199,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
         <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
           <Link
             href="/home"
-            className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm touch-manipulation"
           >
             <ArrowLeft className="size-5 text-white" />
           </Link>
@@ -210,7 +210,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               const ok = await shareNative({ title: commLabel, text: takumi.bio?.slice(0, 120), url })
               if (!ok) toast.info(t("toast.shareAppOnly"))
             }}
-            className="flex size-8 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm touch-manipulation"
             aria-label="Profil teilen"
           >
             <Share2 className="size-4 text-white" />

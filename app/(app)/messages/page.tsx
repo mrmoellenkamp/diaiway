@@ -323,9 +323,10 @@ function MessagesPageContent() {
       <div className="mb-4 space-y-2">
         <div className="flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 overflow-x-auto">
           <button
+            type="button"
             onClick={() => setActiveTab("notifications")}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-11 shrink-0 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors touch-manipulation",
               activeTab === "notifications"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -339,9 +340,10 @@ function MessagesPageContent() {
             )}
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("chats")}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-11 shrink-0 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors touch-manipulation",
               activeTab === "chats"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -350,6 +352,7 @@ function MessagesPageContent() {
             {t("messages.tabChats")}
           </button>
           <button
+            type="button"
             onClick={() => {
               // Manueller Klick → Auswahl immer zurücksetzen (zeigt Listenansicht)
               setSelectedWaymailId(null)
@@ -357,7 +360,7 @@ function MessagesPageContent() {
               setActiveTab("waymails")
             }}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-11 shrink-0 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors touch-manipulation",
               activeTab === "waymails"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -419,11 +422,11 @@ function MessagesPageContent() {
                       {new Date(n.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                     </p>
                   </div>
-                  <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "notification", id: n.id }) }}
                       aria-label={t("common.delete")}
                     >
@@ -433,7 +436,7 @@ function MessagesPageContent() {
                       <>
                         <Button
                           size="sm"
-                          className="h-7 text-xs"
+                          className="min-h-11 shrink-0 px-3 text-xs touch-manipulation"
                           onClick={() => handleBookingAction(n.bookingId!, "confirmed", n.id)}
                           disabled={actingId === n.id}
                         >
@@ -443,7 +446,7 @@ function MessagesPageContent() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 text-xs border-destructive/30 text-destructive"
+                          className="min-h-11 shrink-0 px-3 text-xs border-destructive/30 text-destructive touch-manipulation"
                           onClick={() => handleBookingAction(n.bookingId!, "declined", n.id)}
                           disabled={actingId === n.id}
                         >
@@ -464,9 +467,10 @@ function MessagesPageContent() {
         <div className="flex flex-col gap-1">
           <div className="mb-2 flex gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
             <button
+              type="button"
               onClick={() => { setWaymailFolder("inbox"); setSelectedWaymailId(null); setWaymailDetail(null) }}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors touch-manipulation",
                 waymailFolder === "inbox"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -475,9 +479,10 @@ function MessagesPageContent() {
               {t("messages.waymailInbox")}
             </button>
             <button
+              type="button"
               onClick={() => { setWaymailFolder("sent"); setSelectedWaymailId(null); setWaymailDetail(null) }}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors touch-manipulation",
                 waymailFolder === "sent"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -490,15 +495,16 @@ function MessagesPageContent() {
             <div className="rounded-xl border border-border/60 bg-card/50 p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
+                  type="button"
                   onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
-                  className="text-sm text-primary hover:underline"
+                  className="min-h-11 rounded-lg px-2 text-left text-sm text-primary hover:bg-primary/5 hover:underline touch-manipulation"
                 >
                   ← {t("common.back")}
                 </button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                   onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: waymailDetail.id }) }}
                   aria-label={t("common.delete")}
                 >
@@ -595,7 +601,7 @@ function MessagesPageContent() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: wm.id }) }}
                       aria-label={t("common.delete")}
                     >
@@ -693,7 +699,7 @@ function MessagesPageContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "chat", id: th.partnerId }) }}
                           aria-label={t("common.delete")}
                         >

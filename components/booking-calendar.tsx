@@ -255,13 +255,13 @@ export function BookingCalendar({
 
       {/* ── Month navigation ─────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" className="size-8" onClick={prevMonth}>
+        <Button variant="ghost" size="icon" onClick={prevMonth}>
           <ChevronLeft className="size-4" />
         </Button>
         <span className="text-sm font-semibold text-foreground">
           {MONTH_NAMES[viewMonth]} {viewYear}
         </span>
-        <Button variant="ghost" size="icon" className="size-8" onClick={nextMonth}>
+        <Button variant="ghost" size="icon" onClick={nextMonth}>
           <ChevronRight className="size-4" />
         </Button>
       </div>

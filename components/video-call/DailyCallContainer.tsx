@@ -1771,7 +1771,7 @@ export function DailyCallContainer({
         <Button
           variant={isMuted ? "destructive" : "outline"}
           size="icon"
-          className="size-10 sm:size-12 transition-transform active:scale-95"
+          className="size-11 min-h-11 min-w-11 sm:size-12 sm:min-h-12 sm:min-w-12 touch-manipulation transition-transform active:scale-95"
           onClick={handleToggleMute}
           title={isMuted ? "Mikrofon an" : "Mikrofon aus"}
         >
@@ -1783,7 +1783,7 @@ export function DailyCallContainer({
             <Button
               variant={isCameraOff ? "destructive" : "outline"}
               size="icon"
-              className="size-10 sm:size-12 transition-transform active:scale-95"
+              className="size-11 min-h-11 min-w-11 sm:size-12 sm:min-h-12 sm:min-w-12 touch-manipulation transition-transform active:scale-95"
               onClick={handleToggleCamera}
               title={isCameraOff ? "Kamera an" : "Kamera aus"}
               aria-label={isCameraOff ? "Kamera an" : "Kamera aus"}
@@ -1793,7 +1793,7 @@ export function DailyCallContainer({
             <Button
               variant="outline"
               size="icon"
-              className="size-10 sm:size-12 transition-transform active:scale-95"
+              className="size-11 min-h-11 min-w-11 sm:size-12 sm:min-h-12 sm:min-w-12 touch-manipulation transition-transform active:scale-95"
               onClick={handleCycleCamera}
               title="Kamera wechseln (Front/Rück)"
               aria-label="Kamera wechseln"
@@ -1807,7 +1807,7 @@ export function DailyCallContainer({
               <Button
                 variant={isPiPActive ? "secondary" : "outline"}
                 size="icon"
-                className="size-10 sm:size-12 transition-transform active:scale-95"
+                className="size-11 min-h-11 min-w-11 sm:size-12 sm:min-h-12 sm:min-w-12 touch-manipulation transition-transform active:scale-95"
                 onClick={handleTogglePiP}
                 title={isPiPActive ? "PiP beenden" : "Bild-in-Bild (in anderer App weiter sehen)"}
                 aria-label={isPiPActive ? "PiP beenden" : "Bild-in-Bild"}
@@ -1821,7 +1821,7 @@ export function DailyCallContainer({
         <Button
           variant="destructive"
           size="icon"
-          className="size-10 sm:size-12 transition-transform active:scale-95"
+          className="size-11 min-h-11 min-w-11 sm:size-12 sm:min-h-12 sm:min-w-12 touch-manipulation transition-transform active:scale-95"
           onClick={handleAuflegen}
           title="Auflegen"
         >
@@ -1830,7 +1830,7 @@ export function DailyCallContainer({
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 sm:size-10 shrink-0 rounded-full border border-dashed border-muted-foreground/40 text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground"
+          className="size-11 min-h-11 min-w-11 shrink-0 rounded-full border border-dashed border-muted-foreground/40 text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground touch-manipulation sm:size-12 sm:min-h-12 sm:min-w-12"
           onClick={handleReportAndLeave}
           title="Notfall: Call melden (nur bei Problemen)"
           aria-label="Notfall: Call melden"

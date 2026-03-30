@@ -312,8 +312,10 @@ model Expert {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Stripe Connect für Payout-on-Demand (Takumi muss verknüpft haben)
-  stripeConnectAccountId String?
+  // Stripe Connect Express: Takumi-Auszahlungskonto
+  stripeConnectAccountId     String?   // acct_xxx
+  stripeConnectStatus        String?   // "pending" | "active" | "restricted" | "disabled"
+  stripeConnectOnboardedAt   DateTime? // Wann Onboarding abgeschlossen
 
   // Primäre Anzeige (Karte, Listen) — synchron zu Taxonomie bei Speichern
   primaryCategoryId  String?
