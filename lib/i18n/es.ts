@@ -110,14 +110,15 @@ const es = {
   "landing.conceptTakumiBody":
     "Un «Takumi» es un maestro de su oficio, un artesano que ha perfeccionado su técnica durante muchos años. Aportan la intuición, la experiencia y la capacidad de resolución de problemas que solo alguien con práctica puede ofrecer. Cuando la IA llega a su límite o un proyecto es demasiado complejo para una respuesta solo por texto, entran los Takumis. En videollamadas o llamadas de voz ofrecen ayuda individual.",
   "landing.whoTakumiTitle": "¿Quién es un Takumi?",
-  "landing.whoTakumiP1":
-    "Un Takumi no tiene que ser un profesional titulado: importa mucho más la pasión profunda y el dominio del detalle. A menudo es justo un ",
-  "landing.whoTakumiEmHobby": "hobbyista exigente",
-  "landing.whoTakumiP2":
-    " que mejor entiende las trampas de un proyecto, porque las ha vivido en sus propias manos. Mientras que un técnico suele acudir a soluciones estándar, el Takumi aporta el ",
-  "landing.whoTakumiEmSpirit": "espíritu de descubrimiento",
+  "landing.whoTakumiP1": "Un Takumi puede ser un ",
+  "landing.whoTakumiEmPro": "profesional certificado y empresario",
+  "landing.whoTakumiP2": " – pero también un ",
+  "landing.whoTakumiEmHobby": "aficionado ambicioso",
   "landing.whoTakumiP3":
-    " y la paciencia que tu proyecto necesita. No es un prestador de servicios distante, sino un aliado cuyo saber no sale de los manuales, sino de la dedicación práctica y real.",
+    " que ha ido acumulando enormes conocimientos y experiencia a lo largo de los años. Lo importante es la pasión profunda y el dominio de un tema. A menudo es precisamente un aficionado ambicioso quien mejor entiende las trampas de un proyecto, porque las ha vivido en primera persona. Un profesional a menudo debe actuar con criterios empresariales. El aficionado como Takumi aporta el ",
+  "landing.whoTakumiEmSpirit": "espíritu de descubrimiento",
+  "landing.whoTakumiP4":
+    " y la paciencia que tu proyecto necesita. No vemos a un Takumi como un prestador de servicios distante, sino como un aliado. Nutre su saber no solo de la teoría, sino de una dedicación práctica auténtica.",
   "landing.whyDiaiway": "¿Por qué diAiway?",
   "landing.diaiwayManifestoIsTitle": "Qué es diAiway",
   "landing.diaiwayManifestoIsBody":

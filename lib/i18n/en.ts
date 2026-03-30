@@ -110,14 +110,15 @@ const en = {
   "landing.conceptTakumiBody":
     "A “Takumi” is a master of their craft, an artisan who has perfected their skills over many years. They bring the intuition, experience, and problem-solving ability that only someone with real-world practice can offer. When AI reaches its limits or a project is too complex for a text-only answer, Takumis step in. Via live video calls or voice calls, they provide individual support.",
   "landing.whoTakumiTitle": "Who is a Takumi?",
-  "landing.whoTakumiP1":
-    "A Takumi does not have to be a certified pro - what matters far more is deep passion and mastery of the details. Often it is precisely an ambitious ",
-  "landing.whoTakumiEmHobby": "hobbyist",
-  "landing.whoTakumiP2":
-    " who understands a project's pitfalls best, because they have lived through them. While a professional often reaches for standard solutions, a Takumi brings the ",
-  "landing.whoTakumiEmSpirit": "spirit of discovery",
+  "landing.whoTakumiP1": "A Takumi can be a ",
+  "landing.whoTakumiEmPro": "certified professional and business owner",
+  "landing.whoTakumiP2": " – but also an ",
+  "landing.whoTakumiEmHobby": "ambitious hobbyist",
   "landing.whoTakumiP3":
-    " and the patience your project needs. They are not a distant service provider, but an ally whose knowledge comes not from textbooks but from real, hands-on dedication.",
+    " who has built up enormous knowledge and experience over the years. What matters is deep passion and mastery of a subject. Often it is precisely an ambitious hobbyist who understands a project's pitfalls best, because they have lived through them. A professional often has to take a business-minded approach. The hobbyist as Takumi brings the ",
+  "landing.whoTakumiEmSpirit": "spirit of discovery",
+  "landing.whoTakumiP4":
+    " and the patience your project needs. We don't see a Takumi as a distant service provider, but as an ally. They draw their knowledge not only from theory but from genuine practical dedication.",
   "landing.whyDiaiway": "Why diAiway?",
   "landing.diaiwayManifestoIsTitle": "What diAiway is",
   "landing.diaiwayManifestoIsBody":

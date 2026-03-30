@@ -111,14 +111,15 @@ const de = {
   "landing.conceptTakumiBody":
     "Ein „Takumi“ ist ein Meister seines Fachs, ein Kunsthandwerker, der seine Technik über viele Jahre perfektioniert hat. Sie bringen die nötige Intuition, Erfahrung und Problemlösungskompetenz ein, die nur ein Mensch mit Praxiserfahrung bieten kann. Wenn die KI an ihre Grenzen stößt oder ein Projekt zu komplex für eine reine Textantwort ist, kommen die Takumis ins Spiel. Über Live-Video-Calls oder Sprachanrufe geben sie individuelle Hilfestellung.",
   "landing.whoTakumiTitle": "Wer ist ein Takumi?",
-  "landing.whoTakumiP1":
-    "Ein Takumi muss kein zertifizierter Profi sein – viel wichtiger ist die tiefe Leidenschaft und die Meisterschaft im Detail. Oft ist es gerade ein ambitionierter ",
-  "landing.whoTakumiEmHobby": "Hobbyist",
-  "landing.whoTakumiP2":
-    ", der die Tücken eines Projekts am besten versteht, weil er sie selbst durchlebt hat. Während ein Fachmann oft nur nach Standardlösungen sucht, bringt der Takumi den ",
-  "landing.whoTakumiEmSpirit": "Entdeckergeist",
+  "landing.whoTakumiP1": "Ein Takumi kann ein ",
+  "landing.whoTakumiEmPro": "zertifizierter Profi und Unternehmer",
+  "landing.whoTakumiP2": " sein – aber auch ein ",
+  "landing.whoTakumiEmHobby": "ambitionierter Hobbyist",
   "landing.whoTakumiP3":
-    " und die Geduld mit, die dein Projekt braucht. Er ist kein distanzierter Dienstleister, sondern ein Verbündeter, der sein Wissen nicht aus Lehrbüchern, sondern aus echter, praktischer Hingabe schöpft.",
+    ", der sich über Jahre enormes Wissen und Erfahrung angeeignet hat. Wichtig sind die tiefe Leidenschaft und die Meisterschaft für ein Thema. Oft ist es gerade ein ambitionierter Hobbyist, der die Tücken eines Projekts am besten versteht, weil er sie selbst durchlebt hat. Ein Profi muss oft betriebswirtschaftlich vorgehen. Der Hobbyist als Takumi bringt den ",
+  "landing.whoTakumiEmSpirit": "Entdeckergeist",
+  "landing.whoTakumiP4":
+    " und die Geduld mit, die dein Projekt braucht. Wir sehen einen Takumi nicht als distanzierten Dienstleister, sondern als einen Verbündeten. Er schöpft sein Wissen nicht nur aus der Theorie, sondern aus echter praktischer Hingabe.",
   "landing.whyDiaiway": "Warum diAiway?",
   "landing.diaiwayManifestoIsTitle": "Was diAiway ist",
   "landing.diaiwayManifestoIsBody":

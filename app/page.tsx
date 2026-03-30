@@ -379,10 +379,12 @@ export default function LandingPage() {
         <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
           <p className="text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
             {t("landing.whoTakumiP1")}
-            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmHobby")}</strong>
+            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmPro")}</strong>
             {t("landing.whoTakumiP2")}
-            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmSpirit")}</strong>
+            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmHobby")}</strong>
             {t("landing.whoTakumiP3")}
+            <strong className="font-medium text-foreground">{t("landing.whoTakumiEmSpirit")}</strong>
+            {t("landing.whoTakumiP4")}
           </p>
         </article>
       </section>
