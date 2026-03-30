@@ -6,11 +6,11 @@ import { prisma } from "@/lib/db"
 export const runtime = "nodejs"
 
 /**
- * POST /api/stripe/connect/onboarding
- * Erstellt ein Stripe Connect Express Konto für den Takumi (falls noch keins vorhanden)
- * und gibt einen Onboarding-Link zurück.
+ * POST /api/stripe/connect/account-session
+ * Erstellt eine kurzlebige Stripe Account Session für Embedded Components.
+ * Wird vom Frontend benötigt, um das eingebettete Onboarding-Formular zu laden.
  */
-export async function POST(req: Request) {
+export async function POST() {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
@@ -22,17 +22,12 @@ export async function POST(req: Request) {
       id: true,
       email: true,
       stripeConnectAccountId: true,
-      stripeConnectStatus: true,
     },
   })
 
   if (!expert) {
     return NextResponse.json({ error: "Kein Takumi-Profil gefunden." }, { status: 404 })
   }
-
-  const body = await req.json().catch(() => ({}))
-  const returnUrl = (body?.returnUrl as string) || `${process.env.NEXTAUTH_URL}/profile/finances`
-  const refreshUrl = (body?.refreshUrl as string) || `${process.env.NEXTAUTH_URL}/profile/finances?connect=refresh`
 
   try {
     let accountId = expert.stripeConnectAccountId
@@ -49,7 +44,6 @@ export async function POST(req: Request) {
         },
         settings: {
           payouts: {
-            // Wöchentlich statt täglich – weniger Compliance-Auflagen von Stripe
             schedule: { interval: "weekly", weekly_anchor: "monday" },
           },
         },
@@ -69,23 +63,21 @@ export async function POST(req: Request) {
       })
     }
 
-    // Onboarding-Link generieren
-    // collection_options: "eventually_due" = Stripe fragt nur das Minimum ab
-    // und lässt den Rest für später → weniger Felder, schnellerer Einstieg
-    const accountLink = await stripe.accountLinks.create({
+    const accountSession = await stripe.accountSessions.create({
       account: accountId,
-      refresh_url: refreshUrl,
-      return_url: returnUrl,
-      type: "account_onboarding",
-      collection_options: {
-        fields: "eventually_due",   // Nur Pflichtfelder jetzt, Rest später
-        future_requirements: "include",
+      components: {
+        account_onboarding: { enabled: true },
+        account_management: { enabled: true },
+        notification_banner: { enabled: true },
       },
     })
 
-    return NextResponse.json({ url: accountLink.url, accountId })
+    return NextResponse.json({
+      clientSecret: accountSession.client_secret,
+      accountId,
+    })
   } catch (err) {
-    console.error("[stripe/connect/onboarding] Error:", err)
+    console.error("[stripe/connect/account-session] Error:", err)
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Stripe-Fehler" },
       { status: 500 }

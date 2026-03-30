@@ -11,6 +11,7 @@ import { Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck, Extern
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
+import { StripeConnectOnboarding } from "@/components/stripe-connect-onboarding"
 function formatCents(cents: number): string {
   const abs = Math.abs(cents)
   const sign = cents < 0 ? "−" : ""
@@ -55,7 +56,10 @@ export default function FinancesPage() {
     loading: boolean
     error: boolean
   }>({ status: null, loading: false, error: false })
-  const [connectOnboarding, setConnectOnboarding] = useState(false)
+  const [connectModal, setConnectModal] = useState<{ open: boolean; mode: "onboarding" | "management" }>({
+    open: false,
+    mode: "onboarding",
+  })
   const [savingCancelPolicy, setSavingCancelPolicy] = useState(false)
   const [customerNumber, setCustomerNumber] = useState<string | null>(null)
 
@@ -121,30 +125,9 @@ export default function FinancesPage() {
     } catch { /* ignore */ }
   }, [])
 
-  const startConnectOnboarding = useCallback(async () => {
-    setConnectOnboarding(true)
-    try {
-      const res = await fetch("/api/stripe/connect/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          returnUrl: `${window.location.origin}/profile/finances?connect=success`,
-          refreshUrl: `${window.location.origin}/profile/finances?connect=refresh`,
-        }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        toast.error(data.error || t("finances.connectError"))
-      }
-    } catch {
-      toast.error(t("finances.connectError"))
-    } finally {
-      setConnectOnboarding(false)
-    }
-  }, [t])
+  const openConnectModal = useCallback((mode: "onboarding" | "management") => {
+    setConnectModal({ open: true, mode })
+  }, [])
 
   // Bei Rückkehr zur App/Tab: Wallet neu laden (z.B. nach Webhook-Gutschrift)
   useEffect(() => {
@@ -264,10 +247,9 @@ export default function FinancesPage() {
                         variant="outline"
                         size="sm"
                         className="w-fit gap-2"
-                        onClick={startConnectOnboarding}
-                        disabled={connectOnboarding}
+                        onClick={() => openConnectModal("management")}
                       >
-                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                        <ExternalLink className="size-3.5" />
                         {t("finances.connectManage")}
                       </Button>
                     </div>
@@ -277,8 +259,8 @@ export default function FinancesPage() {
                         <AlertTriangle className="size-4 shrink-0 text-yellow-600" />
                         <p className="text-sm text-yellow-700 dark:text-yellow-400">{t("finances.connectRestricted")}</p>
                       </div>
-                      <Button size="sm" className="w-fit gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
-                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                      <Button size="sm" className="w-fit gap-2" onClick={() => openConnectModal("onboarding")}>
+                        <ExternalLink className="size-3.5" />
                         {t("finances.connectManage")}
                       </Button>
                     </div>
@@ -288,14 +270,14 @@ export default function FinancesPage() {
                         <Clock className="size-4 shrink-0 text-blue-600" />
                         <p className="text-sm text-blue-700 dark:text-blue-400">{t("finances.connectPending")}</p>
                       </div>
-                      <Button size="sm" className="w-fit gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
-                        {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                      <Button size="sm" className="w-fit gap-2" onClick={() => openConnectModal("onboarding")}>
+                        <ExternalLink className="size-3.5" />
                         {t("finances.connectSetup")}
                       </Button>
                     </div>
                   ) : (
-                    <Button size="sm" className="gap-2" onClick={startConnectOnboarding} disabled={connectOnboarding}>
-                      {connectOnboarding ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
+                    <Button size="sm" className="gap-2" onClick={() => openConnectModal("onboarding")}>
+                      <ExternalLink className="size-3.5" />
                       {t("finances.connectSetup")}
                     </Button>
                   )}
@@ -598,6 +580,22 @@ export default function FinancesPage() {
           </>
         )}
       </div>
+
+      {connectModal.open && (
+        <StripeConnectOnboarding
+          mode={connectModal.mode}
+          onClose={() => setConnectModal({ open: false, mode: "onboarding" })}
+          onComplete={() => {
+            setConnectModal({ open: false, mode: "onboarding" })
+            // Status nach Onboarding neu laden
+            setConnectStatus(s => ({ ...s, loading: true }))
+            fetch("/api/stripe/connect/status", { credentials: "include" })
+              .then(r => r.json())
+              .then(data => setConnectStatus({ status: data.status ?? "not_connected", loading: false, error: false }))
+              .catch(() => setConnectStatus({ status: null, loading: false, error: true }))
+          }}
+        />
+      )}
     </PageContainer>
   )
 }
