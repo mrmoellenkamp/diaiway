@@ -24,6 +24,7 @@ import { useI18n } from "@/lib/i18n"
 import { formatDateBerlin, formatDateBerlinShort, parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
 import { isScheduledAwaitingStripeCompletion } from "@/lib/booking-display"
+import { BookingCalendarActions } from "@/components/booking-calendar-actions"
 
 const STATUS_KEYS: Record<string, string> = {
   pending: "booking.statusPending",
@@ -32,6 +33,8 @@ const STATUS_KEYS: Record<string, string> = {
   completed: "booking.statusCompleted",
   declined: "booking.statusDeclined",
   cancelled: "booking.statusCancelled",
+  cancelled_in_handshake: "booking.statusCancelledInHandshake",
+  instant_expired: "booking.statusInstantExpired",
 }
 /** Shugyo: Stripe gestartet, Zahlung noch nicht abgeschlossen */
 const STATUS_AWAITING_PAYMENT_KEY = "booking.statusAwaitingPayment"
@@ -42,6 +45,10 @@ const statusClassNames: Record<string, string> = {
   completed: "bg-muted text-muted-foreground border-border",
   declined: "bg-[rgba(239,68,68,0.1)] text-destructive border-[rgba(239,68,68,0.3)]",
   cancelled: "bg-[rgba(239,68,68,0.1)] text-destructive border-[rgba(239,68,68,0.3)]",
+  cancelled_in_handshake:
+    "bg-muted text-muted-foreground border-border",
+  instant_expired:
+    "bg-[rgba(245,158,11,0.12)] text-amber-800 border-[rgba(245,158,11,0.35)] dark:text-amber-300",
 }
 
 function getInitials(name: string): string {
@@ -275,6 +282,24 @@ export function BookingCard({
                 </Button>
               </Link>
             )}
+            {bookingId ? (
+              <BookingCalendarActions
+                bookingId={bookingId}
+                isExpertView={isExpertView}
+                booking={{
+                  status: booking.status,
+                  paymentStatus: booking.paymentStatus,
+                  bookingMode: booking.bookingMode,
+                  date: booking.date,
+                  startTime: booking.startTime,
+                  endTime: booking.endTime,
+                  userName: booking.userName,
+                  takumiName: booking.takumiName,
+                  callType: booking.callType,
+                  note: booking.note,
+                }}
+              />
+            ) : null}
             {canCancel && (
               <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <AlertDialogTrigger asChild>

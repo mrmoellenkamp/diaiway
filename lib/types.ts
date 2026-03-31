@@ -79,7 +79,15 @@ export interface Category {
   color: string
 }
 
-export type BookingStatus = "pending" | "confirmed" | "active" | "completed" | "declined" | "cancelled"
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "active"
+  | "completed"
+  | "declined"
+  | "cancelled"
+  | "cancelled_in_handshake"
+  | "instant_expired"
 export type PaymentStatus = "unpaid" | "pending" | "paid" | "refunded" | "failed"
 export type CallType = "VIDEO" | "VOICE"
 

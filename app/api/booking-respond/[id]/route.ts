@@ -60,6 +60,9 @@ export async function GET(
     price: booking.price,
     note: booking.note,
     status: booking.status,
+    callType: booking.callType,
+    paymentStatus: booking.paymentStatus,
+    bookingMode: booking.bookingMode,
   })
 }
 

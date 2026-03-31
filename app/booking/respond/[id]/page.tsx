@@ -6,6 +6,13 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Loader2, CheckCircle2, XCircle, MessageSquare, ArrowRight, AlertTriangle } from "lucide-react"
 import Link from "next/link"
+import {
+  BookingCalendarActions,
+  type BookingCalendarActionsBooking,
+} from "@/components/booking-calendar-actions"
+import type { BookingStatus, CallType, PaymentStatus } from "@/lib/types"
+import { canOfferCalendarExport } from "@/lib/booking-calendar"
+import { useI18n } from "@/lib/i18n"
 
 type Action = "confirmed" | "declined" | "ask" | null
 type Phase = "loading" | "confirm" | "form" | "done" | "error"
@@ -24,10 +31,29 @@ interface BookingInfo {
   price: number
   note: string
   status: string
+  callType?: CallType
+  paymentStatus?: PaymentStatus
+  bookingMode?: "scheduled" | "instant"
+}
+
+function toCalendarActionsBooking(b: BookingInfo): BookingCalendarActionsBooking {
+  return {
+    status: b.status as BookingStatus,
+    paymentStatus: b.paymentStatus ?? "unpaid",
+    bookingMode: b.bookingMode,
+    date: b.date,
+    startTime: b.startTime,
+    endTime: b.endTime,
+    userName: b.userName,
+    takumiName: b.expertName,
+    callType: b.callType,
+    note: b.note,
+  }
 }
 
 export default function RespondPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { t } = useI18n()
   const searchParams = useSearchParams()
   const token  = searchParams.get("token")  || ""
   const action = searchParams.get("action") as Action
@@ -213,6 +239,19 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
                   {booking.note && <Row label="Nachricht" value={booking.note} />}
                 </div>
 
+                {canOfferCalendarExport(toCalendarActionsBooking(booking)) ? (
+                  <div className="flex flex-col gap-2 rounded-xl border border-stone-200 bg-white p-3">
+                    <p className="text-xs font-medium text-stone-600">
+                      {t("booking.calendarExportSectionTitle")}
+                    </p>
+                    <BookingCalendarActions
+                      bookingId={booking.id}
+                      isExpertView
+                      booking={toCalendarActionsBooking(booking)}
+                    />
+                  </div>
+                ) : null}
+
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
                   <Button
@@ -268,6 +307,18 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
                   <Row label="Datum" value={booking.date} />
                   <Row label="Zeit" value={`${booking.startTime}–${booking.endTime} Uhr`} />
                 </div>
+                {canOfferCalendarExport(toCalendarActionsBooking(booking)) ? (
+                  <div className="flex flex-col gap-2 rounded-xl border border-stone-200 bg-white p-3">
+                    <p className="text-xs font-medium text-stone-600">
+                      {t("booking.calendarExportSectionTitle")}
+                    </p>
+                    <BookingCalendarActions
+                      bookingId={booking.id}
+                      isExpertView
+                      booking={toCalendarActionsBooking(booking)}
+                    />
+                  </div>
+                ) : null}
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}

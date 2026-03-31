@@ -25,6 +25,23 @@ import { cn } from "@/lib/utils"
 import type { SlotSelectMeta } from "@/components/booking-calendar"
 import { takumiPublicLabel } from "@/lib/communication-display"
 import { PaymentOnboardingModal } from "@/components/payment-onboarding-modal"
+import { BookingCalendarActions } from "@/components/booking-calendar-actions"
+import { canOfferCalendarExport } from "@/lib/booking-calendar"
+import type { BookingStatus, CallType, PaymentStatus } from "@/lib/types"
+
+interface CheckoutBookingApi {
+  isExpert?: boolean
+  status: BookingStatus
+  paymentStatus: PaymentStatus
+  bookingMode?: "scheduled" | "instant"
+  date: string
+  startTime: string
+  endTime: string
+  userName: string
+  takumiName: string
+  callType?: CallType
+  note?: string
+}
 
 export default function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -47,6 +64,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
   const [selectedInSprechzeit, setSelectedInSprechzeit] = useState(false)
   const [selectedSprechzeit, setSelectedSprechzeit] = useState<{ date: string; startTime: string } | null>(null)
   const [paymentOnboardingOpen, setPaymentOnboardingOpen] = useState(false)
+  const [checkoutBookingSnap, setCheckoutBookingSnap] = useState<CheckoutBookingApi | null>(null)
 
   useEffect(() => {
     if (step === "checkout" && session?.user) {
@@ -56,6 +74,37 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         .catch(() => {})
     }
   }, [step, session?.user])
+
+  useEffect(() => {
+    if (step !== "checkout" || !bookingIdForPayment) {
+      setCheckoutBookingSnap(null)
+      return
+    }
+    let cancelled = false
+    fetch(`/api/bookings/${bookingIdForPayment}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: { booking?: CheckoutBookingApi } | null) => {
+        if (cancelled || !json?.booking) return
+        const b = json.booking
+        setCheckoutBookingSnap({
+          isExpert: b.isExpert,
+          status: b.status,
+          paymentStatus: b.paymentStatus,
+          bookingMode: b.bookingMode,
+          date: b.date,
+          startTime: b.startTime,
+          endTime: b.endTime,
+          userName: b.userName,
+          takumiName: b.takumiName,
+          callType: b.callType,
+          note: b.note,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [step, bookingIdForPayment])
 
   if (isTakumisLoading) {
     return (
@@ -293,6 +342,35 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 setStep("form")
               }}
             />
+            {checkoutBookingSnap &&
+              canOfferCalendarExport({
+                status: checkoutBookingSnap.status,
+                paymentStatus: checkoutBookingSnap.paymentStatus,
+                bookingMode: checkoutBookingSnap.bookingMode,
+                date: checkoutBookingSnap.date,
+                startTime: checkoutBookingSnap.startTime,
+                endTime: checkoutBookingSnap.endTime,
+              }) && (
+                <div className="flex flex-col gap-2 rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.25)] p-3">
+                  <p className="text-xs text-muted-foreground">{t("booking.calendarExportCheckoutHint")}</p>
+                  <BookingCalendarActions
+                    bookingId={bookingIdForPayment}
+                    isExpertView={!!checkoutBookingSnap.isExpert}
+                    booking={{
+                      status: checkoutBookingSnap.status,
+                      paymentStatus: checkoutBookingSnap.paymentStatus,
+                      bookingMode: checkoutBookingSnap.bookingMode,
+                      date: checkoutBookingSnap.date,
+                      startTime: checkoutBookingSnap.startTime,
+                      endTime: checkoutBookingSnap.endTime,
+                      userName: checkoutBookingSnap.userName,
+                      takumiName: checkoutBookingSnap.takumiName,
+                      callType: checkoutBookingSnap.callType,
+                      note: checkoutBookingSnap.note,
+                    }}
+                  />
+                </div>
+              )}
             <p className="mt-2 text-center text-[11px] leading-relaxed text-[rgba(120,113,108,0.7)]">
               {t("handshake.p2pNotice")}
             </p>
