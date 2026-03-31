@@ -52,11 +52,11 @@ export function HelpFaqSection() {
             return (
               <div
                 key={id}
-                className="rounded-xl border border-border/60 bg-card overflow-hidden"
+                className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card overflow-hidden"
               >
                 <button
                   onClick={() => setOpenId(isOpen ? null : id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/30 transition-colors"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-[rgba(245,245,244,0.3)] transition-colors"
                 >
                   {item.q}
                   <ChevronDown
@@ -64,7 +64,7 @@ export function HelpFaqSection() {
                   />
                 </button>
                 {isOpen && (
-                  <div className="border-t border-border/40 px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+                  <div className="border-t border-[rgba(231,229,227,0.4)] px-4 py-3 text-sm text-muted-foreground leading-relaxed">
                     {item.a}
                   </div>
                 )}
@@ -87,11 +87,11 @@ export function HelpFaqSection() {
             return (
               <div
                 key={id}
-                className="rounded-xl border border-border/60 bg-card overflow-hidden"
+                className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card overflow-hidden"
               >
                 <button
                   onClick={() => setOpenId(isOpen ? null : id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/30 transition-colors"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-[rgba(245,245,244,0.3)] transition-colors"
                 >
                   {item.q}
                   <ChevronDown
@@ -99,7 +99,7 @@ export function HelpFaqSection() {
                   />
                 </button>
                 {isOpen && (
-                  <div className="border-t border-border/40 px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+                  <div className="border-t border-[rgba(231,229,227,0.4)] px-4 py-3 text-sm text-muted-foreground leading-relaxed">
                     {item.a}
                   </div>
                 )}

@@ -117,7 +117,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-[rgba(6,78,59,0.5)];
   }
   body {
     @apply bg-background text-foreground;

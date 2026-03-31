@@ -86,7 +86,7 @@ export function AdminAnalyticsTab() {
       </div>
 
       {data?.degraded && data.degradedReason && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <div className="rounded-xl border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.1)] px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
           <span className="font-semibold">Hinweis: </span>
           {data.degradedReason}
         </div>
@@ -106,27 +106,27 @@ export function AdminAnalyticsTab() {
       {data && (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(59,130,246,0.1)] text-blue-600">
                   <MousePointerClick className="size-4" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-foreground">{data.summary.totalSessions}</p>
                 <p className="text-xs font-medium text-muted-foreground">Besuche (Sitzungen)</p>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(139,92,246,0.1)] text-violet-600">
                   <Users className="size-4" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-foreground">{data.summary.uniqueVisitors}</p>
                 <p className="text-xs font-medium text-muted-foreground">Unique Besucher</p>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(20,184,166,0.1)] text-teal-600">
                   <Timer className="size-4" />
                 </div>
                 <p className="mt-2 text-xl font-bold text-foreground leading-tight">
@@ -138,9 +138,9 @@ export function AdminAnalyticsTab() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(249,115,22,0.1)] text-orange-600">
                   <Timer className="size-4" />
                 </div>
                 <p className="mt-2 text-xl font-bold text-foreground leading-tight">
@@ -149,9 +149,9 @@ export function AdminAnalyticsTab() {
                 <p className="text-xs font-medium text-muted-foreground">Ø Sitzungslänge (Start → letzte Aktivität)</p>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(34,197,94,0.1)] text-green-600">
                   <LogIn className="size-4" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-foreground">{data.summary.loggedInSessions}</p>
@@ -163,9 +163,9 @@ export function AdminAnalyticsTab() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(245,158,11,0.1)] text-amber-600">
                   <Percent className="size-4" />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-foreground">{data.summary.bounceRatePct} %</p>
@@ -175,7 +175,7 @@ export function AdminAnalyticsTab() {
             </Card>
           </div>
 
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-sm font-semibold">Besuche pro Tag</CardTitle>
             </CardHeader>
@@ -187,9 +187,9 @@ export function AdminAnalyticsTab() {
                   {data.byDay.map((row) => (
                     <div key={row.day} className="flex items-center gap-2 text-xs">
                       <span className="w-24 shrink-0 font-mono text-muted-foreground">{row.day}</span>
-                      <div className="h-6 min-w-0 flex-1 rounded-md bg-muted/60 overflow-hidden">
+                      <div className="h-6 min-w-0 flex-1 rounded-md bg-[rgba(245,245,244,0.6)] overflow-hidden">
                         <div
-                          className="h-full rounded-md bg-primary/70 transition-all"
+                          className="h-full rounded-md bg-[rgba(6,78,59,0.7)] transition-all"
                           style={{ width: `${Math.max(4, (row.sessions / maxBar) * 100)}%` }}
                           title={`${row.sessions} Sitzungen`}
                         />
@@ -203,7 +203,7 @@ export function AdminAnalyticsTab() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-sm font-semibold">Beliebte Pfade</CardTitle>
             </CardHeader>

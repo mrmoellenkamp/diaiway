@@ -37,7 +37,7 @@ function InvoiceDataEditor({
   const update = (k: keyof InvoiceData, v: string | boolean | undefined) =>
     onChange({ ...d, [k]: v })
   return (
-    <div className="mt-2 space-y-2 rounded-lg border border-border/60 p-3">
+    <div className="mt-2 space-y-2 rounded-lg border border-[rgba(231,229,227,0.6)] p-3">
       <RadioGroup value={d.type || "privat"} onValueChange={(v) => update("type", v as "privat" | "unternehmen")} className="flex gap-4">
         <label className="flex items-center gap-2 cursor-pointer text-xs">
           <RadioGroupItem value="privat" />
@@ -64,7 +64,7 @@ function InvoiceDataEditor({
             <Input placeholder="USt-IdNr." value={d.vatId ?? ""} onChange={(e) => update("vatId", e.target.value)} className="h-8 text-xs" />
             <Input placeholder="Steuernr." value={d.taxNumber ?? ""} onChange={(e) => update("taxNumber", e.target.value)} className="h-8 text-xs" />
           </div>
-          <label className="flex items-center justify-between rounded border border-border/40 px-2 py-1.5 text-xs">
+          <label className="flex items-center justify-between rounded border border-[rgba(231,229,227,0.4)] px-2 py-1.5 text-xs">
             <span>Kleinunternehmer (§19 UStG)</span>
             <Switch checked={!!d.kleinunternehmer} onCheckedChange={(v) => update("kleinunternehmer", v)} />
           </label>
@@ -121,7 +121,7 @@ function AdminWeeklySlotsEditor({
           const daySlots = slots[d(day)] || []
           const isActive = daySlots.length > 0
           return (
-            <div key={day} className={`flex flex-col gap-1.5 rounded-lg px-2.5 py-2 ${isActive ? "bg-primary/5" : ""}`}>
+            <div key={day} className={`flex flex-col gap-1.5 rounded-lg px-2.5 py-2 ${isActive ? "bg-[rgba(6,78,59,0.05)]" : ""}`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Switch checked={isActive} onCheckedChange={() => toggleDay(day)} className="scale-90" />
@@ -151,7 +151,7 @@ function AdminWeeklySlotsEditor({
                     className="h-7 w-24 rounded border border-input bg-background px-2 text-base"
                   />
                   {daySlots.length > 1 && (
-                    <Button size="icon" variant="ghost" className="size-6 text-destructive/70 hover:text-destructive" onClick={() => removeSlot(day, idx)}>
+                    <Button size="icon" variant="ghost" className="size-6 text-[rgba(239,68,68,0.7)] hover:text-destructive" onClick={() => removeSlot(day, idx)}>
                       <Trash2 className="size-3" />
                     </Button>
                   )}
@@ -681,7 +681,7 @@ export function AdminUserProfileSheet({
                                     setEditUser({ ...editUser, languages: next } as typeof editUser)
                                   }}
                                   className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-[rgba(245,245,244,0.8)]"
                                   }`}
                                 >
                                   {lang.toUpperCase()}
@@ -922,7 +922,7 @@ export function AdminUserProfileSheet({
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
                     {editShugyo.map((p, i) => (
-                      <div key={i} className="rounded-lg border border-border/60 p-3 space-y-2">
+                      <div key={i} className="rounded-lg border border-[rgba(231,229,227,0.6)] p-3 space-y-2">
                         <div className="flex justify-between">
                           <span className="text-xs font-medium text-muted-foreground">Projekt {i + 1}</span>
                           <Button
@@ -975,7 +975,7 @@ export function AdminUserProfileSheet({
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
                     {editTakumi.map((p, i) => (
-                      <div key={i} className="rounded-lg border border-border/60 p-3 space-y-2">
+                      <div key={i} className="rounded-lg border border-[rgba(231,229,227,0.6)] p-3 space-y-2">
                         <div className="flex justify-between">
                           <span className="text-xs font-medium text-muted-foreground">Portfolio {i + 1}</span>
                           <Button
@@ -1090,7 +1090,7 @@ export function AdminUserProfileSheet({
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
                     {/* Guthaben gutschreiben */}
-                    <div className="rounded-lg border border-border/60 p-3 space-y-2">
+                    <div className="rounded-lg border border-[rgba(231,229,227,0.6)] p-3 space-y-2">
                       <p className="text-xs font-medium">Guthaben gutschreiben</p>
                       <div className="flex gap-2 flex-wrap">
                         <Input
@@ -1138,11 +1138,11 @@ export function AdminUserProfileSheet({
                         {/* Kontoauszug */}
                         <div>
                           <p className="text-xs font-medium mb-2">Transaktionsverlauf</p>
-                          <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border/40">
+                          <div className="max-h-[280px] overflow-y-auto rounded-lg border border-[rgba(231,229,227,0.4)]">
                             {financeHistory.history.length === 0 ? (
                               <p className="p-4 text-xs text-muted-foreground">Keine Transaktionen.</p>
                             ) : (
-                              <div className="divide-y divide-border/40">
+                              <div className="divide-y divide-[rgba(231,229,227,0.4)]">
                                 {(financeHistory.history as Array<{
                                   id: string
                                   type: string
@@ -1186,7 +1186,7 @@ export function AdminUserProfileSheet({
                         </div>
 
                         {/* Systemseitige Korrespondenz (offizielle Rechnungsanschrift) */}
-                        <div className="mt-4 pt-4 border-t border-border/60">
+                        <div className="mt-4 pt-4 border-t border-[rgba(231,229,227,0.6)]">
                           <p className="text-xs font-medium mb-2">Systemseitige Korrespondenz (Rechnungen, Gutschriften)</p>
                           <p className="text-[10px] text-muted-foreground mb-2">
                             Alle Belege mit offizieller Rechnungsanschrift an diesen Nutzer.
@@ -1196,8 +1196,8 @@ export function AdminUserProfileSheet({
                               <Loader2 className="size-5 animate-spin text-primary" />
                             </div>
                           ) : documents && documents.length > 0 ? (
-                            <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border/40">
-                              <div className="divide-y divide-border/40">
+                            <div className="max-h-[200px] overflow-y-auto rounded-lg border border-[rgba(231,229,227,0.4)]">
+                              <div className="divide-y divide-[rgba(231,229,227,0.4)]">
                                 {documents.map((doc) => (
                                   <div key={doc.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
                                     <div className="min-w-0 flex-1">

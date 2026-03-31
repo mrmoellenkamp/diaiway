@@ -12,7 +12,7 @@ function OnlinePill({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-accent",
+        "flex shrink-0 items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.1)] px-2 py-0.5 text-[9px] font-semibold text-accent",
         className
       )}
     >
@@ -62,7 +62,7 @@ export function CollapsibleAiBox({
       className={cn(
         "flex flex-col overflow-hidden rounded-3xl shadow-lg transition-shadow hover:shadow-xl",
         isPrimary
-          ? "border border-primary/20 bg-gradient-to-br from-primary via-primary to-primary/95 shadow-[0_8px_30px_rgba(6,78,59,0.22)]"
+          ? "border border-[rgba(6,78,59,0.2)] bg-gradient-to-br from-primary via-primary to-[rgba(6,78,59,0.95)] shadow-[0_8px_30px_rgba(6,78,59,0.22)]"
           : "border border-border bg-card shadow-md",
         className
       )}
@@ -73,13 +73,13 @@ export function CollapsibleAiBox({
         className={cn(
           "flex w-full items-center gap-3 p-4 text-left transition-colors",
           compact ? "py-3" : "py-4",
-          isPrimary ? "hover:bg-white/5" : "hover:bg-muted/50"
+          isPrimary ? "hover:bg-[rgba(255,255,255,0.05)]" : "hover:bg-[rgba(245,245,244,0.5)]"
         )}
       >
         <div
           className={cn(
             "flex size-10 shrink-0 items-center justify-center rounded-xl",
-            isPrimary ? "bg-white/15 ring-1 ring-white/10" : "bg-primary/10"
+            isPrimary ? "bg-[rgba(255,255,255,0.15)] ring-1 ring-[rgba(255,255,255,0.1)]" : "bg-[rgba(6,78,59,0.1)]"
           )}
         >
           <Sparkles className={cn("size-5", isPrimary ? "text-accent" : "text-primary")} />
@@ -104,7 +104,7 @@ export function CollapsibleAiBox({
                 <span
                   className={cn(
                     "text-[11px] font-semibold tracking-tight",
-                    isPrimary ? "text-primary-foreground/95" : "text-foreground/90"
+                    isPrimary ? "text-[rgba(240,253,244,0.95)]" : "text-[rgba(28,25,23,0.9)]"
                   )}
                 >
                   {t("mentor.intelligenceSuffix")}
@@ -117,7 +117,7 @@ export function CollapsibleAiBox({
           <span
             className={cn(
               "mt-0.5 block text-xs leading-snug",
-              isPrimary ? "text-primary-foreground/65" : "text-muted-foreground"
+              isPrimary ? "text-[rgba(240,253,244,0.65)]" : "text-muted-foreground"
             )}
           >
             {displayDesc}
@@ -126,16 +126,16 @@ export function CollapsibleAiBox({
         {isPrimary && <OnlinePill className="hidden sm:flex" />}
         {expanded ? (
           <ChevronUp
-            className={cn("size-5 shrink-0", isPrimary ? "text-primary-foreground/80" : "text-muted-foreground")}
+            className={cn("size-5 shrink-0", isPrimary ? "text-[rgba(240,253,244,0.8)]" : "text-muted-foreground")}
           />
         ) : (
           <ChevronDown
-            className={cn("size-5 shrink-0", isPrimary ? "text-primary-foreground/80" : "text-muted-foreground")}
+            className={cn("size-5 shrink-0", isPrimary ? "text-[rgba(240,253,244,0.8)]" : "text-muted-foreground")}
           />
         )}
       </button>
       {expanded && (
-        <div className="border-t border-white/10 bg-emerald-50/40">
+        <div className="border-t border-[rgba(255,255,255,0.1)] bg-[rgba(236,253,245,0.4)]">
           <MentorChat
             variant={chatVariant}
             hideHeader

@@ -40,8 +40,8 @@ function TakumiBenefitsSection() {
       className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12"
       aria-labelledby="landing-takumi-benefits-heading"
     >
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.06] via-background to-background p-5 shadow-sm sm:p-6">
-        <div className="pointer-events-none absolute -right-16 top-0 size-40 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+      <div className="relative overflow-hidden rounded-2xl border border-[rgba(6,78,59,0.2)] bg-gradient-to-b from-[rgba(6,78,59,0.06)] via-background to-background p-5 shadow-sm sm:p-6">
+        <div className="pointer-events-none absolute -right-16 top-0 size-40 rounded-full bg-[rgba(6,78,59,0.1)] blur-3xl" aria-hidden />
         <div className="relative">
           <h2 id="landing-takumi-benefits-heading" className="mb-3 text-lg font-bold tracking-tight text-foreground">
             {t("landing.takumiBenefitsHeading")}
@@ -54,9 +54,9 @@ function TakumiBenefitsSection() {
             {t("landing.takumiBenefitsIntroC")}
           </p>
           <div className="flex flex-col gap-4">
-            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.9)] p-4 shadow-sm backdrop-blur-sm">
               <div className="flex gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
                   <CircleDollarSign className="size-5 text-primary" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -64,7 +64,7 @@ function TakumiBenefitsSection() {
                     {t("landing.takumiBenefitMoneyTitle")}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitMoneyIntro")}</p>
-                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-primary/60">
+                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-[rgba(6,78,59,0.6)]">
                     {(
                       [
                         ["landing.takumiBenefitMoneyLi1Label", "landing.takumiBenefitMoneyLi1Body"],
@@ -81,9 +81,9 @@ function TakumiBenefitsSection() {
                 </div>
               </div>
             </article>
-            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.9)] p-4 shadow-sm backdrop-blur-sm">
               <div className="flex gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
                   <Globe2 className="size-5 text-primary" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -91,16 +91,16 @@ function TakumiBenefitsSection() {
                     {t("landing.takumiBenefitFlexTitle")}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexIntro")}</p>
-                  <ul className="mt-3 list-disc space-y-2 pl-4 marker:text-primary/60">
+                  <ul className="mt-3 list-disc space-y-2 pl-4 marker:text-[rgba(6,78,59,0.6)]">
                     <li className="text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexLi1")}</li>
                     <li className="text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitFlexLi2")}</li>
                   </ul>
                 </div>
               </div>
             </article>
-            <article className="rounded-xl border border-border/60 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.9)] p-4 shadow-sm backdrop-blur-sm">
               <div className="flex gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
                   <Award className="size-5 text-primary" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ function TakumiBenefitsSection() {
                     {t("landing.takumiBenefitRepTitle")}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("landing.takumiBenefitRepIntro")}</p>
-                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-primary/60">
+                  <ul className="mt-3 list-disc space-y-2 pl-4 text-left marker:text-[rgba(6,78,59,0.6)]">
                     <li className="text-xs leading-relaxed text-muted-foreground">
                       <span className="font-medium text-foreground">{t("landing.takumiBenefitRepLi1Label")}</span>{" "}
                       {t("landing.takumiBenefitRepLi1Body")}
@@ -135,7 +135,7 @@ function LiveTakumisSection() {
   const { t } = useI18n()
   return (
     <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
-      <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
+      <p className="font-jp text-4xl text-center text-[rgba(120,113,108,0.5)] mb-6">匠</p>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
         {liveTakumis.length > 0 && (
@@ -151,10 +151,10 @@ function LiveTakumisSection() {
       {liveTakumis.length > 0 ? (
         <div className="flex flex-col gap-3">
           {liveTakumis.slice(0, 3).map((tk) => (
-            <div key={tk.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
-              <Avatar className="size-10 border-2 border-accent/20">
+            <div key={tk.id} className="flex items-center gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3">
+              <Avatar className="size-10 border-2 border-[rgba(34,197,94,0.22)]">
                 {tk.imageUrl && <AvatarImage src={tk.imageUrl} alt={takumiPublicLabel(tk)} className="object-cover" />}
-                <AvatarFallback className="bg-accent/10 text-accent font-semibold text-xs">
+                <AvatarFallback className="bg-[rgba(34,197,94,0.12)] text-accent font-semibold text-xs">
                   {tk.avatar}
                 </AvatarFallback>
               </Avatar>
@@ -162,14 +162,14 @@ function LiveTakumisSection() {
                 <span className="text-sm font-semibold text-foreground">{takumiPublicLabel(tk)}</span>
                 <span className="text-xs text-muted-foreground">{tk.subcategory}</span>
               </div>
-              <Button asChild size="sm" className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs">
+              <Button asChild size="sm" className="rounded-lg bg-accent text-accent-foreground hover:bg-[rgba(34,197,94,0.9)] h-8 text-xs">
                 <Link href={`/takumi/${tk.id}`}>{t("landing.connect")}</Link>
               </Button>
             </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
+        <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 text-center">
           <p className="text-sm text-muted-foreground">{t("landing.noExpertsOnline")}</p>
         </div>
       )}
@@ -232,7 +232,7 @@ export default function LandingPage() {
             href={`/beta/${locale}`}
             aria-label={t("landing.betaButton")}
             title={t("landing.betaButton")}
-            className="absolute bottom-3 right-3 z-20 flex size-[5.25rem] sm:size-[5.75rem] flex-col items-center justify-center gap-1 rounded-full border-2 border-primary-foreground/90 bg-accent text-accent-foreground shadow-[0_4px_24px_rgba(0,0,0,0.35)] ring-4 ring-primary/30 transition-transform hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground"
+            className="absolute bottom-3 right-3 z-20 flex size-[5.25rem] sm:size-[5.75rem] flex-col items-center justify-center gap-1 rounded-full border-2 border-[rgba(240,253,244,0.9)] bg-accent text-accent-foreground shadow-[0_4px_24px_rgba(0,0,0,0.35)] ring-4 ring-[rgba(6,78,59,0.35)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(240,253,244)]"
           >
             <FlaskConical className="size-[1.125rem] sm:size-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
             <span className="max-w-[4.25rem] text-center text-[8px] font-extrabold leading-[1.05] tracking-wide sm:max-w-none sm:text-[9px]">
@@ -242,34 +242,35 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
-          <h1 className="text-balance text-center text-3xl font-bold leading-tight tracking-tight text-primary-foreground">
+          <h1 className="text-balance text-center text-3xl font-bold leading-tight tracking-tight text-[rgb(240,253,244)]">
             <span className="block">{t("landing.heroTitle")}</span>
-            <span className="mt-2 block text-lg font-semibold leading-snug tracking-tight text-primary-foreground/90 sm:text-xl">
+            <span className="mt-2 block text-lg font-semibold leading-snug tracking-tight text-[rgba(240,253,244,0.92)] sm:text-xl">
               {t("landing.heroIntro")}
             </span>
           </h1>
-          <p className="font-jp text-4xl text-accent/80">匠</p>
+          <p className="font-jp text-4xl text-[rgba(34,197,94,0.85)]">匠</p>
 
-          <h2 className="text-base font-semibold text-primary-foreground">
+          <h2 className="text-base font-semibold text-[rgb(240,253,244)]">
             {t("landing.heroWaysTitle")}
           </h2>
           <div className="flex w-full flex-col gap-4">
-            <div className="flex flex-col gap-2 rounded-xl bg-primary-foreground/5 p-4 text-left">
-              <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
+            {/* rgba statt bg-…/5: ältere Android-WebViews ignorieren color-mix → sonst fast weiße Karten */}
+            <div className="flex flex-col gap-2 rounded-xl bg-[rgba(240,253,244,0.08)] p-4 text-left">
+              <p className="text-pretty text-sm leading-relaxed text-[rgba(240,253,244,0.9)]">
                 <span className="font-medium">1.</span> {t("landing.heroWay1")}
               </p>
-              <Button asChild size="lg" className="h-auto min-h-12 w-full rounded-xl bg-accent py-3 pr-11 text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
+              <Button asChild size="lg" className="h-auto min-h-12 w-full rounded-xl bg-accent py-3 pr-11 text-base font-bold text-accent-foreground hover:bg-[rgba(34,197,94,0.9)] shadow-md">
                 <Link href="/ai-guide" className="relative block text-center">
                   <span className="whitespace-pre-line leading-snug">{t("landing.heroWay1Button")}</span>
                   <ArrowRight className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2" aria-hidden />
                 </Link>
               </Button>
             </div>
-            <div className="flex flex-col gap-2 rounded-xl bg-primary-foreground/5 p-4 text-left">
-              <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
+            <div className="flex flex-col gap-2 rounded-xl bg-[rgba(240,253,244,0.08)] p-4 text-left">
+              <p className="text-pretty text-sm leading-relaxed text-[rgba(240,253,244,0.9)]">
                 <span className="font-medium">2.</span> {t("landing.heroWay2")}
               </p>
-              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 shadow-md">
+              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-accent text-base font-bold text-accent-foreground hover:bg-[rgba(34,197,94,0.9)] shadow-md">
                 <Link href="/categories">
                   {t("landing.heroWay2Button")}
                   <ArrowRight className="ml-1 size-4" />
@@ -278,20 +279,20 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-2">
-            <p className="text-pretty text-sm font-medium leading-relaxed text-accent/90">
+            <p className="text-pretty text-sm font-medium leading-relaxed text-[rgba(34,197,94,0.92)]">
               {t("landing.heroTakumiCta")}
             </p>
             <Button
               asChild
               variant="outline"
               size="lg"
-              className="h-12 w-full rounded-xl border-primary-foreground/30 bg-transparent text-base font-semibold text-primary-foreground hover:bg-primary-foreground/10"
+              className="h-12 w-full rounded-xl border-[rgba(240,253,244,0.35)] bg-transparent text-base font-semibold text-[rgb(240,253,244)] hover:bg-[rgba(240,253,244,0.12)]"
             >
               <Link href="/register?role=takumi">{t("landing.heroTakumiButton")}</Link>
             </Button>
           </div>
 
-          <div className="flex items-center gap-4 pt-2 text-xs text-primary-foreground/50">
+          <div className="flex items-center gap-4 pt-2 text-xs text-[rgba(240,253,244,0.58)]">
             <span className="flex items-center gap-1">
               <CheckCircle className="size-3" />
               {t("landing.freeMinutes")}
@@ -313,9 +314,9 @@ export default function LandingPage() {
       {/* 匠 + Live Takumis (verzögert geladen für schnelleren LCP) */}
       {showTakumis ? <LiveTakumisSection /> : (
         <section className="mx-auto w-full max-w-lg px-4 pb-10 sm:px-6 sm:pb-12">
-          <p className="font-jp text-4xl text-center text-muted-foreground/50 mb-6">匠</p>
+          <p className="font-jp text-4xl text-center text-[rgba(120,113,108,0.5)] mb-6">匠</p>
           <h2 className="mb-4 text-lg font-bold text-foreground">{t("landing.nowAvailable")}</h2>
-          <div className="rounded-xl border border-border/60 bg-card p-6 animate-pulse">
+          <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 animate-pulse">
             <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-4" />
             <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
           </div>
@@ -346,7 +347,7 @@ export default function LandingPage() {
           {t("landing.conceptsHeading")}
         </h2>
         <div className="flex flex-col gap-4">
-          <article className="rounded-xl border border-border/60 bg-card p-4">
+          <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
             <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
               {t("landing.conceptHishoTitle")}
             </h3>
@@ -356,13 +357,13 @@ export default function LandingPage() {
               {t("landing.conceptHishoTail")}
             </p>
           </article>
-          <article className="rounded-xl border border-border/60 bg-card p-4">
+          <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
             <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
               {t("landing.conceptShugyoTitle")}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">{t("landing.conceptShugyoBody")}</p>
           </article>
-          <article className="rounded-xl border border-border/60 bg-card p-4">
+          <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
             <h3 className="mb-2 text-sm font-semibold text-foreground leading-snug">
               {t("landing.conceptTakumiTitle")}
             </h3>
@@ -378,7 +379,7 @@ export default function LandingPage() {
         <h2 id="landing-who-takumi-heading" className="mb-4 text-lg font-bold text-foreground">
           {t("landing.whoTakumiTitle")}
         </h2>
-        <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+        <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 shadow-sm sm:p-5">
           <p className="text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
             {t("landing.whoTakumiP1")}
             <strong className="font-medium text-foreground">{t("landing.whoTakumiEmPro")}</strong>
@@ -405,8 +406,8 @@ export default function LandingPage() {
             { icon: Handshake, title: t("landing.reasonHandshakeTitle"), desc: t("landing.reasonHandshakeDesc") },
             { icon: Shield, title: t("landing.reasonEscrowTitle"), desc: t("landing.reasonEscrowDesc") },
           ].map((item) => (
-            <div key={item.title} className="flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <div key={item.title} className="flex items-start gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
                 <item.icon className="size-5 text-primary" />
               </div>
               <div className="flex flex-col gap-0.5">
@@ -423,7 +424,7 @@ export default function LandingPage() {
         aria-labelledby="landing-diaiway-is-heading landing-diaiway-not-heading"
       >
         <div className="flex flex-col gap-4">
-          <article className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+          <article className="overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-card shadow-sm">
             <div className="flex min-h-0">
               <div className="w-1 shrink-0 bg-primary" aria-hidden />
               <div className="flex min-w-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5">
@@ -442,9 +443,9 @@ export default function LandingPage() {
               </div>
             </div>
           </article>
-          <article className="overflow-hidden rounded-xl border border-border/60 bg-muted/25 shadow-sm">
+          <article className="overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.25)] shadow-sm">
             <div className="flex min-h-0">
-              <div className="w-1 shrink-0 bg-muted-foreground/35" aria-hidden />
+              <div className="w-1 shrink-0 bg-[rgba(120,113,108,0.35)]" aria-hidden />
               <div className="flex min-w-0 flex-1 gap-3 p-4 sm:gap-4 sm:p-5">
                 <Ban className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
                 <div className="min-w-0">
@@ -468,7 +469,7 @@ export default function LandingPage() {
         className="mx-auto w-full max-w-lg px-4 pb-6 sm:px-6 sm:pb-8"
         aria-label={t("landing.takumiExpectationsAria")}
       >
-        <aside className="flex gap-3 rounded-xl border border-border/80 bg-muted/35 p-4 shadow-sm sm:p-5">
+        <aside className="flex gap-3 rounded-xl border border-[rgba(231,229,227,0.8)] bg-[rgba(245,245,244,0.35)] p-4 shadow-sm sm:p-5">
           <Info className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
           <p className="text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">
             {t("landing.takumiExpectationsBody")}
@@ -481,17 +482,17 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="mx-auto w-full max-w-lg px-4 pb-12 sm:px-6 sm:pb-16">
         <div className="rounded-2xl bg-primary p-8 text-center">
-          <p className="font-jp text-3xl text-accent/70 mb-3">道</p>
-          <h2 className="text-xl font-bold text-primary-foreground mb-2">
+          <p className="font-jp text-3xl text-[rgba(34,197,94,0.72)] mb-3">道</p>
+          <h2 className="text-xl font-bold text-[rgb(240,253,244)] mb-2">
             {showLoggedInCta ? t("landing.ctaTitleLoggedIn") : t("landing.ctaTitleLoggedOut")}
           </h2>
-          <p className="text-sm text-primary-foreground/70 mb-6">
+          <p className="text-sm text-[rgba(240,253,244,0.78)] mb-6">
             {showLoggedInCta ? t("landing.ctaDescLoggedIn") : t("landing.ctaDescLoggedOut")}
           </p>
           <Button
             asChild
             size="lg"
-            className="h-12 w-full rounded-xl bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+            className="h-12 w-full rounded-xl bg-accent font-bold text-accent-foreground hover:bg-[rgba(34,197,94,0.9)]"
           >
             <Link href={showLoggedInCta ? "/categories" : "/register"}>
               {showLoggedInCta ? t("landing.discoverCategories") : t("landing.getStarted")}
@@ -549,7 +550,7 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          <div className="mt-6 flex flex-col items-center gap-1 border-t border-border/40 pt-6 text-center">
+          <div className="mt-6 flex flex-col items-center gap-1 border-t border-[rgba(231,229,227,0.4)] pt-6 text-center">
             <span className="text-sm font-semibold text-foreground">
               di<span className="text-accent">Ai</span>way
             </span>

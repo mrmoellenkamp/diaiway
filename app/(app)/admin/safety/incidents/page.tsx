@@ -117,7 +117,7 @@ export default function AdminSafetyIncidentsPage() {
         ) : incidents.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <CheckCircle2 className="mx-auto mb-3 size-12 text-green-500/50" />
+              <CheckCircle2 className="mx-auto mb-3 size-12 text-[rgba(34,197,94,0.5)]" />
               <p className="text-sm text-muted-foreground">Keine KI-Alert Incidents vorhanden.</p>
               <Button asChild variant="outline" className="mt-4">
                 <Link href="/admin/safety">Zu Safety Reports</Link>
@@ -127,7 +127,7 @@ export default function AdminSafetyIncidentsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {incidents.map((inc) => (
-              <Card key={inc.id} className="border-border/60 overflow-hidden">
+              <Card key={inc.id} className="border-[rgba(231,229,227,0.6)] overflow-hidden">
                 <div className="relative aspect-video bg-muted">
                   <Image
                     src={inc.imageUrl}
@@ -140,7 +140,7 @@ export default function AdminSafetyIncidentsPage() {
                   <Badge
                     className={`absolute right-2 top-2 ${
                       inc.status === "blocked"
-                        ? "bg-destructive/90"
+                        ? "bg-[rgba(239,68,68,0.9)]"
                         : inc.status === "refunded"
                           ? "bg-amber-600"
                           : inc.status === "resolved"

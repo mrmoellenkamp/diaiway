@@ -8,7 +8,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 function SubHeading({ children }: { children: React.ReactNode }) {
-  return <h4 className="text-sm font-semibold text-foreground/90 mt-4 mb-1">{children}</h4>
+  return <h4 className="text-sm font-semibold text-[rgba(28,25,23,0.9)] mt-4 mb-1">{children}</h4>
 }
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -17,7 +17,7 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-primary underline underline-offset-2 hover:text-primary/90 break-all"
+      className="font-medium text-primary underline underline-offset-2 hover:text-[rgba(6,78,59,0.9)] break-all"
     >
       {children}
     </a>
@@ -35,14 +35,14 @@ export default function DatenschutzPage() {
 
           {/* Verantwortlicher */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">
               Verantwortliche Stelle
             </h2>
-            <div className="flex flex-col gap-1 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+            <div className="flex flex-col gap-1 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-5 shadow-sm">
               <span className="font-bold text-foreground text-lg">JM faircharge UG (haftungsbeschränkt)</span>
               <span className="text-muted-foreground">Esmarchstraße 13</span>
               <span className="text-muted-foreground">10407 Berlin</span>
-              <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-3 text-sm text-foreground/80">
+              <div className="mt-4 pt-4 border-t border-[rgba(231,229,227,0.4)] flex items-center gap-3 text-sm text-[rgba(28,25,23,0.8)]">
                 <Building2 className="size-4 text-primary" />
                 <span>Vertreten durch: <strong className="text-foreground">Jens Möllenkamp</strong></span>
               </div>
@@ -51,12 +51,12 @@ export default function DatenschutzPage() {
 
           {/* Kontakt Datenschutz */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">
               Kontakt bei Datenschutzanfragen
             </h2>
             <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-primary/30">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex items-center gap-4 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 transition-colors hover:border-[rgba(6,78,59,0.3)]">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)] text-primary">
                   <Phone className="size-5" />
                 </div>
                 <div className="flex flex-col">
@@ -64,8 +64,8 @@ export default function DatenschutzPage() {
                   <a href="tel:+4917681182794" className="text-sm font-medium hover:underline">+49 176 81182794</a>
                 </div>
               </div>
-              <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-primary/30">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex items-center gap-4 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 transition-colors hover:border-[rgba(6,78,59,0.3)]">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)] text-primary">
                   <Mail className="size-5" />
                 </div>
                 <div className="flex flex-col">
@@ -78,11 +78,11 @@ export default function DatenschutzPage() {
 
           {/* Datenschutz-Inhalte */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)] flex items-center gap-2">
               <Shield className="size-4" />
               Datenschutzerklärung
             </h2>
-            <div className="rounded-2xl border border-border/60 bg-card p-5 text-sm text-muted-foreground leading-relaxed space-y-6">
+            <div className="rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-5 text-sm text-muted-foreground leading-relaxed space-y-6">
 
               {/* 1 */}
               <div>
@@ -413,7 +413,7 @@ export default function DatenschutzPage() {
                 </ul>
                 <p className="mt-3">
                   Zur Ausübung Ihrer Rechte wenden Sie sich an:{" "}
-                  <a href="mailto:jm@faircharge.com" className="font-medium text-primary underline underline-offset-2 hover:text-primary/90">
+                  <a href="mailto:jm@faircharge.com" className="font-medium text-primary underline underline-offset-2 hover:text-[rgba(6,78,59,0.9)]">
                     jm@faircharge.com
                   </a>
                 </p>

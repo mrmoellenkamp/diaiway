@@ -70,7 +70,7 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
-              <p className="font-jp text-4xl text-primary/30">
+              <p className="font-jp text-4xl text-[rgba(6,78,59,0.3)]">
                 {isTakumi ? "匠" : "修行"}
               </p>
               <h1 className="text-2xl font-bold text-foreground">
@@ -82,7 +82,7 @@ export default function OnboardingPage() {
             </div>
             <button
               type="button"
-              className="flex size-28 items-center justify-center rounded-full border-2 border-dashed border-border bg-muted/50 transition-colors hover:border-primary/30 hover:bg-primary/5"
+              className="flex size-28 items-center justify-center rounded-full border-2 border-dashed border-border bg-[rgba(245,245,244,0.5)] transition-colors hover:border-[rgba(6,78,59,0.3)] hover:bg-[rgba(6,78,59,0.05)]"
             >
               <Camera className="size-8 text-muted-foreground" />
             </button>
@@ -111,8 +111,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all text-sm",
                       selected
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/30"
+                        ? "border-primary bg-[rgba(6,78,59,0.05)]"
+                        : "border-border hover:border-[rgba(6,78,59,0.3)]"
                     )}
                   >
                     {selected && <Check className="size-4 shrink-0 text-primary" />}
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
         {/* Step 2: Bio (Takumi) or Welcome (Shugyo) */}
         {step === 2 && !isTakumi && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-            <p className="font-jp text-5xl text-accent/60">道</p>
+            <p className="font-jp text-5xl text-[rgba(34,197,94,0.6)]">道</p>
             <h2 className="text-2xl font-bold text-foreground">{t("onboarding.allReady")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               {t("onboarding.allReadyDesc")}
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
                 placeholder={t("onboarding.bioPlaceholder")}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none resize-none"
+                className="w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[rgba(6,78,59,0.5)] focus-visible:ring-[3px] outline-none resize-none"
                 autoCorrect="on"
                 spellCheck={true}
               />
@@ -174,7 +174,7 @@ export default function OnboardingPage() {
         {/* Step 3: Welcome (Takumi) */}
         {step === 3 && isTakumi && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-            <p className="font-jp text-5xl text-accent/60">匠</p>
+            <p className="font-jp text-5xl text-[rgba(34,197,94,0.6)]">匠</p>
             <h2 className="text-2xl font-bold text-foreground">{t("onboarding.youAreTakumi")}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               {t("onboarding.youAreTakumiDesc")}
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
       <div className="sticky bottom-0 bg-background px-6 pb-8 pt-4 border-t border-border">
         <Button
           onClick={next}
-          className="h-12 w-full rounded-xl bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
+          className="h-12 w-full rounded-xl bg-primary text-base font-semibold text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
         >
           {step === totalSteps - 1 ? t("onboarding.done") : t("onboarding.next")}
           <ArrowRight className="ml-1 size-4" />

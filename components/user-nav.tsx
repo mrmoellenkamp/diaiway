@@ -33,7 +33,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
   if (!isLoggedIn) {
     if (variant === "mobile") {
       return (
-        <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+        <div className="flex flex-col gap-2 pt-2 border-t border-[rgba(231,229,227,0.4)]">
           <Link
             href="/login"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
@@ -43,7 +43,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           </Link>
           <Link
             href="/register"
-            className="flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[rgba(6,78,59,0.9)]"
           >
             {t("nav.register")}
           </Link>
@@ -59,8 +59,8 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           size="sm"
           className={
             variant === "landing"
-              ? "h-9 rounded-lg border-primary-foreground/25 bg-transparent text-sm font-medium text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              : "h-9 rounded-lg border-primary/30 text-sm font-medium text-primary hover:bg-primary/5"
+              ? "h-9 rounded-lg border-[rgba(240,253,244,0.25)] bg-transparent text-sm font-medium text-primary-foreground hover:bg-[rgba(240,253,244,0.1)] hover:text-primary-foreground"
+              : "h-9 rounded-lg border-[rgba(6,78,59,0.3)] text-sm font-medium text-primary hover:bg-[rgba(6,78,59,0.05)]"
           }
         >
           <Link href="/login">
@@ -89,9 +89,9 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
 
   if (variant === "mobile") {
     return (
-      <div className="flex flex-col gap-1 pt-2 border-t border-border/40">
+      <div className="flex flex-col gap-1 pt-2 border-t border-[rgba(231,229,227,0.4)]">
         <div className="flex items-center gap-3 px-3 py-2">
-          <Avatar className="size-9 border-2 border-primary/10">
+          <Avatar className="size-9 border-2 border-[rgba(6,78,59,0.1)]">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -102,7 +102,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
                 className="size-full rounded-full object-cover"
               />
             ) : (
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+              <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-bold">
                 {initials}
               </AvatarFallback>
             )}
@@ -145,7 +145,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
             await signOut({ redirect: false })
             window.location.replace("/")
           }}
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-[rgba(239,68,68,0.1)]"
         >
           <LogOut className="size-4 icon-paper" />
           {t("nav.logout")}
@@ -157,8 +157,8 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:min-w-0">
-          <Avatar className="size-8 border-2 border-primary/10">
+        <button className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-[rgba(245,245,244,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:min-w-0">
+          <Avatar className="size-8 border-2 border-[rgba(6,78,59,0.1)]">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -169,7 +169,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
                 className="size-full rounded-full object-cover"
               />
             ) : (
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+              <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-bold">
                 {initials}
               </AvatarFallback>
             )}
@@ -177,7 +177,7 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           <span className={cn("hidden text-sm font-medium sm:inline", variant === "landing" ? "text-white" : "text-foreground")}>
             {userName.split(" ")[0]}
           </span>
-          <ChevronDown className={cn("size-3.5", variant === "landing" ? "text-white/80" : "text-muted-foreground")} />
+          <ChevronDown className={cn("size-3.5", variant === "landing" ? "text-[rgba(255,255,255,0.8)]" : "text-muted-foreground")} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">

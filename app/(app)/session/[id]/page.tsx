@@ -228,7 +228,7 @@ function PostCallScreen({
   const incurredAmount = paidAmountCents ?? 0
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4 py-8">
+    <div className="flex min-h-dvh-fallback flex-col items-center justify-center gap-6 bg-background px-4 py-8">
       <div className="text-center">
         <h2 className="text-xl font-bold text-foreground">{t("session.ended")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -238,7 +238,7 @@ function PostCallScreen({
 
       {/* Instant: Entstandene Gebühren anzeigen (auch bei 0 €) */}
       {isInstantShugyo && (
-        <div className="w-full max-w-sm rounded-xl border-2 border-primary/30 bg-primary/5 p-5 text-center">
+        <div className="w-full max-w-sm rounded-xl border-2 border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] p-5 text-center">
           <p className="text-sm font-medium text-muted-foreground">{t("session.incurredFees")}</p>
           <p className="mt-1 text-2xl font-bold text-foreground">
             {(incurredAmount / 100).toFixed(2).replace(".", ",")} €
@@ -297,7 +297,7 @@ function PostCallScreen({
               <Button
                 onClick={handleInstantConfirmAndRelease}
                 disabled={submitting}
-                className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
               >
                 {t("session.confirmAndRelease")}
               </Button>
@@ -315,7 +315,7 @@ function PostCallScreen({
         <Button
           onClick={handleSubmitReview}
           disabled={rating === 0 || submitting}
-          className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+          className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
         >
           {t("session.submitReview")}
         </Button>
@@ -324,7 +324,7 @@ function PostCallScreen({
             onClick={handleReleasePayment}
             disabled={submitting}
             variant="outline"
-            className="h-12 w-full rounded-xl border-accent text-accent hover:bg-accent/10"
+            className="h-12 w-full rounded-xl border-accent text-accent hover:bg-[rgba(34,197,94,0.1)]"
           >
             {t("session.releaseAndSkip")}
           </Button>
@@ -468,7 +468,7 @@ function SessionCallContent() {
       ? `${typeof window !== "undefined" ? window.location.origin : ""}/call/${booking.guestToken}`
       : null
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+      <div className="flex min-h-dvh-fallback flex-col items-center justify-center gap-6 bg-background px-4">
         <div className="flex size-20 items-center justify-center rounded-full bg-amber-100 animate-pulse">
           <span className="text-4xl">💳</span>
         </div>
@@ -498,8 +498,8 @@ function SessionCallContent() {
   // Shugyo wartet auf Takumi (Instant-Anklopf)
   if (isWaitMode && !booking.isExpert && booking.status === "pending") {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
-        <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 animate-pulse">
+      <div className="flex min-h-dvh-fallback flex-col items-center justify-center gap-6 bg-background px-4">
+        <div className="flex size-20 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] animate-pulse">
           <span className="text-4xl">📞</span>
         </div>
         <div className="text-center">
@@ -520,7 +520,7 @@ function SessionCallContent() {
   // Instant-Anfrage abgelaufen (60s ohne Antwort)
   if (isWaitMode && !booking.isExpert && booking.status === "instant_expired") {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+      <div className="flex min-h-dvh-fallback flex-col items-center justify-center gap-6 bg-background px-4">
         <div className="flex size-20 items-center justify-center rounded-full bg-muted">
           <span className="text-4xl">⏱️</span>
         </div>
@@ -538,7 +538,7 @@ function SessionCallContent() {
   // Takumi hat abgelehnt
   if (isWaitMode && !booking.isExpert && ["declined", "cancelled"].includes(booking.status)) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4">
+      <div className="flex min-h-dvh-fallback flex-col items-center justify-center gap-6 bg-background px-4">
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">{t("session.requestDeclinedTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -590,7 +590,7 @@ function SessionCallContent() {
   }
 
   return (
-    <div className="relative flex h-dvh flex-col overflow-hidden md:min-h-[80vh]">
+    <div className="relative flex h-dvh-fallback flex-col overflow-hidden md:min-h-[80vh]">
       {showConnecting && <ConnectingSplash />}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <DailyCallContainer
@@ -630,7 +630,7 @@ function SessionCallContent() {
 
 function SessionSkeleton() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 overflow-hidden p-4">
+    <div className="flex min-h-dvh-fallback flex-col gap-4 overflow-hidden p-4">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="aspect-video w-full flex-1 rounded-lg" />
       <div className="flex gap-2">
@@ -643,7 +643,7 @@ function SessionSkeleton() {
 
 export default function SessionCallPage() {
   return (
-    <div className="h-dvh overflow-hidden md:min-h-screen">
+    <div className="h-dvh-fallback overflow-hidden md:min-h-screen">
       <Suspense fallback={<SessionSkeleton />}>
         <SessionCallContent />
       </Suspense>

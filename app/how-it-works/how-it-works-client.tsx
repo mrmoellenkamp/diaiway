@@ -15,7 +15,7 @@ export function HowItWorksClient() {
           <Link
             href="/"
             aria-label={t("howItWorks.backAria")}
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(231,229,227,0.6)] bg-card transition-colors hover:bg-muted"
           >
             <ArrowLeft className="size-5 text-foreground" />
           </Link>
@@ -25,8 +25,8 @@ export function HowItWorksClient() {
           </div>
         </div>
 
-        <section className="relative mb-10 overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.08] via-background to-background p-6 shadow-sm">
-          <div className="pointer-events-none absolute -right-12 top-0 size-32 rounded-full bg-primary/10 blur-2xl" aria-hidden />
+        <section className="relative mb-10 overflow-hidden rounded-2xl border border-[rgba(6,78,59,0.2)] bg-gradient-to-b from-[rgba(6,78,59,0.08)] via-background to-background p-6 shadow-sm">
+          <div className="pointer-events-none absolute -right-12 top-0 size-32 rounded-full bg-[rgba(6,78,59,0.1)] blur-2xl" aria-hidden />
           <div className="relative">
             <div className="mb-4 flex items-center gap-2">
               <Compass className="size-5 shrink-0 text-primary" aria-hidden />
@@ -50,7 +50,7 @@ export function HowItWorksClient() {
             {t("landing.conceptsHeading")}
           </h2>
           <div className="flex flex-col gap-4">
-            <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 shadow-sm">
               <h3 className="mb-2 text-sm font-semibold leading-snug text-foreground">
                 {t("landing.conceptHishoTitle")}
               </h3>
@@ -60,13 +60,13 @@ export function HowItWorksClient() {
                 {t("landing.conceptHishoTail")}
               </p>
             </article>
-            <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 shadow-sm">
               <h3 className="mb-2 text-sm font-semibold leading-snug text-foreground">
                 {t("landing.conceptShugyoTitle")}
               </h3>
               <p className="text-xs leading-relaxed text-muted-foreground">{t("landing.conceptShugyoBody")}</p>
             </article>
-            <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 shadow-sm">
               <h3 className="mb-2 text-sm font-semibold leading-snug text-foreground">
                 {t("landing.conceptTakumiTitle")}
               </h3>
@@ -118,7 +118,7 @@ export function HowItWorksClient() {
         <div className="mt-10 flex flex-col gap-4">
           <Link
             href="/register"
-            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[rgba(6,78,59,0.9)]"
           >
             {t("howItWorks.ctaStart")}
           </Link>
@@ -148,13 +148,13 @@ function StepCard({
   body: ReactNode
 }) {
   return (
-    <article className="rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+    <article className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 shadow-sm sm:p-5">
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
           <Icon className="size-5 text-primary" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+          <span className="text-xs font-semibold uppercase tracking-wide text-[rgba(6,78,59,0.8)]">
             {stepLabel} {step}
           </span>
           <h3 className="mt-1 text-base font-semibold leading-snug text-foreground">{title}</h3>

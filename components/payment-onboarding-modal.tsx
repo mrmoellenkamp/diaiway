@@ -84,7 +84,7 @@ export function PaymentOnboardingModal({ open, onOpenChange, onSuccess }: Props)
         </DialogHeader>
 
         <div className="flex flex-col gap-3 py-2">
-          <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
+          <div className="rounded-xl border border-[rgba(231,229,227,0.7)] bg-[rgba(245,245,244,0.3)] p-3">
             <div className="flex gap-3">
               <Checkbox
                 id="p2-billing"
@@ -98,7 +98,7 @@ export function PaymentOnboardingModal({ open, onOpenChange, onSuccess }: Props)
               </Label>
             </div>
           </div>
-          <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
+          <div className="rounded-xl border border-[rgba(231,229,227,0.7)] bg-[rgba(245,245,244,0.3)] p-3">
             <div className="flex gap-3">
               <Checkbox
                 id="p2-waiver"

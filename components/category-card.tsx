@@ -10,7 +10,7 @@ export function CategoryCard({ category }: { category: Category }) {
 
   return (
     <Link href={`/categories/${category.slug}`}>
-      <div className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-3 text-center transition-all hover:border-primary/30 hover:shadow-md">
+      <div className="group flex flex-col items-center gap-2 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3 text-center transition-all hover:border-[rgba(6,78,59,0.3)] hover:shadow-md">
         <div
           className="flex size-11 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
           style={{ backgroundColor: `${category.color}15` }}
@@ -41,7 +41,7 @@ export function CategoryCardLarge({ category }: { category: Category }) {
 
   return (
     <Link href={`/categories/${category.slug}`}>
-      <div className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
+      <div className="group flex items-center gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 transition-all hover:border-[rgba(6,78,59,0.3)] hover:shadow-md">
         <div
           className="flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
           style={{ backgroundColor: `${category.color}15` }}

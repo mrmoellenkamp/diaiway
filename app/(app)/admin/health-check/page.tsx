@@ -169,7 +169,7 @@ export default function AdminHealthCheckPage() {
           {data && (
             <>
               {data.degraded && data.degradedReason && (
-                <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+                <div className="rounded-xl border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.1)] px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
                   <span className="font-semibold">Datenbank nicht erreichbar. </span>
                   {data.degradedReason}
                 </div>
@@ -182,11 +182,11 @@ export default function AdminHealthCheckPage() {
                       <Eye className="size-4 text-muted-foreground" />
                       BILDPRÜFUNG (VISION API)
                       {data.visionConfig.configured ? (
-                        <span className="ml-2 rounded bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-500">
+                        <span className="ml-2 rounded bg-[rgba(34,197,94,0.2)] px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-500">
                           {data.visionConfig.method === "api_key" ? "API-Key" : "Service Account"}
                         </span>
                       ) : (
-                        <span className="ml-2 rounded bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
+                        <span className="ml-2 rounded bg-[rgba(239,68,68,0.2)] px-2 py-0.5 text-xs font-medium text-destructive">
                           {t("admin.notConfigured")}
                         </span>
                       )}
@@ -241,7 +241,7 @@ export default function AdminHealthCheckPage() {
                     <CreditCard className="size-4 text-muted-foreground" />
                     STRIPE-ESCROW-CHECK
                     {data.stripeEscrow.length > 0 && (
-                      <span className="ml-2 rounded bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
+                      <span className="ml-2 rounded bg-[rgba(239,68,68,0.2)] px-2 py-0.5 text-xs font-medium text-destructive">
                         {data.stripeEscrow.length} Expiry-Risiko
                       </span>
                     )}
@@ -295,7 +295,7 @@ export default function AdminHealthCheckPage() {
                     <Wallet className="size-4 text-muted-foreground" />
                     WALLET-INTEGRITÄT
                     {data.walletIntegrity.length > 0 && (
-                      <span className="ml-2 rounded bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
+                      <span className="ml-2 rounded bg-[rgba(239,68,68,0.2)] px-2 py-0.5 text-xs font-medium text-destructive">
                         {data.walletIntegrity.length} Diskrepanzen
                       </span>
                     )}
@@ -322,7 +322,7 @@ export default function AdminHealthCheckPage() {
                       </TableHeader>
                       <TableBody>
                         {data.walletIntegrity.map((w) => (
-                          <TableRow key={w.userId} className="bg-destructive/10">
+                          <TableRow key={w.userId} className="bg-[rgba(239,68,68,0.1)]">
                             <TableCell>
                               <span className="font-medium">{w.userName}</span>
                               <span className="ml-1 font-mono text-[10px] text-muted-foreground">
@@ -355,7 +355,7 @@ export default function AdminHealthCheckPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="rounded-lg border border-border bg-muted/30 px-4 py-2">
+                    <div className="rounded-lg border border-border bg-[rgba(245,245,244,0.3)] px-4 py-2">
                       <span className="text-2xl font-bold text-foreground">
                         {data.pushReachability.percentWithoutPush}%
                       </span>

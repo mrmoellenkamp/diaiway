@@ -223,7 +223,7 @@ export function VisionScannerTab() {
                 <button
                   type="button"
                   onClick={() => { setImageDataUrl(null); setResult(null) }}
-                  className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-white/90 shadow hover:bg-red-50 hover:text-red-600"
+                  className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-[rgba(255,255,255,0.9)] shadow hover:bg-red-50 hover:text-red-600"
                 >
                   <X className="size-3.5" />
                 </button>

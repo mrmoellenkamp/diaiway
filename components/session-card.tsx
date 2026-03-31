@@ -9,10 +9,10 @@ import type { Session } from "@/lib/types"
 import { takumiPublicLabel } from "@/lib/communication-display"
 
 const statusConfig = {
-  active: { label: "Aktiv", className: "bg-accent/15 text-accent border-accent/30" },
-  upcoming: { label: "Geplant", className: "bg-primary/10 text-primary border-primary/30" },
+  active: { label: "Aktiv", className: "bg-[rgba(34,197,94,0.15)] text-accent border-[rgba(34,197,94,0.3)]" },
+  upcoming: { label: "Geplant", className: "bg-[rgba(6,78,59,0.1)] text-primary border-[rgba(6,78,59,0.3)]" },
   completed: { label: "Abgeschlossen", className: "bg-muted text-muted-foreground border-border" },
-  cancelled: { label: "Storniert", className: "bg-destructive/10 text-destructive border-destructive/30" },
+  cancelled: { label: "Storniert", className: "bg-[rgba(239,68,68,0.1)] text-destructive border-[rgba(239,68,68,0.3)]" },
 }
 
 export function SessionCard({ session }: { session: Session }) {
@@ -22,11 +22,11 @@ export function SessionCard({ session }: { session: Session }) {
 
   return (
     <Link href={`/sessions/${session.id}`}>
-      <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden border-[rgba(231,229,227,0.6)] py-0 transition-shadow hover:shadow-md">
         <CardContent className="flex items-start gap-3 p-4">
-          <Avatar className="size-12 shrink-0 border-2 border-primary/10">
+          <Avatar className="size-12 shrink-0 border-2 border-[rgba(6,78,59,0.1)]">
             {session.takumi.imageUrl && <AvatarImage src={session.takumi.imageUrl} alt={takumiLabel} className="object-cover" />}
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+            <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary font-semibold text-sm">
               {session.takumi.avatar}
             </AvatarFallback>
           </Avatar>

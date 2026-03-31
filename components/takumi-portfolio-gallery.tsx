@@ -50,7 +50,7 @@ export function TakumiPortfolioGallery({
     return (
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-foreground">{displayTitle}</h2>
-        <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 py-10 text-center">
+        <div className="rounded-xl border border-dashed border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] py-10 text-center">
           <p className="text-sm text-muted-foreground">{displayEmpty}</p>
         </div>
       </div>
@@ -65,9 +65,9 @@ export function TakumiPortfolioGallery({
           <div
             key={p.id}
             className={[
-              "group relative overflow-hidden rounded-xl border border-border/60 bg-card transition-all",
+              "group relative overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-card transition-all",
               !readOnly && p.imageUrl
-                ? "cursor-pointer hover:scale-[1.02] hover:shadow-md hover:ring-2 hover:ring-primary/40"
+                ? "cursor-pointer hover:scale-[1.02] hover:shadow-md hover:ring-2 hover:ring-[rgba(6,78,59,0.4)]"
                 : "",
             ].join(" ")}
           >
@@ -75,7 +75,7 @@ export function TakumiPortfolioGallery({
               <Button
                 size="icon"
                 variant="ghost"
-                className="absolute right-1 top-1 z-10 size-7 rounded-full bg-black/40 text-white hover:bg-destructive hover:text-white"
+                className="absolute right-1 top-1 z-10 size-7 rounded-full bg-[rgba(0,0,0,0.4)] text-white hover:bg-destructive hover:text-white"
                 onClick={(e) => {
                   e.stopPropagation()
                   onDelete(p.id)
@@ -107,7 +107,7 @@ export function TakumiPortfolioGallery({
                     sizes="(max-width: 640px) 50vw, 33vw"
                   />
                 ) : (
-                  <div className="flex size-full items-center justify-center text-muted-foreground/50">
+                  <div className="flex size-full items-center justify-center text-[rgba(120,113,108,0.5)]">
                     <span className="text-xs">{p.title}</span>
                   </div>
                 )}

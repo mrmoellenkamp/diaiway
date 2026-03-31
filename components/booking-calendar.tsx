@@ -290,10 +290,10 @@ export function BookingCalendar({
               disabled={!available}
               className={[
                 "flex size-9 items-center justify-center rounded-xl text-xs font-medium transition-colors",
-                isPicked  ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30" : "",
-                !isPicked && available ? "text-foreground hover:bg-primary/10 cursor-pointer" : "",
-                !available ? "cursor-not-allowed text-muted-foreground/30" : "",
-                isToday && !isPicked ? "ring-1 ring-primary/40 font-bold text-primary" : "",
+                isPicked  ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-[rgba(6,78,59,0.3)]" : "",
+                !isPicked && available ? "text-foreground hover:bg-[rgba(6,78,59,0.1)] cursor-pointer" : "",
+                !available ? "cursor-not-allowed text-[rgba(120,113,108,0.3)]" : "",
+                isToday && !isPicked ? "ring-1 ring-[rgba(6,78,59,0.4)] font-bold text-primary" : "",
               ].join(" ")}
             >
               {day}
@@ -318,7 +318,7 @@ export function BookingCalendar({
                   "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
                   duration === d
                     ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border/60 bg-card text-foreground hover:border-primary/40 hover:bg-primary/5",
+                    : "border-[rgba(231,229,227,0.6)] bg-card text-foreground hover:border-[rgba(6,78,59,0.4)] hover:bg-[rgba(6,78,59,0.05)]",
                 ].join(" ")}
               >
                 {DURATION_LABELS[d]}
@@ -340,7 +340,7 @@ export function BookingCalendar({
               <Loader2 className="size-4 animate-spin text-primary" />
             </div>
           ) : startTimes.length === 0 ? (
-            <p className="rounded-lg bg-muted/60 px-3 py-3 text-xs text-muted-foreground">
+            <p className="rounded-lg bg-[rgba(245,245,244,0.6)] px-3 py-3 text-xs text-muted-foreground">
               {t("booking.noFreeTimesForDuration", { duration: DURATION_LABELS[duration] })}
             </p>
           ) : (
@@ -361,12 +361,12 @@ export function BookingCalendar({
                     className={[
                       "flex items-center justify-center gap-1 rounded-lg border px-2 py-2.5 text-xs font-medium transition-colors",
                       blocked
-                        ? "cursor-not-allowed border-border/30 bg-muted/50 text-muted-foreground/40"
+                        ? "cursor-not-allowed border-[rgba(231,229,227,0.3)] bg-[rgba(245,245,244,0.5)] text-[rgba(120,113,108,0.4)]"
                         : isSelected
                           ? "border-primary bg-primary text-primary-foreground shadow-sm"
                           : isSprechzeitOnly
-                            ? "border-emerald-500/40 bg-emerald-500/5 text-foreground hover:border-emerald-500/60 hover:bg-emerald-500/10"
-                            : "border-border/60 bg-card text-foreground hover:border-primary/40 hover:bg-primary/5",
+                            ? "border-[rgba(16,185,129,0.4)] bg-[rgba(16,185,129,0.05)] text-foreground hover:border-[rgba(16,185,129,0.6)] hover:bg-[rgba(16,185,129,0.1)]"
+                            : "border-[rgba(231,229,227,0.6)] bg-card text-foreground hover:border-[rgba(6,78,59,0.4)] hover:bg-[rgba(6,78,59,0.05)]",
                     ].join(" ")}
                     title={
                       blocked
@@ -399,7 +399,7 @@ export function BookingCalendar({
               </Badge>
             )}
             {selectedSprechzeit?.date === pickedDate && selectedSprechzeit?.startTime && (
-              <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-500/50">
+              <Badge variant="outline" className="text-[10px] text-emerald-700 border-[rgba(16,185,129,0.5)]">
                 {t("booking.officeHours")}: {selectedSprechzeit.startTime}
               </Badge>
             )}

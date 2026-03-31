@@ -359,7 +359,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
             bookingId ? (
               <a
                 href={`/session/${bookingId}`}
-                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition"
+                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-[rgba(6,78,59,0.9)] transition"
               >
                 {t("guestCall.joinCall")}
               </a>
@@ -375,7 +375,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                     window.location.href = `/session/${data.booking.id}`
                   }
                 }}
-                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition"
+                className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-[rgba(6,78,59,0.9)] transition"
               >
                 {t("guestCall.joinCall")}
               </button>
@@ -485,7 +485,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               </p>
               <p className="text-2xl font-bold text-slate-900">{formatPrice(booking.totalPrice)}</p>
             </div>
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)]">
               <ShieldCheck className="size-6 text-primary" />
             </div>
           </div>
@@ -505,7 +505,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                 onClick={() => setInvoiceData((d) => ({ ...d, type }))}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-medium transition ${
                   invoiceData.type === type
-                    ? "border-primary bg-primary/5 text-primary"
+                    ? "border-primary bg-[rgba(6,78,59,0.05)] text-primary"
                     : "border-slate-200 text-slate-600 hover:border-slate-300"
                 }`}
               >
@@ -520,7 +520,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               {invoiceData.type === "privat" && (
                 <div className="col-span-2">
                   <input
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                     placeholder={t("guestCall.placeholder.fullName")}
                     value={invoiceData.fullName}
                     onChange={(e) => setInvoiceData((d) => ({ ...d, fullName: e.target.value }))}
@@ -531,7 +531,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                 <>
                   <div className="col-span-2">
                     <input
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                       placeholder={t("guestCall.placeholder.companyName")}
                       value={invoiceData.companyName}
                       onChange={(e) => setInvoiceData((d) => ({ ...d, companyName: e.target.value }))}
@@ -539,7 +539,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                   </div>
                   <div className="col-span-2">
                     <input
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                       placeholder={t("guestCall.placeholder.vatId")}
                       value={invoiceData.vatId}
                       onChange={(e) => setInvoiceData((d) => ({ ...d, vatId: e.target.value }))}
@@ -548,32 +548,32 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
                 </>
               )}
               <input
-                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                 placeholder={t("guestCall.placeholder.street")}
                 value={invoiceData.street}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, street: e.target.value }))}
               />
               <input
-                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                 placeholder={t("guestCall.placeholder.houseNumber")}
                 value={invoiceData.houseNumber}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, houseNumber: e.target.value }))}
               />
               <input
-                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                 placeholder={t("guestCall.placeholder.zip")}
                 value={invoiceData.zip}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, zip: e.target.value }))}
               />
               <input
-                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                 placeholder={t("guestCall.placeholder.city")}
                 value={invoiceData.city}
                 onChange={(e) => setInvoiceData((d) => ({ ...d, city: e.target.value }))}
               />
               <div className="col-span-2">
                 <input
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                   placeholder={t("guestCall.placeholder.country")}
                   value={invoiceData.country}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, country: e.target.value }))}
@@ -582,7 +582,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
               <div className="col-span-2">
                 <input
                   type="email"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                   placeholder={t("guestCall.placeholder.emailInvoice")}
                   value={invoiceData.email}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, email: e.target.value }))}
@@ -598,7 +598,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
           <p className="text-sm text-slate-500">{t("guestCall.onboardingDesc")}</p>
           <input
             type="password"
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
             placeholder={t("guestCall.passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -647,7 +647,7 @@ export default function GuestCallPage({ params }: { params: Promise<{ guestToken
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full bg-primary text-white py-4 rounded-2xl font-semibold text-base hover:bg-primary/90 transition disabled:opacity-60 flex items-center justify-center gap-2"
+          className="w-full bg-primary text-white py-4 rounded-2xl font-semibold text-base hover:bg-[rgba(6,78,59,0.9)] transition disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
           {t("guestCall.proceedToPayment")}
@@ -842,7 +842,7 @@ function GuestVideoCall({
           className="w-full h-full object-cover"
         />
         {/* Local video (PiP) */}
-        <div className="absolute bottom-24 right-4 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/30 bg-slate-800">
+        <div className="absolute bottom-24 right-4 w-28 h-20 rounded-xl overflow-hidden border-2 border-[rgba(255,255,255,0.3)] bg-slate-800">
           <video
             ref={localVideoRef}
             autoPlay
@@ -854,10 +854,10 @@ function GuestVideoCall({
       </div>
 
       {/* Controls */}
-      <div className="bg-black/80 backdrop-blur-sm py-6 px-8 flex items-center justify-center gap-6">
+      <div className="bg-[rgba(0,0,0,0.8)] backdrop-blur-sm py-6 px-8 flex items-center justify-center gap-6">
         <button
           onClick={toggleMic}
-          className={`rounded-full p-4 transition ${micOn ? "bg-white/20 text-white" : "bg-red-500 text-white"}`}
+          className={`rounded-full p-4 transition ${micOn ? "bg-[rgba(255,255,255,0.2)] text-white" : "bg-red-500 text-white"}`}
         >
           {micOn ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
         </button>
@@ -869,7 +869,7 @@ function GuestVideoCall({
         </button>
         <button
           onClick={toggleCam}
-          className={`rounded-full p-4 transition ${camOn ? "bg-white/20 text-white" : "bg-red-500 text-white"}`}
+          className={`rounded-full p-4 transition ${camOn ? "bg-[rgba(255,255,255,0.2)] text-white" : "bg-red-500 text-white"}`}
         >
           {camOn ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
         </button>

@@ -10,7 +10,7 @@ function Section({ num, title, children, critical }: {
   critical?: boolean
 }) {
   return (
-    <section className="flex flex-col gap-2 border-b border-border/40 pb-6 last:border-0">
+    <section className="flex flex-col gap-2 border-b border-[rgba(231,229,227,0.4)] pb-6 last:border-0">
       <h2 className={`font-semibold ${critical ? "text-primary" : "text-foreground"}`}>
         § {num} {title}
       </h2>
@@ -30,7 +30,7 @@ export default function AGBPage() {
         <div className="mb-8 flex items-center gap-4">
           <Link
             href="/profile"
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card transition-colors hover:bg-muted"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(231,229,227,0.6)] bg-card transition-colors hover:bg-muted"
             aria-label="Zurück"
           >
             <ArrowLeft className="size-5" />
@@ -43,7 +43,7 @@ export default function AGBPage() {
 
         <div className="flex flex-col gap-8">
           
-          <div className="rounded-2xl bg-muted/30 p-4 border border-border/60 flex gap-3 items-start">
+          <div className="rounded-2xl bg-[rgba(245,245,244,0.3)] p-4 border border-[rgba(231,229,227,0.6)] flex gap-3 items-start">
             <FileText className="size-5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed text-muted-foreground uppercase tracking-tight font-medium">
               Geltungsbereich für die Nutzung der Plattform diAIway durch Takumis und Shugyos.
@@ -92,8 +92,8 @@ export default function AGBPage() {
             </p>
           </Section>
 
-          <div className="mt-8 pt-8 border-t border-border/40 text-center flex flex-col items-center gap-2">
-            <Scale className="size-4 text-muted-foreground/30" />
+          <div className="mt-8 pt-8 border-t border-[rgba(231,229,227,0.4)] text-center flex flex-col items-center gap-2">
+            <Scale className="size-4 text-[rgba(120,113,108,0.3)]" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
               Stand: März 2026 · JM faircharge UG (haftungsbeschränkt)
             </p>

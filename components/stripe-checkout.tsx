@@ -153,7 +153,7 @@ export function SessionCheckout({
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       </div>
-      <p className="text-center text-[11px] leading-relaxed text-muted-foreground/70">
+      <p className="text-center text-[11px] leading-relaxed text-[rgba(120,113,108,0.7)]">
         {t("handshake.p2pNotice")}
       </p>
     </div>

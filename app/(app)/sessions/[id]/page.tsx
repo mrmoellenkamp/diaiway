@@ -97,8 +97,8 @@ export default function SessionDetailPage() {
             </Button>
             <h1 className="text-lg font-semibold">Session starten</h1>
           </div>
-          <Avatar className="size-24 border-4 border-primary/10">
-            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+          <Avatar className="size-24 border-4 border-[rgba(6,78,59,0.1)]">
+            <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-2xl font-bold">
               {takumi.avatar}
             </AvatarFallback>
           </Avatar>
@@ -112,7 +112,7 @@ export default function SessionDetailPage() {
             </div>
           </div>
 
-          <Card className="w-full border-border/60 gap-0 py-0">
+          <Card className="w-full border-[rgba(231,229,227,0.6)] gap-0 py-0">
             <CardContent className="flex flex-col gap-4 p-4">
               <div className="flex items-center gap-3 text-sm">
                 <Clock className="size-4 text-muted-foreground" />
@@ -140,7 +140,7 @@ export default function SessionDetailPage() {
 
           <Button
             onClick={handleStartTrial}
-            className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-accent/90"
+            className="h-14 w-full rounded-xl bg-accent text-lg font-bold text-accent-foreground shadow-lg hover:bg-[rgba(34,197,94,0.9)]"
           >
             <Video className="mr-2 size-5" />
             Starte 5-Min Probe
@@ -154,8 +154,8 @@ export default function SessionDetailPage() {
   if (phase === "rating") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 pb-safe">
-        <Avatar className="size-20 border-4 border-primary/10">
-          <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+        <Avatar className="size-20 border-4 border-[rgba(6,78,59,0.1)]">
+          <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xl font-bold">
             {takumi.avatar}
           </AvatarFallback>
         </Avatar>
@@ -178,7 +178,7 @@ export default function SessionDetailPage() {
           <Button
             onClick={handleSubmitRating}
             disabled={rating === 0}
-            className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
+            className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-[rgba(6,78,59,0.9)]"
           >
             {t("session.submitReview")}
           </Button>
@@ -188,7 +188,7 @@ export default function SessionDetailPage() {
               router.push("/sessions")
             }}
             variant="outline"
-            className="h-12 w-full rounded-xl border-accent text-accent hover:bg-accent/10"
+            className="h-12 w-full rounded-xl border-accent text-accent hover:bg-[rgba(34,197,94,0.1)]"
           >
             {t("session.releaseAndSkip")}
           </Button>
@@ -204,8 +204,8 @@ export default function SessionDetailPage() {
         {/* Remote video (full screen mock) */}
         <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary to-emerald-800">
           <div className="flex flex-col items-center gap-3">
-            <Avatar className="size-28 border-4 border-white/20">
-              <AvatarFallback className="bg-white/10 text-white text-3xl font-bold">
+            <Avatar className="size-28 border-4 border-[rgba(255,255,255,0.2)]">
+              <AvatarFallback className="bg-[rgba(255,255,255,0.1)] text-white text-3xl font-bold">
                 {takumi.avatar}
               </AvatarFallback>
             </Avatar>
@@ -213,8 +213,8 @@ export default function SessionDetailPage() {
             <Badge
               className={
                 phase === "trial"
-                  ? "border-accent/50 bg-accent/20 text-accent"
-                  : "border-amber-400/50 bg-amber-400/20 text-amber-200"
+                  ? "border-[rgba(34,197,94,0.5)] bg-[rgba(34,197,94,0.2)] text-accent"
+                  : "border-[rgba(251,191,36,0.5)] bg-[rgba(251,191,36,0.2)] text-amber-200"
               }
             >
               {phase === "trial" ? "Kostenlose Probe" : "Bezahlte Session"}
@@ -223,31 +223,31 @@ export default function SessionDetailPage() {
         </div>
 
         {/* Self-view (small PIP) */}
-        <div className="absolute right-4 top-16 flex size-32 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-stone-800 shadow-lg">
+        <div className="absolute right-4 top-16 flex size-32 items-center justify-center overflow-hidden rounded-2xl border-2 border-[rgba(255,255,255,0.2)] bg-stone-800 shadow-lg">
           {isCameraOff ? (
-            <VideoOff className="size-8 text-white/40" />
+            <VideoOff className="size-8 text-[rgba(255,255,255,0.4)]" />
           ) : (
-            <User className="size-12 text-white/30" />
+            <User className="size-12 text-[rgba(255,255,255,0.3)]" />
           )}
         </div>
 
         {/* Timer overlay */}
         <div className="absolute left-1/2 top-4 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-full bg-[rgba(0,0,0,0.6)] px-4 py-2 backdrop-blur-sm">
             <span className={`size-2 rounded-full ${phase === "trial" ? "bg-accent animate-live-pulse" : "bg-amber-400 animate-live-pulse"}`} />
             <span className="font-mono text-sm font-bold text-white">{formatTime(timer)}</span>
-            <span className="text-[10px] text-white/60">
+            <span className="text-[10px] text-[rgba(255,255,255,0.6)]">
               {phase === "trial" ? "Probe" : "Bezahlt"}
             </span>
           </div>
         </div>
 
         {/* Controls bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pb-8 pt-12">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[rgba(0,0,0,0.8)] to-transparent pb-8 pt-12">
           <div className="mx-auto flex max-w-xs items-center justify-around">
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${isMuted ? "bg-destructive" : "bg-white/20"}`}
+              className={`flex size-12 items-center justify-center rounded-full transition-colors ${isMuted ? "bg-destructive" : "bg-[rgba(255,255,255,0.2)]"}`}
               aria-label={isMuted ? "Stummschaltung aufheben" : "Stummschalten"}
             >
               {isMuted ? <MicOff className="size-5 text-white" /> : <Mic className="size-5 text-white" />}
@@ -255,7 +255,7 @@ export default function SessionDetailPage() {
 
             <button
               onClick={() => setIsCameraOff(!isCameraOff)}
-              className={`flex size-12 items-center justify-center rounded-full transition-colors ${isCameraOff ? "bg-destructive" : "bg-white/20"}`}
+              className={`flex size-12 items-center justify-center rounded-full transition-colors ${isCameraOff ? "bg-destructive" : "bg-[rgba(255,255,255,0.2)]"}`}
               aria-label={isCameraOff ? "Kamera einschalten" : "Kamera ausschalten"}
             >
               {isCameraOff ? <VideoOff className="size-5 text-white" /> : <Video className="size-5 text-white" />}
@@ -271,7 +271,7 @@ export default function SessionDetailPage() {
 
             <button
               onClick={() => toast.info(t("toast.messageSent"))}
-              className="flex size-12 items-center justify-center rounded-full bg-white/20"
+              className="flex size-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.2)]"
               aria-label="Problem melden"
             >
               <AlertTriangle className="size-5 text-white" />

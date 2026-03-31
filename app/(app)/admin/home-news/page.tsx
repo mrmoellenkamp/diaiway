@@ -193,7 +193,7 @@ function AdminHomeNewsExistingCard({
           Titel + Text für eine Sprache leer lassen und speichern → diese Sprachfassung wird entfernt.
         </p>
 
-        <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3">
+        <div className="space-y-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)] p-3">
           <p className="text-xs font-medium text-muted-foreground">Fallback (wenn eine Sprache keinen Link hat)</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>

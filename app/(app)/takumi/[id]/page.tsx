@@ -91,7 +91,7 @@ function SocialBar({ links }: { links: SocialLinks }) {
             target="_blank"
             rel="noopener noreferrer"
             title={label}
-            className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md touch-manipulation"
+            className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-[rgba(231,229,227,0.6)] bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md touch-manipulation"
             style={{ color }}
           >
             {icon}
@@ -194,12 +194,12 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen bg-background pb-safe">
       {/* Cover Area */}
-      <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
+      <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-[rgba(6,78,59,0.8)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
         <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
           <Link
             href="/home"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm touch-manipulation"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[rgba(0,0,0,0.2)] backdrop-blur-sm touch-manipulation"
           >
             <ArrowLeft className="size-5 text-white" />
           </Link>
@@ -210,7 +210,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               const ok = await shareNative({ title: commLabel, text: takumi.bio?.slice(0, 120), url })
               if (!ok) toast.info(t("toast.shareAppOnly"))
             }}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur-sm touch-manipulation"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[rgba(0,0,0,0.2)] backdrop-blur-sm touch-manipulation"
             aria-label="Profil teilen"
           >
             <Share2 className="size-4 text-white" />
@@ -234,9 +234,9 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                 {takumi.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-jp text-sm text-primary/60">匠</span>
+                <span className="font-jp text-sm text-[rgba(6,78,59,0.6)]">匠</span>
                 {takumi.isPro && (
-                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-none">PRO</Badge>
+                  <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
                 )}
                 {takumi.isLive && <LiveBadge size="md" />}
               </div>
@@ -253,7 +253,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               { label: t("takumiPage.rating"), value: takumi.rating.toString(), icon: Star },
               { label: t("takumiPage.responseTime"), value: takumi.responseTime, icon: Clock },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-1 rounded-xl border border-border/60 bg-card p-3">
+              <div key={stat.label} className="flex flex-col items-center gap-1 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3">
                 <stat.icon className="size-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">{stat.value}</span>
                 <span className="text-[10px] text-muted-foreground">{stat.label}</span>
@@ -289,7 +289,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               <Button
                 onClick={handleStartChat}
                 disabled={chatLoading}
-                className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+                className="h-12 w-full gap-2.5 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)] hover:bg-[rgba(6,78,59,0.9)]"
               >
                 {chatLoading ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -300,13 +300,13 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                 <span className="ml-1.5 flex size-2 rounded-full bg-green-400" aria-hidden />
               </Button>
             ) : (
-              <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)] px-4 py-3 text-sm text-muted-foreground">
                 <p>
                   {t("takumiPage.offlineWaymailPrefix").replace("{name}", commLabel)}{" "}
                   <button
                     type="button"
                     onClick={() => setComposeOpen(true)}
-                    className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80"
+                    className="font-semibold text-primary underline underline-offset-2 hover:text-[rgba(6,78,59,0.8)]"
                   >
                     Waymail
                   </button>{" "}
@@ -316,7 +316,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             )}
             {chatOpen && chatPartner && (
               <Drawer open={chatOpen} onOpenChange={setChatOpen} direction="bottom">
-                <DrawerContent className="max-h-[90dvh] flex flex-col p-0 gap-0 rounded-t-2xl">
+                <DrawerContent className="max-h-90dvh-fallback flex flex-col p-0 gap-0 rounded-t-2xl">
                   <div className="flex flex-1 min-h-0 overflow-hidden">
                     <UserChatBox
                       partnerId={chatPartner.userId}
@@ -337,7 +337,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
             <Button
               onClick={() => setComposeOpen(true)}
               variant="outline"
-              className="h-12 w-full gap-2.5 rounded-xl border-primary/30 text-base font-semibold text-primary hover:bg-primary/5"
+              className="h-12 w-full gap-2.5 rounded-xl border-[rgba(6,78,59,0.3)] text-base font-semibold text-primary hover:bg-[rgba(6,78,59,0.05)]"
             >
               <Mail className="size-4" />
               {t("takumiPage.sendMail")}
@@ -355,16 +355,16 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
           {/* Trust Badges */}
           <div className="flex flex-wrap gap-2">
             {takumi.verified && (
-              <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-full bg-[rgba(34,197,94,0.1)] px-3 py-1.5">
                 <VerifiedBadge size="sm" className="text-accent" />
                 <span className="text-xs text-accent font-medium">{t("takumiPage.verified")}</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 rounded-full bg-[rgba(6,78,59,0.1)] px-3 py-1.5">
               <Shield className="size-3 text-primary" />
               <span className="text-xs text-primary font-medium">{t("takumiPage.moneyBackGuarantee")}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-amber/10 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 rounded-full bg-[rgba(245,158,11,0.1)] px-3 py-1.5">
               <MessageSquare className="size-3 text-amber" />
               <span className="text-xs font-medium" style={{ color: "var(--amber)" }}>
                 {t("takumiPage.freeMinutes")}
@@ -384,8 +384,8 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               </div>
             </div>
             {reviews.length === 0 ? (
-              <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-                <p className="font-jp text-2xl text-muted-foreground/30 mb-1">評</p>
+              <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 text-center">
+                <p className="font-jp text-2xl text-[rgba(120,113,108,0.3)] mb-1">評</p>
                 <p className="text-xs text-muted-foreground">
                   {t("takumiPage.reviewsEmpty")}
                 </p>
@@ -410,7 +410,7 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
       </PageContainer>
 
       {/* Sticky Bottom Bar: Preis + Termin buchen + Instant Connect (wenn verfügbar) — oberhalb BottomNav */}
-      <div className="fixed left-0 right-0 z-40 above-bottom-nav border-t border-border bg-card/95 backdrop-blur-md px-4 py-4">
+      <div className="fixed left-0 right-0 z-40 above-bottom-nav border-t border-border bg-[rgba(255,255,255,0.95)] backdrop-blur-md px-4 py-4">
         <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-lg font-bold text-foreground">
@@ -431,8 +431,8 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
               className={cn(
                 "order-1 sm:order-2 h-12 rounded-xl text-sm font-bold w-full sm:w-auto",
                 takumi.liveStatus === "available"
-                  ? "bg-accent text-accent-foreground hover:bg-accent/90 px-6"
-                  : "bg-accent px-6 text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20"
+                  ? "bg-accent text-accent-foreground hover:bg-[rgba(34,197,94,0.9)] px-6"
+                  : "bg-accent px-6 text-accent-foreground hover:bg-[rgba(34,197,94,0.9)] shadow-lg shadow-[0_4px_14px_rgba(34,197,94,0.2)]"
               )}
             >
               <Link href={`/booking/${takumi.id}`} className="flex items-center justify-center gap-2">

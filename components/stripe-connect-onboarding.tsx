@@ -210,7 +210,7 @@ export function StripeConnectOnboarding({
       </div>
 
       {isDev && (
-        <div className="border-t border-border/60 bg-muted/20 px-3 py-2">
+        <div className="border-t border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] px-3 py-2">
           <p className="mb-2 text-center text-[11px] leading-snug text-muted-foreground">
             Dev: Tunnel → Port <strong>3001</strong>. <code className="rounded bg-muted px-0.5">NEXTAUTH_URL</code> =
             aktuelle Basis-URL (https://…trycloudflare.com), sonst Session/Login kaputt.

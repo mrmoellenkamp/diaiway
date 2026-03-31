@@ -44,7 +44,7 @@ export function HomeNewsFeed({ className }: { className?: string }) {
 
   if (loading) {
     return (
-      <section className={cn("rounded-2xl border border-border/60 bg-card/40 px-4 py-6", className)}>
+      <section className={cn("rounded-2xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.4)] px-4 py-6", className)}>
         <div className="flex items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="size-5 animate-spin" />
           <span className="text-sm">{t("home.newsLoading")}</span>
@@ -56,12 +56,12 @@ export function HomeNewsFeed({ className }: { className?: string }) {
   if (items.length === 0) return null
 
   return (
-    <section className={cn("rounded-2xl border border-border/60 bg-card/50 overflow-hidden", className)}>
-      <div className="flex items-center gap-2 border-b border-border/50 bg-primary/[0.04] px-4 py-2.5">
+    <section className={cn("rounded-2xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)] overflow-hidden", className)}>
+      <div className="flex items-center gap-2 border-b border-[rgba(231,229,227,0.5)] bg-[rgba(6,78,59,0.04)] px-4 py-2.5">
         <Newspaper className="size-4 text-primary shrink-0" />
         <h2 className="text-sm font-bold text-foreground">{t("home.newsTitle")}</h2>
       </div>
-      <ul className="divide-y divide-border/40">
+      <ul className="divide-y divide-[rgba(231,229,227,0.4)]">
         {items.map((item) => {
           const href = item.linkUrl ?? ""
           const isInternalPath = href.startsWith("/") && !href.startsWith("//")
@@ -81,7 +81,7 @@ export function HomeNewsFeed({ className }: { className?: string }) {
               </Link>
             )}
             {item.publishedAt && (
-              <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+              <p className="mt-1.5 text-[10px] text-[rgba(120,113,108,0.7)]">
                 {new Date(item.publishedAt).toLocaleDateString(undefined, {
                   day: "numeric",
                   month: "short",

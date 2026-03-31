@@ -19,8 +19,8 @@ export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
         className={cn(
           "group flex flex-col items-center gap-3 rounded-xl border-2 p-5 text-center transition-all",
           selected === "shugyo"
-            ? "border-primary bg-primary/5 shadow-md"
-            : "border-border hover:border-primary/30"
+            ? "border-primary bg-[rgba(6,78,59,0.05)] shadow-md"
+            : "border-border hover:border-[rgba(6,78,59,0.3)]"
         )}
       >
         <span className="font-jp text-3xl transition-transform group-hover:scale-110">修行</span>
@@ -39,8 +39,8 @@ export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
         className={cn(
           "group flex flex-col items-center gap-3 rounded-xl border-2 p-5 text-center transition-all",
           selected === "takumi"
-            ? "border-accent bg-accent/5 shadow-md"
-            : "border-border hover:border-accent/30"
+            ? "border-accent bg-[rgba(34,197,94,0.05)] shadow-md"
+            : "border-border hover:border-[rgba(34,197,94,0.3)]"
         )}
       >
         <span className="font-jp text-3xl transition-transform group-hover:scale-110">匠</span>

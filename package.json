@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
     "docs:check": "node scripts/check-docs.mjs",
+    "fix:webview-opacity": "node scripts/apply-webview-safe-opacity.mjs && node scripts/apply-palette-opacity.mjs",
     "logo:svg": "node scripts/generate-diaiway-logo-svg.cjs",
     "db:generate": "node scripts/prisma-runner.mjs generate",
     "db:push": "node scripts/prisma-runner.mjs db push",

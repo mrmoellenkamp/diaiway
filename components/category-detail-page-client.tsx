@@ -67,8 +67,8 @@ export function CategoryDetailPageClient({ slug, category, categoryTakumis }: Ca
                 <TakumiCard key={tk.id} takumi={tk} priority={index < 3} />
               ))
             ) : (
-              <div className="rounded-xl border border-border/60 bg-card p-8 text-center">
-                <p className="font-jp text-3xl text-muted-foreground/30 mb-2">匠</p>
+              <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-8 text-center">
+                <p className="font-jp text-3xl text-[rgba(120,113,108,0.3)] mb-2">匠</p>
                 <p className="text-sm text-muted-foreground">
                   {t("categoryDetail.loading")}
                 </p>

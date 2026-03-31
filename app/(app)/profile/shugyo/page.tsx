@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/alert-dialog"
 
 const SKILL_LEVELS = [
-  { value: "NEULING", color: "bg-emerald-500/20 text-emerald-700 border-emerald-500/40" },
-  { value: "FORTGESCHRITTEN", color: "bg-blue-500/20 text-blue-700 border-blue-500/40" },
-  { value: "PROFI", color: "bg-violet-500/20 text-violet-700 border-violet-500/40" },
+  { value: "NEULING", color: "bg-[rgba(16,185,129,0.2)] text-emerald-700 border-[rgba(16,185,129,0.4)]" },
+  { value: "FORTGESCHRITTEN", color: "bg-[rgba(59,130,246,0.2)] text-blue-700 border-[rgba(59,130,246,0.4)]" },
+  { value: "PROFI", color: "bg-[rgba(139,92,246,0.2)] text-violet-700 border-[rgba(139,92,246,0.4)]" },
 ] as const
 
 type SkillLevel = (typeof SKILL_LEVELS)[number]["value"]
@@ -215,7 +215,7 @@ export default function ShugyoDashboardPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {projects.map((p) => (
-              <Card key={p.id} className="border-border/60 overflow-hidden">
+              <Card key={p.id} className="border-[rgba(231,229,227,0.6)] overflow-hidden">
                 <CardContent className="p-0">
                   {editingId === p.id ? (
                     <div className="p-4 space-y-3">
@@ -249,7 +249,7 @@ export default function ShugyoDashboardPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="relative aspect-video w-full bg-muted/50">
+                      <div className="relative aspect-video w-full bg-[rgba(245,245,244,0.5)]">
                         {p.imageUrl ? (
                           <Image
                             src={p.imageUrl}
@@ -260,7 +260,7 @@ export default function ShugyoDashboardPage() {
                           />
                         ) : (
                           <div className="flex size-full items-center justify-center">
-                            <ImageIcon className="size-12 text-muted-foreground/40" />
+                            <ImageIcon className="size-12 text-[rgba(120,113,108,0.4)]" />
                           </div>
                         )}
                       </div>
@@ -298,7 +298,7 @@ export default function ShugyoDashboardPage() {
                                 <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteProject(p.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
+                                  className="bg-destructive hover:bg-[rgba(239,68,68,0.9)]"
                                 >
                                   {t("common.delete")}
                                 </AlertDialogAction>
@@ -315,9 +315,9 @@ export default function ShugyoDashboardPage() {
           </div>
 
           {projects.length === 0 && (
-            <Card className="border-dashed border-border/60">
+            <Card className="border-dashed border-[rgba(231,229,227,0.6)]">
               <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
-                <ImageIcon className="size-12 text-muted-foreground/40" />
+                <ImageIcon className="size-12 text-[rgba(120,113,108,0.4)]" />
                 <p className="text-sm text-muted-foreground">{t("shugyo.noProjects")}</p>
                 <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)}>
                   {t("shugyo.addFirstProject")}
@@ -328,7 +328,7 @@ export default function ShugyoDashboardPage() {
         </div>
 
         {/* Kenntnisstufe – unterhalb Projekte */}
-        <Card className="border-border/60">
+        <Card className="border-[rgba(231,229,227,0.6)]">
           <CardContent className="p-4">
             <h2 className="text-sm font-semibold text-foreground mb-3">{t("shugyo.selectSkillLevel")}</h2>
             <p className="text-xs text-muted-foreground mb-4">{t("shugyo.skillLevelDesc")}</p>
@@ -343,7 +343,7 @@ export default function ShugyoDashboardPage() {
                   <Badge
                     variant="outline"
                     className={`cursor-pointer transition-all ${
-                      skillLevel === value ? color : "bg-muted/50 text-muted-foreground border-border"
+                      skillLevel === value ? color : "bg-[rgba(245,245,244,0.5)] text-muted-foreground border-border"
                     } ${savingSkill ? "opacity-70" : ""}`}
                   >
                     {value === "NEULING"
@@ -361,7 +361,7 @@ export default function ShugyoDashboardPage() {
 
       {/* Add Project Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] p-4">
           <Card className="w-full max-w-md">
             <CardContent className="p-4 space-y-4">
               <h3 className="font-semibold text-foreground">{t("shugyo.addProject")}</h3>

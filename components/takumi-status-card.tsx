@@ -49,7 +49,7 @@ export function TakumiStatusCard() {
 
   if (liveStatus === null || profileApproved === null) {
     return (
-      <Card className="border-primary/20">
+      <Card className="border-[rgba(6,78,59,0.2)]">
         <CardContent className="flex items-center justify-center py-6">
           <Loader2 className="size-5 animate-spin text-primary" />
         </CardContent>
@@ -73,7 +73,7 @@ export function TakumiStatusCard() {
           : "Offline"
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.04] to-transparent">
+    <Card className="border-[rgba(6,78,59,0.2)] bg-gradient-to-br from-[rgba(6,78,59,0.04)] to-transparent">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
           {isAvailable ? (

@@ -207,8 +207,8 @@ export function InstantCallTrigger({
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
                   callType === "VIDEO"
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card hover:border-primary/40"
+                    ? "border-primary bg-[rgba(6,78,59,0.1)]"
+                    : "border-border bg-card hover:border-[rgba(6,78,59,0.4)]"
                 )}
               >
                 <Video className="size-6 text-primary" />
@@ -223,8 +223,8 @@ export function InstantCallTrigger({
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
                   callType === "VOICE"
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card hover:border-primary/40"
+                    ? "border-primary bg-[rgba(6,78,59,0.1)]"
+                    : "border-border bg-card hover:border-[rgba(6,78,59,0.4)]"
                 )}
               >
                 <Mic className="size-6 text-primary" />
@@ -234,7 +234,7 @@ export function InstantCallTrigger({
                 </span>
               </button>
             </div>
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <div className="rounded-lg border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] p-3">
               <p className="text-sm font-medium text-foreground">
                 {t("instant.billingLine")
                   .replace("{mode}", callType === "VIDEO" ? t("booking.videoShort") : t("booking.voiceShort"))

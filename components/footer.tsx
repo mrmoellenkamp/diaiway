@@ -27,13 +27,13 @@ export function Footer() {
 
   const colClass = "flex flex-col gap-3"
   const headerClass = "text-sm font-semibold text-foreground"
-  const linkClass = "text-xs text-muted-foreground/80 transition-colors hover:text-foreground block"
+  const linkClass = "text-xs text-[rgba(120,113,108,0.8)] transition-colors hover:text-foreground block"
 
   return (
     <footer
       aria-label="Footer"
       className={cn(
-        "w-full border-t border-border/60 bg-card/50",
+        "w-full border-t border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)]",
         hasBottomNav ? "pb-24" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       )}
     >
@@ -85,7 +85,7 @@ export function Footer() {
           {/* 4. Mission */}
           <div className={colClass}>
             <span className={headerClass}>{t("footer.mission")}</span>
-            <p className="text-xs text-muted-foreground/80 leading-relaxed">
+            <p className="text-xs text-[rgba(120,113,108,0.8)] leading-relaxed">
               {t("footer.missionText")}
             </p>
             <a href="mailto:kontakt@diaiway.com" className={linkClass}>
@@ -95,11 +95,11 @@ export function Footer() {
         </div>
 
         {/* Brand + Copyright */}
-        <div className="mt-8 flex flex-col items-center gap-1 border-t border-border/40 pt-6">
+        <div className="mt-8 flex flex-col items-center gap-1 border-t border-[rgba(231,229,227,0.4)] pt-6">
           <span className="text-sm font-semibold text-foreground">
             di<span className="text-accent">Ai</span>way
           </span>
-          <p className="text-[11px] text-muted-foreground/70">
+          <p className="text-[11px] text-[rgba(120,113,108,0.7)]">
             {t("footer.copyright")}
           </p>
         </div>

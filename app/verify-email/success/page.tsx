@@ -36,10 +36,10 @@ export default function VerifyEmailSuccessPage() {
   return (
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-md">
-        <Card className="overflow-hidden border-border/60">
-          <CardHeader className="border-b border-border/40 bg-muted/20 pb-6">
+        <Card className="overflow-hidden border-[rgba(231,229,227,0.6)]">
+          <CardHeader className="border-b border-[rgba(231,229,227,0.4)] bg-[rgba(245,245,244,0.2)] pb-6">
             <div className="flex items-center justify-center">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-green-500/10">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-[rgba(34,197,94,0.1)]">
                 <CheckCircle className="size-7 text-green-600 dark:text-green-400" />
               </div>
             </div>

@@ -89,8 +89,8 @@ function formatDate(iso: string | null) {
 
 function expiryBg(h: HoldItem): string {
   if (h.paymentType === "wallet") return ""
-  if (h.expiryStatus === "critical") return "bg-red-500/15 dark:bg-red-500/10"
-  if (h.expiryStatus === "warning") return "bg-yellow-500/15 dark:bg-yellow-500/10"
+  if (h.expiryStatus === "critical") return "bg-[rgba(239,68,68,0.15)] dark:bg-[rgba(239,68,68,0.1)]"
+  if (h.expiryStatus === "warning") return "bg-[rgba(234,179,8,0.15)] dark:bg-[rgba(234,179,8,0.1)]"
   return ""
 }
 
@@ -220,10 +220,10 @@ export default function AdminFinancePage() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-[rgba(245,158,11,0.15)] text-amber-600 dark:text-amber-400">
                     <CreditCard className="size-5" />
                   </div>
                   <div>
@@ -233,10 +233,10 @@ export default function AdminFinancePage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-[rgba(59,130,246,0.15)] text-blue-600 dark:text-blue-400">
                     <Wallet className="size-5" />
                   </div>
                   <div>
@@ -246,7 +246,7 @@ export default function AdminFinancePage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-border/50">
+            <Card className="border-[rgba(231,229,227,0.5)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
@@ -262,7 +262,7 @@ export default function AdminFinancePage() {
           </div>
 
           {/* Holds Table */}
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Escrow-Holds</CardTitle>
               <p className="text-xs text-muted-foreground">
@@ -338,7 +338,7 @@ export default function AdminFinancePage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 text-xs gap-1 text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+                              className="h-7 text-xs gap-1 text-amber-600 border-[rgba(245,158,11,0.4)] hover:bg-[rgba(245,158,11,0.1)]"
                               onClick={() => openAction("manual_release", h)}
                             >
                               <XCircle className="size-3" />
@@ -355,7 +355,7 @@ export default function AdminFinancePage() {
           </Card>
 
           {/* Audit Log */}
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="size-4 text-muted-foreground" />
@@ -372,7 +372,7 @@ export default function AdminFinancePage() {
                 </div>
               )}
               {!auditLoading && (
-                <ScrollArea className="h-[280px] rounded-md border border-border/50">
+                <ScrollArea className="h-[280px] rounded-md border border-[rgba(231,229,227,0.5)]">
                   <div className="p-2 space-y-1">
                     {auditItems.length === 0 && (
                       <p className="text-center text-sm text-muted-foreground py-8">Keine Einträge</p>
@@ -380,7 +380,7 @@ export default function AdminFinancePage() {
                     {auditItems.map((a) => (
                       <div
                         key={`${a.type}-${a.id}`}
-                        className="flex items-start justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 text-xs"
+                        className="flex items-start justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-[rgba(245,245,244,0.5)] text-xs"
                       >
                         <div className="min-w-0 flex-1">
                           <span className="text-muted-foreground font-mono">

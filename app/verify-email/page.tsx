@@ -67,10 +67,10 @@ function VerifyEmailContent() {
   return (
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-md">
-        <Card className="overflow-hidden border-border/60">
-          <CardHeader className="border-b border-border/40 bg-muted/20 pb-6">
+        <Card className="overflow-hidden border-[rgba(231,229,227,0.6)]">
+          <CardHeader className="border-b border-[rgba(231,229,227,0.4)] bg-[rgba(245,245,244,0.2)] pb-6">
             <div className="flex items-center justify-center">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-[rgba(6,78,59,0.1)]">
                 <Mail className="size-7 text-primary" />
               </div>
             </div>
@@ -83,12 +83,12 @@ function VerifyEmailContent() {
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             {error === "expired" && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200">
+              <div className="rounded-xl border border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.1)] p-4 text-sm text-amber-800 dark:text-amber-200">
                 Der Link ist abgelaufen. Fordere unten eine neue E-Mail an.
               </div>
             )}
             {error === "invalid" && (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              <div className="rounded-xl border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] p-4 text-sm text-destructive">
                 Ungültiger oder bereits verwendeter Link. Fordere bei Bedarf eine neue E-Mail an.
               </div>
             )}

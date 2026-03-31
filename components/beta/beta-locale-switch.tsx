@@ -26,8 +26,8 @@ export function BetaLocaleSwitch({
       className={cn(
         "flex items-center gap-1 rounded-full px-1 py-0.5 backdrop-blur-sm",
         isLight
-          ? "border border-border/70 bg-white/95 shadow-sm"
-          : "border border-white/20 bg-black/30",
+          ? "border border-[rgba(231,229,227,0.7)] bg-[rgba(255,255,255,0.95)] shadow-sm"
+          : "border border-[rgba(255,255,255,0.2)] bg-[rgba(0,0,0,0.3)]",
         className,
       )}
     >
@@ -45,7 +45,7 @@ export function BetaLocaleSwitch({
                   : "text-muted-foreground hover:bg-muted"
                 : active
                   ? "bg-white text-primary"
-                  : "text-white/90 hover:bg-white/10",
+                  : "text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.1)]",
             )}
           >
             {code}

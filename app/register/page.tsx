@@ -253,7 +253,7 @@ function RegisterForm() {
   return (
     <div className="flex w-full max-w-md flex-col gap-8">
       <div className="flex flex-col items-center gap-3">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-[rgba(6,78,59,0.1)] shadow-sm">
           <span className="font-jp text-2xl font-bold text-primary">匠</span>
         </div>
         <h1 className="text-2xl font-bold text-foreground text-balance">{t("register.title")}</h1>
@@ -300,9 +300,9 @@ function RegisterForm() {
               onChange={(e) => setUsername(e.target.value)}
               className={`h-12 rounded-xl pr-10 ${
                 usernameCheck === "taken" || usernameCheck === "invalid"
-                  ? "border-destructive focus-visible:ring-destructive/30"
+                  ? "border-destructive focus-visible:ring-[rgba(239,68,68,0.3)]"
                   : usernameCheck === "available"
-                  ? "border-green-500 focus-visible:ring-green-500/30"
+                  ? "border-green-500 focus-visible:ring-[rgba(34,197,94,0.3)]"
                   : ""
               }`}
               autoComplete="username"
@@ -360,7 +360,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+              className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[rgba(245,245,244,0.7)] hover:text-foreground"
               aria-label={showPassword ? t("aria.hidePassword") : t("aria.showPassword")}
               tabIndex={-1}
             >
@@ -383,7 +383,7 @@ function RegisterForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={`h-12 rounded-xl pr-12 ${
                 confirmPassword && confirmPassword !== password
-                  ? "border-destructive focus-visible:ring-destructive/30"
+                  ? "border-destructive focus-visible:ring-[rgba(239,68,68,0.3)]"
                   : ""
               }`}
               autoComplete="new-password"
@@ -392,7 +392,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+              className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[rgba(245,245,244,0.7)] hover:text-foreground"
               aria-label={showConfirm ? t("aria.hidePassword") : t("aria.showPassword")}
               tabIndex={-1}
             >
@@ -407,7 +407,7 @@ function RegisterForm() {
         <RegistrationConsentBlock value={consents} onChange={setConsents} disabled={isLoading} />
 
         {error && (
-          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+          <p className="rounded-lg bg-[rgba(239,68,68,0.1)] px-3 py-2 text-xs font-medium text-destructive">
             {error}
           </p>
         )}
@@ -415,7 +415,7 @@ function RegisterForm() {
         <Button
           type="submit"
           disabled={isLoading || !canSubmit}
-          className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+          className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)] hover:bg-[rgba(6,78,59,0.9)]"
         >
           {isLoading ? (
             <>

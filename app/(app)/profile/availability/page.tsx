@@ -123,7 +123,7 @@ function WeeklySlotsEditor({
         return (
           <div
             key={day}
-            className={`flex flex-col gap-2 rounded-lg px-3 py-3 transition-colors ${isActive ? "bg-primary/5" : ""}`}
+            className={`flex flex-col gap-2 rounded-lg px-3 py-3 transition-colors ${isActive ? "bg-[rgba(6,78,59,0.05)]" : ""}`}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ function WeeklySlotsEditor({
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="size-7 text-destructive/60 hover:text-destructive"
+                      className="size-7 text-[rgba(239,68,68,0.6)] hover:text-destructive"
                       onClick={() => removeSlot(day, idx)}
                     >
                       <Trash2 className="size-3.5" />
@@ -181,7 +181,7 @@ function WeeklySlotsEditor({
                 </div>
               ))}
 
-            <div className="mt-1 h-px bg-border/40" />
+            <div className="mt-1 h-px bg-[rgba(231,229,227,0.4)]" />
           </div>
         )
       })}
@@ -530,7 +530,7 @@ export default function AvailabilityPage() {
 
           {/* Pending bookings alert */}
           {pendingBookings.length > 0 && (
-            <Card className="border-amber-300/60 bg-amber-50 dark:bg-amber-950/20">
+            <Card className="border-[rgba(252,211,77,0.6)] bg-amber-50 dark:bg-[rgba(69,26,3,0.2)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-400">
                   <AlertCircle className="size-4" />
@@ -541,7 +541,7 @@ export default function AvailabilityPage() {
                 {pendingBookings.map((b) => (
                   <div
                     key={b.id}
-                    className="flex items-center justify-between rounded-lg border border-amber-200/60 bg-card p-3"
+                    className="flex items-center justify-between rounded-lg border border-[rgba(253,230,138,0.6)] bg-card p-3"
                   >
                     <div>
                       <p className="text-sm font-medium">
@@ -568,7 +568,7 @@ export default function AvailabilityPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1 text-xs border-destructive/30 text-destructive"
+                        className="h-7 gap-1 text-xs border-[rgba(239,68,68,0.3)] text-destructive"
                         onClick={() => handleBookingAction(b.id, b.statusToken, "declined")}
                       >
                         <XCircle className="size-3" /> {t("common.no")}
@@ -663,7 +663,7 @@ export default function AvailabilityPage() {
                   <CardContent className="p-0">
 
                     {/* Month navigation header */}
-                    <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-[rgba(231,229,227,0.6)] px-4 py-3">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -693,7 +693,7 @@ export default function AvailabilityPage() {
                       <div className="mb-1 grid grid-cols-7">
                         {DAY_SHORT_HEADER.map((d, i) => (
                           <div key={d} className="flex items-center justify-center py-1.5">
-                            <span className={`text-[11px] font-semibold ${i >= 5 ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
+                            <span className={`text-[11px] font-semibold ${i >= 5 ? "text-[rgba(120,113,108,0.6)]" : "text-muted-foreground"}`}>
                               {d}
                             </span>
                           </div>
@@ -701,7 +701,7 @@ export default function AvailabilityPage() {
                       </div>
 
                       {/* Day cells */}
-                      <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden bg-border/20">
+                      <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden bg-[rgba(231,229,227,0.2)]">
                         {calendarDays.map((day, i) => {
                           if (day === null) return (
                             <div key={`e-${i}`} className="bg-background h-12" />
@@ -715,10 +715,10 @@ export default function AvailabilityPage() {
                           // Background color by state (only future days)
                           let cellBg = "bg-background"
                           if (!isPast && !isSelected) {
-                            if      (exception?.type === "unavailable") cellBg = "bg-red-50 dark:bg-red-950/25"
-                            else if (exception?.type === "custom")      cellBg = "bg-amber-50 dark:bg-amber-950/25"
-                            else if (isAvailable)                        cellBg = "bg-emerald-50/70 dark:bg-emerald-950/20"
-                            else if (isWeekend)                          cellBg = "bg-muted/30"
+                            if      (exception?.type === "unavailable") cellBg = "bg-red-50 dark:bg-[rgba(69,10,10,0.25)]"
+                            else if (exception?.type === "custom")      cellBg = "bg-amber-50 dark:bg-[rgba(69,26,3,0.25)]"
+                            else if (isAvailable)                        cellBg = "bg-[rgba(236,253,245,0.7)] dark:bg-[rgba(2,44,34,0.2)]"
+                            else if (isWeekend)                          cellBg = "bg-[rgba(245,245,244,0.3)]"
                           }
 
                           return (
@@ -744,7 +744,7 @@ export default function AvailabilityPage() {
                                   "text-sm font-semibold leading-none",
                                   isSelected   ? "text-primary-foreground" : "",
                                   isToday && !isSelected ? "text-primary" : "",
-                                  isPast && !isSelected  ? "text-muted-foreground/30" : "",
+                                  isPast && !isSelected  ? "text-[rgba(120,113,108,0.3)]" : "",
                                   !isPast && !isSelected && !isToday ? "text-foreground" : "",
                                 ].join(" ")}
                               >
@@ -753,22 +753,22 @@ export default function AvailabilityPage() {
 
                               {/* Today ring */}
                               {isToday && !isSelected && (
-                                <span className="absolute inset-1 rounded-md ring-2 ring-primary/50 pointer-events-none" />
+                                <span className="absolute inset-1 rounded-md ring-2 ring-[rgba(6,78,59,0.5)] pointer-events-none" />
                               )}
 
                               {/* Booking count pill */}
                               {!isSelected && dayBookings.length > 0 && (
-                                <span className="text-[9px] font-bold leading-none text-primary/70">
+                                <span className="text-[9px] font-bold leading-none text-[rgba(6,78,59,0.7)]">
                                   {dayBookings.length}×
                                 </span>
                               )}
 
                               {/* Exception stripe */}
                               {!isSelected && !isPast && exception?.type === "unavailable" && (
-                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-destructive/60" />
+                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[rgba(239,68,68,0.6)]" />
                               )}
                               {!isSelected && !isPast && exception?.type === "custom" && (
-                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-amber-500/70" />
+                                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[rgba(245,158,11,0.7)]" />
                               )}
                             </button>
                           )
@@ -777,17 +777,17 @@ export default function AvailabilityPage() {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/40 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[rgba(231,229,227,0.4)] px-4 py-2.5">
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span className="h-3 w-3 rounded-sm border border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60" />
+                        <span className="h-3 w-3 rounded-sm border border-emerald-200 bg-emerald-100 dark:border-emerald-800 dark:bg-[rgba(2,44,34,0.6)]" />
                         {t("avail.legendAvailable")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span className="h-3 w-3 rounded-sm border border-red-200 bg-red-100 dark:border-red-800 dark:bg-red-950/60" />
+                        <span className="h-3 w-3 rounded-sm border border-red-200 bg-red-100 dark:border-red-800 dark:bg-[rgba(69,10,10,0.6)]" />
                         {t("avail.legendUnavailable")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span className="h-3 w-3 rounded-sm border border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60" />
+                        <span className="h-3 w-3 rounded-sm border border-amber-200 bg-amber-100 dark:border-amber-800 dark:bg-[rgba(69,26,3,0.6)]" />
                         {t("avail.legendCustom")}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -800,7 +800,7 @@ export default function AvailabilityPage() {
 
                 {/* ── Day detail panel (below calendar) ─────────────────── */}
                 {selectedDate && selectedInfo ? (
-                  <Card className="border-primary/30 bg-gradient-to-b from-primary/[0.03] to-transparent">
+                  <Card className="border-[rgba(6,78,59,0.3)] bg-gradient-to-b from-[rgba(6,78,59,0.03)] to-transparent">
                     <CardHeader className="pb-0 pt-4">
                       <div className="flex items-start justify-between">
                         <div>
@@ -830,11 +830,11 @@ export default function AvailabilityPage() {
                             className={[
                               "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium",
                               selectedInfo.exception?.type === "unavailable"
-                                ? "bg-destructive/10 text-destructive"
+                                ? "bg-[rgba(239,68,68,0.1)] text-destructive"
                                 : selectedInfo.exception?.type === "custom"
-                                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                                  ? "bg-[rgba(245,158,11,0.1)] text-amber-700 dark:text-amber-400"
                                   : selectedInfo.resolved.length > 0
-                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    ? "bg-[rgba(16,185,129,0.1)] text-emerald-700 dark:text-emerald-400"
                                     : "bg-muted text-muted-foreground",
                             ].join(" ")}
                           >
@@ -867,7 +867,7 @@ export default function AvailabilityPage() {
                               ).map((s, i) => (
                                 <div
                                   key={i}
-                                  className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm"
+                                  className="flex items-center gap-2 rounded-lg bg-[rgba(245,245,244,0.4)] px-3 py-2 text-sm"
                                 >
                                   <Clock className="size-3.5 text-primary shrink-0" />
                                   <span className="font-medium tabular-nums">{s.start}</span>
@@ -887,7 +887,7 @@ export default function AvailabilityPage() {
                               {selectedInfo.dayBookings.map((b) => (
                                 <div
                                   key={b.id}
-                                  className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2"
+                                  className="flex items-center gap-2 rounded-lg border border-[rgba(231,229,227,0.5)] bg-card px-3 py-2"
                                 >
                                   <div className="flex-1 min-w-0">
                                     <p className="truncate text-xs font-semibold">
@@ -907,9 +907,9 @@ export default function AvailabilityPage() {
                                     variant="outline"
                                     className={`shrink-0 text-[10px] ${
                                       b.status === "confirmed"
-                                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                                        ? "border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.1)] text-emerald-600"
                                         : b.status === "pending"
-                                          ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                                          ? "border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.1)] text-amber-600"
                                           : "border-border bg-muted text-muted-foreground"
                                     }`}
                                   >
@@ -922,7 +922,7 @@ export default function AvailabilityPage() {
                         </div>
 
                         {/* Right column: Exception controls */}
-                        <div className="flex flex-col gap-3 sm:border-l sm:border-border/40 sm:pl-4">
+                        <div className="flex flex-col gap-3 sm:border-l sm:border-[rgba(231,229,227,0.4)] sm:pl-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {t("avail.exceptionForDay")}
                           </p>
@@ -968,7 +968,7 @@ export default function AvailabilityPage() {
                                       <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="size-7 shrink-0 text-destructive/60 hover:text-destructive"
+                                        className="size-7 shrink-0 text-[rgba(239,68,68,0.6)] hover:text-destructive"
                                         onClick={() => {
                                           const s = (selectedInfo.exception!.slots || []).filter((_, i) => i !== idx)
                                           updateException(selectedDate, { slots: s })
@@ -995,7 +995,7 @@ export default function AvailabilityPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 w-full gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                                className="h-8 w-full gap-1.5 text-xs border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.05)]"
                                 onClick={() => removeException(selectedDate)}
                               >
                                 <Trash2 className="size-3.5" /> {t("avail.exceptionRemove")}
@@ -1009,7 +1009,7 @@ export default function AvailabilityPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-9 w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/5"
+                                className="h-9 w-full gap-2 border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.05)]"
                                 onClick={() => addException("unavailable")}
                               >
                                 <CalendarX2 className="size-4" />
@@ -1018,7 +1018,7 @@ export default function AvailabilityPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-9 w-full gap-2 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/5"
+                                className="h-9 w-full gap-2 border-[rgba(245,158,11,0.4)] text-amber-700 dark:text-amber-400 hover:bg-[rgba(245,158,11,0.05)]"
                                 onClick={() => addException("custom")}
                               >
                                 <Clock className="size-4" />
@@ -1031,7 +1031,7 @@ export default function AvailabilityPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-8 text-center">
+                  <div className="flex items-center justify-center rounded-xl border border-dashed border-[rgba(231,229,227,0.5)] py-8 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Calendar className="size-7 opacity-25" />
                       <p className="text-xs">{t("avail.clickDayToEdit")}</p>
@@ -1061,7 +1061,7 @@ export default function AvailabilityPage() {
                   )}
 
                   {yearlyRules.map((rule, idx) => (
-                    <div key={idx} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                    <div key={idx} className="rounded-lg border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] p-3">
                       <div className="mb-2 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-[10px]">{rule.name}</Badge>
@@ -1073,7 +1073,7 @@ export default function AvailabilityPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="size-6 text-destructive/60 hover:text-destructive"
+                          className="size-6 text-[rgba(239,68,68,0.6)] hover:text-destructive"
                           onClick={() => setYearlyRules(yearlyRules.filter((_, i) => i !== idx))}
                         >
                           <Trash2 className="size-3" />
@@ -1091,7 +1091,7 @@ export default function AvailabilityPage() {
                   ))}
 
                   {showNewRule ? (
-                    <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-3">
+                    <div className="rounded-lg border-2 border-dashed border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] p-3">
                       <h4 className="mb-3 text-xs font-semibold">{t("avail.addRule")}</h4>
                       <div className="flex flex-col gap-2.5">
                         <Input
@@ -1186,7 +1186,7 @@ export default function AvailabilityPage() {
                     {guestLink ? (
                       /* ── Link result ── */
                       <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                        <div className="flex items-center gap-2 rounded-xl border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] px-4 py-3">
                           <Link2 className="size-4 shrink-0 text-primary" />
                           <span className="flex-1 truncate text-xs font-mono text-foreground">{guestLink}</span>
                         </div>
@@ -1210,7 +1210,7 @@ export default function AvailabilityPage() {
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.guestEmail")} *</label>
                           <input
                             type="email"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                             value={guestForm.guestEmail}
                             onChange={(e) => setGuestForm((f) => ({ ...f, guestEmail: e.target.value }))}
                             placeholder={t("guestInvite.guestEmailPlaceholder")}
@@ -1218,7 +1218,7 @@ export default function AvailabilityPage() {
                         </div>
 
                         {/* Kalender – zeigt eigene Verfügbarkeiten */}
-                        <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                        <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] p-3">
                           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {t("guestInvite.date")} *
                           </p>
@@ -1236,12 +1236,12 @@ export default function AvailabilityPage() {
 
                         {/* Gewählter Slot – editierbar */}
                         {guestForm.date && (
-                          <div className="grid grid-cols-2 gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                          <div className="grid grid-cols-2 gap-3 rounded-xl border border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)] p-3">
                             <div>
                               <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.startTime")} *</label>
                               <input
                                 type="time" step="900"
-                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                                 value={guestForm.startTime}
                                 onChange={(e) => setGuestForm((f) => ({ ...f, startTime: e.target.value }))}
                               />
@@ -1250,7 +1250,7 @@ export default function AvailabilityPage() {
                               <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.endTime")} *</label>
                               <input
                                 type="time" step="900"
-                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                                 value={guestForm.endTime}
                                 onChange={(e) => setGuestForm((f) => ({ ...f, endTime: e.target.value }))}
                               />
@@ -1266,7 +1266,7 @@ export default function AvailabilityPage() {
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("guestInvite.callType")}</label>
                           <select
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                             value={guestForm.callType}
                             onChange={(e) => setGuestForm((f) => ({ ...f, callType: e.target.value }))}
                           >
@@ -1299,21 +1299,21 @@ export default function AvailabilityPage() {
                                 "flex items-center justify-between rounded-xl border px-4 py-3",
                                 displayPrice !== null
                                   ? customPrice !== null
-                                    ? "border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20"
-                                    : "border-primary/30 bg-primary/5"
-                                  : "border-border/60 bg-muted/30",
+                                    ? "border-[rgba(251,191,36,0.4)] bg-[rgba(255,251,235,0.6)] dark:bg-[rgba(69,26,3,0.2)]"
+                                    : "border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)]"
+                                  : "border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)]",
                               ].join(" ")}>
                                 <div>
                                   <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                                     {durationMin > 0 ? t("avail.durationMinutesPrefix", { minutes: durationMin }) : ""}
                                     {t("avail.totalAmount")}
                                     {displayPrice !== null && customPrice === null && (
-                                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                                      <span className="rounded bg-[rgba(6,78,59,0.1)] px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                                         {t("avail.priceCalculatedBadge")}
                                       </span>
                                     )}
                                     {customPrice !== null && (
-                                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                                      <span className="rounded bg-[rgba(245,158,11,0.15)] px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                                         {t("avail.priceCustomBadge")}
                                       </span>
                                     )}
@@ -1336,7 +1336,7 @@ export default function AvailabilityPage() {
                               </div>
 
                               {/* Individuellen Preis eingeben */}
-                              <div className="rounded-xl border border-dashed border-border/60 px-4 py-3">
+                              <div className="rounded-xl border border-dashed border-[rgba(231,229,227,0.6)] px-4 py-3">
                                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                                   {t("avail.customPriceHint")}
                                 </label>
@@ -1344,7 +1344,7 @@ export default function AvailabilityPage() {
                                   type="number"
                                   min="1"
                                   step="0.01"
-                                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                                   value={guestForm.totalPrice}
                                   onChange={(e) => setGuestForm((f) => ({ ...f, totalPrice: e.target.value }))}
                                   placeholder={autoPrice !== null
@@ -1366,11 +1366,11 @@ export default function AvailabilityPage() {
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">
                             {t("avail.personalMessageGuest")}
-                            <span className="ml-1 text-muted-foreground/60">({t("avail.hostMessageOptionalHint")})</span>
+                            <span className="ml-1 text-[rgba(120,113,108,0.6)]">({t("avail.hostMessageOptionalHint")})</span>
                           </label>
                           <textarea
                             rows={2}
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)] resize-none"
                             value={guestForm.hostMessage}
                             onChange={(e) => setGuestForm((f) => ({ ...f, hostMessage: e.target.value }))}
                             placeholder={t("avail.hostMessagePlaceholder")}
@@ -1381,11 +1381,11 @@ export default function AvailabilityPage() {
                         <div>
                           <label className="mb-1 block text-xs font-medium text-muted-foreground">
                             {t("guestInvite.note")}
-                            <span className="ml-1 text-muted-foreground/60">({t("avail.internalNoteSendHint")})</span>
+                            <span className="ml-1 text-[rgba(120,113,108,0.6)]">({t("avail.internalNoteSendHint")})</span>
                           </label>
                           <input
                             type="text"
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.3)]"
                             value={guestForm.note}
                             onChange={(e) => setGuestForm((f) => ({ ...f, note: e.target.value }))}
                             placeholder={t("guestInvite.notePlaceholder")}
@@ -1438,8 +1438,8 @@ export default function AvailabilityPage() {
                                   variant="outline"
                                   className={`shrink-0 text-[10px] ${
                                     isCancelled ? "border-muted text-muted-foreground" :
-                                    isPaid ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600" :
-                                    "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                                    isPaid ? "border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.1)] text-emerald-600" :
+                                    "border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.1)] text-amber-600"
                                   }`}
                                 >
                                   {isCancelled ? t("guestInvite.statusCancelled") : isPaid ? t("guestInvite.statusPaid") : t("guestInvite.statusUnpaid")}
@@ -1459,7 +1459,7 @@ export default function AvailabilityPage() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="h-7 gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                                      className="h-7 gap-1 text-xs border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.05)]"
                                       disabled={guestCancelling === gb.id}
                                       onClick={() => handleCancelGuestBooking(gb.id)}
                                     >
@@ -1487,7 +1487,7 @@ export default function AvailabilityPage() {
 
           {/* Upcoming confirmed bookings */}
           {upcomingConfirmed.length > 0 && (
-            <Card className="border-primary/20">
+            <Card className="border-[rgba(6,78,59,0.2)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Calendar className="size-4 text-primary" />
@@ -1498,7 +1498,7 @@ export default function AvailabilityPage() {
                 {upcomingConfirmed.map((b) => (
                   <div
                     key={b.id}
-                    className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2"
+                    className="flex items-center justify-between rounded-lg bg-[rgba(245,245,244,0.5)] px-3 py-2"
                   >
                     <div>
                       <p className="text-xs font-medium">
@@ -1514,7 +1514,7 @@ export default function AvailabilityPage() {
                         {formatDisplay(b.date)} · {b.startTime}–{b.endTime}
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/5 text-primary">
+                    <Badge variant="outline" className="text-[10px] border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary">
                       {t("avail.confirmed")}
                     </Badge>
                   </div>
@@ -1527,7 +1527,7 @@ export default function AvailabilityPage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full gap-2 rounded-xl bg-primary font-semibold shadow-md shadow-primary/20"
+            className="w-full gap-2 rounded-xl bg-primary font-semibold shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)]"
           >
             {saving ? (
               <><Loader2 className="size-4 animate-spin" /> {t("avail.saving")}</>

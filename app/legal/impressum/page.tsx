@@ -14,15 +14,15 @@ export default function ImpressumPage() {
           
           {/* Anbieter nach § 5 TMG */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">
               Angaben gemäß § 5 TMG
             </h2>
-            <div className="flex flex-col gap-1 rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+            <div className="flex flex-col gap-1 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-5 shadow-sm">
               <span className="font-bold text-foreground text-lg">JMfaircharge UG (haftungsbeschränkt)</span>
               <span className="text-muted-foreground">Esmarchstraße 13</span>
               <span className="text-muted-foreground">10407 Berlin</span>
               
-              <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-3 text-sm text-foreground/80">
+              <div className="mt-4 pt-4 border-t border-[rgba(231,229,227,0.4)] flex items-center gap-3 text-sm text-[rgba(28,25,23,0.8)]">
                 <Building2 className="size-4 text-primary" />
                 <span>Vertreten durch: <strong className="text-foreground">Jens Möllenkamp</strong></span>
               </div>
@@ -31,12 +31,12 @@ export default function ImpressumPage() {
 
           {/* Kontakt */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">
               Kontakt
             </h2>
             <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-primary/30">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex items-center gap-4 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 transition-colors hover:border-[rgba(6,78,59,0.3)]">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)] text-primary">
                   <Phone className="size-5" />
                 </div>
                 <div className="flex flex-col">
@@ -45,8 +45,8 @@ export default function ImpressumPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-primary/30">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex items-center gap-4 rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 transition-colors hover:border-[rgba(6,78,59,0.3)]">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)] text-primary">
                   <Mail className="size-5" />
                 </div>
                 <div className="flex flex-col">
@@ -60,15 +60,15 @@ export default function ImpressumPage() {
           {/* Register & Steuern */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">Registereintrag</h2>
-              <div className="rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">Registereintrag</h2>
+              <div className="rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 text-sm text-muted-foreground">
                 <p>Registergericht: <span className="text-foreground font-medium text-xs">Amtsgericht Berlin (Charlottenburg)</span></p>
                 <p className="mt-1">Registernummer: <span className="text-foreground font-medium text-xs">HRB 214163 B</span></p>
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">Umsatzsteuer-ID</h2>
-              <div className="rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">Umsatzsteuer-ID</h2>
+              <div className="rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 text-sm text-muted-foreground">
                 <p className="text-[10px] uppercase mb-1">Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG:</p>
                 <p className="text-foreground font-medium">DE327945253</p>
               </div>
@@ -77,10 +77,10 @@ export default function ImpressumPage() {
 
           {/* Redaktionell Verantwortlich */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[rgba(120,113,108,0.8)]">
               Redaktionell verantwortlich
             </h2>
-            <div className="rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-[rgba(231,229,227,0.6)] bg-card p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">Jens Möllenkamp</p>
               <p>Esmarchstraße 13</p>
               <p>10407 Berlin</p>
@@ -88,14 +88,14 @@ export default function ImpressumPage() {
           </section>
 
           {/* Streitschlichtung */}
-          <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+          <section className="flex flex-col gap-4 border-t border-[rgba(231,229,227,0.6)] pt-6">
             <div className="flex items-center gap-2 text-primary">
               <Scale className="size-5" />
               <h2 className="text-base font-bold">Streitschlichtung</h2>
             </div>
             
             <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-              <div className="rounded-2xl bg-muted/30 p-4">
+              <div className="rounded-2xl bg-[rgba(245,245,244,0.3)] p-4">
                 <p className="font-semibold text-foreground mb-1 italic">EU-Streitschlichtung</p>
                 <p>
                   Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: 
@@ -110,7 +110,7 @@ export default function ImpressumPage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-muted/30 p-4">
+              <div className="rounded-2xl bg-[rgba(245,245,244,0.3)] p-4">
                 <p className="font-semibold text-foreground mb-1 italic">Verbraucherstreitbeilegung</p>
                 <p>
                   Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.

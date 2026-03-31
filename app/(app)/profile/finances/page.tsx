@@ -12,6 +12,7 @@ import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
 import { StripeConnectOnboarding } from "@/components/stripe-connect-onboarding"
+import { cn } from "@/lib/utils"
 function formatCents(cents: number): string {
   const abs = Math.abs(cents)
   const sign = cents < 0 ? "−" : ""
@@ -170,7 +171,7 @@ export default function FinancesPage() {
         ) : (
           <>
             {/* Salden */}
-            <Card className="border-primary/20 bg-primary/5">
+            <Card className="border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Wallet className="size-4 text-primary" />
@@ -179,7 +180,7 @@ export default function FinancesPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background p-3">
+                  <div className="flex flex-col gap-2 rounded-lg border border-[rgba(231,229,227,0.6)] bg-background p-3">
                     <p className="text-[10px] text-muted-foreground">{t("finances.balance")}</p>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xl font-bold text-foreground">
@@ -189,7 +190,7 @@ export default function FinancesPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                          className="h-8 gap-1 shrink-0 text-primary hover:bg-[rgba(6,78,59,0.1)] hover:text-primary"
                           onClick={() => window.open("https://diaiway.com/profile/finances", "_blank")}
                         >
                           <ExternalLink className="size-3.5" />
@@ -200,7 +201,7 @@ export default function FinancesPage() {
                           onClick={() => openWalletTopup(refetchWallet)}
                           size="sm"
                           variant="ghost"
-                          className="h-8 gap-1 shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                          className="h-8 gap-1 shrink-0 text-primary hover:bg-[rgba(6,78,59,0.1)] hover:text-primary"
                         >
                           <Plus className="size-3.5" />
                           <span className="text-xs">{t("finances.topup")}</span>
@@ -208,7 +209,7 @@ export default function FinancesPage() {
                       )}
                     </div>
                   </div>
-                  <div className="rounded-lg border border-border/60 bg-background p-3">
+                  <div className="rounded-lg border border-[rgba(231,229,227,0.6)] bg-background p-3">
                     <p className="text-[10px] text-muted-foreground">{t("finances.pendingBalance")}</p>
                     <p className="text-xl font-bold text-muted-foreground">
                       {wallet ? formatCents(wallet.pendingBalance) : "€0,00"}
@@ -223,7 +224,7 @@ export default function FinancesPage() {
 
             {/* Stripe Connect Auszahlungskonto (nur Takumi) */}
             {appRole === "takumi" && (
-              <Card className="border-border/60">
+              <Card className="border-[rgba(231,229,227,0.6)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
                     <Wallet className="size-4 text-primary" />
@@ -241,7 +242,7 @@ export default function FinancesPage() {
                     <p className="text-sm text-destructive">{t("finances.connectError")}</p>
                   ) : connectStatus.status === "active" ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-[rgba(5,46,22,0.3)] border border-green-200 dark:border-green-800 p-3">
                         <BadgeCheck className="size-4 shrink-0 text-green-600" />
                         <p className="text-sm text-green-700 dark:text-green-400">{t("finances.connectActive")}</p>
                       </div>
@@ -257,7 +258,7 @@ export default function FinancesPage() {
                     </div>
                   ) : connectStatus.status === "restricted" ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 p-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-yellow-50 dark:bg-[rgba(66,32,6,0.3)] border border-yellow-200 dark:border-yellow-800 p-3">
                         <AlertTriangle className="size-4 shrink-0 text-yellow-600" />
                         <p className="text-sm text-yellow-700 dark:text-yellow-400">{t("finances.connectRestricted")}</p>
                       </div>
@@ -268,7 +269,7 @@ export default function FinancesPage() {
                     </div>
                   ) : connectStatus.status === "pending" ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-[rgba(23,37,84,0.3)] border border-blue-200 dark:border-blue-800 p-3">
                         <Clock className="size-4 shrink-0 text-blue-600" />
                         <p className="text-sm text-blue-700 dark:text-blue-400">{t("finances.connectPending")}</p>
                       </div>
@@ -289,7 +290,7 @@ export default function FinancesPage() {
 
             {/* Stornierungsrichtlinie (nur Takumi) */}
             {appRole === "takumi" && (
-              <Card className="border-border/60">
+              <Card className="border-[rgba(231,229,227,0.6)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
                     <ShieldCheck className="size-4 text-primary" />
@@ -310,8 +311,8 @@ export default function FinancesPage() {
                           onClick={() => setCancelFreeHours(h)}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             cancelFreeHours === h
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                              ? "border-primary bg-[rgba(6,78,59,0.1)] text-primary"
+                              : "border-border bg-[rgba(245,245,244,0.3)] text-muted-foreground hover:border-[rgba(6,78,59,0.5)]"
                           }`}
                         >
                           {h === 0
@@ -333,8 +334,8 @@ export default function FinancesPage() {
                           onClick={() => setCancelFeePercent(p)}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             cancelFeePercent === p
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50"
+                              ? "border-primary bg-[rgba(6,78,59,0.1)] text-primary"
+                              : "border-border bg-[rgba(245,245,244,0.3)] text-muted-foreground hover:border-[rgba(6,78,59,0.5)]"
                           }`}
                         >
                           {p === 0 ? t("editProfile.cancelNoFee") : `${p}%`}
@@ -342,7 +343,7 @@ export default function FinancesPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                  <div className="rounded-xl bg-[rgba(245,245,244,0.4)] px-3 py-2.5 text-xs text-muted-foreground">
                     {cancelFreeHours === 0
                       ? t("editProfile.cancelSummaryNoFree").replace("{percent}", String(cancelFeePercent))
                       : cancelFeePercent === 0
@@ -390,7 +391,7 @@ export default function FinancesPage() {
 
             {/* Rückerstattung bei Ablehnung (nur Shugyo) */}
             {appRole === "shugyo" && (
-              <Card className="border-border/60 gap-0 py-0">
+              <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
                 <CardContent className="flex flex-col gap-3 p-4">
                   <div className="flex items-center gap-2">
                     <Wallet className="size-4 text-muted-foreground" />
@@ -424,14 +425,26 @@ export default function FinancesPage() {
                     }}
                     className="grid gap-2"
                   >
-                    <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-lg border border-[rgba(231,229,227,0.4)] p-3 hover:bg-[rgba(245,245,244,0.3)]",
+                        refundPreference === "payout" &&
+                          "border-[rgba(6,78,59,0.5)] bg-[rgba(6,78,59,0.05)]",
+                      )}
+                    >
                       <RadioGroupItem value="payout" />
                       <div>
                         <span className="text-sm font-medium">{t("profile.refundPayout")}</span>
                         <p className="text-xs text-muted-foreground">{t("profile.refundPayoutDesc")}</p>
                       </div>
                     </label>
-                    <label className="flex items-center gap-3 rounded-lg border border-border/40 p-3 cursor-pointer hover:bg-muted/30 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-primary/5">
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-lg border border-[rgba(231,229,227,0.4)] p-3 hover:bg-[rgba(245,245,244,0.3)]",
+                        refundPreference === "wallet" &&
+                          "border-[rgba(6,78,59,0.5)] bg-[rgba(6,78,59,0.05)]",
+                      )}
+                    >
                       <RadioGroupItem value="wallet" />
                       <div>
                         <span className="text-sm font-medium">{t("profile.refundWallet")}</span>
@@ -478,7 +491,7 @@ export default function FinancesPage() {
                       return (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 p-3"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-[rgba(231,229,227,0.6)] p-3"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">{displayLabel}</p>

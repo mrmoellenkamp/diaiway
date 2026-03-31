@@ -115,16 +115,16 @@ function eur(cents: number) {
 
 function statusColor(s: string) {
   const map: Record<string, string> = {
-    pending: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400",
-    confirmed: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-    active: "bg-green-500/15 text-green-700 dark:text-green-400",
-    completed: "bg-primary/15 text-primary",
-    declined: "bg-red-500/15 text-red-700 dark:text-red-400",
+    pending: "bg-[rgba(234,179,8,0.15)] text-yellow-700 dark:text-yellow-400",
+    confirmed: "bg-[rgba(59,130,246,0.15)] text-blue-700 dark:text-blue-400",
+    active: "bg-[rgba(34,197,94,0.15)] text-green-700 dark:text-green-400",
+    completed: "bg-[rgba(6,78,59,0.15)] text-primary",
+    declined: "bg-[rgba(239,68,68,0.15)] text-red-700 dark:text-red-400",
     cancelled: "bg-muted text-muted-foreground",
-    paid: "bg-green-500/15 text-green-700 dark:text-green-400",
+    paid: "bg-[rgba(34,197,94,0.15)] text-green-700 dark:text-green-400",
     unpaid: "bg-muted text-muted-foreground",
-    refunded: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
-    failed: "bg-red-500/15 text-red-700 dark:text-red-400",
+    refunded: "bg-[rgba(249,115,22,0.15)] text-orange-700 dark:text-orange-400",
+    failed: "bg-[rgba(239,68,68,0.15)] text-red-700 dark:text-red-400",
   }
   return map[s] ?? "bg-muted text-muted-foreground"
 }
@@ -147,14 +147,14 @@ function StatCard({
   sub?: string; trend?: number; color?: string
 }) {
   const colorMap: Record<string, string> = {
-    primary: "bg-primary/10 text-primary",
-    green: "bg-green-500/10 text-green-600 dark:text-green-400",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    primary: "bg-[rgba(6,78,59,0.1)] text-primary",
+    green: "bg-[rgba(34,197,94,0.1)] text-green-600 dark:text-green-400",
+    blue: "bg-[rgba(59,130,246,0.1)] text-blue-600 dark:text-blue-400",
+    orange: "bg-[rgba(249,115,22,0.1)] text-orange-600 dark:text-orange-400",
+    purple: "bg-[rgba(168,85,247,0.1)] text-purple-600 dark:text-purple-400",
   }
   return (
-    <Card className="border-border/50">
+    <Card className="border-[rgba(231,229,227,0.5)]">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${colorMap[color] ?? colorMap.primary}`}>
@@ -184,7 +184,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
   return (
     <div className="flex flex-col gap-5">
       {stats.degraded && stats.degradedReason && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <div className="rounded-xl border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.1)] px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
           <span className="font-semibold">Statistiken eingeschränkt. </span>
           {stats.degradedReason}
         </div>
@@ -203,7 +203,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
       </div>
 
       {/* Role split */}
-      <Card className="border-border/50">
+      <Card className="border-[rgba(231,229,227,0.5)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold">Nutzer-Rollen</CardTitle>
         </CardHeader>
@@ -232,7 +232,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
       </Card>
 
       {/* Booking status breakdown */}
-      <Card className="border-border/50">
+      <Card className="border-[rgba(231,229,227,0.5)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold">Buchungen nach Status</CardTitle>
         </CardHeader>
@@ -246,7 +246,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
               { key: "declined", label: "Abgelehnt" },
               { key: "cancelled", label: "Storniert" },
             ].map(({ key, label }) => (
-              <div key={key} className="flex flex-col items-center rounded-lg border border-border/40 bg-muted/30 p-2 text-center">
+              <div key={key} className="flex flex-col items-center rounded-lg border border-[rgba(231,229,227,0.4)] bg-[rgba(245,245,244,0.3)] p-2 text-center">
                 <span className="text-lg font-bold text-foreground">{bs[key] ?? 0}</span>
                 <span className="text-[10px] text-muted-foreground leading-tight">{label}</span>
               </div>
@@ -256,7 +256,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
       </Card>
 
       {/* Revenue */}
-      <Card className="border-border/50">
+      <Card className="border-[rgba(231,229,227,0.5)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <CreditCard className="size-4 text-muted-foreground" />
@@ -265,18 +265,18 @@ function OverviewTab({ stats }: { stats: Stats }) {
         </CardHeader>
         <CardContent className="px-4 pb-4 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-muted/30 border border-border/40 p-3">
+            <div className="rounded-lg bg-[rgba(245,245,244,0.3)] border border-[rgba(231,229,227,0.4)] p-3">
               <p className="text-xs text-muted-foreground">Dieser Monat</p>
               <p className="text-lg font-bold text-foreground">{eur(stats.revenue.thisMonthCents)}</p>
               <p className="text-[10px] text-muted-foreground">{stats.revenue.paidThisMonthCount} Zahlungen</p>
             </div>
-            <div className="rounded-lg bg-muted/30 border border-border/40 p-3">
+            <div className="rounded-lg bg-[rgba(245,245,244,0.3)] border border-[rgba(231,229,227,0.4)] p-3">
               <p className="text-xs text-muted-foreground">Letzter Monat</p>
               <p className="text-lg font-bold text-foreground">{eur(stats.revenue.lastMonthCents)}</p>
               <p className="text-[10px] text-muted-foreground">Vergleichszeitraum</p>
             </div>
           </div>
-          <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 px-3 py-2">
+          <div className="flex items-center justify-between rounded-lg bg-[rgba(6,78,59,0.05)] border border-[rgba(6,78,59,0.2)] px-3 py-2">
             <span className="text-sm font-medium">Gesamtumsatz</span>
             <span className="text-sm font-bold text-primary">{eur(stats.revenue.totalCents)}</span>
           </div>
@@ -284,7 +284,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
       </Card>
 
       {/* Top experts */}
-      <Card className="border-border/50">
+      <Card className="border-[rgba(231,229,227,0.5)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Star className="size-4 text-yellow-500" />
@@ -296,7 +296,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
             <p className="text-xs text-muted-foreground text-center py-4">Noch keine Daten</p>
           )}
           {stats.topExperts.map((ex, i) => (
-            <div key={ex.id} className="flex items-center gap-3 rounded-lg border border-border/40 p-2.5">
+            <div key={ex.id} className="flex items-center gap-3 rounded-lg border border-[rgba(231,229,227,0.4)] p-2.5">
               <span className="text-sm font-bold text-muted-foreground w-4 text-center">{i + 1}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -315,7 +315,7 @@ function OverviewTab({ stats }: { stats: Stats }) {
       </Card>
 
       {/* Recent activity */}
-      <Card className="border-border/50">
+      <Card className="border-[rgba(231,229,227,0.5)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold">Letzte Aktivität</CardTitle>
         </CardHeader>
@@ -453,12 +453,12 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
         {users.map((u) => {
           const displayName = u.username ?? u.name
           return (
-          <Card key={u.id} className="border-border/50">
+          <Card key={u.id} className="border-[rgba(231,229,227,0.5)]">
             <CardContent className="p-3">
               {editingId === u.id ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                    <div className="size-8 rounded-full bg-[rgba(6,78,59,0.1)] flex items-center justify-center text-xs font-bold text-primary">
                       {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -495,7 +495,7 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                  <div className="size-9 rounded-full bg-[rgba(6,78,59,0.1)] flex items-center justify-center text-sm font-bold text-primary shrink-0">
                     {u.image ? (
                       <Image
                         src={u.image}
@@ -510,11 +510,11 @@ function UsersTab({ onDataChanged }: { onDataChanged?: () => void }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold truncate">{displayName}</span>
-                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${u.appRole === "takumi" ? "bg-primary/15 text-primary" : "bg-blue-500/15 text-blue-600"}`}>
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${u.appRole === "takumi" ? "bg-[rgba(6,78,59,0.15)] text-primary" : "bg-[rgba(59,130,246,0.15)] text-blue-600"}`}>
                         {u.appRole}
                       </span>
                       {u.role === "admin" && (
-                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/15 text-red-600">
+                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-[rgba(239,68,68,0.15)] text-red-600">
                           admin
                         </span>
                       )}
@@ -656,7 +656,7 @@ function BookingsTab() {
 
       <div className="flex flex-col gap-2">
         {bookings.map((b) => (
-          <Card key={b.id} className="border-border/50">
+          <Card key={b.id} className="border-[rgba(231,229,227,0.5)]">
             <CardContent className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -756,7 +756,7 @@ function TakumisTab({ refreshKey }: { refreshKey?: number }) {
     <div className="flex flex-col gap-3">
       {loading && <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-primary" /></div>}
       {takumis.map((ex) => (
-        <Card key={ex.id} className="border-border/50">
+        <Card key={ex.id} className="border-[rgba(231,229,227,0.5)]">
           <CardContent className="p-3">
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
@@ -888,10 +888,10 @@ function DatabaseTab({
       <Card
         className={
           dbHealthLoading
-            ? "border-border/60"
+            ? "border-[rgba(231,229,227,0.6)]"
             : dbHealth?.dbOk
-              ? "border-green-500/40 bg-green-500/5"
-              : "border-destructive/40 bg-destructive/5"
+              ? "border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.05)]"
+              : "border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.05)]"
         }
       >
         <CardHeader className="pb-2 pt-4 px-4">
@@ -901,12 +901,12 @@ function DatabaseTab({
             {dbHealthLoading ? (
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : dbHealth?.dbOk ? (
-              <Badge variant="outline" className="border-green-600/50 bg-green-500/10 text-green-700 dark:text-green-400">
+              <Badge variant="outline" className="border-[rgba(22,163,74,0.5)] bg-[rgba(34,197,94,0.1)] text-green-700 dark:text-green-400">
                 <CheckCircle2 className="size-3 mr-1" />
                 OK
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive">
+              <Badge variant="outline" className="border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.1)] text-destructive">
                 <XCircle className="size-3 mr-1" />
                 Fehler
               </Badge>
@@ -942,7 +942,7 @@ function DatabaseTab({
             !dbHealth?.dbOk &&
             dbHealth?.error !== "Forbidden" &&
             dbHealth?.error !== "Auth failed" && (
-            <div className="space-y-2 text-destructive/95 dark:text-destructive">
+            <div className="space-y-2 text-[rgba(239,68,68,0.95)] dark:text-destructive">
               <p className="font-medium text-foreground">
                 PostgreSQL ist von diesem Server aus nicht erreichbar oder die Verbindung bricht ab.
               </p>
@@ -950,7 +950,7 @@ function DatabaseTab({
                 <p className="font-mono text-[11px]">Code: {dbHealth.dbError.code}</p>
               )}
               {dbHealth?.dbError?.message && (
-                <p className="rounded-md bg-background/80 border border-border/60 p-2 font-mono text-[10px] break-words text-foreground">
+                <p className="rounded-md bg-[rgba(250,250,249,0.8)] border border-[rgba(231,229,227,0.6)] p-2 font-mono text-[10px] break-words text-foreground">
                   {dbHealth.dbError.message}
                 </p>
               )}
@@ -970,7 +970,7 @@ function DatabaseTab({
         </CardContent>
       </Card>
 
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="flex items-center gap-2 text-sm">
             <Database className="size-4 text-primary" />
@@ -1009,7 +1009,7 @@ function DatabaseTab({
                     <span className="block font-medium text-foreground">
                       Zur Bestätigung genau eingeben:
                     </span>
-                    <code className="block rounded bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive text-center tracking-wide">
+                    <code className="block rounded bg-[rgba(239,68,68,0.1)] px-3 py-2 text-sm font-bold text-destructive text-center tracking-wide">
                       ALLE DATEN LÖSCHEN
                     </code>
                   </AlertDialogDescription>
@@ -1018,7 +1018,7 @@ function DatabaseTab({
                   value={resetPassword}
                   onChange={(e) => setResetPassword(e.target.value)}
                   placeholder="ALLE DATEN LÖSCHEN"
-                  className="font-mono text-sm border-destructive/40 focus-visible:ring-destructive"
+                  className="font-mono text-sm border-[rgba(239,68,68,0.4)] focus-visible:ring-destructive"
                   onPaste={(e) => e.preventDefault()}
                 />
                 <AlertDialogFooter>
@@ -1040,7 +1040,7 @@ function DatabaseTab({
         </CardContent>
       </Card>
 
-      <Card className="border-border/60">
+      <Card className="border-[rgba(231,229,227,0.6)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="flex items-center gap-2 text-sm">
             <UserPlus className="size-4 text-primary" />
@@ -1436,7 +1436,7 @@ function FinanceTab() {
   return (
     <div className="flex flex-col gap-4">
       {/* Alle Pending-Umsätze (Escrow) */}
-      <Card className="border-amber-500/30 bg-amber-500/5">
+      <Card className="border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.05)]">
         <CardHeader className="pb-2 pt-4 px-4">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Lock className="size-4 text-amber-600" />
@@ -1459,9 +1459,9 @@ function FinanceTab() {
                 <div
                   key={h.bookingId}
                   className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
-                    h.expiryStatus === "critical" ? "border-red-500/40 bg-red-500/5" :
-                    h.expiryStatus === "warning" ? "border-amber-500/30 bg-amber-500/5" :
-                    "border-amber-500/20 bg-card"
+                    h.expiryStatus === "critical" ? "border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.05)]" :
+                    h.expiryStatus === "warning" ? "border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.05)]" :
+                    "border-[rgba(245,158,11,0.2)] bg-card"
                   }`}
                 >
                   <div className="min-w-0 flex-1">
@@ -1499,7 +1499,7 @@ function FinanceTab() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs gap-1 text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+                      className="h-7 text-xs gap-1 text-amber-600 border-[rgba(245,158,11,0.4)] hover:bg-[rgba(245,158,11,0.1)]"
                       onClick={() => openHoldAction("manual_release", h)}
                       title="Shugyo zurückerstatten / Stripe-Hold auflösen"
                     >
@@ -1516,7 +1516,7 @@ function FinanceTab() {
 
       {/* Offene Freigaben (Admin-Override) */}
       {pendingReleases.length > 0 && (
-        <Card className="border-amber-500/40 bg-amber-500/5">
+        <Card className="border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.05)]">
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Lock className="size-4 text-amber-600" />
@@ -1531,7 +1531,7 @@ function FinanceTab() {
               {pendingReleases.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-card px-3 py-2"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-[rgba(245,158,11,0.2)] bg-card px-3 py-2"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">
@@ -1597,7 +1597,7 @@ function FinanceTab() {
       {/* KPI Cards */}
       {kpis && (
         <div className="grid grid-cols-3 gap-2">
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardContent className="p-3">
               <p className="text-[10px] text-muted-foreground font-medium">Netto-Provision (Total)</p>
               <p className="text-xl font-bold text-foreground">
@@ -1612,14 +1612,14 @@ function FinanceTab() {
               )}
             </CardContent>
           </Card>
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardContent className="p-3">
               <p className="text-[10px] text-muted-foreground font-medium">Gesammelte USt (Schätzung)</p>
               <p className="text-xl font-bold text-foreground">{eur(kpis.collectedVatCents)}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Nur B2C, reverse charge = 0</p>
             </CardContent>
           </Card>
-          <Card className="border-border/50">
+          <Card className="border-[rgba(231,229,227,0.5)]">
             <CardContent className="p-3">
               <p className="text-[10px] text-muted-foreground font-medium">Offene Takumi-Auszahlungen</p>
               <p className="text-xl font-bold text-foreground">{eur(kpis.openTakumiPayoutsCents)}</p>
@@ -1635,7 +1635,7 @@ function FinanceTab() {
       )}
 
       {!loading && (
-        <Card className="border-border/50">
+        <Card className="border-[rgba(231,229,227,0.5)]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -1651,7 +1651,7 @@ function FinanceTab() {
               {items.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-[rgba(245,245,244,0.5)]"
                   onClick={() => setSelected(row)}
                 >
                   <TableCell className="text-xs whitespace-nowrap">
@@ -1679,7 +1679,7 @@ function FinanceTab() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Badge variant="outline" className="text-[10px] gap-0.5 bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400 cursor-help">
+                            <Badge variant="outline" className="text-[10px] gap-0.5 bg-[rgba(59,130,246,0.1)] text-blue-700 border-[rgba(59,130,246,0.3)] dark:text-blue-400 cursor-help">
                               <Building2 className="size-3" />
                               ZUGFeRD
                             </Badge>
@@ -2002,7 +2002,7 @@ function AdminDashboardContent() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-foreground">Admin-Dashboard</h1>
-                <Badge className="border-destructive/30 bg-destructive/10 text-destructive text-[10px] shrink-0" variant="outline">
+                <Badge className="border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] text-destructive text-[10px] shrink-0" variant="outline">
                   Admin
                 </Badge>
               </div>
@@ -2030,7 +2030,7 @@ function AdminDashboardContent() {
                   key={label}
                   type="button"
                   onClick={() => handleTabChange(tab)}
-                  className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-2 text-center transition-colors hover:bg-muted/50 active:scale-[0.98]"
+                  className="flex flex-col items-center rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-2 text-center transition-colors hover:bg-[rgba(245,245,244,0.5)] active:scale-[0.98]"
                 >
                   <Icon className={`size-4 ${color} mb-1`} />
                   <span className="text-sm font-bold text-foreground leading-tight truncate max-w-full">{value}</span>
@@ -2044,7 +2044,7 @@ function AdminDashboardContent() {
           <button
             type="button"
             onClick={() => handleTabChange("analytics")}
-            className="flex w-full items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2.5 text-left text-xs transition-colors hover:bg-primary/10"
+            className="flex w-full items-center gap-2 rounded-xl border border-[rgba(6,78,59,0.25)] bg-[rgba(6,78,59,0.05)] px-3 py-2.5 text-left text-xs transition-colors hover:bg-[rgba(6,78,59,0.1)]"
           >
             <LineChart className="size-4 shrink-0 text-primary" />
             <span>
@@ -2151,7 +2151,7 @@ function AdminDashboardContent() {
             <TabsContent value="finance" className="mt-4">
               <div className="flex flex-col gap-4">
                 <FinanceTab />
-                <div className="rounded-xl border border-border/50 bg-card p-4">
+                <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">Finance Monitoring</p>
@@ -2168,9 +2168,9 @@ function AdminDashboardContent() {
             <TabsContent value="safety" className="mt-4">
               <div className="flex flex-col gap-3">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(239,68,68,0.1)]">
                         <Shield className="size-5 text-red-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2182,9 +2182,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(249,115,22,0.1)]">
                         <AlertTriangle className="size-5 text-orange-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2211,15 +2211,15 @@ function AdminDashboardContent() {
 
             <TabsContent value="system" className="mt-4">
               <div className="flex flex-col gap-4">
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="rounded-xl border border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)] p-4">
                   <p className="text-sm font-semibold text-foreground">Templates</p>
                   <p className="text-xs text-muted-foreground mt-0.5 mb-3">
                     Kommunikationsvorlagen (Waymail), PDF-Rechnungen & Belegtexte — zentral verknüpft
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-border/60 bg-card p-3">
+                    <div className="rounded-lg border border-[rgba(231,229,227,0.6)] bg-card p-3">
                       <div className="flex items-start gap-2">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(59,130,246,0.1)]">
                           <Mail className="size-4 text-blue-600" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -2231,9 +2231,9 @@ function AdminDashboardContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-card p-3">
+                    <div className="rounded-lg border border-[rgba(231,229,227,0.6)] bg-card p-3">
                       <div className="flex items-start gap-2">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(16,185,129,0.1)]">
                           <FileText className="size-4 text-emerald-700" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -2248,9 +2248,9 @@ function AdminDashboardContent() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(139,92,246,0.1)]">
                         <Tags className="size-5 text-violet-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2262,9 +2262,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(34,197,94,0.1)]">
                         <Activity className="size-5 text-green-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2276,9 +2276,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(20,184,166,0.1)]">
                         <Newspaper className="size-5 text-teal-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2292,9 +2292,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(139,92,246,0.1)]">
                         <UserCheck className="size-5 text-violet-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2311,9 +2311,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(244,63,94,0.1)]">
                         <Lock className="size-5 text-rose-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2330,9 +2330,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(139,92,246,0.1)]">
                         <UserPlus className="size-5 text-violet-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2349,9 +2349,9 @@ function AdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 bg-card p-4">
+                  <div className="rounded-xl border border-[rgba(231,229,227,0.5)] bg-card p-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[rgba(245,158,11,0.1)]">
                         <Star className="size-5 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">

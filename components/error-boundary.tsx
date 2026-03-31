@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex flex-col items-center justify-center gap-4 p-8 text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+          <div className="flex size-16 items-center justify-center rounded-full bg-[rgba(239,68,68,0.1)]">
             <AlertTriangle className="size-8 text-destructive" />
           </div>
           <div className="flex flex-col gap-1">
@@ -72,7 +72,7 @@ export function DataError({
   onRetry?: () => void
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.05)] p-6 text-center">
       <AlertTriangle className="size-6 text-destructive" />
       <p className="text-sm text-destructive">{message}</p>
       {onRetry && (
@@ -80,7 +80,7 @@ export function DataError({
           onClick={onRetry}
           variant="outline"
           size="sm"
-          className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+          className="gap-1.5 border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.1)]"
         >
           <RefreshCcw className="size-3.5" />
           Erneut laden

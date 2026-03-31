@@ -29,7 +29,7 @@ function PendingAttachmentPreview({
   const isPdf = filename.toLowerCase().endsWith(".pdf")
 
   return (
-    <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+    <div className="mb-2 flex items-center gap-3 rounded-lg border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.1)] px-3 py-2">
       {showThumb ? (
         <Image
           src={thumbnailUrl!}
@@ -133,14 +133,17 @@ export function MessageComposeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="gap-0 p-0 overflow-hidden w-[min(420px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] sm:max-h-[90vh] pb-safe rounded-xl border-0 shadow-xl">
+      <DialogContent
+        showCloseButton={false}
+        className="gap-0 p-0 overflow-hidden w-[min(420px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] max-h-waymail-dialog pb-safe rounded-xl border-0 shadow-xl"
+      >
         {/* Grüner Header: Waymail + X rechts */}
         <div className="flex items-center justify-between gap-3 bg-primary px-4 py-3 rounded-t-xl shrink-0">
           <span className="text-base font-semibold text-primary-foreground">{t("waymail.title")}</span>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-primary-foreground/90 hover:bg-white/20 transition-colors touch-manipulation"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-[rgba(240,253,244,0.9)] hover:bg-[rgba(255,255,255,0.2)] transition-colors touch-manipulation"
             aria-label={t("common.close")}
           >
             <XCircle className="size-5" />
@@ -167,7 +170,7 @@ export function MessageComposeModal({
           </div>
           <div className="flex flex-1 flex-col p-4">
             {uploadError && (
-              <div className="mb-2 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              <div className="mb-2 flex items-center gap-2 rounded-lg border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] px-3 py-2 text-xs text-destructive">
                 {uploadError}
                 <button type="button" onClick={clearUploadError} className="shrink-0 ml-auto" aria-label="Schließen">
                   <XCircle className="size-3.5" />
@@ -191,7 +194,7 @@ export function MessageComposeModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t("messages.placeholder")}
-              className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="min-h-[120px] w-full resize-none rounded-lg border border-border bg-[rgba(245,245,244,0.3)] px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[rgba(6,78,59,0.2)]"
               rows={4}
             />
             <div className="mt-3 flex items-center justify-end gap-2">
@@ -199,7 +202,7 @@ export function MessageComposeModal({
                 type="button"
                 onClick={handleAttach}
                 disabled={sending || uploadScanning}
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary transition-colors"
+                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-[rgba(6,78,59,0.05)] hover:text-primary transition-colors"
                 aria-label={t("waymail.attachAria")}
               >
                 {uploadScanning ? (

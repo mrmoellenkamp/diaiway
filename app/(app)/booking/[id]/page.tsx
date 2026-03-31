@@ -268,11 +268,11 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {step === "checkout" && bookingIdForPayment ? (
-          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
+          <div className="flex flex-col gap-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
             <p className="text-sm text-muted-foreground">
               {t("handshake.minutesWith", { duration: String(durationMin), name: takumiPublicName })}
             </p>
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-[rgba(245,245,244,0.3)] p-3">
               <span className="text-sm text-muted-foreground">{t("handshake.amount")}</span>
               <span className="text-lg font-bold text-foreground">
                 {totalPrice.toFixed(2)} €
@@ -293,7 +293,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                 setStep("form")
               }}
             />
-            <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground/70">
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-[rgba(120,113,108,0.7)]">
               {t("handshake.p2pNotice")}
             </p>
             <p className="mt-1 text-center text-xs text-muted-foreground">
@@ -306,10 +306,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         ) : (
           <>
         {/* Takumi Summary */}
-        <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
-          <Avatar className="size-14 border-2 border-primary/10">
+        <div className="flex items-center gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
+          <Avatar className="size-14 border-2 border-[rgba(6,78,59,0.1)]">
             {takumi.imageUrl && <AvatarImage src={takumi.imageUrl} alt={takumiPublicName} className="object-cover" />}
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary font-semibold">
               {takumi.avatar}
             </AvatarFallback>
           </Avatar>
@@ -324,7 +324,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Gesprächsmodus – über Termin-Auswahl */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">{t("booking.conversationModeTitle")}</h2>
           <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
             <button
@@ -332,10 +332,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               onClick={() => setCallType("VIDEO")}
               className={cn(
                 "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
-                "hover:bg-accent/50 active:scale-95",
+                "hover:bg-[rgba(34,197,94,0.5)] active:scale-95",
                 callType === "VIDEO"
-                  ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
-                  : "scale-[0.98] border-border bg-card hover:border-primary/40"
+                  ? "scale-100 border-primary bg-[rgba(6,78,59,0.05)] shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                  : "scale-[0.98] border-border bg-card hover:border-[rgba(6,78,59,0.4)]"
               )}
             >
               <Video className={cn("size-5", callType === "VIDEO" && "text-primary")} />
@@ -349,10 +349,10 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               onClick={() => setCallType("VOICE")}
               className={cn(
                 "flex flex-col gap-1.5 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
-                "hover:bg-accent/50 active:scale-95",
+                "hover:bg-[rgba(34,197,94,0.5)] active:scale-95",
                 callType === "VOICE"
-                  ? "scale-100 border-primary bg-primary/5 shadow-[0_0_12px_rgba(6,78,59,0.15)]"
-                  : "scale-[0.98] border-border bg-card hover:border-primary/40"
+                  ? "scale-100 border-primary bg-[rgba(6,78,59,0.05)] shadow-[0_0_12px_rgba(6,78,59,0.15)]"
+                  : "scale-[0.98] border-border bg-card hover:border-[rgba(6,78,59,0.4)]"
               )}
             >
               <Mic className={cn("size-5", callType === "VOICE" && "text-primary")} />
@@ -368,7 +368,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Preisaufstellung – Tariffierung Video/Voice */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">{t("booking.priceBreakdown")}</h2>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
@@ -394,7 +394,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
               <span className="text-accent font-medium">{t("booking.free")}</span>
             </div>
           </div>
-          <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3">
+          <div className="flex items-start gap-2 rounded-lg bg-[rgba(34,197,94,0.1)] p-3">
             <Info className="size-4 shrink-0 text-accent mt-0.5" />
             <p className="text-xs text-accent leading-relaxed">
               {t("booking.escrowNotice")}
@@ -404,7 +404,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
         {/* Hinweis: Takumi im Gespräch */}
         {takumi.liveStatus === "in_call" && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="rounded-xl border border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.1)] p-4">
             <p className="text-sm text-amber-800 dark:text-amber-200">
               {t("booking.takumiInCall")}
             </p>
@@ -412,7 +412,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         )}
 
         {/* Date & Time Selection */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Calendar className="size-4 text-primary" /> {t("booking.chooseAppointment")}
           </h2>
@@ -428,7 +428,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
 
         {/* Sprechstunde: Direkt anrufen ODER Termin buchen – beide Optionen nebeneinander */}
         {(selectedInSprechzeit || selectedSprechzeit) && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col gap-3">
+          <div className="rounded-xl border border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.1)] p-4 flex flex-col gap-3">
             <p className="text-sm text-emerald-800 dark:text-emerald-200">
               {t("booking.sprechzeitHint")}
             </p>
@@ -448,7 +448,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                   setSelectedInSprechzeit(false)
                 }}
                 className={cn(
-                  "h-12 rounded-xl border-emerald-500/50 bg-white/80 hover:bg-white dark:bg-card",
+                  "h-12 rounded-xl border-[rgba(16,185,129,0.5)] bg-[rgba(255,255,255,0.8)] hover:bg-white dark:bg-card",
                   takumi.liveStatus === "available" ? "order-2" : "order-1"
                 )}
               >
@@ -465,11 +465,11 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         )}
 
         {/* Termindetails – Buchungszusammenfassung unterhalb des Kalenders (aktualisiert bei jedem Klick) */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">{t("booking.appointmentDetailsTitle")}</h2>
           {selectedDate && selectedStart && selectedEnd ? (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] p-3">
                 <Calendar className="size-4 text-primary shrink-0" />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold text-foreground">
@@ -485,7 +485,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-[rgba(245,245,244,0.3)] px-3 py-2">
                 <span className="text-sm text-muted-foreground">
                   {t("booking.summaryLine")
                     .replace("{duration}", String(durationMin))
@@ -554,7 +554,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
           <Button
             type="submit"
             disabled={!selectedDate || !selectedStart || totalPrice < 0 || isBooking}
-            className="h-14 w-full rounded-xl bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90 shadow-lg disabled:opacity-50"
+            className="h-14 w-full rounded-xl bg-primary text-base font-bold text-primary-foreground hover:bg-[rgba(6,78,59,0.9)] shadow-lg disabled:opacity-50"
           >
             {isBooking ? (
               <><Loader2 className="size-4 animate-spin mr-2" /> {t("booking.bookingInProgress")}</>

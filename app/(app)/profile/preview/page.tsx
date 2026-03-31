@@ -80,7 +80,7 @@ function SocialBar({ links }: { links: SocialLinks }) {
             target="_blank"
             rel="noopener noreferrer"
             title={label}
-            className="flex size-9 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md"
+            className="flex size-9 items-center justify-center rounded-xl border border-[rgba(231,229,227,0.6)] bg-card shadow-sm transition-all hover:scale-105 hover:shadow-md"
             style={{ color }}
           >
             {icon}
@@ -230,22 +230,22 @@ export default function ProfilePreviewPage() {
       {/* Preview-Banner */}
       <div className="flex items-center justify-between gap-2 bg-primary px-4 py-2">
         <div className="flex items-center gap-2">
-          <Eye className="size-4 text-primary-foreground/80" />
+          <Eye className="size-4 text-[rgba(240,253,244,0.8)]" />
           <span className="text-xs font-medium text-primary-foreground">{t("profile.previewTitle")}</span>
         </div>
         <Link
           href="/profile"
-          className="rounded-lg bg-primary-foreground/15 px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary-foreground/25"
+          className="rounded-lg bg-[rgba(240,253,244,0.15)] px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-[rgba(240,253,244,0.25)]"
         >
           {t("profile.backToProfile")}
         </Link>
       </div>
         <PageContainer>
           <div className="flex flex-col gap-6 pb-12">
-            <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card p-6 mt-4">
-              <Avatar className="size-20 border-4 border-primary/10">
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 mt-4">
+              <Avatar className="size-20 border-4 border-[rgba(6,78,59,0.1)]">
                 {user.image && <AvatarImage src={user.image} alt={displayName} className="object-cover" />}
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-2xl font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -258,7 +258,7 @@ export default function ProfilePreviewPage() {
             </div>
 
             {(shugyo?.skillLevel || (shugyo?.projects && shugyo.projects.length > 0)) && (
-              <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+              <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <FolderOpen className="size-4 text-primary" />
                   {t("shugyo.dashboardTitle")}
@@ -272,10 +272,10 @@ export default function ProfilePreviewPage() {
                       variant="outline"
                       className={
                         shugyo.skillLevel === "NEULING"
-                          ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/40"
+                          ? "bg-[rgba(16,185,129,0.2)] text-emerald-700 border-[rgba(16,185,129,0.4)]"
                           : shugyo.skillLevel === "FORTGESCHRITTEN"
-                            ? "bg-blue-500/20 text-blue-700 border-blue-500/40"
-                            : "bg-violet-500/20 text-violet-700 border-violet-500/40"
+                            ? "bg-[rgba(59,130,246,0.2)] text-blue-700 border-[rgba(59,130,246,0.4)]"
+                            : "bg-[rgba(139,92,246,0.2)] text-violet-700 border-[rgba(139,92,246,0.4)]"
                       }
                     >
                       {shugyo.skillLevel === "NEULING"
@@ -293,14 +293,14 @@ export default function ProfilePreviewPage() {
                     </p>
                     <div className="flex flex-col gap-2">
                       {shugyo.projects.map((p) => (
-                        <div key={p.id} className="rounded-lg border border-border/40 overflow-hidden bg-muted/30">
+                        <div key={p.id} className="rounded-lg border border-[rgba(231,229,227,0.4)] overflow-hidden bg-[rgba(245,245,244,0.3)]">
                           {p.imageUrl ? (
                             <div className="relative aspect-video w-full">
                               <Image src={p.imageUrl} alt={p.title} fill className="object-cover" />
                             </div>
                           ) : (
-                            <div className="flex aspect-video items-center justify-center bg-muted/50">
-                              <ImageIcon className="size-8 text-muted-foreground/40" />
+                            <div className="flex aspect-video items-center justify-center bg-[rgba(245,245,244,0.5)]">
+                              <ImageIcon className="size-8 text-[rgba(120,113,108,0.4)]" />
                             </div>
                           )}
                           <div className="p-2">
@@ -318,7 +318,7 @@ export default function ProfilePreviewPage() {
             )}
 
             {(!shugyo?.skillLevel && (!shugyo?.projects || shugyo.projects.length === 0)) && (
-              <p className="rounded-xl border border-dashed border-border/60 bg-muted/20 py-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-xl border border-dashed border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] py-6 text-center text-sm text-muted-foreground">
                 {t("shugyo.previewEmpty")}
               </p>
             )}
@@ -364,24 +364,24 @@ export default function ProfilePreviewPage() {
       {/* Preview-Banner */}
       <div className="flex items-center justify-between gap-2 bg-primary px-4 py-2">
         <div className="flex items-center gap-2">
-          <Eye className="size-4 text-primary-foreground/80" />
+          <Eye className="size-4 text-[rgba(240,253,244,0.8)]" />
           <span className="text-xs font-medium text-primary-foreground">{t("profile.previewTitle")}</span>
         </div>
         <Link
           href="/profile"
-          className="rounded-lg bg-primary-foreground/15 px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary-foreground/25"
+          className="rounded-lg bg-[rgba(240,253,244,0.15)] px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-[rgba(240,253,244,0.25)]"
         >
           {t("profile.backToProfile")}
         </Link>
       </div>
 
       {tk.profileReviewStatus === "pending_review" && (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-[rgba(69,26,3,0.4)] dark:text-amber-100">
           {t("profile.previewModerationPending")}
         </div>
       )}
       {tk.profileReviewStatus === "rejected" && (
-        <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-foreground">
+        <div className="border-b border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] px-4 py-2 text-xs text-foreground">
           <p className="font-medium text-destructive">{t("profile.previewModerationRejected")}</p>
           {tk.profileRejectionReason && (
             <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{tk.profileRejectionReason}</p>
@@ -394,13 +394,13 @@ export default function ProfilePreviewPage() {
         </div>
       )}
       {tk.previewShowsPublicVsPendingHint && (
-        <div className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-950 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-100">
+        <div className="border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-950 dark:border-blue-900 dark:bg-[rgba(23,37,84,0.3)] dark:text-blue-100">
           {t("profile.previewPublicBioPendingHint")}
         </div>
       )}
 
       {/* Cover */}
-      <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-primary/80">
+      <div className="relative h-36 bg-gradient-to-br from-primary via-primary to-[rgba(6,78,59,0.8)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(34,197,94,0.2)_0%,_transparent_60%)]" />
       </div>
 
@@ -420,9 +420,9 @@ export default function ProfilePreviewPage() {
                 {tk.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-jp text-sm text-primary/60">匠</span>
+                <span className="font-jp text-sm text-[rgba(6,78,59,0.6)]">匠</span>
                 {tk.isPro && (
-                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-none">PRO</Badge>
+                  <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
                 )}
                 {tk.liveStatus === "available" && <LiveBadge size="md" />}
               </div>
@@ -439,7 +439,7 @@ export default function ProfilePreviewPage() {
               { label: t("takumiPage.rating"), value: tk.rating.toString(), icon: Star },
               { label: t("takumiPage.responseTime"), value: tk.responseTime, icon: Clock },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-1 rounded-xl border border-border/60 bg-card p-3">
+              <div key={stat.label} className="flex flex-col items-center gap-1 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3">
                 <stat.icon className="size-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">{stat.value}</span>
                 <span className="text-[10px] text-muted-foreground">{stat.label}</span>
@@ -476,7 +476,7 @@ export default function ProfilePreviewPage() {
             <div className="h-12 w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground">
               <span className="text-sm">{t("takumiPage.chatNow").replace("{name}", tk.name)}</span>
             </div>
-            <div className="h-12 w-full flex items-center justify-center gap-2 rounded-xl border border-primary/30 text-base font-semibold text-primary">
+            <div className="h-12 w-full flex items-center justify-center gap-2 rounded-xl border border-[rgba(6,78,59,0.3)] text-base font-semibold text-primary">
               <span className="text-sm">{t("takumiPage.sendMail")}</span>
             </div>
           </div>
@@ -484,16 +484,16 @@ export default function ProfilePreviewPage() {
           {/* Trust Badges */}
           <div className="flex flex-wrap gap-2">
             {tk.verified && (
-              <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-full bg-[rgba(34,197,94,0.1)] px-3 py-1.5">
                 <VerifiedBadge size="sm" className="text-accent" />
                 <span className="text-xs text-accent font-medium">{t("takumiPage.verified")}</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 rounded-full bg-[rgba(6,78,59,0.1)] px-3 py-1.5">
               <Shield className="size-3 text-primary" />
               <span className="text-xs text-primary font-medium">{t("takumiPage.moneyBackGuarantee")}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-amber/10 px-3 py-1.5">
+            <div className="flex items-center gap-1.5 rounded-full bg-[rgba(245,158,11,0.1)] px-3 py-1.5">
               <MessageSquare className="size-3 text-amber" />
               <span className="text-xs font-medium" style={{ color: "var(--amber)" }}>
                 {t("takumiPage.freeMinutes")}
@@ -513,8 +513,8 @@ export default function ProfilePreviewPage() {
               </div>
             </div>
             {reviews.length === 0 ? (
-              <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-                <p className="font-jp text-2xl text-muted-foreground/30 mb-1">評</p>
+              <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 text-center">
+                <p className="font-jp text-2xl text-[rgba(120,113,108,0.3)] mb-1">評</p>
                 <p className="text-xs text-muted-foreground">{t("takumiPage.reviewsEmpty")}</p>
               </div>
             ) : (
@@ -537,7 +537,7 @@ export default function ProfilePreviewPage() {
       </PageContainer>
 
       {/* Sticky Bottom Bar — deaktiviert */}
-      <div className="fixed left-0 right-0 z-40 above-bottom-nav border-t border-border bg-card/95 backdrop-blur-md px-4 py-4 opacity-50 pointer-events-none select-none">
+      <div className="fixed left-0 right-0 z-40 above-bottom-nav border-t border-border bg-[rgba(255,255,255,0.95)] backdrop-blur-md px-4 py-4 opacity-50 pointer-events-none select-none">
         <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-lg font-bold text-foreground">

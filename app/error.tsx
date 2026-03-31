@@ -24,7 +24,7 @@ export default function Error({
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-6 p-8">
-      <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+      <div className="flex size-16 items-center justify-center rounded-full bg-[rgba(239,68,68,0.1)]">
         <AlertTriangle className="size-8 text-destructive" />
       </div>
       <div className="flex flex-col items-center gap-2 text-center">
@@ -35,7 +35,7 @@ export default function Error({
           Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.
         </p>
         {isDev && error.message && (
-          <pre className="mt-4 max-w-full overflow-auto rounded-lg border border-border bg-muted/50 p-4 text-left text-xs text-destructive">
+          <pre className="mt-4 max-w-full overflow-auto rounded-lg border border-border bg-[rgba(245,245,244,0.5)] p-4 text-left text-xs text-destructive">
             {error.message}
           </pre>
         )}

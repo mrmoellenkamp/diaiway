@@ -49,7 +49,7 @@ export function ImageLightbox({
       aria-modal="true"
       aria-label="Bild vergrößert anzeigen"
       className={cn(
-        "fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm",
+        "fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(0,0,0,0.9)] backdrop-blur-sm",
         className
       )}
       onClick={onClose}
@@ -57,7 +57,7 @@ export function ImageLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        className="absolute right-4 top-4 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] text-white transition-colors hover:bg-[rgba(255,255,255,0.2)]"
         aria-label="Schließen"
       >
         <X className="size-5" />
@@ -79,7 +79,7 @@ export function ImageLightbox({
           />
         </div>
         {caption && (
-          <p className="mt-3 max-w-2xl text-center text-sm text-white/90">
+          <p className="mt-3 max-w-2xl text-center text-sm text-[rgba(255,255,255,0.9)]">
             {caption}
           </p>
         )}

@@ -36,12 +36,12 @@ const STATUS_KEYS: Record<string, string> = {
 /** Shugyo: Stripe gestartet, Zahlung noch nicht abgeschlossen */
 const STATUS_AWAITING_PAYMENT_KEY = "booking.statusAwaitingPayment"
 const statusClassNames: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
-  confirmed: "bg-primary/10 text-primary border-primary/30",
-  active: "bg-accent/15 text-accent border-accent/30",
+  pending: "bg-[rgba(245,158,11,0.15)] text-amber-700 border-[rgba(245,158,11,0.3)] dark:text-amber-400",
+  confirmed: "bg-[rgba(6,78,59,0.1)] text-primary border-[rgba(6,78,59,0.3)]",
+  active: "bg-[rgba(34,197,94,0.15)] text-accent border-[rgba(34,197,94,0.3)]",
   completed: "bg-muted text-muted-foreground border-border",
-  declined: "bg-destructive/10 text-destructive border-destructive/30",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/30",
+  declined: "bg-[rgba(239,68,68,0.1)] text-destructive border-[rgba(239,68,68,0.3)]",
+  cancelled: "bg-[rgba(239,68,68,0.1)] text-destructive border-[rgba(239,68,68,0.3)]",
 }
 
 function getInitials(name: string): string {
@@ -91,7 +91,7 @@ export function BookingCard({
     label: t(statusKey),
     className:
       statusKey === STATUS_AWAITING_PAYMENT_KEY
-        ? "bg-sky-500/15 text-sky-800 border-sky-500/30 dark:text-sky-300"
+        ? "bg-[rgba(14,165,233,0.15)] text-sky-800 border-[rgba(14,165,233,0.3)] dark:text-sky-300"
         : statusClassNames[booking.status] || statusClassNames.pending,
   }
   const expertCanRespondToPending =
@@ -156,13 +156,13 @@ export function BookingCard({
   }
 
   return (
-    <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
+    <Card className="gap-0 overflow-hidden border-[rgba(231,229,227,0.6)] py-0 transition-shadow hover:shadow-md">
       <CardContent className="flex items-start gap-3 p-4">
-        <Avatar className="size-12 shrink-0 border-2 border-primary/10">
+        <Avatar className="size-12 shrink-0 border-2 border-[rgba(6,78,59,0.1)]">
           {partnerProfileImage ? (
             <AvatarImage src={partnerProfileImage} alt="" className="object-cover" />
           ) : null}
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+          <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary font-semibold text-sm">
             {getInitials(isExpertView ? booking.userName : booking.takumiName)}
           </AvatarFallback>
         </Avatar>
@@ -219,7 +219,7 @@ export function BookingCard({
 
           {/* Cancellation info for already-cancelled bookings */}
           {booking.status === "cancelled" && booking.cancelledBy && (
-            <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive">
+            <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-[rgba(239,68,68,0.05)] px-2.5 py-1.5 text-xs text-destructive">
               <UserX className="size-3 shrink-0" />
               <span>
                 {booking.cancelledBy === "expert"
@@ -239,7 +239,7 @@ export function BookingCard({
               <Link href={`/booking/respond/${bookingId}`} className="flex-1 min-w-[140px]">
                 <Button
                   size="sm"
-                  className="h-9 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-9 w-full bg-primary text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
                 >
                   <MessageSquare className="mr-1.5 size-3.5" />
                   {t("booking.respondToRequest")}
@@ -248,14 +248,14 @@ export function BookingCard({
             )}
             {/* Takumi: confirmed → Hinweis "Termin bestätigt" (deaktiviert, read-only) */}
             {isExpertView && booking.status === "confirmed" && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-xs font-medium text-primary">
+              <div className="flex items-center gap-1.5 rounded-lg bg-[rgba(6,78,59,0.08)] px-2.5 py-1.5 text-xs font-medium text-primary">
                 <CheckCircle2 className="size-3.5 shrink-0" />
                 {t("booking.expertConfirmedHint")}
               </div>
             )}
             {/* Takumi: declined → Hinweis "Termin abgesagt" */}
             {isExpertView && booking.status === "declined" && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-destructive/8 px-2.5 py-1.5 text-xs font-medium text-destructive">
+              <div className="flex items-center gap-1.5 rounded-lg bg-[rgba(239,68,68,0.08)] px-2.5 py-1.5 text-xs font-medium text-destructive">
                 <XCircle className="size-3.5 shrink-0" />
                 {t("booking.expertDeclinedHint")}
               </div>
@@ -266,8 +266,8 @@ export function BookingCard({
                   size="sm"
                   className={
                     isLive
-                      ? "h-9 w-full animate-pulse bg-accent text-accent-foreground hover:bg-accent/90"
-                      : "h-9 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      ? "h-9 w-full animate-pulse bg-accent text-accent-foreground hover:bg-[rgba(34,197,94,0.9)]"
+                      : "h-9 w-full bg-primary text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
                   }
                 >
                   <Phone className="mr-1.5 size-3.5" />
@@ -281,7 +281,7 @@ export function BookingCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-9 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    className="h-9 border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.1)]"
                     disabled={isCancelling}
                   >
                     {isCancelling ? (
@@ -306,7 +306,7 @@ export function BookingCard({
                         {/* Fee preview panel */}
                         {cancelPreview && !isExpertCancelling ? (
                           cancelPreview.isFree ? (
-                            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-[rgba(2,44,34,0.3)]">
                               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                               <div className="space-y-0.5">
                                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
@@ -327,7 +327,7 @@ export function BookingCard({
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-[rgba(69,26,3,0.3)]">
                               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
                               <div className="space-y-0.5">
                                 <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -351,7 +351,7 @@ export function BookingCard({
                             </div>
                           )
                         ) : isExpertCancelling ? (
-                          <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                          <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-[rgba(2,44,34,0.3)]">
                             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                             <div>
                               <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
@@ -375,7 +375,7 @@ export function BookingCard({
                     <AlertDialogCancel>{t("common.abort")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleCancel}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="bg-destructive text-destructive-foreground hover:bg-[rgba(239,68,68,0.9)]"
                     >
                       {t("booking.confirmCancel")}
                     </AlertDialogAction>

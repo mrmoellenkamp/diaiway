@@ -114,7 +114,7 @@ export default function SettingsPage() {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 text-sm text-muted-foreground/80 hover:text-destructive hover:bg-destructive/5"
+                  className="w-full justify-start gap-2 text-sm text-[rgba(120,113,108,0.8)] hover:text-destructive hover:bg-[rgba(239,68,68,0.05)]"
                 >
                   <Trash2 className="size-4" />
                   {t("profile.deleteAccount")}
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                   <AlertDialogAction
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                    className="bg-destructive hover:bg-[rgba(239,68,68,0.9)] text-destructive-foreground"
                   >
                     {deleting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
                     {t("profile.deleteAccountConfirmBtn")}

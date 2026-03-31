@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 /** Skeleton mit exakter Geometrie der TakumiCard – für CLS-Stabilität während des Ladens */
 export function TakumiCardSkeleton() {
   return (
-    <Card className="gap-0 overflow-hidden border-border/60 py-0">
+    <Card className="gap-0 overflow-hidden border-[rgba(231,229,227,0.6)] py-0">
       <CardContent className="relative flex items-start gap-3 p-4">
         <div className="absolute top-3 right-3 z-10 size-6" aria-hidden />
         <div className="relative shrink-0">

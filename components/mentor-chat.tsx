@@ -300,34 +300,34 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
       className={cn(
         "flex flex-col overflow-hidden font-sans",
         isEmbedded
-          ? "rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10"
+          ? "rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
           : isFullpage
-            ? "h-[calc(100vh-6rem)] rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10"
-            : "h-full rounded-3xl border border-primary/15 bg-emerald-50/50 backdrop-blur-md shadow-lg shadow-primary/10",
+            ? "h-[calc(100vh-6rem)] rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
+            : "h-full rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]",
         className
       )}
     >
       {/* Header — einheitlich dunkelgrün (wie CollapsibleAiBox / Marketing) */}
       {!hideHeader && (
-        <div className="flex items-center gap-3 border-b border-white/10 bg-gradient-to-br from-primary via-primary to-primary/95 px-4 py-3 shadow-[0_4px_20px_rgba(6,78,59,0.25)]">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/10">
+        <div className="flex items-center gap-3 border-b border-[rgba(255,255,255,0.1)] bg-gradient-to-br from-primary via-primary to-[rgba(6,78,59,0.95)] px-4 py-3 shadow-[0_4px_20px_rgba(6,78,59,0.25)]">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(255,255,255,0.15)] ring-1 ring-[rgba(255,255,255,0.1)]">
             <Sparkles className="size-4 text-accent" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-baseline gap-x-1 text-sm font-bold text-primary-foreground leading-tight">
               <span className="font-semibold">{t("mentor.hishoName")}</span>
-              <span className="text-primary-foreground/60">–</span>
+              <span className="text-[rgba(240,253,244,0.6)]">–</span>
               <DiAiwayBrand lightOnDark />
-              <span className="text-primary-foreground/60">–</span>
-              <span className="text-[11px] font-semibold text-primary-foreground/90">
+              <span className="text-[rgba(240,253,244,0.6)]">–</span>
+              <span className="text-[11px] font-semibold text-[rgba(240,253,244,0.9)]">
                 {t("mentor.intelligenceSuffix")}
               </span>
             </p>
-            <p className="truncate text-[10px] text-primary-foreground/65">
+            <p className="truncate text-[10px] text-[rgba(240,253,244,0.65)]">
               {(isEmbedded || isFullpage) ? t("mentor.headerDescEmbedded") : t("mentor.headerDescFloating")}
             </p>
           </div>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-accent">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.1)] px-2 py-0.5 text-[9px] font-semibold text-accent">
             <span className="relative flex size-1.5">
               <span className="absolute inline-flex size-full animate-live-pulse rounded-full bg-accent" />
               <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
@@ -348,10 +348,10 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         {/* Welcome */}
         {messages.length === 0 && (
           <div className="flex gap-2.5">
-            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/10">
+            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)]">
               <Bot className="size-3.5 text-primary" />
             </div>
-            <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border/30 bg-white/80 px-3 py-2.5 text-[13px] leading-relaxed text-foreground shadow-sm">
+            <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-[rgba(231,229,227,0.3)] bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-[13px] leading-relaxed text-foreground shadow-sm">
               {t("mentor.welcome")}
             </div>
           </div>
@@ -366,7 +366,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                 <div
                   className={cn(
                     "mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full",
-                    msg.role === "assistant" ? "bg-primary/10 ring-1 ring-primary/10" : "bg-accent/10 ring-1 ring-accent/10"
+                    msg.role === "assistant" ? "bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)]" : "bg-[rgba(34,197,94,0.1)] ring-1 ring-[rgba(34,197,94,0.1)]"
                   )}
                 >
                   {msg.role === "assistant" ? (
@@ -388,8 +388,8 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
                     msg.role === "assistant"
-                      ? "rounded-tl-md bg-white/80 text-foreground shadow-sm border border-border/30"
-                      : "rounded-tr-md bg-primary/10 text-foreground"
+                      ? "rounded-tl-md bg-[rgba(255,255,255,0.8)] text-foreground shadow-sm border border-[rgba(231,229,227,0.3)]"
+                      : "rounded-tr-md bg-[rgba(6,78,59,0.1)] text-foreground"
                   )}
                 >
                   <div className="flex flex-col gap-2">
@@ -413,7 +413,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                             key={idx}
                             src={part.url}
                             alt={part.filename ?? t("mentor.attachPhoto")}
-                            className="max-h-40 max-w-full rounded-lg border border-border/40 object-contain"
+                            className="max-h-40 max-w-full rounded-lg border border-[rgba(231,229,227,0.4)] object-contain"
                           />
                         )
                       }
@@ -425,19 +425,19 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
 
               {/* Takumi Tip Card */}
               {showTakumiTip && (
-                <div className="ml-9 mt-2.5 overflow-hidden rounded-xl border border-accent/20 bg-white/70 shadow-sm">
-                  <div className="border-b border-accent/10 bg-accent/[0.06] px-3 py-1.5">
+                <div className="ml-9 mt-2.5 overflow-hidden rounded-xl border border-[rgba(34,197,94,0.2)] bg-[rgba(255,255,255,0.7)] shadow-sm">
+                  <div className="border-b border-[rgba(34,197,94,0.1)] bg-[rgba(34,197,94,0.06)] px-3 py-1.5">
                     <div className="flex items-center gap-1.5">
                       <Sparkles className="size-3 text-accent" />
-                      <span className="font-jp text-[9px] text-accent/60">{"提案"}</span>
+                      <span className="font-jp text-[9px] text-[rgba(34,197,94,0.6)]">{"提案"}</span>
                       <span className="text-[10px] font-bold text-foreground">KI-Tipp: Experten-Check</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2.5 p-3">
                     <div className="flex items-center gap-2.5">
-                      <Avatar className="size-9 ring-2 ring-accent/20">
+                      <Avatar className="size-9 ring-2 ring-[rgba(34,197,94,0.2)]">
                         {liveTakumi.imageUrl && <AvatarImage src={liveTakumi.imageUrl} alt={liveTakumi.name} className="object-cover" />}
-                        <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">{liveTakumi.avatar}</AvatarFallback>
+                        <AvatarFallback className="bg-[rgba(34,197,94,0.1)] text-accent text-xs font-bold">{liveTakumi.avatar}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-semibold text-foreground">{liveTakumi.name}</p>
@@ -453,14 +453,14 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 rounded-lg bg-accent/5 px-2.5 py-1.5">
+                    <div className="flex items-center gap-1.5 rounded-lg bg-[rgba(34,197,94,0.05)] px-2.5 py-1.5">
                       <CheckCircle2 className="size-3 shrink-0 text-accent" />
                       <p className="text-[10px] text-muted-foreground">5 Min. gratis. Kein Abo.</p>
                     </div>
                     <Button
                       onClick={() => router.push(`/takumi/${liveTakumi.id}`)}
                       size="sm"
-                      className="h-9 gap-1.5 rounded-xl bg-accent text-xs font-bold text-accent-foreground shadow-md shadow-accent/15 hover:bg-accent/90"
+                      className="h-9 gap-1.5 rounded-xl bg-accent text-xs font-bold text-accent-foreground shadow-md shadow-[0_4px_14px_rgba(34,197,94,0.15)] hover:bg-[rgba(34,197,94,0.9)]"
                     >
                       <Video className="size-3.5" />
                       Experten-Check starten
@@ -476,16 +476,16 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         {/* Proactive prompt -- ask user if they want expert search */}
         {showProactivePrompt && !isSearchingExperts && (
           <div className="flex gap-2.5">
-            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/10">
+            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)]">
               <Sparkles className="size-3.5 text-primary" />
             </div>
-            <div className="max-w-[90%] flex flex-col gap-2.5 rounded-2xl rounded-tl-md border border-primary/15 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-sm">
+            <div className="max-w-[90%] flex flex-col gap-2.5 rounded-2xl rounded-tl-md border border-[rgba(6,78,59,0.15)] bg-[rgba(255,255,255,0.9)] px-3 py-3 shadow-sm backdrop-blur-sm">
               <p className="text-[13px] leading-relaxed text-foreground">{t("mentor.proactiveSearchQuestion")}</p>
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleSearchExperts}
                   size="sm"
-                  className="h-8 gap-1.5 rounded-lg bg-primary text-[11px] font-bold text-primary-foreground hover:bg-primary/90"
+                  className="h-8 gap-1.5 rounded-lg bg-primary text-[11px] font-bold text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
                 >
                   <Sparkles className="size-3" />
                   {t("mentor.proactiveSearchYes")}
@@ -494,7 +494,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                   onClick={handleDeclineSearch}
                   size="sm"
                   variant="outline"
-                  className="h-8 rounded-lg text-[11px] border-border/50"
+                  className="h-8 rounded-lg text-[11px] border-[rgba(231,229,227,0.5)]"
                 >
                   {t("mentor.proactiveSearchNo")}
                 </Button>
@@ -509,11 +509,11 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             <div className="relative">
               <div className="search-pulse-ring absolute inset-0 rounded-full" />
               <div className="search-pulse-ring-delayed absolute inset-0 rounded-full" />
-              <div className="relative flex size-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30">
+              <div className="relative flex size-16 items-center justify-center rounded-full bg-primary shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_10px_28px_rgba(6,78,59,0.28)]">
                 <Sparkles className="size-6 text-primary-foreground" />
               </div>
             </div>
-            <p className="font-jp text-sm font-medium text-primary/70">
+            <p className="font-jp text-sm font-medium text-[rgba(6,78,59,0.7)]">
               {"最適なマッチを探しています"}
             </p>
             <p className="text-[12px] text-muted-foreground">Suche nach dem perfekten Match...</p>
@@ -538,12 +538,12 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                 return (
                   <div
                     key={t.id}
-                    className="flex w-[200px] shrink-0 flex-col gap-2.5 rounded-xl border border-primary/10 bg-white/70 p-3 shadow-sm backdrop-blur-sm"
+                    className="flex w-[200px] shrink-0 flex-col gap-2.5 rounded-xl border border-[rgba(6,78,59,0.1)] bg-[rgba(255,255,255,0.7)] p-3 shadow-sm backdrop-blur-sm"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Avatar className="size-10 ring-2 ring-primary/10">
+                      <Avatar className="size-10 ring-2 ring-[rgba(6,78,59,0.1)]">
                         {t.imageUrl && <AvatarImage src={t.imageUrl} alt={t.name} className="object-cover" />}
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                        <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-bold">
                           {t.avatar}
                         </AvatarFallback>
                       </Avatar>
@@ -572,7 +572,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                     <Button
                       onClick={() => router.push(`/takumi/${t.id}`)}
                       size="sm"
-                      className="h-8 w-full rounded-lg bg-primary/90 text-[11px] font-semibold text-primary-foreground hover:bg-primary"
+                      className="h-8 w-full rounded-lg bg-[rgba(6,78,59,0.9)] text-[11px] font-semibold text-primary-foreground hover:bg-primary"
                     >
                       Profil ansehen
                       <ArrowRight className="ml-1 size-3" />
@@ -587,14 +587,14 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         {/* Thinking indicator */}
         {isStreaming && messages[messages.length - 1]?.role === "user" && (
           <div className="flex gap-2.5">
-            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/10 animate-live-pulse">
+            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)] animate-live-pulse">
               <Bot className="size-3.5 text-primary" />
             </div>
-            <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-border/30 bg-white/80 px-3 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-[rgba(231,229,227,0.3)] bg-[rgba(255,255,255,0.8)] px-3 py-2.5 shadow-sm">
               <div className="flex items-center gap-1">
-                <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-1" />
-                <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-2" />
-                <span className="block size-1.5 rounded-full bg-primary/50 animate-mentor-dot-3" />
+                <span className="block size-1.5 rounded-full bg-[rgba(6,78,59,0.5)] animate-mentor-dot-1" />
+                <span className="block size-1.5 rounded-full bg-[rgba(6,78,59,0.5)] animate-mentor-dot-2" />
+                <span className="block size-1.5 rounded-full bg-[rgba(6,78,59,0.5)] animate-mentor-dot-3" />
               </div>
               <span className="text-[10px] text-muted-foreground">{t("mentor.thinking")}</span>
             </div>
@@ -604,17 +604,17 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
         {/* Error state */}
         {hasError && (
           <div className="flex gap-2.5">
-            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-destructive/10 ring-1 ring-destructive/10">
+            <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgba(239,68,68,0.1)] ring-1 ring-[rgba(239,68,68,0.1)]">
               <Sparkles className="size-3.5 text-destructive" />
             </div>
-            <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-[12px] leading-relaxed text-foreground shadow-sm">
+            <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.05)] px-3 py-2.5 text-[12px] leading-relaxed text-foreground shadow-sm">
               <p className="font-semibold text-destructive">Verbindungsfehler</p>
               <p className="mt-1 text-muted-foreground text-[11px] break-words">
                 {error?.message || "Bitte versuche es erneut."}
               </p>
               <button
                 onClick={() => input.trim() ? handleSend() : setInput("Hallo")}
-                className="mt-1.5 text-[10px] font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+                className="mt-1.5 text-[10px] font-medium text-primary underline underline-offset-2 hover:text-[rgba(6,78,59,0.8)]"
               >
                 Erneut versuchen
               </button>
@@ -624,11 +624,11 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
       </div>
 
       {/* Input Bar */}
-      <div className="border-t border-primary/8 bg-white/40 px-3 py-2.5">
-        <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
+      <div className="border-t border-[rgba(6,78,59,0.08)] bg-[rgba(255,255,255,0.4)] px-3 py-2.5">
+        <div className="flex items-end gap-2 rounded-xl border border-[rgba(231,229,227,0.4)] bg-[rgba(255,255,255,0.7)] px-2.5 py-1.5">
           <label
             className={cn(
-              "relative mb-0.5 flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary touch-manipulation",
+              "relative mb-0.5 flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[rgba(6,78,59,0.05)] hover:text-primary touch-manipulation",
               isStreaming && "pointer-events-none opacity-40"
             )}
             aria-label={t("mentor.attachPhoto")}
@@ -652,7 +652,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             disabled={isStreaming}
             placeholder={(isEmbedded || isFullpage) ? t("mentor.placeholderEmbedded") : t("mentor.placeholderFloating")}
             rows={1}
-            className="min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
+            className="min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-relaxed text-foreground placeholder:text-[rgba(120,113,108,0.4)] focus:outline-none disabled:opacity-50"
             style={{ maxHeight: 160 }}
           />
           <button
@@ -661,15 +661,15 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             className={cn(
               "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-all touch-manipulation",
               input.trim() && !isStreaming
-                ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                : "text-muted-foreground/25"
+                ? "bg-primary text-primary-foreground shadow-sm hover:bg-[rgba(6,78,59,0.9)]"
+                : "text-[rgba(120,113,108,0.25)]"
             )}
             aria-label="Nachricht senden"
           >
             <Send className="size-3.5" />
           </button>
         </div>
-        <p className="mt-1 text-center text-[9px] text-muted-foreground/30">
+        <p className="mt-1 text-center text-[9px] text-[rgba(120,113,108,0.3)]">
           Shift+Enter fur neue Zeile
         </p>
       </div>

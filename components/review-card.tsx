@@ -30,10 +30,10 @@ export function ReviewCard({
     : reviewerName.charAt(0).toUpperCase()
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-2">
+    <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="size-7 shrink-0 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+          <div className="size-7 shrink-0 rounded-full overflow-hidden bg-[rgba(6,78,59,0.1)] flex items-center justify-center">
             {reviewerImage ? (
               <Image
                 src={reviewerImage}
@@ -52,7 +52,7 @@ export function ReviewCard({
             <span
               className={cn(
                 "text-[10px] font-medium",
-                reviewerRole === "takumi" ? "text-primary/70" : "text-accent/70"
+                reviewerRole === "takumi" ? "text-[rgba(6,78,59,0.7)]" : "text-[rgba(34,197,94,0.7)]"
               )}
             >
               {reviewerRole === "takumi" ? "匠 Takumi" : "修 Shugyo"}

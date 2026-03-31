@@ -149,14 +149,14 @@ export default function AdminSafetyPage() {
         ) : reports.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Flag className="mx-auto mb-3 size-12 text-muted-foreground/50" />
+              <Flag className="mx-auto mb-3 size-12 text-[rgba(120,113,108,0.5)]" />
               <p className="text-sm text-muted-foreground">{t("admin.noSafetyReports")}</p>
             </CardContent>
           </Card>
         ) : (
           <div className="flex flex-col gap-3">
             {reports.map((r) => (
-              <Card key={r.id} className="border-border/60">
+              <Card key={r.id} className="border-[rgba(231,229,227,0.6)]">
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle className="text-sm font-semibold">
@@ -165,8 +165,8 @@ export default function AdminSafetyPage() {
                     <Badge
                       className={
                         r.status === "pending"
-                          ? "bg-amber-500/15 text-amber-700"
-                          : "bg-green-500/15 text-green-700"
+                          ? "bg-[rgba(245,158,11,0.15)] text-amber-700"
+                          : "bg-[rgba(34,197,94,0.15)] text-green-700"
                       }
                     >
                       {r.status}

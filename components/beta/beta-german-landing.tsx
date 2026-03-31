@@ -26,7 +26,7 @@ export function BetaGermanLanding() {
       </section>
 
       <article className="mx-auto max-w-2xl px-4 pt-4 pb-8 md:pt-6 md:pb-12">
-        <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
+        <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[rgba(6,78,59,0.25)] bg-[rgba(6,78,59,0.1)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
           <Rocket className="size-3.5" aria-hidden />
           Beta-Runde
         </p>
@@ -53,7 +53,7 @@ export function BetaGermanLanding() {
           geht, ein Möbelstück zusammenzubauen oder einen Oldtimer zu restaurieren.
         </p>
 
-        <div className="mt-8 rounded-2xl border border-primary/15 bg-primary/[0.06] p-5 md:p-6">
+        <div className="mt-8 rounded-2xl border border-[rgba(6,78,59,0.15)] bg-[rgba(6,78,59,0.06)] p-5 md:p-6">
           <p className="text-base font-semibold leading-relaxed text-primary md:text-lg">
             Und jetzt ist es endlich so weit: Die Plattform heißt{" "}
             <span className="whitespace-nowrap font-semibold text-foreground">
@@ -70,7 +70,7 @@ export function BetaGermanLanding() {
 
         {/* Beta-Tester-Aufruf: Key-Visual direkt nach „brauche ich dich“ */}
         <div className="mx-auto mt-8 flex w-full justify-center">
-          <div className="relative aspect-square w-full max-w-[min(88vw,26rem)] overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-border/60 sm:max-w-md md:max-w-lg">
+          <div className="relative aspect-square w-full max-w-[min(88vw,26rem)] overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-[rgba(231,229,227,0.6)] sm:max-w-md md:max-w-lg">
             <Image
               src="/beta/hero-beta-de.png"
               alt="diAiway: Wir suchen Beta-Tester — DIY-Werkstatt mit Live-Experte auf dem Bildschirm und KI-Einblicken"
@@ -99,7 +99,7 @@ export function BetaGermanLanding() {
           <Button
             asChild
             size="lg"
-            className="h-12 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+            className="h-12 rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_8px_24px_rgba(6,78,59,0.22)] hover:bg-[rgba(6,78,59,0.9)]"
           >
             <a href={mailtoHref}>
               <Mail className="mr-2 size-4" aria-hidden />
@@ -110,7 +110,7 @@ export function BetaGermanLanding() {
             asChild
             size="lg"
             variant="outline"
-            className="h-12 rounded-xl border-primary/30 bg-white text-base font-semibold text-primary hover:bg-primary/5"
+            className="h-12 rounded-xl border-[rgba(6,78,59,0.3)] bg-white text-base font-semibold text-primary hover:bg-[rgba(6,78,59,0.05)]"
           >
             <Link href="/">
               <UserPlus className="mr-2 size-4" aria-hidden />

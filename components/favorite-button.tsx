@@ -54,8 +54,8 @@ export function FavoriteButton({ takumiId, className, size = "sm" }: FavoriteBut
         "flex items-center justify-center rounded-full transition-all",
         size === "sm" ? "size-11 min-h-11 min-w-11" : "size-11 min-h-11 min-w-11",
         isFav
-          ? "bg-destructive/10 text-destructive"
-          : "bg-background/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+          ? "bg-[rgba(239,68,68,0.1)] text-destructive"
+          : "bg-[rgba(250,250,249,0.8)] text-muted-foreground hover:text-destructive hover:bg-[rgba(239,68,68,0.1)]",
         isAnimating && "scale-125",
         className
       )}

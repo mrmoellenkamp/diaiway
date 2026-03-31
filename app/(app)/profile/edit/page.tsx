@@ -470,7 +470,7 @@ export default function EditProfilePage() {
         ) : (
           <>
             {/* ===== Base Profile ===== */}
-            <Card className="border-border/60">
+            <Card className="border-[rgba(231,229,227,0.6)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <User className="size-4 text-primary" />
@@ -482,12 +482,12 @@ export default function EditProfilePage() {
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
                     {image ? (
-                      <div className="relative size-24 overflow-hidden rounded-full border-4 border-primary/10">
+                      <div className="relative size-24 overflow-hidden rounded-full border-4 border-[rgba(6,78,59,0.1)]">
                         <Image src={image} alt={t("editProfile.personalData")} fill className="object-cover" />
                       </div>
                     ) : (
-                      <Avatar className="size-24 border-4 border-primary/10">
-                        <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                      <Avatar className="size-24 border-4 border-[rgba(6,78,59,0.1)]">
+                        <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-2xl font-bold">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
@@ -553,7 +553,7 @@ export default function EditProfilePage() {
             </Card>
 
             {/* ===== Sprachen ===== */}
-            <Card className="border-border/60">
+            <Card className="border-[rgba(231,229,227,0.6)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -576,8 +576,8 @@ export default function EditProfilePage() {
                       }}
                       className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
                         isSelected
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                          ? "border-[rgba(6,78,59,0.4)] bg-[rgba(6,78,59,0.1)] text-primary"
+                          : "border-border bg-[rgba(245,245,244,0.3)] text-muted-foreground hover:bg-[rgba(245,245,244,0.5)]"
                       }`}
                     >
                       <LanguageFlagSticker lang={lang} showLabel="code" size="sm" />
@@ -588,7 +588,7 @@ export default function EditProfilePage() {
             </Card>
 
             {/* ===== Role Toggle ===== */}
-            <Card className="border-border/60">
+            <Card className="border-[rgba(231,229,227,0.6)]">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-foreground">{t("editProfile.takumiMode")}</span>
@@ -604,13 +604,13 @@ export default function EditProfilePage() {
             {/* ===== Takumi Profile ===== */}
             {isTakumi && (
               <>
-                <Card className="border-accent/30 bg-accent/5">
+                <Card className="border-[rgba(34,197,94,0.3)] bg-[rgba(34,197,94,0.05)]">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <Briefcase className="size-4 text-accent" />
                       {t("editProfile.expertProfile")}
                       {takumiExists && (
-                        <Badge variant="outline" className="ml-auto text-[10px] border-primary/30 bg-primary/5 text-primary">
+                        <Badge variant="outline" className="ml-auto text-[10px] border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary">
                           {t("common.active")}
                         </Badge>
                       )}
@@ -618,12 +618,12 @@ export default function EditProfilePage() {
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
                     {profileReviewStatus === "pending_review" && (
-                      <div className="rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-100">
+                      <div className="rounded-lg border border-[rgba(252,211,77,0.6)] bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-[rgba(180,83,9,0.5)] dark:bg-[rgba(69,26,3,0.3)] dark:text-amber-100">
                         {t("editProfile.moderationPending")}
                       </div>
                     )}
                     {profileReviewStatus === "rejected" && profileRejectionReason && (
-                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground">
+                      <div className="rounded-lg border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.05)] px-3 py-2 text-xs text-foreground">
                         <p className="font-medium text-destructive">{t("editProfile.moderationRejectedTitle")}</p>
                         <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{profileRejectionReason}</p>
                         <p className="mt-2 text-muted-foreground">
@@ -643,7 +643,7 @@ export default function EditProfilePage() {
                             <Image src={takumiImageUrl} alt={t("editProfile.expertImage")} fill className="object-cover" />
                           </div>
                         ) : (
-                          <div className="flex size-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted/50">
+                          <div className="flex size-16 items-center justify-center rounded-lg border border-dashed border-border bg-[rgba(245,245,244,0.5)]">
                             <Upload className="size-5 text-muted-foreground" />
                           </div>
                         )}
@@ -752,7 +752,7 @@ export default function EditProfilePage() {
                 </Card>
 
                 {/* ===== Social Media ===== */}
-                <Card className="border-border/60">
+                <Card className="border-[rgba(231,229,227,0.6)]">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -854,7 +854,7 @@ export default function EditProfilePage() {
 
                 {/* ===== Pending Bookings ===== */}
                 {!loadingBookings && pendingBookings.length > 0 && (
-                  <Card className="border-amber-300/60 bg-amber-50 dark:bg-amber-950/20">
+                  <Card className="border-[rgba(252,211,77,0.6)] bg-amber-50 dark:bg-[rgba(69,26,3,0.2)]">
                     <CardHeader className="pb-2">
                       <CardTitle className="flex items-center gap-2 text-sm">
                         <AlertCircle className="size-4 text-amber-600" />
@@ -889,7 +889,7 @@ export default function EditProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 gap-1 border-destructive/30 text-xs font-semibold text-destructive"
+                              className="h-7 gap-1 border-[rgba(239,68,68,0.3)] text-xs font-semibold text-destructive"
                               onClick={() => handleBookingAction(b.id, b.statusToken, "declined")}
                             >
                               <XCircle className="size-3" /> {t("common.no")}
@@ -903,7 +903,7 @@ export default function EditProfilePage() {
 
                 {/* ===== Confirmed Bookings ===== */}
                 {!loadingBookings && confirmedBookings.length > 0 && (
-                  <Card className="border-primary/30">
+                  <Card className="border-[rgba(6,78,59,0.3)]">
                     <CardHeader className="pb-2">
                       <CardTitle className="flex items-center gap-2 text-sm">
                         <Calendar className="size-4 text-primary" />
@@ -912,7 +912,7 @@ export default function EditProfilePage() {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-1.5">
                       {confirmedBookings.map((b) => (
-                        <div key={b.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                        <div key={b.id} className="flex items-center justify-between rounded-lg bg-[rgba(245,245,244,0.5)] px-3 py-2">
                           <div className="flex flex-col">
                             {b.userId ? (
                               <Link href={`/user/${b.userId}`} className="text-xs font-medium text-foreground underline-offset-2 hover:underline">
@@ -923,7 +923,7 @@ export default function EditProfilePage() {
                             )}
                             <span className="text-[11px] text-muted-foreground">{b.date} / {b.startTime}-{b.endTime}</span>
                           </div>
-                          <Badge variant="outline" className="text-[10px] border-primary/30 bg-primary/5 text-primary">
+                          <Badge variant="outline" className="text-[10px] border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary">
                             {t("editProfile.confirmed")}
                           </Badge>
                         </div>
@@ -942,7 +942,7 @@ export default function EditProfilePage() {
                   type="button"
                   onClick={() => handleSave(needsReviewSubmit, needsReviewSubmit ? "submit" : "profile")}
                   disabled={saving || uploading}
-                  className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
+                  className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)]"
                 >
                   {savingAction === "submit" || savingAction === "profile" ? (
                     <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>
@@ -968,7 +968,7 @@ export default function EditProfilePage() {
               <Button
                 onClick={() => handleSave(false, "profile")}
                 disabled={saving || uploading}
-                className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
+                className="h-12 w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)]"
               >
                 {savingAction === "profile" ? (
                   <><Loader2 className="size-4 animate-spin" /> {t("common.saving")}</>

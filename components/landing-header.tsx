@@ -34,10 +34,10 @@ export function LandingHeader() {
   const mobileAvatarSrc = (userAvatar || session?.user?.image || "").trim()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary/95 backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
+    <header className="sticky top-0 z-50 border-b border-[rgba(240,253,244,0.1)] bg-[rgba(6,78,59,0.95)] backdrop-blur-md pointer-events-auto pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex w-full max-w-lg min-w-0 items-center justify-between py-2.5 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
         <Link href="/" className="flex min-h-11 items-center gap-2 rounded-lg py-1 touch-manipulation">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/10">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(240,253,244,0.1)]">
             <span className="text-sm font-bold text-accent">di</span>
           </div>
           <span className="text-base font-bold text-primary-foreground">
@@ -53,7 +53,7 @@ export function LandingHeader() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
-            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 touch-manipulation sm:hidden"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-[rgba(240,253,244,0.1)] touch-manipulation sm:hidden"
             aria-label="Menu"
           >
             {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -62,11 +62,11 @@ export function LandingHeader() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="border-t border-primary-foreground/10 bg-card px-4 py-3 sm:hidden">
+        <div className="border-t border-[rgba(240,253,244,0.1)] bg-card px-4 py-3 sm:hidden">
           {isLoggedIn ? (
             <nav className="flex flex-col gap-0.5">
               <div className="flex items-center gap-3 px-3 py-2.5">
-                <Avatar className="size-10 border-2 border-primary/10">
+                <Avatar className="size-10 border-2 border-[rgba(6,78,59,0.1)]">
                   {mobileAvatarSrc ? (
                     <Image
                       src={mobileAvatarSrc}
@@ -77,7 +77,7 @@ export function LandingHeader() {
                       className="size-full rounded-full object-cover"
                     />
                   ) : (
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                    <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-sm font-bold">
                       {initials}
                     </AvatarFallback>
                   )}
@@ -127,7 +127,7 @@ export function LandingHeader() {
                   await signOut({ redirect: false })
                   window.location.replace("/")
                 }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-[rgba(239,68,68,0.1)]"
               >
                 <LogOut className="size-4" />
                 {t("nav.logout")}

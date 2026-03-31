@@ -193,9 +193,9 @@ function SessionsContent() {
       {isTakumi && (
         <Link
           href="/profile/availability?tab=guest"
-          className="mb-4 flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10 active:scale-[0.98]"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] px-4 py-3 transition-colors hover:bg-[rgba(6,78,59,0.1)] active:scale-[0.98]"
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.15)]">
             <UserPlus className="size-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">

@@ -25,8 +25,8 @@ function TopicCard({
   desc: string
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+    <div className="flex items-start gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(6,78,59,0.1)]">
         <Icon className="size-4 text-primary" />
       </div>
       <div className="flex flex-col gap-0.5">
@@ -50,7 +50,7 @@ export default function HelpPage() {
 
         <div className="flex flex-col gap-8">
           {/* Contact CTA */}
-          <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex flex-col gap-3 rounded-xl border border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)] p-4">
             <div className="flex items-center gap-2">
               <HelpCircle className="size-5 text-primary" />
               <span className="font-semibold text-foreground">Direkter Support</span>
@@ -60,7 +60,7 @@ export default function HelpPage() {
             </p>
             <a
               href="mailto:support@diaiway.com"
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 w-fit"
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-[rgba(6,78,59,0.9)] w-fit"
             >
               <Mail className="size-4" />
               support@diaiway.com

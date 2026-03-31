@@ -24,7 +24,7 @@ export function LanguageSwitcher({ variant = "default" }: { variant?: "default" 
           className={cn(
             "flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring touch-manipulation",
             variant === "landing"
-              ? "px-2 text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              ? "px-2 text-[rgba(240,253,244,0.7)] hover:bg-[rgba(240,253,244,0.1)] hover:text-primary-foreground"
               : variant === "compact"
                 ? "px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                 : "px-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"

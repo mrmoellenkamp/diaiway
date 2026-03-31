@@ -92,8 +92,8 @@ function SortableCategoryRow({
       style={style}
       className={cn(
         "flex min-w-0 flex-wrap items-center gap-1 rounded-lg border p-2 text-sm transition-colors sm:flex-nowrap md:p-3",
-        isSelected ? "border-primary bg-primary/5" : "border-border/60",
-        isDragging && "z-10 bg-card shadow-lg ring-2 ring-primary/25",
+        isSelected ? "border-primary bg-[rgba(6,78,59,0.05)]" : "border-[rgba(231,229,227,0.6)]",
+        isDragging && "z-10 bg-card shadow-lg ring-2 ring-[rgba(6,78,59,0.25)]",
       )}
     >
       <button
@@ -108,7 +108,7 @@ function SortableCategoryRow({
       <button
         type="button"
         onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 text-left transition-colors hover:bg-muted/40"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 text-left transition-colors hover:bg-[rgba(245,245,244,0.4)]"
       >
         <div
           className="flex size-10 shrink-0 items-center justify-center rounded-lg"
@@ -154,8 +154,8 @@ function SortableSpecialtyRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex flex-col gap-2 rounded-md border border-border/50 p-2 text-sm sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:py-2",
-        isDragging && "z-10 bg-card shadow-md ring-2 ring-primary/20",
+        "flex flex-col gap-2 rounded-md border border-[rgba(231,229,227,0.5)] p-2 text-sm sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:py-2",
+        isDragging && "z-10 bg-card shadow-md ring-2 ring-[rgba(6,78,59,0.2)]",
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -175,7 +175,7 @@ function SortableSpecialtyRow({
           onBlur={(e) => onNameBlur(s.id, e.target.value.trim() || s.name)}
         />
       </div>
-      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/40 pt-2 sm:border-t-0 sm:pt-0">
+      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[rgba(231,229,227,0.4)] pt-2 sm:border-t-0 sm:pt-0">
         <Switch checked={s.isActive} onCheckedChange={(v) => onToggleActive(s.id, v)} />
         <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => onDelete(s.id)}>
           <Trash2 className="size-3.5 text-destructive" />
@@ -503,9 +503,9 @@ export default function AdminTaxonomyPage() {
         </div>
 
         {schemaBlockMessage && (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="rounded-xl border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.1)] px-4 py-3 text-sm text-destructive">
             <p className="font-semibold">Datenbank-Schema unvollständig</p>
-            <p className="mt-1 text-destructive/90">{schemaBlockMessage}</p>
+            <p className="mt-1 text-[rgba(239,68,68,0.9)]">{schemaBlockMessage}</p>
           </div>
         )}
 
@@ -553,7 +553,7 @@ export default function AdminTaxonomyPage() {
               </CardContent>
             </Card>
 
-            <Card className="min-w-0 border-primary/15 shadow-sm">
+            <Card className="min-w-0 border-[rgba(6,78,59,0.15)] shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">
                   Fachbereiche{selected ? <span className="font-normal text-muted-foreground"> — {selected.name}</span> : null}
@@ -570,7 +570,7 @@ export default function AdminTaxonomyPage() {
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 {!selected ? (
-                  <p className="rounded-lg border border-dashed border-border/80 bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+                  <p className="rounded-lg border border-dashed border-[rgba(231,229,227,0.8)] bg-[rgba(245,245,244,0.3)] px-4 py-8 text-center text-sm text-muted-foreground">
                     Noch keine Kategorie gewählt — tippe auf eine Zeile unter „Kategorien“.
                   </p>
                 ) : (

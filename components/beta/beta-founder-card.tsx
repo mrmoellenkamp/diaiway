@@ -17,7 +17,7 @@ export function BetaFounderCard({ label, name, imageAlt, className }: BetaFounde
   return (
     <div
       className={cn(
-        "flex w-full max-w-xl items-center gap-4 rounded-3xl bg-white p-5 shadow-[0_4px_28px_rgba(15,23,42,0.1)] ring-1 ring-stone-200/80 sm:gap-6 sm:p-6 md:max-w-2xl md:gap-8 md:p-8",
+        "flex w-full max-w-xl items-center gap-4 rounded-3xl bg-white p-5 shadow-[0_4px_28px_rgba(15,23,42,0.1)] ring-1 ring-[rgba(231,229,228,0.8)] sm:gap-6 sm:p-6 md:max-w-2xl md:gap-8 md:p-8",
         className,
       )}
     >

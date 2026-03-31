@@ -71,13 +71,13 @@ function MenuItem({
     <div className="flex items-center gap-3 px-4 py-3.5">
       <Icon className={`size-5 ${accent ? "text-accent" : "text-muted-foreground"}`} />
       <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
-      <ChevronRight className="size-4 text-muted-foreground/50" />
+      <ChevronRight className="size-4 text-[rgba(120,113,108,0.5)]" />
     </div>
   )
 
   if (href) {
     return (
-      <Link href={href} className="block transition-colors hover:bg-muted/50">
+      <Link href={href} className="block transition-colors hover:bg-[rgba(245,245,244,0.5)]">
         {inner}
       </Link>
     )
@@ -85,7 +85,7 @@ function MenuItem({
 
   return (
     <button
-      className="block w-full text-left transition-colors hover:bg-muted/50"
+      className="block w-full text-left transition-colors hover:bg-[rgba(245,245,244,0.5)]"
       onClick={() => toast.info(comingSoonKey ? t(comingSoonKey) : t("profile.comingSoon"))}
     >
       {inner}
@@ -479,7 +479,7 @@ export default function ProfilePage() {
                   onClick={() => { setEditImage(userImage); setIsEditingImage(true); setHasUnsavedChanges(true) }}
                   className="group relative"
                 >
-                  <Avatar className="size-20 border-4 border-primary/10">
+                  <Avatar className="size-20 border-4 border-[rgba(6,78,59,0.1)]">
                     {userImage ? (
                       <Image
                         src={userImage}
@@ -490,12 +490,12 @@ export default function ProfilePage() {
                         className="size-full rounded-full object-cover"
                       />
                     ) : (
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                      <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xl font-bold">
                         {userInitials}
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[rgba(0,0,0,0.4)] opacity-0 transition-opacity group-hover:opacity-100">
                     <Edit3 className="size-4 text-white" />
                   </div>
                 </button>
@@ -536,13 +536,13 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className="border-primary/30 bg-primary/5 text-primary text-[10px]"
+                    className="border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary text-[10px]"
                   >
                     {isTakumi ? "Takumi" : "Shugyo"}{" "}
                     <span className="font-jp ml-0.5">{isTakumi ? "匠" : "修行"}</span>
                   </Badge>
                   {(session?.user as { role?: string })?.role === "admin" && (
-                    <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]">
+                    <Badge variant="outline" className="border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] text-destructive text-[10px]">
                       Admin
                     </Badge>
                   )}
@@ -563,7 +563,7 @@ export default function ProfilePage() {
             <Button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className="w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/20"
+              className="w-full gap-2 rounded-xl bg-primary font-semibold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)]"
             >
               {isSaving ? (
                 <>
@@ -580,7 +580,7 @@ export default function ProfilePage() {
           )}
 
           {/* Stats */}
-          <Card className="border-border/60 gap-0 py-0">
+          <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
             <CardContent className="flex items-center justify-around p-4">
               <StatBox label={t("profile.sessions")} value={String(completedSessions)} />
               <div className="h-8 w-px bg-border" />
@@ -591,7 +591,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Benutzername */}
-          <Card className="border-border/60 gap-0 py-0">
+          <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
             <CardContent className="flex flex-col gap-3 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">{t("register.username")}</span>
@@ -614,9 +614,9 @@ export default function ProfilePage() {
                       placeholder={t("register.usernamePlaceholder")}
                       className={`h-10 rounded-xl pr-10 text-sm ${
                         usernameCheck === "taken" || usernameCheck === "invalid"
-                          ? "border-destructive focus-visible:ring-destructive/30"
+                          ? "border-destructive focus-visible:ring-[rgba(239,68,68,0.3)]"
                           : usernameCheck === "available"
-                          ? "border-green-500 focus-visible:ring-green-500/30"
+                          ? "border-green-500 focus-visible:ring-[rgba(34,197,94,0.3)]"
                           : ""
                       }`}
                       autoCapitalize="none"
@@ -672,7 +672,7 @@ export default function ProfilePage() {
 
           {/* Shugyo Lerner-Profil (nur für Shugyo sichtbar) */}
           {!isTakumi && (
-            <Card className="border-primary/20 bg-primary/5 gap-0 py-0">
+            <Card className="border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)] gap-0 py-0">
               <CardContent className="flex flex-col gap-3 p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <FolderOpen className="size-4 text-primary" />
@@ -693,11 +693,11 @@ export default function ProfilePage() {
                         className={`cursor-pointer text-[10px] transition-all ${
                           skillLevel === level
                             ? level === "NEULING"
-                              ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/40"
+                              ? "bg-[rgba(16,185,129,0.2)] text-emerald-700 border-[rgba(16,185,129,0.4)]"
                               : level === "FORTGESCHRITTEN"
-                                ? "bg-blue-500/20 text-blue-700 border-blue-500/40"
-                                : "bg-violet-500/20 text-violet-700 border-violet-500/40"
-                            : "bg-muted/50 text-muted-foreground border-border"
+                                ? "bg-[rgba(59,130,246,0.2)] text-blue-700 border-[rgba(59,130,246,0.4)]"
+                                : "bg-[rgba(139,92,246,0.2)] text-violet-700 border-[rgba(139,92,246,0.4)]"
+                            : "bg-[rgba(245,245,244,0.5)] text-muted-foreground border-border"
                         } ${savingSkill ? "opacity-70" : ""}`}
                       >
                         {level === "NEULING"
@@ -725,7 +725,7 @@ export default function ProfilePage() {
           <ProfileFavoritesSection favoriteIds={favorites} />
 
           {/* Role switcher */}
-          <Card className="border-border/60 gap-0 py-0">
+          <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{t("profile.switchRole")}</span>
@@ -746,7 +746,7 @@ export default function ProfilePage() {
           {/* Online-Status verbergen (Takumi only) */}
           {isTakumi && (
             <>
-            <Card className="border-border/60 gap-0 py-0">
+            <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
               <CardContent className="flex flex-col gap-0 p-0">
                 <div className="flex items-center justify-between p-4">
                   <div className="flex flex-col gap-0.5">
@@ -795,15 +795,15 @@ export default function ProfilePage() {
                   />
                 </div>
                 {appearsOnlineToOthers !== null && (
-                  <div className="border-t border-border/50 px-4 py-3">
+                  <div className="border-t border-[rgba(231,229,227,0.5)] px-4 py-3">
                     <div className="flex gap-2">
                       <span
                         className={`mt-1 size-2 shrink-0 rounded-full ${
                           hideOnlineStatus
-                            ? "bg-muted-foreground/40"
+                            ? "bg-[rgba(120,113,108,0.4)]"
                             : appearsOnlineToOthers
                               ? "bg-emerald-500"
-                              : "bg-muted-foreground/50"
+                              : "bg-[rgba(120,113,108,0.5)]"
                         }`}
                         aria-hidden
                       />
@@ -830,7 +830,7 @@ export default function ProfilePage() {
 
           {/* Takumi earnings (Takumi only) */}
           {isTakumi && (
-            <Card className="border-border/60 gap-0 py-0">
+            <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
               <CardContent className="flex flex-col gap-3 p-4">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Wallet className="size-4 text-accent" />
@@ -855,7 +855,7 @@ export default function ProfilePage() {
           )}
 
           {/* Menu items */}
-          <Card className="overflow-hidden border-border/60 gap-0 py-0">
+          <Card className="overflow-hidden border-[rgba(231,229,227,0.6)] gap-0 py-0">
             <CardContent className="flex flex-col p-0 divide-y divide-border">
               <MenuItem icon={Edit3} label={t("profile.editProfile")} href="/profile/edit" accent />
               <MenuItem icon={FolderOpen} label={t("shugyo.myProjects")} href="/profile/shugyo" />
@@ -888,7 +888,7 @@ export default function ProfilePage() {
           {/* Logout */}
           <Button
             variant="ghost"
-            className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="w-full gap-2 text-destructive hover:text-destructive hover:bg-[rgba(239,68,68,0.1)]"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />

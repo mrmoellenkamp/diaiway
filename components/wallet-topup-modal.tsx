@@ -158,7 +158,7 @@ export function WalletTopupModal({
           {/* iOS: Aufladung nur über Web möglich */}
           {isNative ? (
             <div className="flex flex-col items-center gap-5 py-6 text-center">
-              <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)]">
                 <Wallet className="size-6 text-primary" />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -244,7 +244,7 @@ export function WalletTopupModal({
                 </div>
               )}
               {confirming && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/95">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-[rgba(250,250,249,0.95)]">
                   <Loader2 className="size-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">
                     {t("wallet.confirming")}

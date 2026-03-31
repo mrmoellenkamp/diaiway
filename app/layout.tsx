@@ -98,8 +98,8 @@ export default function RootLayout({
         Inline-Hintergrund: erster Paint auch wenn CSS-Chunks verzögern (Capacitor-Emulator).
       */}
       <body
-        className="font-sans antialiased app-bottom-space"
-        style={{ backgroundColor: "#fafaf9", minHeight: "100dvh" }}
+        className="font-sans antialiased app-bottom-space min-h-dvh-fallback"
+        style={{ backgroundColor: "#fafaf9" }}
       >
         <ErrorBoundary>
           <SessionProvider>

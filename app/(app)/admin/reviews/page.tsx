@@ -297,7 +297,7 @@ function AdminReviewsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-[rgba(245,245,244,0.3)]">
       <PageContainer className="max-w-5xl py-8">
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Button variant="ghost" size="sm" asChild className="gap-1">
@@ -309,7 +309,7 @@ function AdminReviewsContent() {
         </div>
 
         <div className="mb-6 flex items-start gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(245,158,11,0.15)]">
             <Star className="size-6 text-amber-600" />
           </div>
           <div>
@@ -361,7 +361,7 @@ function AdminReviewsContent() {
                 </TableHeader>
                 <TableBody>
                   {users.map((u) => (
-                    <TableRow key={u.id} className={selectedUserId === u.id ? "bg-muted/50" : undefined}>
+                    <TableRow key={u.id} className={selectedUserId === u.id ? "bg-[rgba(245,245,244,0.5)]" : undefined}>
                       <TableCell className="font-medium">{u.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>
                       <TableCell>
@@ -728,7 +728,7 @@ export default function AdminReviewsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="min-h-screen bg-[rgba(245,245,244,0.3)] flex items-center justify-center">
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       }

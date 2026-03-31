@@ -119,7 +119,7 @@ export function LanguageFlagSticker({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-2 py-0.5 shadow-sm icon-paper",
+        "inline-flex items-center gap-1.5 rounded-full border border-[rgba(231,229,227,0.5)] bg-[rgba(255,255,255,0.8)] px-2 py-0.5 shadow-sm icon-paper",
         size === "sm" && "gap-1 px-1.5 py-0.5 text-xs",
         size === "md" && "gap-1.5 px-2 py-1 text-sm",
         className

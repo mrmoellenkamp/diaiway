@@ -383,7 +383,7 @@ function LoginContent() {
 
         {/* ── Timeout banner ── */}
         {reasonTimeout && (
-          <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-center text-sm font-medium text-amber-700 dark:text-amber-400">
+          <p className="rounded-lg bg-[rgba(245,158,11,0.1)] px-3 py-2 text-center text-sm font-medium text-amber-700 dark:text-amber-400">
             {t("login.timeoutMessage")}
           </p>
         )}
@@ -392,9 +392,9 @@ function LoginContent() {
             QUICK LOGIN CARD (native only, when stored biometric creds)
         ══════════════════════════════════════════════════════════════ */}
         {showBiometricCard && quickUser && (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-7 text-center shadow-sm">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.05)] px-6 py-7 text-center shadow-sm">
             {/* Avatar */}
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-md shadow-primary/30">
+            <div className="flex size-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_8px_22px_rgba(6,78,59,0.28)]">
               {initials(quickUser.name)}
             </div>
 
@@ -411,7 +411,7 @@ function LoginContent() {
               type="button"
               onClick={handleBiometricLogin}
               disabled={biometricLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_10px_28px_rgba(6,78,59,0.28)] transition-all hover:bg-[rgba(6,78,59,0.9)] active:scale-[0.98] disabled:opacity-60"
             >
               {biometricLoading ? (
                 <Loader2 className="size-6 animate-spin" />
@@ -423,7 +423,7 @@ function LoginContent() {
 
             {/* Error */}
             {error && (
-              <p className="w-full rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+              <p className="w-full rounded-lg bg-[rgba(239,68,68,0.1)] px-3 py-2 text-xs font-medium text-destructive">
                 {error}
               </p>
             )}
@@ -454,10 +454,10 @@ function LoginContent() {
             PREFILLED HINT (native, has lastUser but no biometric)
         ══════════════════════════════════════════════════════════════ */}
         {showPrefilledHint && quickUser && !showBiometricCard && (
-          <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
+          <div className="flex flex-col gap-3 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                <div className="flex size-9 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] text-sm font-bold text-primary">
                   {initials(quickUser.name)}
                 </div>
                 <div>
@@ -492,7 +492,7 @@ function LoginContent() {
             {/* Header (only when no prefilled hint) */}
             {!showPrefilledHint && (
               <div className="flex flex-col items-center gap-3">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-[rgba(6,78,59,0.1)] shadow-sm">
                   <span className="font-jp text-2xl font-bold text-primary">匠</span>
                 </div>
                 <h1 className="text-2xl font-bold text-foreground text-balance">{t("login.title")}</h1>
@@ -547,7 +547,7 @@ function LoginContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                    className="absolute right-1 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[rgba(245,245,244,0.7)] hover:text-foreground"
                     aria-label={showPassword ? t("aria.hidePassword") : t("aria.showPassword")}
                     tabIndex={-1}
                   >
@@ -563,7 +563,7 @@ function LoginContent() {
               </div>
 
               {error && (
-                <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                <p className="rounded-lg bg-[rgba(239,68,68,0.1)] px-3 py-2 text-xs font-medium text-destructive">
                   {getErrorMessage(error) || error}
                 </p>
               )}
@@ -571,7 +571,7 @@ function LoginContent() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+                className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08),0_6px_18px_rgba(6,78,59,0.22)] hover:bg-[rgba(6,78,59,0.9)]"
               >
                 {isLoading ? (
                   <><Loader2 className="size-4 animate-spin" />{t("login.submitting")}</>
@@ -596,7 +596,7 @@ function LoginContent() {
           BIOMETRIC SAVE PROMPT (bottom sheet, shown after manual login)
       ══════════════════════════════════════════════════════════════ */}
       {saveBioState !== "hidden" && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-safe">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(0,0,0,0.4)] px-4 pb-safe">
           <div className="w-full max-w-sm rounded-t-3xl bg-background px-6 py-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex flex-col gap-5">
               <div className="text-center">
@@ -608,7 +608,7 @@ function LoginContent() {
                   type="button"
                   onClick={handleStayYes}
                   disabled={saveBioState === "saving"}
-                  className="flex items-start gap-3 rounded-xl border-2 border-primary bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 disabled:opacity-60"
+                  className="flex items-start gap-3 rounded-xl border-2 border-primary bg-[rgba(6,78,59,0.05)] px-4 py-3 text-left transition-colors hover:bg-[rgba(6,78,59,0.1)] disabled:opacity-60"
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                     {saveBioState === "saving" ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />}
@@ -622,7 +622,7 @@ function LoginContent() {
                   type="button"
                   onClick={handleStayNo}
                   disabled={saveBioState === "saving"}
-                  className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-60"
+                  className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-[rgba(245,245,244,0.5)] disabled:opacity-60"
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                     <BiometricIcon biometryType={biometryType} className="size-5 text-muted-foreground" />

@@ -29,8 +29,8 @@ export function BottomNav() {
     <footer
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 pointer-events-auto",
-        "border-t border-border/80",
-        "bg-card/90 backdrop-blur-xl",
+        "border-t border-[rgba(231,229,227,0.8)]",
+        "bg-[rgba(255,255,255,0.9)] backdrop-blur-xl",
         "shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.2)]",
         "rounded-t-2xl"
       )}

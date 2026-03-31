@@ -72,7 +72,7 @@ function SearchContent() {
                     <Link
                       key={c.slug}
                       href={`/categories/${c.slug}`}
-                      className="block rounded-xl border border-border/60 bg-card p-3 text-sm transition-colors hover:bg-muted/50"
+                      className="block rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3 text-sm transition-colors hover:bg-[rgba(245,245,244,0.5)]"
                     >
                       <span className="font-medium">{c.name}</span>
                       {matchingSubs.length > 0 && (
@@ -80,7 +80,7 @@ function SearchContent() {
                           {matchingSubs.map((sub) => (
                             <span
                               key={sub.id}
-                              className="rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                              className="rounded-md bg-[rgba(6,78,59,0.1)] px-2 py-0.5 text-xs text-primary"
                             >
                               {sub.name}
                             </span>
@@ -114,7 +114,7 @@ function SearchContent() {
 
       {query.length <= 1 && (
         <div className="py-12 text-center">
-          <p className="font-jp text-3xl text-muted-foreground/30 mb-2">探</p>
+          <p className="font-jp text-3xl text-[rgba(120,113,108,0.3)] mb-2">探</p>
           <p className="text-sm text-muted-foreground">
             {t("search.hint")}
           </p>

@@ -54,7 +54,7 @@ function MessageAttachment({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1.5 text-xs text-primary hover:underline"
+          className="flex items-center gap-2 rounded-lg border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)] px-2 py-1.5 text-xs text-primary hover:underline"
         >
           📄 {filename || "PDF"}
         </a>
@@ -96,7 +96,7 @@ function PendingAttachmentPreview({
   const isPdf = url.toLowerCase().endsWith(".pdf") || filename.toLowerCase().endsWith(".pdf")
 
   return (
-    <div className="mb-2 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+    <div className="mb-2 flex items-center gap-3 rounded-lg border border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.1)] px-3 py-2">
       {showThumb ? (
         <Image
           src={thumbnailUrl!}
@@ -387,23 +387,23 @@ export function UserChatBox({
     <div
       className={cn(
         "flex flex-col overflow-hidden flex-1 min-h-0",
-        !inDrawer && "rounded-2xl border border-primary/10 bg-emerald-50/50 backdrop-blur-md shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200",
+        !inDrawer && "rounded-2xl border border-[rgba(6,78,59,0.1)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200",
         inDrawer && "bg-background",
         inline ? "w-full max-w-lg" : "w-full"
       )}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-primary/8 bg-primary/[0.04] px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-[rgba(6,78,59,0.08)] bg-[rgba(6,78,59,0.04)] px-4 py-3">
         <button
           onClick={onClose}
-          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full hover:bg-primary/5"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full hover:bg-[rgba(6,78,59,0.05)]"
           aria-label={t("common.close")}
         >
           <X className="size-4 text-foreground" />
         </button>
-        <Avatar className="size-9 border border-primary/10 ring-1 ring-primary/10 shrink-0">
+        <Avatar className="size-9 border border-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)] shrink-0">
           {partnerImageUrl ? <AvatarImage src={partnerImageUrl} alt={partnerName} /> : null}
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{partnerAvatar}</AvatarFallback>
+          <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-semibold">{partnerAvatar}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground truncate flex items-center gap-1.5">
@@ -433,7 +433,7 @@ export function UserChatBox({
         }}
         className={cn(
           "flex flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-none min-h-[200px]",
-          inDrawer ? "max-h-[60dvh]" : "max-h-[min(50vh,400px)]"
+          inDrawer ? "max-h-60dvh-fallback" : "max-h-[min(50vh,400px)]"
         )}
       >
         {loading ? (
@@ -447,8 +447,8 @@ export function UserChatBox({
                 className={cn(
                   "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold overflow-hidden",
                   msg.sender === "partner"
-                    ? "bg-primary/10 ring-1 ring-primary/10 text-primary"
-                    : "bg-accent/10 ring-1 ring-accent/10"
+                    ? "bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)] text-primary"
+                    : "bg-[rgba(34,197,94,0.1)] ring-1 ring-[rgba(34,197,94,0.1)]"
                 )}
               >
                 {msg.sender === "partner" ? (
@@ -481,10 +481,10 @@ export function UserChatBox({
                 className={cn(
                   "relative max-w-[85%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed",
                   msg.sender === "user"
-                    ? "rounded-tr-md bg-primary/10 text-foreground"
-                    : "rounded-tl-md border border-border/30 bg-white/80 text-foreground shadow-sm",
+                    ? "rounded-tr-md bg-[rgba(6,78,59,0.1)] text-foreground"
+                    : "rounded-tl-md border border-[rgba(231,229,227,0.3)] bg-[rgba(255,255,255,0.8)] text-foreground shadow-sm",
                   msg.sender === "user" && msg.status === "pending" && "opacity-70",
-                  msg.sender === "user" && msg.status === "failed" && "ring-1 ring-destructive/30"
+                  msg.sender === "user" && msg.status === "failed" && "ring-1 ring-[rgba(239,68,68,0.3)]"
                 )}
               >
                 {msg.text}
@@ -509,7 +509,7 @@ export function UserChatBox({
                   <button
                     type="button"
                     onClick={(e) => requestDeleteMessage(msg, e)}
-                    className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
+                    className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-[rgba(245,245,244,0.8)] text-muted-foreground hover:bg-[rgba(239,68,68,0.2)] hover:text-destructive transition-colors"
                     aria-label={t("common.delete")}
                   >
                     <X className="size-3" />
@@ -523,18 +523,18 @@ export function UserChatBox({
 
       {/* Input — mit Tastatur-Offset, damit das Feld bei geöffneter Tastatur sichtbar bleibt */}
       <div
-        className="border-t border-primary/8 bg-white/40 px-3 py-2.5 shrink-0"
+        className="border-t border-[rgba(6,78,59,0.08)] bg-[rgba(255,255,255,0.4)] px-3 py-2.5 shrink-0"
         style={keyboardOffset > 0 ? { paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${keyboardOffset}px)` } : undefined}
       >
         {uploadError && (
-          <div className="mb-2 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+          <div className="mb-2 flex items-start gap-2 rounded-lg border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] px-3 py-2">
             <p className="min-w-0 flex-1 text-xs text-destructive" role="alert">
               {uploadError}
             </p>
             <button
               type="button"
               onClick={clearUploadError}
-              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-destructive hover:bg-destructive/20 touch-manipulation"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-destructive hover:bg-[rgba(239,68,68,0.2)] touch-manipulation"
               aria-label="Fehlermeldung schließen"
             >
               <XCircle className="size-4" />
@@ -555,13 +555,13 @@ export function UserChatBox({
         {uploadScanning ? (
           <p className="mb-2 text-xs text-muted-foreground">{statusLabel}</p>
         ) : null}
-        <div className="flex items-end gap-2 rounded-xl border border-border/40 bg-white/70 px-2.5 py-1.5">
+        <div className="flex items-end gap-2 rounded-xl border border-[rgba(231,229,227,0.4)] bg-[rgba(255,255,255,0.7)] px-2.5 py-1.5">
           <button
             type="button"
             onClick={handleAttach}
             disabled={sending || uploadScanning || interactionLocked}
             className={cn(
-              "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary touch-manipulation",
+              "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[rgba(6,78,59,0.05)] hover:text-primary touch-manipulation",
               (sending || uploadScanning || interactionLocked) && "pointer-events-none opacity-40"
             )}
             aria-label="Datei anhängen"
@@ -590,7 +590,7 @@ export function UserChatBox({
             spellCheck={true}
             autoComplete="off"
             rows={1}
-            className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
+            className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-base leading-relaxed text-foreground placeholder:text-[rgba(120,113,108,0.4)] focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={handleSend}
@@ -598,8 +598,8 @@ export function UserChatBox({
             className={cn(
               "mb-0.5 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-all touch-manipulation",
               (input.trim() || pendingAttachment) && !sending
-                ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                : "text-muted-foreground/25"
+                ? "bg-primary text-primary-foreground shadow-sm hover:bg-[rgba(6,78,59,0.9)]"
+                : "text-[rgba(120,113,108,0.25)]"
             )}
             aria-label="Nachricht senden"
           >
@@ -624,7 +624,7 @@ export function UserChatBox({
                   setDeleteMessageConfirm(null)
                 }
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-[rgba(239,68,68,0.9)]"
             >
               {t("common.delete")}
             </AlertDialogAction>

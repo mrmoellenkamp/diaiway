@@ -81,7 +81,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="mx-4 rounded-xl border border-border/60 bg-card p-4 text-center">
+            <div className="mx-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4 text-center">
               <p className="text-xs text-muted-foreground">
                 {t("home.noExpertsOnline")}
               </p>
@@ -117,8 +117,8 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-border/60 bg-card p-6 text-center">
-              <p className="font-jp text-xl text-muted-foreground/30 mb-1">匠</p>
+            <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-6 text-center">
+              <p className="font-jp text-xl text-[rgba(120,113,108,0.3)] mb-1">匠</p>
               <p className="text-xs text-muted-foreground">
                 {isEmpty ? t("home.noExperts") : t("home.noRecommendations")}
               </p>

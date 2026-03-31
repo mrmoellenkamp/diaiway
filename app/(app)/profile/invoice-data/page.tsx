@@ -192,17 +192,17 @@ export default function InvoiceDataPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <Alert className="border-primary/25 bg-primary/5">
+            <Alert className="border-[rgba(6,78,59,0.25)] bg-[rgba(6,78,59,0.05)]">
               <Info className="text-primary" />
               <AlertTitle>{t("invoice.contextTitle")}</AlertTitle>
-              <AlertDescription className="space-y-2 text-foreground/90">
+              <AlertDescription className="space-y-2 text-[rgba(28,25,23,0.9)]">
                 <p>{t("invoice.contextProfile")}</p>
                 <p>{t("invoice.contextPayment")}</p>
               </AlertDescription>
             </Alert>
 
             {appRole === "shugyo" ? (
-              <Card className="border-primary/20 bg-primary/[0.03]">
+              <Card className="border-[rgba(6,78,59,0.2)] bg-[rgba(6,78,59,0.03)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
                     <Shield className="size-4 text-primary" />
@@ -213,10 +213,10 @@ export default function InvoiceDataPage() {
                 <CardContent className="flex flex-col gap-3">
                   {isPaymentVerified === true ? (
                     showPhase2Timestamps ? (
-                      <Alert className="border-emerald-500/30 bg-emerald-500/5">
+                      <Alert className="border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.05)]">
                         <CheckCircle2 className="text-emerald-600" />
                         <AlertTitle>{t("invoice.phase2DoneTitle")}</AlertTitle>
-                        <AlertDescription className="text-foreground/90">
+                        <AlertDescription className="text-[rgba(28,25,23,0.9)]">
                           <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
                             <li>{t("invoice.phase2BillingLine", { date: billingConsentLabel })}</li>
                             <li>{t("invoice.phase2WaiverLine", { date: waiverConsentLabel })}</li>
@@ -224,7 +224,7 @@ export default function InvoiceDataPage() {
                         </AlertDescription>
                       </Alert>
                     ) : (
-                      <Alert className="border-emerald-500/30 bg-emerald-500/5">
+                      <Alert className="border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.05)]">
                         <CheckCircle2 className="text-emerald-600" />
                         <AlertTitle>{t("invoice.phase2DoneTitle")}</AlertTitle>
                         <AlertDescription>{t("invoice.phase2DoneGeneric")}</AlertDescription>
@@ -232,7 +232,7 @@ export default function InvoiceDataPage() {
                     )
                   ) : (
                     <>
-                      <Alert className="border-amber-500/35 bg-amber-500/5">
+                      <Alert className="border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.05)]">
                         <AlertCircle className="text-amber-600" />
                         <AlertTitle>{t("invoice.phase2PendingTitle")}</AlertTitle>
                         <AlertDescription>{t("invoice.phase2PendingBody")}</AlertDescription>
@@ -247,13 +247,13 @@ export default function InvoiceDataPage() {
             ) : null}
 
             {paymentCheck.ok ? (
-              <Alert className="border-emerald-500/30 bg-emerald-500/5">
+              <Alert className="border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.05)]">
                 <CheckCircle2 className="text-emerald-600" />
                 <AlertTitle>{t("invoice.statusPaymentReadyTitle")}</AlertTitle>
                 <AlertDescription>{t("invoice.statusPaymentReadyBody")}</AlertDescription>
               </Alert>
             ) : (
-              <Alert className="border-amber-500/35 bg-amber-500/5">
+              <Alert className="border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.05)]">
                 <AlertCircle className="text-amber-600" />
                 <AlertTitle>{t("invoice.statusPaymentIncompleteTitle")}</AlertTitle>
                 <AlertDescription>
@@ -417,7 +417,7 @@ export default function InvoiceDataPage() {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                  <div className="flex items-center justify-between rounded-lg border border-[rgba(231,229,227,0.6)] p-3">
                     <div>
                       <Label htmlFor="kleinunternehmer">{t("invoice.kleinunternehmer")}</Label>
                       <p className="text-xs text-muted-foreground">

@@ -1410,12 +1410,12 @@ export function DailyCallContainer({
 
   // --- App Shell (unzerstörbare Struktur) ---
   const shellClass =
-    "fixed inset-0 h-[100dvh] w-full flex flex-col bg-background overflow-hidden pt-[env(safe-area-inset-top,0px)]"
+    "fixed inset-0 h-dvh-fallback w-full flex flex-col bg-background overflow-hidden pt-[env(safe-area-inset-top,0px)]"
 
   if (error) {
     return (
       <div className={cn(shellClass, "items-center justify-center p-6")}>
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-destructive/50 bg-destructive/10 p-6">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-[rgba(239,68,68,0.5)] bg-[rgba(239,68,68,0.1)] p-6">
           <p className="text-center text-destructive">{error}</p>
           <Button variant="outline" onClick={() => setError(null)}>
             Erneut versuchen
@@ -1461,7 +1461,7 @@ export function DailyCallContainer({
                 <Checkbox checked={safetyCheck5} onCheckedChange={(v) => setSafetyCheck5(!!v)} className="mt-0.5" />
                 <span>Ich willige ein, dass Video-Stichproben zur Sicherheitsprüfung automatisch analysiert werden können (Vision API).</span>
               </label>
-              <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+              <div className="flex items-center gap-2 rounded-lg border border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.1)] p-3">
                 <Square className="size-5 shrink-0 fill-destructive text-destructive" />
                 <span className="text-xs text-foreground">
                   Der rote Notfall-Button (⏹) im Call unterbricht sofort das Gespräch und meldet den Call. Nutze ihn bei Problemen.
@@ -1497,9 +1497,9 @@ export function DailyCallContainer({
                 </Avatar>
               </div>
             )}
-            <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-black/40">
+            <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full bg-[rgba(0,0,0,0.4)]">
               <div
-                className="h-full rounded-full bg-green-500/90 transition-all"
+                className="h-full rounded-full bg-[rgba(34,197,94,0.9)] transition-all"
                 style={{ width: `${Math.round(micLevel * 100)}%` }}
               />
             </div>
@@ -1533,7 +1533,7 @@ export function DailyCallContainer({
               <p className="text-sm text-destructive">{preCheckError}</p>
             )}
             {scheduleJoinBlocked && (
-              <div className="rounded-lg border border-amber-500/45 bg-amber-500/10 px-3 py-2.5 text-sm">
+              <div className="rounded-lg border border-[rgba(245,158,11,0.45)] bg-[rgba(245,158,11,0.1)] px-3 py-2.5 text-sm">
                 <p className="font-medium text-foreground">Noch zu früh für den Beitritt</p>
                 <p className="mt-1 text-xs leading-snug text-muted-foreground">
                   Der Raum steht frühestens 5 Minuten vor dem vereinbarten Start zur Verfügung (Zeitzone
@@ -1608,7 +1608,7 @@ export function DailyCallContainer({
             />
             {/* Platzhalter NUR wenn !hasRemoteVideo – z-10 damit über leeres Video */}
             {showVideoFallback && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80" aria-hidden>
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(0,0,0,0.8)]" aria-hidden>
                 <Avatar className="size-24 sm:size-32">
                   {partnerImageUrl ? (
                     <AvatarImage src={partnerImageUrl} alt={partnerName} />
@@ -1630,7 +1630,7 @@ export function DailyCallContainer({
             >
               {partnerSpeaking && (
                 <div
-                  className="absolute left-1/2 top-1/2 size-[10rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/50 sm:size-[12rem] animate-voice-pulse-ring"
+                  className="absolute left-1/2 top-1/2 size-[10rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(6,78,59,0.5)] sm:size-[12rem] animate-voice-pulse-ring"
                   aria-hidden
                 />
               )}
@@ -1648,7 +1648,7 @@ export function DailyCallContainer({
 
         {/* Paket 4: Shugyo Freeze-Overlay – Guthaben aufgebraucht */}
         {isFrozen && userRole === "shugyo" && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,0.6)] backdrop-blur-md">
             <div className="mx-4 flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6 text-center shadow-xl">
               <Wallet className="size-12 text-amber-500" />
               <div>
@@ -1670,8 +1670,8 @@ export function DailyCallContainer({
 
         {/* Paket 4: Takumi-Overlay – Shugyo lädt auf */}
         {isShugyoFrozen && userRole === "takumi" && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="mx-4 rounded-xl border border-border bg-card/95 px-6 py-4 text-center shadow-lg">
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,0.5)] backdrop-blur-sm">
+            <div className="mx-4 rounded-xl border border-border bg-[rgba(255,255,255,0.95)] px-6 py-4 text-center shadow-lg">
               <Loader2 className="mx-auto size-8 animate-spin text-primary" />
               <p className="mt-2 text-sm font-medium text-foreground">
                 Dein Partner lädt gerade sein Guthaben auf.
@@ -1684,24 +1684,24 @@ export function DailyCallContainer({
         )}
 
         {reconnectState && (
-          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-black/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-[rgba(0,0,0,0.8)] backdrop-blur-sm">
             <Loader2 className="size-12 animate-spin text-primary" />
             <p className="text-center text-base font-medium text-white">
               Verbindung unterbrochen. Verbinde neu…
             </p>
-            <p className="text-sm text-white/80">
+            <p className="text-sm text-[rgba(255,255,255,0.8)]">
               {reconnectState.secondsLeft > 0
                 ? `Automatischer Versuch in ${reconnectState.secondsLeft}s`
                 : "Warte auf Netzwerkverbindung…"}
             </p>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-[rgba(255,255,255,0.6)]">
               Der 5-Min-Timer läuft weiter – keine doppelte Abrechnung.
             </p>
           </div>
         )}
 
         {showPartnerSearchWarning && !reconnectState && (
-          <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-medium text-black">
+          <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-[rgba(245,158,11,0.9)] px-4 py-2 text-sm font-medium text-black">
             Suche Partner im Raum…
           </div>
         )}
@@ -1709,7 +1709,7 @@ export function DailyCallContainer({
           <div className="absolute left-3 top-3 z-10 flex flex-col gap-1 sm:left-4 sm:top-4">
             <div
               className={cn(
-                "flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:px-3 sm:py-1.5",
+                "flex items-center gap-1.5 rounded-full bg-[rgba(0,0,0,0.5)] px-2.5 py-1 text-sm font-medium tabular-nums backdrop-blur-sm sm:px-3 sm:py-1.5",
                 timerColorClass,
                 timerBlink && "animate-timer-blink"
               )}
@@ -1718,14 +1718,14 @@ export function DailyCallContainer({
               <span>{formatMmSs(secs)}</span>
             </div>
             {useBillingTimer && (
-              <span className="text-[10px] text-white/70">ab Sek. 1 abrechnungsrelevant</span>
+              <span className="text-[10px] text-[rgba(255,255,255,0.7)]">ab Sek. 1 abrechnungsrelevant</span>
             )}
           </div>
         )}
 
         {/* Paket 4: Shugyo Freeze-Overlay */}
         {isFrozen && userRole === "shugyo" && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-md p-6">
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[rgba(0,0,0,0.6)] backdrop-blur-md p-6">
             <p className="text-center text-lg font-medium text-white">
               Dein Guthaben ist aufgebraucht. Lade dein Wallet auf, um das Gespräch fortzusetzen.
             </p>
@@ -1741,7 +1741,7 @@ export function DailyCallContainer({
 
         {/* Paket 4: Takumi-Overlay wenn Shugyo eingefroren */}
         {isShugyoFrozen && userRole === "takumi" && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,0.5)] backdrop-blur-sm p-6">
             <p className="text-center text-base font-medium text-white">
               Dein Partner lädt gerade sein Guthaben auf. Bitte warte einen Moment…
             </p>
@@ -1749,7 +1749,7 @@ export function DailyCallContainer({
         )}
 
         {callMode === "video" && (
-          <div className="absolute bottom-3 right-3 z-10 aspect-video w-20 overflow-hidden rounded-lg border-2 border-white/20 shadow-lg sm:bottom-4 sm:right-4 sm:w-24">
+          <div className="absolute bottom-3 right-3 z-10 aspect-video w-20 overflow-hidden rounded-lg border-2 border-[rgba(255,255,255,0.2)] shadow-lg sm:bottom-4 sm:right-4 sm:w-24">
             <video
               ref={localPiPVideoRef}
               autoPlay
@@ -1830,7 +1830,7 @@ export function DailyCallContainer({
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 min-h-11 min-w-11 shrink-0 rounded-full border border-dashed border-muted-foreground/40 text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground touch-manipulation sm:size-12 sm:min-h-12 sm:min-w-12"
+          className="size-11 min-h-11 min-w-11 shrink-0 rounded-full border border-dashed border-[rgba(120,113,108,0.4)] text-muted-foreground hover:bg-[rgba(245,245,244,0.5)] hover:text-muted-foreground touch-manipulation sm:size-12 sm:min-h-12 sm:min-w-12"
           onClick={handleReportAndLeave}
           title="Notfall: Call melden (nur bei Problemen)"
           aria-label="Notfall: Call melden"

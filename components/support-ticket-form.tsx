@@ -39,7 +39,7 @@ export function SupportTicketForm() {
 
   if (sent) {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-[rgba(2,44,34,0.3)]">
         <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
           Vielen Dank! Dein Ticket wurde erstellt. Wir melden uns in Kürze bei dir.
         </p>
@@ -56,7 +56,7 @@ export function SupportTicketForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-4">
       <div>
         <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           Deine E-Mail

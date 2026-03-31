@@ -62,9 +62,9 @@ function formatPrice(p: number | null) {
 
 function statusLabel(b: GuestBooking) {
   if (b.status === "cancelled") return { label: "Storniert", cls: "border-muted text-muted-foreground" }
-  if (b.paymentStatus === "paid") return { label: "Bezahlt", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600" }
-  if (b.paymentStatus === "refunded") return { label: "Erstattet", cls: "border-blue-500/30 bg-blue-500/10 text-blue-600" }
-  return { label: "Ausstehend", cls: "border-amber-500/30 bg-amber-500/10 text-amber-600" }
+  if (b.paymentStatus === "paid") return { label: "Bezahlt", cls: "border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.1)] text-emerald-600" }
+  if (b.paymentStatus === "refunded") return { label: "Erstattet", cls: "border-[rgba(59,130,246,0.3)] bg-[rgba(59,130,246,0.1)] text-blue-600" }
+  return { label: "Ausstehend", cls: "border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.1)] text-amber-600" }
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
@@ -240,7 +240,7 @@ export default function AdminGuestBookingsPage() {
               {bookings.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground italic">Keine Einträge gefunden.</p>
               ) : (
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-[rgba(231,229,227,0.5)]">
                   {bookings.map((b) => {
                     const { label, cls } = statusLabel(b)
                     const isCancelled = b.status === "cancelled"
@@ -289,7 +289,7 @@ export default function AdminGuestBookingsPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-7 gap-1 text-xs border-amber-500/30 text-amber-700 hover:bg-amber-50"
+                                  className="h-7 gap-1 text-xs border-[rgba(245,158,11,0.3)] text-amber-700 hover:bg-amber-50"
                                   disabled={actionLoading === b.id + "-cancel"}
                                 >
                                   {actionLoading === b.id + "-cancel"
@@ -322,7 +322,7 @@ export default function AdminGuestBookingsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                                className="h-7 gap-1 text-xs border-[rgba(239,68,68,0.3)] text-destructive hover:bg-[rgba(239,68,68,0.05)]"
                                 disabled={actionLoading === b.id + "-delete"}
                               >
                                 {actionLoading === b.id + "-delete"

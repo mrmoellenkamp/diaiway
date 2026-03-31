@@ -21,7 +21,7 @@ export function ProfileFavoritesSection({ favoriteIds }: ProfileFavoritesSection
   if (favoriteIds.length === 0) return null
 
   return (
-    <Card className="border-border/60 gap-0 py-0">
+    <Card className="border-[rgba(231,229,227,0.6)] gap-0 py-0">
       <CardContent className="flex flex-col gap-3 p-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Heart className="size-4 text-destructive" />
@@ -37,11 +37,11 @@ export function ProfileFavoritesSection({ favoriteIds }: ProfileFavoritesSection
               <Link
                 key={takumi.id}
                 href={`/takumi/${takumi.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border/40 p-3 transition-colors hover:bg-muted/50"
+                className="flex items-center gap-3 rounded-lg border border-[rgba(231,229,227,0.4)] p-3 transition-colors hover:bg-[rgba(245,245,244,0.5)]"
               >
-                <Avatar className="size-10 border-2 border-primary/10">
+                <Avatar className="size-10 border-2 border-[rgba(6,78,59,0.1)]">
                   {takumi.imageUrl && <AvatarImage src={takumi.imageUrl} alt={takumiPublicLabel(takumi)} className="object-cover" />}
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                  <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-bold">
                     {takumi.avatar}
                   </AvatarFallback>
                 </Avatar>

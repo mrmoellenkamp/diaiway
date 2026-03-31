@@ -99,7 +99,7 @@ export function ImageUpload({
             <Image src={value} alt="Avatar" fill className="object-cover" sizes="96px" quality={75} />
           ) : (
             <div className="flex size-full items-center justify-center text-2xl font-bold text-muted-foreground">
-              {placeholder || <Camera className="size-8 text-muted-foreground/50" />}
+              {placeholder || <Camera className="size-8 text-[rgba(120,113,108,0.5)]" />}
             </div>
           )}
         </div>
@@ -107,7 +107,7 @@ export function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={disabled || isUploading}
-          className="absolute bottom-0 right-0 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-background bg-primary shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50 touch-manipulation"
+          className="absolute bottom-0 right-0 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full border-2 border-background bg-primary shadow-md transition-colors hover:bg-[rgba(6,78,59,0.9)] disabled:opacity-50 touch-manipulation"
           aria-label={t("imageUpload.ariaUpload")}
         >
           {isUploading ? (
@@ -139,8 +139,8 @@ export function ImageUpload({
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         className={cn(
-          "relative flex w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors",
-          "hover:border-primary/50 hover:bg-primary/5",
+          "relative flex w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-border bg-[rgba(245,245,244,0.3)] transition-colors",
+          "hover:border-[rgba(6,78,59,0.5)] hover:bg-[rgba(6,78,59,0.05)]",
           value ? "h-36" : "h-28",
           (disabled || isUploading) && "cursor-not-allowed opacity-60"
         )}
@@ -157,7 +157,7 @@ export function ImageUpload({
               quality={75}
             />
             {/* Overlay on hover */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+            <div className="absolute inset-0 flex items-center justify-center bg-[rgba(0,0,0,0.4)] opacity-0 transition-opacity hover:opacity-100">
               <p className="text-xs font-medium text-white">{t("imageUpload.replaceImage")}</p>
             </div>
           </>
@@ -166,12 +166,12 @@ export function ImageUpload({
             {isUploading ? (
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
             ) : (
-              <Upload className="size-6 text-muted-foreground/60" />
+              <Upload className="size-6 text-[rgba(120,113,108,0.6)]" />
             )}
             <p className="text-xs text-muted-foreground">
               {isUploading ? t("imageUpload.uploading") : t("imageUpload.dragDrop")}
             </p>
-            <p className="text-[10px] text-muted-foreground/60">{t("imageUpload.formatHint")}</p>
+            <p className="text-[10px] text-[rgba(120,113,108,0.6)]">{t("imageUpload.formatHint")}</p>
           </>
         )}
       </div>

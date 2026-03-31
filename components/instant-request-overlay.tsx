@@ -92,9 +92,9 @@ export function InstantRequestOverlay() {
   const req = requests[0]
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(0,0,0,0.6)] backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl p-6 flex flex-col items-center gap-4">
-        <div className="flex size-16 items-center justify-center rounded-full bg-primary/20">
+        <div className="flex size-16 items-center justify-center rounded-full bg-[rgba(6,78,59,0.2)]">
           <Phone className="size-8 text-primary animate-pulse" />
         </div>
         <div className="text-center">
@@ -106,7 +106,7 @@ export function InstantRequestOverlay() {
         <div className="flex gap-3 w-full">
           <Button
             variant="outline"
-            className="flex-1 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10"
+            className="flex-1 gap-2 border-[rgba(239,68,68,0.4)] text-destructive hover:bg-[rgba(239,68,68,0.1)]"
             disabled={!!actioning}
             onClick={() => handleAction(req.id, req.statusToken, "declined")}
           >

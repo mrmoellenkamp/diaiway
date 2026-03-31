@@ -101,7 +101,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-[rgba(6,78,59,0.5)];
   }
   body {
     @apply bg-background text-foreground;
@@ -112,6 +112,55 @@
   textarea,
   select {
     font-size: max(1rem, 16px) !important;
+  }
+}
+
+/*
+ * Viewport units: Android System-WebView oft < Chromium 108 — reines 100dvh/100svh wird ignoriert
+ * (gesamte min-height/max-height-Regel ungültig). Erst vh/svh-Fallback, dann dvh/svh überschreiben.
+ */
+.min-h-dvh-fallback {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-dvh-fallback {
+  height: 100vh;
+  height: 100dvh;
+}
+.min-h-svh-fallback {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+.h-svh-fallback {
+  height: 100vh;
+  height: 100svh;
+}
+.min-h-calc-dvh-minus-4 {
+  min-height: calc(100vh - 4rem);
+  min-height: calc(100dvh - 4rem);
+}
+.max-h-60dvh-fallback {
+  max-height: 60vh;
+  max-height: 60dvh;
+}
+.max-h-90dvh-fallback {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+/* Waymail-Dialog: Mobile mit Safe-Area; ab sm wie bisher 90vh */
+.max-h-waymail-dialog {
+  max-height: min(
+    85vh,
+    calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem)
+  );
+  max-height: min(
+    85dvh,
+    calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem)
+  );
+}
+@media (min-width: 640px) {
+  .max-h-waymail-dialog {
+    max-height: 90vh;
   }
 }
 

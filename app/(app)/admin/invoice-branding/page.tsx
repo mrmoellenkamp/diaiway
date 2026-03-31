@@ -286,7 +286,7 @@ export default function AdminInvoiceBrandingPage() {
               <Loader2 className="size-8 animate-spin text-primary" />
             </div>
           ) : loadError ? (
-            <Card className="border-destructive/40">
+            <Card className="border-[rgba(239,68,68,0.4)]">
               <CardHeader>
                 <CardTitle className="text-base text-destructive">Einstellungen nicht geladen</CardTitle>
                 <CardDescription>{loadError}</CardDescription>
@@ -359,7 +359,7 @@ export default function AdminInvoiceBrandingPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="relative w-full overflow-hidden rounded-lg border border-border bg-muted/20">
+                  <div className="relative w-full overflow-hidden rounded-lg border border-border bg-[rgba(245,245,244,0.2)]">
                     <iframe
                       key={`${previewDoc}-${previewRev}`}
                       title={`PDF-Vorschau ${DOC_TYPE_LABELS[previewDoc]}`}
@@ -540,7 +540,7 @@ export default function AdminInvoiceBrandingPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <div className="flex items-start gap-3 rounded-lg border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)] p-3">
                     <Checkbox
                       id="test-zugferd"
                       checked={testZugferd}

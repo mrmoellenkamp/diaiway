@@ -39,8 +39,8 @@ export function RegistrationConsentBlock({ value, onChange, disabled }: Props) {
   ) => (
     <div
       className={cn(
-        "flex gap-3 rounded-lg border border-border/50 bg-background/80 p-3 shadow-sm transition-colors",
-        required && "border-primary/15",
+        "flex gap-3 rounded-lg border border-[rgba(231,229,227,0.5)] bg-[rgba(250,250,249,0.8)] p-3 shadow-sm transition-colors",
+        required && "border-[rgba(6,78,59,0.15)]",
       )}
     >
       <Checkbox
@@ -59,7 +59,7 @@ export function RegistrationConsentBlock({ value, onChange, disabled }: Props) {
   )
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-primary/10 bg-primary/[0.04] p-4 md:p-5">
+    <div className="flex flex-col gap-3 rounded-2xl border border-[rgba(6,78,59,0.1)] bg-[rgba(6,78,59,0.04)] p-4 md:p-5">
       <div>
         <h2 className="text-sm font-semibold tracking-tight text-foreground">{t("register.consent.sectionTitle")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">{t("register.consent.phase1Hint")}</p>

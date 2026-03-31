@@ -273,7 +273,7 @@ export default function RespondPage({ params }: { params: Promise<{ id: string }
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Deine Frage oder Anmerkung zur Buchungsanfrage…"
                   rows={5}
-                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-700/30"
+                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[rgba(4,120,87,0.3)]"
                 />
                 <div className="flex gap-2">
                   <Button

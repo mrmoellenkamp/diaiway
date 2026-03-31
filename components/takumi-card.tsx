@@ -17,11 +17,11 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
   const publicName = takumiPublicLabel(takumi)
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
-      <Card className="gap-0 overflow-hidden border-border/60 py-0 transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden border-[rgba(231,229,227,0.6)] py-0 transition-shadow hover:shadow-md">
         <CardContent className="relative flex items-start gap-3 p-4">
           <FavoriteButton takumiId={takumi.id} className="absolute top-3 right-3 z-10" />
           <div className="relative shrink-0">
-            <Avatar className="size-14 border-2 border-primary/10">
+            <Avatar className="size-14 border-2 border-[rgba(6,78,59,0.1)]">
               {takumi.imageUrl ? (
                 <span className="relative block size-full">
                   <Image
@@ -35,7 +35,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
                   />
                 </span>
               ) : null}
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+              <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary font-semibold text-sm">
                 {takumi.avatar}
               </AvatarFallback>
             </Avatar>
@@ -46,7 +46,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
             )}
             {takumi.liveStatus === "available" && (
               <span className="absolute -top-0.5 -right-0.5">
-                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/20 text-accent border-accent/40">
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-[rgba(34,197,94,0.2)] text-accent border-[rgba(34,197,94,0.4)]">
                   Instant
                 </Badge>
               </span>
@@ -59,7 +59,7 @@ export function TakumiCard({ takumi, priority }: { takumi: Takumi; priority?: bo
               </span>
               {takumi.verified && <VerifiedBadge size="sm" className="shrink-0" />}
               {takumi.isPro && (
-                <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-none">
+                <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0 bg-[rgba(6,78,59,0.1)] text-primary border-none">
                   PRO
                 </Badge>
               )}
@@ -101,10 +101,10 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
   const publicName = takumiPublicLabel(takumi)
   return (
     <Link href={`/takumi/${takumi.id}`} className="block">
-      <div className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-3 transition-shadow hover:shadow-md">
+      <div className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-[rgba(231,229,227,0.6)] bg-card p-3 transition-shadow hover:shadow-md">
         <FavoriteButton takumiId={takumi.id} size="sm" className="absolute top-2 right-2 z-10 min-h-[44px] min-w-[44px]" />
         <div className="relative">
-          <Avatar className="size-16 border-2 border-primary/10">
+          <Avatar className="size-16 border-2 border-[rgba(6,78,59,0.1)]">
             {takumi.imageUrl ? (
               <span className="relative block size-full">
                 <Image
@@ -118,7 +118,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
                 />
               </span>
             ) : null}
-            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+            <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary font-bold">
               {takumi.avatar}
             </AvatarFallback>
           </Avatar>
@@ -140,7 +140,7 @@ export function TakumiCardCompact({ takumi, priority }: { takumi: Takumi; priori
             <ReviewStars rating={takumi.rating} />
           </div>
           {offersInstant && (
-            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/20 text-accent border-accent/40">
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-[rgba(34,197,94,0.2)] text-accent border-[rgba(34,197,94,0.4)]">
               Instant
             </Badge>
           )}

@@ -18,13 +18,13 @@ export function ShugyoInfoPanel({ userName, projects }: ShugyoInfoPanelProps) {
 
   return (
     <div
-      className={`absolute top-14 right-0 z-20 flex flex-col rounded-l-xl border border-r-0 border-border/60 bg-card/95 shadow-lg backdrop-blur-sm transition-all ${
+      className={`absolute top-14 right-0 z-20 flex flex-col rounded-l-xl border border-r-0 border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.95)] shadow-lg backdrop-blur-sm transition-all ${
         collapsed ? "w-10" : "w-64 max-h-[50vh]"
       }`}
     >
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -left-6 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-l border border-r-0 border-border/60 bg-card shadow"
+        className="absolute -left-6 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-l border border-r-0 border-[rgba(231,229,227,0.6)] bg-card shadow"
         aria-label={collapsed ? t("shugyo.expandPanel") : t("shugyo.collapsePanel")}
       >
         {collapsed ? (
@@ -49,7 +49,7 @@ export function ShugyoInfoPanel({ userName, projects }: ShugyoInfoPanelProps) {
                 {projects.map((p) => (
                   <div
                     key={p.id}
-                    className="rounded-lg border border-border/40 overflow-hidden bg-muted/30"
+                    className="rounded-lg border border-[rgba(231,229,227,0.4)] overflow-hidden bg-[rgba(245,245,244,0.3)]"
                   >
                     {p.imageUrl ? (
                       <div className="relative aspect-video w-full">
@@ -62,8 +62,8 @@ export function ShugyoInfoPanel({ userName, projects }: ShugyoInfoPanelProps) {
                         />
                       </div>
                     ) : (
-                      <div className="flex aspect-video items-center justify-center bg-muted/50">
-                        <ImageIcon className="size-8 text-muted-foreground/40" />
+                      <div className="flex aspect-video items-center justify-center bg-[rgba(245,245,244,0.5)]">
+                        <ImageIcon className="size-8 text-[rgba(120,113,108,0.4)]" />
                       </div>
                     )}
                     <div className="p-2">

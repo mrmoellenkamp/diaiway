@@ -93,7 +93,7 @@ export function TakumiTaxonomyEditor({
       <div>
         <Label className="text-xs font-medium text-muted-foreground">{t("editProfile.taxonomyCategories")}</Label>
         <p className="text-[10px] text-muted-foreground mb-2">{t("editProfile.taxonomyCategoriesHint")}</p>
-        <div className="flex flex-col gap-2 rounded-lg border border-border/60 p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-[rgba(231,229,227,0.6)] p-3">
           {categories.map((c) => (
             <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
               <Checkbox
@@ -111,7 +111,7 @@ export function TakumiTaxonomyEditor({
           <Label className="text-xs font-medium text-muted-foreground">{t("editProfile.taxonomySpecialties")}</Label>
           <p className="text-[10px] text-muted-foreground">{t("editProfile.taxonomySpecialtiesHint")}</p>
           {selectedCategories.map((c) => (
-            <div key={c.id} className="rounded-lg border border-border/50 bg-muted/20 p-3">
+            <div key={c.id} className="rounded-lg border border-[rgba(231,229,227,0.5)] bg-[rgba(245,245,244,0.2)] p-3">
               <p className="mb-2 text-xs font-semibold text-foreground">{c.name}</p>
               <div className="flex flex-col gap-2">
                 {c.subcategories.map((s) => (
@@ -133,7 +133,7 @@ export function TakumiTaxonomyEditor({
         <div>
           <Label className="text-xs font-medium text-muted-foreground">{t("editProfile.taxonomyPrimary")}</Label>
           <p className="text-[10px] text-muted-foreground mb-2">{t("editProfile.taxonomyPrimaryHint")}</p>
-          <div className="flex flex-col gap-2 rounded-lg border border-border/60 p-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-[rgba(231,229,227,0.6)] p-3">
             {value.specialtyIds.map((sid) => {
               const loc = findSpecLocation(categories, sid)
               if (!loc) return null
@@ -141,8 +141,8 @@ export function TakumiTaxonomyEditor({
                 <label
                   key={sid}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-muted/50",
-                    value.primarySpecialtyId === sid && "bg-primary/10",
+                    "flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-[rgba(245,245,244,0.5)]",
+                    value.primarySpecialtyId === sid && "bg-[rgba(6,78,59,0.1)]",
                   )}
                 >
                   <input

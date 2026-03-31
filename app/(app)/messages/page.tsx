@@ -321,7 +321,7 @@ function MessagesPageContent() {
     <PageContainer>
       {/* Tabs: Benachrichtigungen | Chats | Waymails */}
       <div className="mb-4 space-y-2">
-        <div className="flex gap-1 rounded-xl border border-border/60 bg-muted/30 p-1 overflow-x-auto">
+        <div className="flex gap-1 rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.3)] p-1 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("notifications")}
@@ -384,12 +384,12 @@ function MessagesPageContent() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="rounded-xl border border-border/60 bg-card/50 px-4 py-8 text-center">
+            <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)] px-4 py-8 text-center">
               <Bell className="mx-auto mb-2 size-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t("messages.noNotifications")}</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
+            <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)]">
               {notifications.slice(0, 50).map((n) => (
                 <div
                   key={n.id}
@@ -408,8 +408,8 @@ function MessagesPageContent() {
                   }}
                   onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}
                   className={cn(
-                    "flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30",
-                    !n.read && "bg-accent/5"
+                    "flex items-start gap-3 border-b border-[rgba(231,229,227,0.4)] px-3 py-3 text-left last:border-0 hover:bg-[rgba(245,245,244,0.3)]",
+                    !n.read && "bg-[rgba(34,197,94,0.05)]"
                   )}
                 >
                   <div className="mt-0.5 shrink-0">
@@ -418,7 +418,7 @@ function MessagesPageContent() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">{n.title}</p>
                     <p className="truncate text-xs text-muted-foreground">{n.body}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                    <p className="mt-0.5 text-[10px] text-[rgba(120,113,108,0.7)]">
                       {new Date(n.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                     </p>
                   </div>
@@ -426,7 +426,7 @@ function MessagesPageContent() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-[rgba(239,68,68,0.1)] touch-manipulation"
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "notification", id: n.id }) }}
                       aria-label={t("common.delete")}
                     >
@@ -446,7 +446,7 @@ function MessagesPageContent() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="min-h-11 shrink-0 px-3 text-xs border-destructive/30 text-destructive touch-manipulation"
+                          className="min-h-11 shrink-0 px-3 text-xs border-[rgba(239,68,68,0.3)] text-destructive touch-manipulation"
                           onClick={() => handleBookingAction(n.bookingId!, "declined", n.id)}
                           disabled={actingId === n.id}
                         >
@@ -465,7 +465,7 @@ function MessagesPageContent() {
       {/* Waymails — Posteingang | Postausgang */}
       {activeTab === "waymails" && (
         <div className="flex flex-col gap-1">
-          <div className="mb-2 flex gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+          <div className="mb-2 flex gap-1 rounded-lg border border-[rgba(231,229,227,0.6)] bg-[rgba(245,245,244,0.2)] p-1">
             <button
               type="button"
               onClick={() => { setWaymailFolder("inbox"); setSelectedWaymailId(null); setWaymailDetail(null) }}
@@ -492,19 +492,19 @@ function MessagesPageContent() {
             </button>
           </div>
           {selectedWaymailId && waymailDetail ? (
-            <div className="rounded-xl border border-border/60 bg-card/50 p-4">
+            <div className="rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)] p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => { setSelectedWaymailId(null); setWaymailDetail(null) }}
-                  className="min-h-11 rounded-lg px-2 text-left text-sm text-primary hover:bg-primary/5 hover:underline touch-manipulation"
+                  className="min-h-11 rounded-lg px-2 text-left text-sm text-primary hover:bg-[rgba(6,78,59,0.05)] hover:underline touch-manipulation"
                 >
                   ← {t("common.back")}
                 </button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                  className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-[rgba(239,68,68,0.1)] touch-manipulation"
                   onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: waymailDetail.id }) }}
                   aria-label={t("common.delete")}
                 >
@@ -529,8 +529,8 @@ function MessagesPageContent() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : waymails.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/60 bg-card/50 px-4 py-20 text-center">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)] px-4 py-20 text-center">
+              <div className="flex size-16 items-center justify-center rounded-2xl bg-[rgba(6,78,59,0.1)]">
                 <MailOpen className="size-7 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
@@ -540,13 +540,13 @@ function MessagesPageContent() {
                 {waymailFolder === "sent" ? t("messages.waymailSentEmptyDesc") : t("messages.waymailEmptyDesc")}
               </p>
               {waymailFolder === "inbox" && (
-                <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]">
                   <Link href="/takumis">{t("messages.findExperts")}</Link>
                 </Button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
+            <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)]">
               {waymails.map((wm) => (
                 <div
                   key={wm.id}
@@ -569,10 +569,10 @@ function MessagesPageContent() {
                       .catch(() => setWaymailDetail(null))
                   }}
                   onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}
-                  className="flex items-start gap-3 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-muted/30"
+                  className="flex items-start gap-3 border-b border-[rgba(231,229,227,0.4)] px-3 py-3 text-left last:border-0 hover:bg-[rgba(245,245,244,0.3)]"
                 >
                   {waymailFolder === "inbox" && wm.isSystemWaymail ? (
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" title="diAiway System">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] text-primary" title="diAiway System">
                       <Building2 className="size-5" />
                     </div>
                   ) : (
@@ -580,7 +580,7 @@ function MessagesPageContent() {
                       {waymailFolder === "sent"
                         ? (wm.recipientImageUrl ? <AvatarImage src={wm.recipientImageUrl} alt={wm.recipientName} /> : null)
                         : (wm.senderImageUrl ? <AvatarImage src={wm.senderImageUrl} alt={wm.senderName} /> : null)}
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                      <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-semibold">
                         {(waymailFolder === "sent" ? wm.recipientName : wm.senderName)?.slice(0, 2).toUpperCase() ?? "??"}
                       </AvatarFallback>
                     </Avatar>
@@ -592,7 +592,7 @@ function MessagesPageContent() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-foreground truncate">{wm.subject}</p>
                       <p className="truncate text-xs text-muted-foreground">{wm.textPreview}</p>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                      <p className="mt-0.5 text-[10px] text-[rgba(120,113,108,0.7)]">
                         {new Date(wm.timestamp).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                       </p>
                     </div>
@@ -601,7 +601,7 @@ function MessagesPageContent() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                      className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-[rgba(239,68,68,0.1)] touch-manipulation"
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "waymail", id: wm.id }) }}
                       aria-label={t("common.delete")}
                     >
@@ -623,19 +623,19 @@ function MessagesPageContent() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/60 bg-card/50 px-4 py-20 text-center">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)] px-4 py-20 text-center">
+              <div className="flex size-16 items-center justify-center rounded-2xl bg-[rgba(6,78,59,0.1)]">
                 <MessageSquareDashed className="size-7 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">{t("messages.empty")}</h2>
               <p className="max-w-xs text-sm text-muted-foreground">{t("messages.emptyDesc")}</p>
-              <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button asChild className="mt-2 rounded-xl bg-primary text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]">
                 <Link href="/takumis">{t("messages.findExperts")}</Link>
               </Button>
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-border/60 bg-card/50">
+              <div className="flex flex-col gap-1 overflow-hidden rounded-xl border border-[rgba(231,229,227,0.6)] bg-[rgba(255,255,255,0.5)]">
                 {threads.map((th) => {
                   const lastMsg = th.lastMessage
                   const time = lastMsg ? new Date(lastMsg.timestamp) : new Date()
@@ -648,14 +648,14 @@ function MessagesPageContent() {
                       onClick={() => setActiveThread(th.partnerId)}
                       onKeyDown={(e) => e.key === "Enter" && setActiveThread(th.partnerId)}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/30 cursor-pointer",
-                        isActive && "bg-primary/5 border-l-2 border-l-primary"
+                        "flex items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-[rgba(245,245,244,0.3)] cursor-pointer",
+                        isActive && "bg-[rgba(6,78,59,0.05)] border-l-2 border-l-primary"
                       )}
                     >
                       <div className="relative shrink-0">
-                        <Avatar className="size-11 border border-primary/10">
+                        <Avatar className="size-11 border border-[rgba(6,78,59,0.1)]">
                           {th.partnerImageUrl ? <AvatarImage src={th.partnerImageUrl} alt={th.partnerName} /> : null}
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          <AvatarFallback className="bg-[rgba(6,78,59,0.1)] text-primary text-xs font-semibold">
                             {th.partnerAvatar}
                           </AvatarFallback>
                         </Avatar>
@@ -699,7 +699,7 @@ function MessagesPageContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                          className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-[rgba(239,68,68,0.1)] touch-manipulation"
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "chat", id: th.partnerId }) }}
                           aria-label={t("common.delete")}
                         >
@@ -749,7 +749,7 @@ function MessagesPageContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-[rgba(239,68,68,0.9)]">
               {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

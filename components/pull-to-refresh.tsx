@@ -95,7 +95,7 @@ export function PullToRefresh() {
         style={{ height: "100%" }}
       >
         <div
-          className={`flex size-10 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-lg ${
+          className={`flex size-10 items-center justify-center rounded-full bg-[rgba(6,78,59,0.9)] text-primary-foreground shadow-lg ${
             refreshing ? "animate-spin" : ""
           }`}
           style={{

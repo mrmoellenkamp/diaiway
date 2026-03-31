@@ -194,7 +194,7 @@ export default function TakumiProfileRevocationsPage() {
             ) : (
               <div className="space-y-2">
                 {snippets.map((s) => (
-                  <div key={s.id} className="rounded-lg border border-border/60 p-3">
+                  <div key={s.id} className="rounded-lg border border-[rgba(231,229,227,0.6)] p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium">{s.title}</p>
@@ -228,7 +228,7 @@ export default function TakumiProfileRevocationsPage() {
             </div>
 
             {experts.length > 0 && (
-              <div className="max-h-56 space-y-2 overflow-auto rounded-lg border border-border/60 p-2">
+              <div className="max-h-56 space-y-2 overflow-auto rounded-lg border border-[rgba(231,229,227,0.6)] p-2">
                 {experts.map((e) => (
                   <button
                     key={e.id}
@@ -241,7 +241,7 @@ export default function TakumiProfileRevocationsPage() {
                       e.profileReviewStatus !== "approved"
                         ? "cursor-not-allowed opacity-60"
                         : selectedExpertId === e.id
-                          ? "bg-primary/10 border border-primary/30"
+                          ? "bg-[rgba(6,78,59,0.1)] border border-[rgba(6,78,59,0.3)]"
                           : "hover:bg-muted"
                     }`}
                   >
