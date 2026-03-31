@@ -53,9 +53,10 @@
   --font-size-xs: 1rem;
   --font-size-sm: 1rem;
 
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
-  --font-jp: 'Noto Sans JP', 'Geist', sans-serif;
+  /* System-UI als letzte Stufe: garantiert sichtbaren Text, falls Web-Font in WebView scheitert */
+  --font-sans: 'Geist', 'Geist Fallback', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-jp: 'Noto Sans JP', 'Geist', 'Geist Fallback', system-ui, sans-serif;
   --color-amber: var(--amber);
   --color-amber-foreground: var(--amber-foreground);
   --color-background: var(--background);

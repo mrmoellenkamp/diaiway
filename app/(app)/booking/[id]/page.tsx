@@ -200,7 +200,7 @@ export default function BookingPage({ params }: { params: Promise<{ id: string }
         setBookingIdForPayment(newBookingId)
 
         if (Capacitor.isNativePlatform() && walletBalanceCents < Math.round(totalPrice * 100)) {
-          // iOS ohne ausreichendes Guthaben: nativer Stripe-Flow
+          // Native (iOS/Android) ohne ausreichendes Guthaben: Stripe-Zahlung (iOS: In-App-Browser, Android: WebView)
           try {
             const tokenRes = await fetch(`/api/bookings/${newBookingId}/pay-token`, { method: "POST" })
             const tokenData = await tokenRes.json()

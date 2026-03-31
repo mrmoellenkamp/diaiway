@@ -24,13 +24,33 @@ import { Footer } from '@/components/footer'
 import { VercelAnalytics } from '@/components/vercel-analytics'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"], display: "swap" })
-const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
+// display: optional + system fallbacks: vermeidet unsichtbaren Text (FOIT) in älteren Android-WebViews
+const _geist = Geist({
+  subsets: ["latin"],
+  display: "optional",
+  adjustFontFallback: true,
+  fallback: ["system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
+})
+const _geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "optional",
+  adjustFontFallback: true,
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
+})
 const _notoJP = Noto_Sans_JP({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-jp",
-  display: "swap",
+  display: "optional",
+  adjustFontFallback: true,
+  fallback: [
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic UI",
+    "Meiryo",
+    "system-ui",
+    "sans-serif",
+  ],
 })
 
 export const metadata: Metadata = {
