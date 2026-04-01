@@ -58,9 +58,9 @@ export function AiMentorFab() {
       {isOpen && (
         <div
           className={cn(
-            "fixed right-3 z-[100] flex w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-3xl border border-[rgba(6,78,59,0.15)] bg-card shadow-2xl pointer-events-auto",
+            "fixed right-3 z-[100] flex min-h-0 w-[calc(100vw-1.5rem)] max-w-md flex-col overflow-hidden rounded-3xl border border-[rgba(6,78,59,0.15)] bg-card shadow-2xl pointer-events-auto",
             "animate-in fade-in slide-in-from-bottom-4 duration-300",
-            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-h-[min(75vh,600px)]"
+            "bottom-[max(8.5rem,calc(2rem+env(safe-area-inset-bottom,0px)))] max-h-mentor-fab-window"
           )}
           role="dialog"
           aria-label={t("mentor.chat")}
@@ -68,13 +68,13 @@ export function AiMentorFab() {
           {/* Close button */}
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute right-3 top-3 z-10 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-[rgba(255,255,255,0.3)] backdrop-blur-sm text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.5)] hover:text-foreground active:scale-95"
+            className="absolute right-3 top-3 z-10 flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full bg-[rgba(255,255,255,0.92)] text-muted-foreground shadow-sm transition-colors hover:bg-white hover:text-foreground active:scale-95"
             aria-label={t("mentor.close")}
           >
             <X className="size-5" />
           </button>
 
-          <MentorChat variant="floating" className="min-h-[400px] flex-1" />
+          <MentorChat variant="floating" className="min-h-0 flex-1" />
         </div>
       )}
     </>

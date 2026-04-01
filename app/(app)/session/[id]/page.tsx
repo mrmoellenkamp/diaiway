@@ -574,6 +574,21 @@ function SessionCallContent() {
     viewMode === "call" &&
     !hasJoinedCall
 
+  const scheduledSlotDurationSec =
+    booking.bookingMode === "scheduled" &&
+    booking.date &&
+    booking.startTime &&
+    booking.endTime
+      ? Math.max(
+          0,
+          Math.round(
+            (parseBerlinDateTime(booking.date, booking.endTime).getTime() -
+              parseBerlinDateTime(booking.date, booking.startTime).getTime()) /
+              1000
+          )
+        )
+      : null
+
   if (viewMode === "post-call") {
     return (
       <PostCallScreen
@@ -608,11 +623,18 @@ function SessionCallContent() {
           bookingMode={booking.bookingMode}
           scheduledDate={booking.date}
           scheduledStartTime={booking.startTime}
+          scheduledEndTime={booking.endTime}
+          scheduledSlotDurationSec={
+            scheduledSlotDurationSec && scheduledSlotDurationSec > 0
+              ? scheduledSlotDurationSec
+              : null
+          }
           bookingStatus={booking.status}
           sessionStartedAt={booking.sessionStartedAt}
           userBalanceCents={booking.userBalanceCents}
           pricePerMinuteCents={booking.pricePerMinuteCents}
           hasPaidBefore={booking.hasPaidBefore}
+          isGuestCall={booking.isGuestCall}
         />
       </div>
       <div className="shrink-0 border-t px-4 py-3">

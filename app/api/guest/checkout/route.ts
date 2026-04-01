@@ -115,7 +115,7 @@ export async function POST(req: Request) {
           where: { id: booking.id },
           data: {
             snapshotConsentAt: new Date(),
-            safetyAcceptedAt: new Date(),
+            bookerSafetyAcceptedAt: new Date(),
           },
         })
         return NextResponse.json({ clientSecret: existing.client_secret, bookingId: booking.id })
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
       ...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
       paymentStatus: "pending",
       snapshotConsentAt: new Date(),
-      safetyAcceptedAt: new Date(),
+      bookerSafetyAcceptedAt: new Date(),
       // Store guest invoice + onboarding data as JSON in the note field for webhook pickup
       // (will be migrated to dedicated fields in Etappe 3)
       note: JSON.stringify({

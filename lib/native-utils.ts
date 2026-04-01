@@ -1,6 +1,17 @@
 "use client"
 
 import { Capacitor } from "@capacitor/core"
+import { parseBerlinDateTime } from "@/lib/date-utils"
+
+/** Stabile numerische ID für LocalNotifications (pro bookingId), Cancel muss gleiche Logik nutzen. */
+export function bookingReminderLocalNotificationId(bookingId: string): number {
+  let h = 0
+  for (let i = 0; i < bookingId.length; i++) {
+    h = (Math.imul(31, h) + bookingId.charCodeAt(i)) | 0
+  }
+  const n = Math.abs(h) % 2147483646
+  return n === 0 ? 1 : n
+}
 
 /** Nur in nativer App ausführen; im Web no-op. */
 function whenNative(fn: () => void): void {
@@ -97,14 +108,13 @@ export async function shareNative(options: { title: string; text?: string; url?:
 }
 
 /**
- * Session-Erinnerung planen (30 Min vor Start).
- * Nur native; bricht ab wenn nicht verbunden.
+ * Session-Erinnerung planen (5 Min vor Start, Zeitzone Europe/Berlin wie die Buchung).
+ * Nur native; bei fehlender Berechtigung oder vergangenem Zeitpunkt no-op.
  */
 const SESSION_CHANNEL_ID = "session-reminders"
 
 export async function scheduleSessionReminder(booking: {
   id: string
-  expertName: string
   date: string
   startTime: string
   /** Android channel label + notification copy (use i18n on the caller). */
@@ -120,6 +130,7 @@ export async function scheduleSessionReminder(booking: {
         id: SESSION_CHANNEL_ID,
         name: booking.channelName,
         importance: 4,
+        vibration: true,
       })
     }
     const permissions = await LocalNotifications.checkPermissions()
@@ -130,20 +141,20 @@ export async function scheduleSessionReminder(booking: {
       if (status !== "granted") return
     }
 
-    const [year, month, day] = booking.date.split("-").map(Number)
-    const [hour, min] = (booking.startTime || "10:00").split(":").map(Number)
-    const at = new Date(year, month - 1, day, hour, min - 30, 0)
+    const sessionStart = parseBerlinDateTime(booking.date, booking.startTime || "00:00")
+    const at = new Date(sessionStart.getTime() - 5 * 60 * 1000)
     if (at.getTime() <= Date.now()) return
 
-    const id = parseInt(booking.id.replace(/\D/g, "").slice(-8) || "0", 16) % 2147483647
+    const nid = bookingReminderLocalNotificationId(booking.id)
     await LocalNotifications.schedule({
       notifications: [
         {
-          id: Math.abs(id) || 1,
+          id: nid,
           channelId: SESSION_CHANNEL_ID,
           title: booking.title,
           body: booking.body,
           schedule: { at },
+          sound: "default",
         },
       ],
     })
@@ -159,10 +170,7 @@ export async function cancelPastReminders(bookingIds: string[]): Promise<void> {
   if (!Capacitor.isNativePlatform() || bookingIds.length === 0) return
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications")
-    const ids = bookingIds.map((id) => {
-      const n = parseInt(id.replace(/\D/g, "").slice(-8) || "0", 16) % 2147483647
-      return Math.abs(n) || 1
-    })
+    const ids = bookingIds.map((id) => bookingReminderLocalNotificationId(id))
     await LocalNotifications.cancel({ notifications: ids.map((id) => ({ id })) })
   } catch {
     /* ignore */

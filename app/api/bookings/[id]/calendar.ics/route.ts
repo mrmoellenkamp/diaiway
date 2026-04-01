@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { communicationUsername } from "@/lib/communication-display"
 import { buildBookingIcs } from "@/lib/booking-calendar"
-import { isScheduledAwaitingStripeCompletion } from "@/lib/booking-display"
+import { isScheduledCheckoutShell } from "@/lib/booking-display"
 
 export const runtime = "nodejs"
 
@@ -64,14 +64,15 @@ export async function GET(
       return NextResponse.json({ error: "Termin nicht verfügbar." }, { status: 410 })
     }
 
+    // Nur reine Checkout-Hülle (noch keine Zahlung gestartet): kein Export
     if (
-      isScheduledAwaitingStripeCompletion({
+      isScheduledCheckoutShell({
         status: booking.status,
         paymentStatus: booking.paymentStatus,
         bookingMode: booking.bookingMode,
       })
     ) {
-      return NextResponse.json({ error: "Kalender nach Zahlungsabschluss verfügbar." }, { status: 409 })
+      return NextResponse.json({ error: "Kalender erst nach Buchungsstart verfügbar." }, { status: 409 })
     }
 
     const takumiDisplay = communicationUsername(booking.expert?.user?.username, booking.expertName || "Takumi")

@@ -298,12 +298,13 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
 
     <div
       className={cn(
-        "flex flex-col overflow-hidden font-sans",
+        /* min-h-0: Flex-Kinder dürfen schrumpfen (Android WebView + overflow) */
+        "flex min-h-0 flex-col overflow-hidden font-sans",
         isEmbedded
-          ? "rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
+          ? "rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.96)] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
           : isFullpage
-            ? "h-[calc(100vh-6rem)] rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
-            : "h-full rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.5)] backdrop-blur-md shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]",
+            ? "h-mentor-fullpage rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.96)] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]"
+            : "h-full min-h-0 rounded-3xl border border-[rgba(6,78,59,0.15)] bg-[rgba(236,253,245,0.96)] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_6px_16px_rgba(6,78,59,0.12)]",
         className
       )}
     >
@@ -479,7 +480,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
             <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)] ring-1 ring-[rgba(6,78,59,0.1)]">
               <Sparkles className="size-3.5 text-primary" />
             </div>
-            <div className="max-w-[90%] flex flex-col gap-2.5 rounded-2xl rounded-tl-md border border-[rgba(6,78,59,0.15)] bg-[rgba(255,255,255,0.9)] px-3 py-3 shadow-sm backdrop-blur-sm">
+            <div className="max-w-[90%] flex flex-col gap-2.5 rounded-2xl rounded-tl-md border border-[rgba(6,78,59,0.15)] bg-[rgba(255,255,255,0.98)] px-3 py-3 shadow-sm">
               <p className="text-[13px] leading-relaxed text-foreground">{t("mentor.proactiveSearchQuestion")}</p>
               <div className="flex items-center gap-2">
                 <Button
@@ -538,7 +539,7 @@ export function MentorChat({ variant, className, hideHeader = false }: MentorCha
                 return (
                   <div
                     key={t.id}
-                    className="flex w-[200px] shrink-0 flex-col gap-2.5 rounded-xl border border-[rgba(6,78,59,0.1)] bg-[rgba(255,255,255,0.7)] p-3 shadow-sm backdrop-blur-sm"
+                    className="flex w-[200px] shrink-0 flex-col gap-2.5 rounded-xl border border-[rgba(6,78,59,0.1)] bg-[rgba(255,255,255,0.98)] p-3 shadow-sm"
                   >
                     <div className="flex items-center gap-2.5">
                       <Avatar className="size-10 ring-2 ring-[rgba(6,78,59,0.1)]">

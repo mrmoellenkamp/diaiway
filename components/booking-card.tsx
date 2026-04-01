@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +26,10 @@ import { formatDateBerlin, formatDateBerlinShort, parseBerlinDateTime } from "@/
 import type { BookingRecord } from "@/lib/types"
 import { isScheduledAwaitingStripeCompletion } from "@/lib/booking-display"
 import { BookingCalendarActions } from "@/components/booking-calendar-actions"
+import {
+  isBeforeScheduledJoinWindow,
+  minutesUntilScheduledJoinOpens,
+} from "@/lib/scheduled-call-window"
 
 const STATUS_KEYS: Record<string, string> = {
   pending: "booking.statusPending",
@@ -81,6 +86,7 @@ export function BookingCard({
   onCancelled?: () => void
 }) {
   const { t } = useI18n()
+  const router = useRouter()
   const { data: session } = useSession()
   const [isCancelling, setIsCancelling] = useState(false)
   const [cancelPreview, setCancelPreview] = useState<CancelPreview | null>(null)
@@ -128,6 +134,21 @@ export function BookingCard({
       })
       .catch(() => {/* silent – we'll show generic message */})
   }, [dialogOpen, canCancel, bookingId])
+
+  function handleStartOrJoinSession() {
+    if (!bookingId) return
+    const scheduled = (booking.bookingMode ?? "scheduled") === "scheduled"
+    if (
+      scheduled &&
+      booking.status === "confirmed" &&
+      isBeforeScheduledJoinWindow(new Date(), booking.date, booking.startTime)
+    ) {
+      const mins = minutesUntilScheduledJoinOpens(new Date(), booking.date, booking.startTime)
+      toast.error(t("booking.scheduledJoinTooEarly").replace("{minutes}", String(Math.max(1, mins))))
+      return
+    }
+    router.push(`/session/${bookingId}`)
+  }
 
   async function handleCancel() {
     setIsCancelling(true)
@@ -268,19 +289,21 @@ export function BookingCard({
               </div>
             )}
             {canJoin && (
-              <Link href={`/session/${bookingId}`} className="flex-1">
+              <div className="flex-1">
                 <Button
+                  type="button"
                   size="sm"
                   className={
                     isLive
                       ? "h-9 w-full animate-pulse bg-accent text-accent-foreground hover:bg-[rgba(34,197,94,0.9)]"
                       : "h-9 w-full bg-primary text-primary-foreground hover:bg-[rgba(6,78,59,0.9)]"
                   }
+                  onClick={handleStartOrJoinSession}
                 >
                   <Phone className="mr-1.5 size-3.5" />
                   {isLive ? t("booking.join") : t("booking.start")}
                 </Button>
-              </Link>
+              </div>
             )}
             {bookingId ? (
               <BookingCalendarActions

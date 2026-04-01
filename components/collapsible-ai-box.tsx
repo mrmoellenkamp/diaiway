@@ -60,7 +60,7 @@ export function CollapsibleAiBox({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-3xl shadow-lg transition-shadow hover:shadow-xl",
+        "flex min-h-0 flex-col overflow-hidden rounded-3xl shadow-lg transition-shadow hover:shadow-xl",
         isPrimary
           ? "border border-[rgba(6,78,59,0.2)] bg-gradient-to-br from-primary via-primary to-[rgba(6,78,59,0.95)] shadow-[0_8px_30px_rgba(6,78,59,0.22)]"
           : "border border-border bg-card shadow-md",
@@ -135,7 +135,7 @@ export function CollapsibleAiBox({
         )}
       </button>
       {expanded && (
-        <div className="border-t border-[rgba(255,255,255,0.1)] bg-[rgba(236,253,245,0.4)]">
+        <div className="flex min-h-0 flex-col overflow-hidden border-t border-[rgba(255,255,255,0.1)] bg-[rgba(236,253,245,0.92)]">
           <MentorChat
             variant={chatVariant}
             hideHeader

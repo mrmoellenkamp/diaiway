@@ -144,24 +144,22 @@ function SessionsContent() {
   ]
 
   const bookings = displayBookings
-  // Local Notifications: Erinnerungen für bestätigte Sessions (30 Min vor Start)
+  // Local Notifications: bestätigte Sessions, 5 Min vor Start (Europe/Berlin)
   useEffect(() => {
     const confirmed = bookings.filter((b) => b.status === "confirmed")
     const now = new Date()
     const past: string[] = []
     for (const b of confirmed) {
-      const [y, m, d] = (b.date || "").split("-").map(Number)
-      const [h, min] = (b.startTime || "00:00").split(":").map(Number)
-      const at = new Date(y, m - 1, d, h, min, 0)
-      if (at.getTime() > now.getTime()) {
+      const sessionStart = parseBerlinDateTime(b.date, b.startTime || "00:00")
+      if (sessionStart.getTime() > now.getTime()) {
+        const partnerName = isTakumi ? b.userName : b.expertName
         scheduleSessionReminder({
           id: b.id,
-          expertName: b.expertName,
           date: b.date,
           startTime: b.startTime || "00:00",
           channelName: t("native.sessionReminderChannel"),
           title: t("native.sessionReminderTitle"),
-          body: t("native.sessionReminderBody", { expertName: b.expertName }),
+          body: t("native.sessionReminderBody", { partnerName }),
         })
       } else {
         past.push(b.id)
@@ -171,7 +169,7 @@ function SessionsContent() {
       .filter((b) => ["completed", "declined", "cancelled"].includes(b.status) || past.includes(b.id))
       .map((b) => b.id)
     if (toCancel.length > 0) cancelPastReminders([...new Set(toCancel)])
-  }, [bookings, t])
+  }, [bookings, t, isTakumi])
 
   const filtered = bookings
     .filter((b) => tabForBooking(b) === activeTab)

@@ -5,6 +5,23 @@
 
 const BERLIN = "Europe/Berlin"
 
+/** Kalendertag YYYY-MM-DD in einer Zeitzone (z. B. für Prisma-Feld `Booking.date`). */
+export function formatYmdInTimeZone(d: Date, timeZone: string): string {
+  return d.toLocaleDateString("sv-SE", { timeZone })
+}
+
+/** Gestern / heute / morgen in Europe/Berlin — Cron & Filter, wenn `date` in Berlin gespeichert ist. */
+export function berlinDateStringsThreeDayWindow(now: Date = new Date()): string[] {
+  const dayMs = 86400000
+  return [
+    ...new Set([
+      formatYmdInTimeZone(new Date(now.getTime() - dayMs), BERLIN),
+      formatYmdInTimeZone(now, BERLIN),
+      formatYmdInTimeZone(new Date(now.getTime() + dayMs), BERLIN),
+    ]),
+  ]
+}
+
 /** Format options for Berlin timezone */
 const berlinOptions: Intl.DateTimeFormatOptions = { timeZone: BERLIN }
 

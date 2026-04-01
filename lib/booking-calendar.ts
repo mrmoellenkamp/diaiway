@@ -1,6 +1,6 @@
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import type { BookingRecord } from "@/lib/types"
-import { isScheduledAwaitingStripeCompletion } from "@/lib/booking-display"
+import { isScheduledCheckoutShell } from "@/lib/booking-display"
 
 /** Minimale Buchungsdaten für Kalender-Freigabe und Client-URLs. */
 export type BookingCalendarEligibilityFields = Pick<
@@ -11,7 +11,7 @@ export type BookingCalendarEligibilityFields = Pick<
 export function canOfferCalendarExport(booking: BookingCalendarEligibilityFields): boolean {
   const bookingMode = booking.bookingMode ?? "scheduled"
   if (
-    isScheduledAwaitingStripeCompletion({
+    isScheduledCheckoutShell({
       status: booking.status,
       paymentStatus: booking.paymentStatus,
       bookingMode,

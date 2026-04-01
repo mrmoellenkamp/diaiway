@@ -22,6 +22,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **Production-Login / Safari** | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) |
 | **Beitragen (i18n, Stil)** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | **Doku pflegen** | [UPDATE.md](UPDATE.md) |
+| **vNext (Backlog / Prompt-Specs)** | [vNext/README.md](vNext/README.md) |
 
 ---
 
@@ -70,6 +71,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | [PREFLIGHT-AUDIT.md](PREFLIGHT-AUDIT.md) | Preflight-Audit |
 | [kundennummer-zaehler.md](kundennummer-zaehler.md) | KD-Nummern / InvoiceCounter |
 | [BILLING-DOCUMENTS-AND-PAYMENTS.md](BILLING-DOCUMENTS-AND-PAYMENTS.md) | RE/GS/PR/SR/SG/GBL, Gutschriftverfahren, MwSt-Takumi, Admin-Vorschau, Webhooks, iOS-Hinweise |
+| [vNext/README.md](vNext/README.md) | Backlog: kommende Features mit **Prompt-Slugs** für Cursor (`docs/vNext/`) |
 
 ---
 

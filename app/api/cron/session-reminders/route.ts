@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { parseBerlinDateTime } from "@/lib/date-utils"
+import { berlinDateStringsThreeDayWindow, parseBerlinDateTime } from "@/lib/date-utils"
 import { sendPushToUser } from "@/lib/push"
 import { pushT } from "@/lib/push-strings"
 import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
@@ -15,14 +15,15 @@ export const runtime = "nodejs"
  */
 async function runSessionReminders() {
   const now = new Date()
-  const upper = new Date(now.getTime() + 5 * 60 * 1000)
+  /** booking.date ist Kalendertag in Europe/Berlin — nicht UTC-Datum filtern. */
+  const berlinDates = berlinDateStringsThreeDayWindow(now)
 
   const candidates = await prisma.booking.findMany({
     where: {
       bookingMode: "scheduled",
       status: "confirmed",
       paymentStatus: "paid",
-      date: { in: [now.toISOString().slice(0, 10), upper.toISOString().slice(0, 10)] },
+      date: { in: berlinDates },
     },
     include: {
       user: { select: { id: true, username: true } },
@@ -71,6 +72,7 @@ async function runSessionReminders() {
         }),
         url: bookingUrl,
         tag: `booking-reminder-${b.id}-user`,
+        pushType: "REMINDER",
       }).catch(() => {})
       sent += 1
     } else {
@@ -103,6 +105,7 @@ async function runSessionReminders() {
           }),
           url: bookingUrl,
           tag: `booking-reminder-${b.id}-expert`,
+          pushType: "REMINDER",
         }).catch(() => {})
         sent += 1
       } else {

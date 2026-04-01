@@ -21,6 +21,29 @@ import {
 
 export const runtime = "nodejs"
 
+/** 15-Minuten-Preis in EUR für Instant (Voice vs. Video) — konsistent mit end-session / instant/route */
+function instantPrice15EuroFromBooking(booking: {
+  callType: string
+  expert: {
+    priceVideo15Min: unknown
+    priceVoice15Min: unknown
+    pricePerSession: unknown
+  } | null
+}): number {
+  const e = booking.expert
+  if (!e) return 0
+  const voice = booking.callType === "VOICE"
+  return voice
+    ? Number(
+        e.priceVoice15Min ??
+          e.priceVideo15Min ??
+          (e.pricePerSession ? (e.pricePerSession as number) / 2 : 0)
+      )
+    : Number(
+        e.priceVideo15Min ?? (e.pricePerSession ? (e.pricePerSession as number) / 2 : 0)
+      )
+}
+
 /**
  * GET /api/bookings/[id]
  * Load a single booking enriched with expert data.
@@ -102,11 +125,44 @@ export async function GET(
       ])
       userBalanceCents = shugyoUser?.balance ?? 0
       hasPaidBefore = !!priorPaid
-      const price15 = Number(
-        booking.expert?.priceVideo15Min ?? (booking.expert?.pricePerSession ? (booking.expert.pricePerSession as number) / 2 : 0)
-      )
+      const price15 = instantPrice15EuroFromBooking(booking)
       pricePerMinuteCents = Math.round((price15 * 100) / 15)
     }
+
+    // Instant + Takumi: Shugyo-Guthaben + gleicher Minutenpreis (Timer = Restzeit aus Wallet / Burning Rate)
+    if (isExpert && booking.bookingMode === "instant" && booking.userId) {
+      const shugyoUser = await prisma.user.findUnique({
+        where: { id: booking.userId },
+        select: { balance: true },
+      })
+      userBalanceCents = shugyoUser?.balance ?? 0
+      const price15 = instantPrice15EuroFromBooking(booking)
+      pricePerMinuteCents = Math.round((price15 * 100) / 15)
+    }
+
+    // Geplanter Call: Folgekontakt = 30 s Handshake (sonst 5 min) — gleiche Logik wie end-session; für Bucher- und Takumi-UI
+    if (
+      booking.bookingMode === "scheduled" &&
+      booking.userId &&
+      !(booking.isGuestCall ?? false) &&
+      (isBooker || isExpert)
+    ) {
+      const priorPaidScheduled = await prisma.booking.findFirst({
+        where: {
+          userId: booking.userId,
+          expertId: booking.expertId,
+          paymentStatus: "paid",
+          id: { not: booking.id },
+        },
+        select: { id: true },
+      })
+      hasPaidBefore = !!priorPaidScheduled
+    }
+
+    /** Safety-Opt-in je Partei; Fallback auf legacy safetyAcceptedAt (Migration). */
+    const safetyAcceptedAtForViewer = isExpert
+      ? booking.expertSafetyAcceptedAt ?? booking.safetyAcceptedAt
+      : booking.bookerSafetyAcceptedAt ?? booking.safetyAcceptedAt
 
     return NextResponse.json({
       booking: {
@@ -133,7 +189,7 @@ export async function GET(
         totalPrice: booking.totalPrice != null ? Number(booking.totalPrice) : null,
         price: booking.price,
         note: booking.note,
-        safetyAcceptedAt: booking.safetyAcceptedAt,
+        safetyAcceptedAt: safetyAcceptedAtForViewer,
         sessionStartedAt: booking.sessionStartedAt,
         sessionEndedAt: booking.sessionEndedAt,
         sessionDuration: booking.sessionDuration,
@@ -309,7 +365,9 @@ export async function PATCH(
       }
       await prisma.booking.update({
         where: { id },
-        data: { safetyAcceptedAt: new Date() },
+        data: isBooker
+          ? { bookerSafetyAcceptedAt: new Date() }
+          : { expertSafetyAcceptedAt: new Date() },
       })
       return NextResponse.json({ success: true })
     }

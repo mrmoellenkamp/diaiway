@@ -14,7 +14,7 @@ export default function AiGuidePage() {
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t("aiGuide.introText")}
         </p>
-        <MentorChat variant="fullpage" className="h-[380px] max-h-[calc(70vh-4rem)]" />
+        <MentorChat variant="fullpage" className="h-[380px] max-h-ai-guide-chat" />
       </div>
     </PageContainer>
   )

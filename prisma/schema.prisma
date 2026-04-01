@@ -442,9 +442,11 @@ model Booking {
   trialUsed             Boolean       @default(false)
   shugyoFrozenAt        DateTime?     // Paket 4: Soft-Freeze – Shugyo hat 0 Guthaben
 
-  // diaiway Safety Enforcement: Pre-Call-Gateway-Zustimmung
-  safetyAcceptedAt      DateTime?
-  snapshotConsentAt     DateTime?  // Shugyo: Einwilligung zu Stichproben-Snapshots bei Verstößen
+  // diaiway Safety Enforcement: Pre-Call-Gateway-Zustimmung (pro Partei; legacy safetyAcceptedAt siehe Migration)
+  safetyAcceptedAt           DateTime?
+  bookerSafetyAcceptedAt     DateTime?
+  expertSafetyAcceptedAt     DateTime?
+  snapshotConsentAt          DateTime?  // Shugyo: Einwilligung zu Stichproben-Snapshots bei Verstößen
 
   // Expert's rating of the user (Shugyo) — set when Takumi rates the booker
   expertRating    Float?

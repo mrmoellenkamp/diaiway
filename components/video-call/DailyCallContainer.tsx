@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { FlipHorizontal, Loader2, Maximize2, Mic, MicOff, PhoneOff, PictureInPicture, Square, Video, VideoOff, Wallet } from "lucide-react"
+import { Clock, FlipHorizontal, Loader2, Maximize2, Mic, MicOff, PhoneOff, PictureInPicture, Square, Video, VideoOff, Wallet } from "lucide-react"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -37,6 +37,7 @@ import { useSafeSnapshot } from "@/hooks/use-safe-snapshot"
 import { useSessionActivity } from "@/components/session-activity-provider"
 import { useHeartbeat } from "@/hooks/use-heartbeat"
 import { getScheduledEarliestJoin } from "@/lib/scheduled-call-window"
+import { parseBerlinDateTime } from "@/lib/date-utils"
 
 // --- State Machine ---
 type CallPhase = "LOBBY" | "JOINING" | "IN_CALL"
@@ -62,12 +63,18 @@ interface DailyCallContainerProps {
   /** Geplante Sessions: Slot (Europe/Berlin) — für 5-Min-vor-Start-Regel in der Lobby */
   scheduledDate?: string
   scheduledStartTime?: string
+  /** Slot-Ende (Europe/Berlin) — automatisches Beenden + 1-Min-Warnung */
+  scheduledEndTime?: string
+  /** Fallback Slot-Länge in Sekunden (Start→Ende), wenn endTime fehlt — aus Buchung ableiten */
+  scheduledSlotDurationSec?: number | null
   /** z. B. "confirmed" | "active" — bei active ist das Zeitfenster aufgehoben */
   bookingStatus?: string
   sessionStartedAt?: string | null
   userBalanceCents?: number
   pricePerMinuteCents?: number
   hasPaidBefore?: boolean
+  /** Geplanter Gast-Call: Handshake 60 s wie Server (end-session) */
+  isGuestCall?: boolean
 }
 
 interface MediaDevice {
@@ -82,34 +89,33 @@ const MAX_JOIN_RETRIES = 3
 const JOIN_RETRY_DELAYS_MS = [2000, 2500, 3000] as const
 
 /**
- * Paket 3: Berechnet Restzeit in Sekunden für Instant-Abrechnung (Start = beide im Raum).
- *
- * Handshake: 60 Sek (Erst- und Folgekontakt). Unter 60 Sek → keine Abrechnung.
- * Timer läuft ab Sekunde 1 (zeigt volle Restzeit). Die 60-Sek-Schwelle ist nur
- * eine no-charge-Grenze auf dem Server – der Client-Timer läuft zur Anzeige ab Sek. 1.
- * Mindestabrechnung: 5 Min (serverseitig). Timer zeigt echte verbleibende Wallet-Zeit.
+ * Instant: Restzeit = verbleibendes Guthaben ÷ Burning Rate (Cent/Min),
+ * abzüglich bereits „verbrannter“ Cent seit effektivem Start (linear nach Minutenpreis).
+ * Entspricht: (balance − elapsedMin × pricePerMinute) / pricePerMinute in Minuten → Sekunden.
  */
-function calculateRemainingTime(
-  effectiveStartMs: number,
-  hasPaidBefore: boolean,
-  userBalanceCents: number,
+function instantWalletRemainingSec(
+  balanceCents: number,
   pricePerMinuteCents: number,
-  frozenDurationMs = 0
+  elapsedBillableSec: number
 ): number {
   if (pricePerMinuteCents <= 0) return TIMER_DURATION_SEC
-  // Timer läuft ab Sekunde 1 – keine freePeriod mehr im Client
-  // Mindestabrechnung 5 Min wird serverseitig angewendet
-  void hasPaidBefore
-  const elapsedSec = (Date.now() - effectiveStartMs - frozenDurationMs) / 1000
-  const balanceMinutes = userBalanceCents / pricePerMinuteCents
-  const remainingSec = Math.max(0, balanceMinutes * 60 - elapsedSec)
-  return Math.round(remainingSec)
+  const burnedCents = (elapsedBillableSec / 60) * pricePerMinuteCents
+  const remainingCents = balanceCents - burnedCents
+  return Math.max(0, Math.floor((remainingCents / pricePerMinuteCents) * 60))
 }
 
 function formatMmSs(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${String(s).padStart(2, "0")}`
+}
+
+/** Handshake-Phase grün, danach weiß, letzte Minute rot (serverseitige Grenzen in end-session). */
+function getCallTimerColorClass(remainingSec: number, elapsedSec: number, handshakeSec: number): string {
+  if (remainingSec <= 0) return "text-muted-foreground"
+  if (remainingSec <= 60) return "text-red-400"
+  if (elapsedSec < handshakeSec) return "text-emerald-400"
+  return "text-white"
 }
 
 export function DailyCallContainer({
@@ -124,11 +130,14 @@ export function DailyCallContainer({
   bookingMode,
   scheduledDate,
   scheduledStartTime,
+  scheduledEndTime,
+  scheduledSlotDurationSec = null,
   bookingStatus,
   sessionStartedAt,
   userBalanceCents = 0,
   pricePerMinuteCents = 0,
   hasPaidBefore = false,
+  isGuestCall = false,
 }: DailyCallContainerProps) {
   const { t } = useI18n()
   const nativeSessionActive = useMemo(
@@ -294,6 +303,7 @@ export function DailyCallContainer({
       setSafetyAccepted(true)
     } catch (e) {
       console.warn("[DailyCall] accept-safety:", e)
+      toast.error(e instanceof Error ? e.message : "Safety-Bestätigung fehlgeschlagen.")
     } finally {
       setSafetySubmitting(false)
     }
@@ -321,6 +331,10 @@ export function DailyCallContainer({
   const serverSessionStartMsRef = useRef<number | null>(null)
   const haptic4MinFiredRef = useRef(false)
   const haptic5MinFiredRef = useRef(false)
+  const scheduledSlotWarn60Ref = useRef(false)
+  const scheduledSlotEndFiredRef = useRef(false)
+  const scheduledSlotEndMsRef = useRef<number | null>(null)
+  const handleAuflegenRef = useRef<(() => Promise<void>) | null>(null)
   /** Erstcall-/Abrechnungs-Timer erst, wenn lokaler + Remote-Teilnehmer im Raum sind */
   const timerLoopStartedRef = useRef(false)
   const bothJoinedAtMsRef = useRef<number | null>(null)
@@ -335,14 +349,75 @@ export function DailyCallContainer({
   const [balanceCentsForTimer, setBalanceCentsForTimer] = useState<number | null>(null)
   const { openWalletTopup } = useWalletTopup()
 
-  const useBillingTimer =
-    bookingMode === "instant" &&
-    userRole === "shugyo" &&
-    pricePerMinuteCents > 0
+  /** Instant: Wallet-Restzeit für Shugyo und Takumi (serverseitig gleicher Minutenpreis / Guthaben). */
+  const useInstantWalletTimer = bookingMode === "instant" && pricePerMinuteCents > 0
+  /** Nur Shugyo: Freeze / Wallet-Aufladen bei 0 Restzeit */
+  const useShugyoInstantWalletFreeze = useInstantWalletTimer && userRole === "shugyo"
+
+  const useScheduledSlotTimer = useMemo(() => {
+    if (bookingMode !== "scheduled" || !scheduledDate) return false
+    if (scheduledEndTime?.trim()) return true
+    return !!(
+      scheduledStartTime?.trim() &&
+      scheduledSlotDurationSec != null &&
+      scheduledSlotDurationSec > 0
+    )
+  }, [
+    bookingMode,
+    scheduledDate,
+    scheduledEndTime,
+    scheduledStartTime,
+    scheduledSlotDurationSec,
+  ])
+
+  const callHandshakeSecUi = useMemo(() => {
+    if (bookingMode === "instant" || isGuestCall) return 60
+    if (bookingMode === "scheduled") return hasPaidBefore ? 30 : 300
+    return 60
+  }, [bookingMode, isGuestCall, hasPaidBefore])
+
+  useEffect(() => {
+    if (bookingMode !== "scheduled" || !scheduledDate) {
+      scheduledSlotEndMsRef.current = null
+      return
+    }
+    const endStr = scheduledEndTime?.trim()
+    if (endStr) {
+      try {
+        scheduledSlotEndMsRef.current = parseBerlinDateTime(scheduledDate, endStr).getTime()
+        return
+      } catch {
+        /* endTime ungültig → Dauer-Fallback unten */
+      }
+    }
+    const startStr = scheduledStartTime?.trim()
+    if (startStr && scheduledSlotDurationSec != null && scheduledSlotDurationSec > 0) {
+      try {
+        const startMs = parseBerlinDateTime(scheduledDate, startStr).getTime()
+        scheduledSlotEndMsRef.current = startMs + scheduledSlotDurationSec * 1000
+      } catch {
+        scheduledSlotEndMsRef.current = null
+      }
+      return
+    }
+    scheduledSlotEndMsRef.current = null
+  }, [
+    bookingMode,
+    scheduledDate,
+    scheduledEndTime,
+    scheduledStartTime,
+    scheduledSlotDurationSec,
+  ])
 
   useEffect(() => {
     balanceCentsRef.current = balanceCentsForTimer
   }, [balanceCentsForTimer])
+
+  useEffect(() => {
+    if (!useInstantWalletTimer) return
+    balanceCentsRef.current = userBalanceCents
+    setBalanceCentsForTimer(userBalanceCents)
+  }, [useInstantWalletTimer, userBalanceCents])
 
   // Server-backed session start for timer sync (no reset on reconnect)
   useEffect(() => {
@@ -424,6 +499,7 @@ export function DailyCallContainer({
     if (onCallEnded) onCallEnded()
     else redirectToSessions("Auflegen-Button")
   }, [bookingId, performCleanup, onCallEnded, redirectToSessions])
+  handleAuflegenRef.current = handleAuflegen
 
   // --- IN_CALL: Report and leave ---
   const handleReportAndLeave = useCallback(async () => {
@@ -726,38 +802,66 @@ export function DailyCallContainer({
       haptic4MinFiredRef.current = false
       haptic5MinFiredRef.current = false
       lowBalanceWarningShownRef.current = false
+      scheduledSlotWarn60Ref.current = false
+      scheduledSlotEndFiredRef.current = false
 
       const tick = () => {
         const effectiveStart = bothJoinedAtMsRef.current ?? sessionStartMsRef.current ?? Date.now()
-        if (useBillingTimer && sessionStartMsRef.current) {
+        const slotEndMs = scheduledSlotEndMsRef.current
+        if (useInstantWalletTimer && sessionStartMsRef.current) {
           const balance = balanceCentsRef.current ?? userBalanceCents
-          const remaining = calculateRemainingTime(
-            effectiveStart,
-            hasPaidBefore,
-            balance,
-            pricePerMinuteCents,
-            frozenDurationMsRef.current
+          const elapsedBillableSec = Math.max(
+            0,
+            (Date.now() - effectiveStart - frozenDurationMsRef.current) / 1000
           )
+          const remaining = instantWalletRemainingSec(balance, pricePerMinuteCents, elapsedBillableSec)
           setTimerSecondsLeft(remaining)
-          if (remaining <= 60 && remaining > 0 && !lowBalanceWarningShownRef.current) {
+          if (
+            useShugyoInstantWalletFreeze &&
+            remaining <= 60 &&
+            remaining > 0 &&
+            !lowBalanceWarningShownRef.current
+          ) {
             lowBalanceWarningShownRef.current = true
             toast.warning(t("toast.balanceLow"))
           }
           if (remaining <= 0) {
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
-            frozenAtMsRef.current = Date.now()
-            setIsFrozen(true)
-            try {
-              call.setLocalVideo(false)
-              call.setLocalAudio(false)
-            } catch (e) {
-              console.warn("[DailyCall] setLocalVideo/Audio off:", e)
+            if (timerIntervalRef.current) {
+              clearInterval(timerIntervalRef.current)
+              timerIntervalRef.current = null
             }
-            fetch(`/api/bookings/${bookingId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "set-shugyo-frozen" }),
-            }).catch(() => {})
+            if (useShugyoInstantWalletFreeze) {
+              frozenAtMsRef.current = Date.now()
+              setIsFrozen(true)
+              try {
+                call.setLocalVideo(false)
+                call.setLocalAudio(false)
+              } catch (e) {
+                console.warn("[DailyCall] setLocalVideo/Audio off:", e)
+              }
+              fetch(`/api/bookings/${bookingId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "set-shugyo-frozen" }),
+              }).catch(() => {})
+            } else {
+              setTimerSecondsLeft(0)
+            }
+          }
+        } else if (slotEndMs != null) {
+          const remaining = Math.max(0, Math.ceil((slotEndMs - Date.now()) / 1000))
+          setTimerSecondsLeft(remaining)
+          if (remaining <= 60 && remaining > 0 && !scheduledSlotWarn60Ref.current) {
+            scheduledSlotWarn60Ref.current = true
+            toast.info(t("toast.scheduledSlotEndingSoon"))
+          }
+          if (remaining <= 0 && !scheduledSlotEndFiredRef.current) {
+            scheduledSlotEndFiredRef.current = true
+            if (timerIntervalRef.current) {
+              clearInterval(timerIntervalRef.current)
+              timerIntervalRef.current = null
+            }
+            void handleAuflegenRef.current?.()
           }
         } else {
           setTimerSecondsLeft((prev) => {
@@ -780,9 +884,19 @@ export function DailyCallContainer({
       }
       const startMs = bothJoinedAtMsRef.current ?? Date.now()
       const elapsedSec = (Date.now() - startMs) / 1000
-      const initialRemaining = useBillingTimer
-        ? calculateRemainingTime(startMs, hasPaidBefore, balanceCentsRef.current ?? userBalanceCents, pricePerMinuteCents, frozenDurationMsRef.current)
-        : Math.max(0, Math.round(TIMER_DURATION_SEC - elapsedSec))
+      const elapsedBillableInstant = Math.max(
+        0,
+        (Date.now() - startMs - frozenDurationMsRef.current) / 1000
+      )
+      const initialRemaining = useInstantWalletTimer
+        ? instantWalletRemainingSec(
+            balanceCentsRef.current ?? userBalanceCents,
+            pricePerMinuteCents,
+            elapsedBillableInstant
+          )
+        : scheduledSlotEndMsRef.current != null
+          ? Math.max(0, Math.ceil((scheduledSlotEndMsRef.current - Date.now()) / 1000))
+          : Math.max(0, Math.round(TIMER_DURATION_SEC - elapsedSec))
       setTimerSecondsLeft(initialRemaining)
       tick()
       timerIntervalRef.current = setInterval(tick, 1000)
@@ -960,6 +1074,8 @@ export function DailyCallContainer({
       initGuardRef.current = false
       timerLoopStartedRef.current = false
       bothJoinedAtMsRef.current = null
+      scheduledSlotWarn60Ref.current = false
+      scheduledSlotEndFiredRef.current = false
       setTimerSecondsLeft(null)
       setShowPartnerSearchWarning(false)
     })
@@ -990,7 +1106,7 @@ export function DailyCallContainer({
       timerLoopStartedRef.current = false
       bothJoinedAtMsRef.current = null
     }
-  }, [phase, callMode, useBillingTimer, hasPaidBefore, userBalanceCents, pricePerMinuteCents, bookingId, t])
+  }, [phase, callMode, useInstantWalletTimer, useShugyoInstantWalletFreeze, userBalanceCents, pricePerMinuteCents, bookingId, t])
 
   // --- App State: Background → local notification; Foreground → cancel notification ---
   useEffect(() => {
@@ -1139,7 +1255,7 @@ export function DailyCallContainer({
 
   // Paket 4: Timer neu starten nach Resume (Shugyo hatte 0 Guthaben, hat aufgeladen)
   useEffect(() => {
-    if (isFrozen || !useBillingTimer || phase !== "IN_CALL" || !sessionStartMsRef.current || balanceCentsForTimer === null) return
+    if (isFrozen || !useShugyoInstantWalletFreeze || phase !== "IN_CALL" || !sessionStartMsRef.current) return
     if (!remoteParticipant) return
 
     if (timerIntervalRef.current) {
@@ -1150,16 +1266,17 @@ export function DailyCallContainer({
     const tick = () => {
       const balance = balanceCentsRef.current ?? userBalanceCents
       const effectiveStart = bothJoinedAtMsRef.current ?? sessionStartMsRef.current ?? Date.now()
-      const remaining = calculateRemainingTime(
-        effectiveStart,
-        hasPaidBefore,
-        balance,
-        pricePerMinuteCents,
-        frozenDurationMsRef.current
+      const elapsedBillableSec = Math.max(
+        0,
+        (Date.now() - effectiveStart - frozenDurationMsRef.current) / 1000
       )
+      const remaining = instantWalletRemainingSec(balance, pricePerMinuteCents, elapsedBillableSec)
       setTimerSecondsLeft(remaining)
       if (remaining <= 0) {
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current)
+          timerIntervalRef.current = null
+        }
         frozenAtMsRef.current = Date.now()
         setIsFrozen(true)
         const call = callObjectRef.current
@@ -1187,7 +1304,7 @@ export function DailyCallContainer({
         timerIntervalRef.current = null
       }
     }
-  }, [isFrozen, useBillingTimer, phase, bookingId, hasPaidBefore, userBalanceCents, pricePerMinuteCents, balanceCentsForTimer, remoteParticipant])
+  }, [isFrozen, useShugyoInstantWalletFreeze, phase, bookingId, userBalanceCents, pricePerMinuteCents, balanceCentsForTimer, remoteParticipant])
 
   // --- Paket 4: Takumi – Poll für isShugyoFrozen, Session-Status ---
   useEffect(() => {
@@ -1432,8 +1549,18 @@ export function DailyCallContainer({
     return (
       <div className={shellClass}>
         {/* Pre-Call Safety Modal (nur Video) */}
-        <Dialog open={needsSafetyModal && !safetyAccepted}>
-          <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+        <Dialog
+          open={needsSafetyModal && !safetyAccepted}
+          onOpenChange={() => {
+            /* Opt-in erzwingen: Schließen nur nach erfolgreicher Bestätigung (kein X). */
+          }}
+        >
+          <DialogContent
+            className="max-w-md"
+            showCloseButton={false}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>diaiway Safety Enforcement</DialogTitle>
               <DialogDescription>
@@ -1578,9 +1705,23 @@ export function DailyCallContainer({
 
   // IN_CALL: App Shell mit Video + Steuerungsleiste
   const secs = timerSecondsLeft ?? 0
-  const timerColorClass =
-    secs > 120 ? "text-emerald-400" : secs > 60 ? "text-amber-400" : "text-red-400"
-  const timerBlink = secs > 0 && secs <= (useBillingTimer ? 60 : 30)
+  const sessionAnchorMs = sessionStartMsRef.current ?? bothJoinedAtMsRef.current
+  let elapsedSecForColor = 0
+  if (sessionAnchorMs != null) {
+    if (useInstantWalletTimer && frozenAtMsRef.current != null) {
+      elapsedSecForColor = Math.max(
+        0,
+        (frozenAtMsRef.current - sessionAnchorMs - frozenDurationMsRef.current) / 1000
+      )
+    } else {
+      elapsedSecForColor = Math.max(
+        0,
+        (Date.now() - sessionAnchorMs - (useInstantWalletTimer ? frozenDurationMsRef.current : 0)) / 1000
+      )
+    }
+  }
+  const timerColorClass = getCallTimerColorClass(secs, elapsedSecForColor, callHandshakeSecUi)
+  const timerBlink = secs > 0 && secs <= 60
 
   const hasRemoteVideo =
     callMode === "video" && remoteParticipant?.hasVideo
@@ -1695,7 +1836,11 @@ export function DailyCallContainer({
                 : "Warte auf Netzwerkverbindung…"}
             </p>
             <p className="text-xs text-[rgba(255,255,255,0.6)]">
-              Der 5-Min-Timer läuft weiter – keine doppelte Abrechnung.
+              {useScheduledSlotTimer
+                ? t("session.reconnectScheduledSlotHint")
+                : useInstantWalletTimer
+                  ? t("session.reconnectInstantWalletHint")
+                  : t("session.reconnectFallbackTimerHint")}
             </p>
           </div>
         )}
@@ -1714,11 +1859,21 @@ export function DailyCallContainer({
                 timerBlink && "animate-timer-blink"
               )}
             >
-              {useBillingTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
+              {useInstantWalletTimer && <Wallet className="size-3.5 shrink-0 opacity-80" />}
+              {useScheduledSlotTimer && !useInstantWalletTimer && (
+                <Clock className="size-3.5 shrink-0 opacity-80" aria-hidden />
+              )}
               <span>{formatMmSs(secs)}</span>
             </div>
-            {useBillingTimer && (
-              <span className="text-[10px] text-[rgba(255,255,255,0.7)]">ab Sek. 1 abrechnungsrelevant</span>
+            {useInstantWalletTimer && (
+              <span className="text-[10px] text-[rgba(255,255,255,0.7)]">
+                {t("session.instantWalletTimerSubline")}
+              </span>
+            )}
+            {useScheduledSlotTimer && !useInstantWalletTimer && (
+              <span className="text-[10px] text-[rgba(255,255,255,0.7)]">
+                {t("session.scheduledSlotRemaining")}
+              </span>
             )}
           </div>
         )}
