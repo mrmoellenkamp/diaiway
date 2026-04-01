@@ -303,7 +303,8 @@ npx prisma studio
 | [docs/MOBILE-BUILD.md](docs/MOBILE-BUILD.md) | Mobile Build (Capacitor) |
 | [docs/DEEP-LINKING-SETUP.md](docs/DEEP-LINKING-SETUP.md) | Deep-Links (Waymail, Chat) |
 | [docs/SECURE-FILE-EXCHANGE.md](docs/SECURE-FILE-EXCHANGE.md) | Sichere Datei-Übertragung |
-| [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance |
+| [docs/STORE-COMPLIANCE-CHECKLIST.md](docs/STORE-COMPLIANCE-CHECKLIST.md) | App-Store-Compliance (gemeinsame Basis) |
+| [docs/GOOGLE-PLAY-COMPLIANCE.md](docs/GOOGLE-PLAY-COMPLIANCE.md) | Google Play: Console, Data safety, Checklisten |
 | [docs/IOS-APP-STORE-COMPLIANCE.md](docs/IOS-APP-STORE-COMPLIANCE.md) | iOS App Store Compliance |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | i18n, Code-Stil, Verweis auf GitHub/CI |
 | [docs/UPDATE.md](docs/UPDATE.md) | Matrix: welche Doku bei welcher Änderung anfassen |

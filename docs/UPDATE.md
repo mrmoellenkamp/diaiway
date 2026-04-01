@@ -26,6 +26,7 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 | Capacitor / Android Signing | `docs/MOBILE-BUILD.md` |
 | Dokumentations-Index | `docs/INDEX.md` |
 | iOS Wallet/IAP vs. Marktplatz-Zahlung | `docs/IOS-APP-STORE-COMPLIANCE.md`, `docs/STORE-COMPLIANCE-CHECKLIST.md` |
+| Google Play Einreichung / Data safety | `docs/GOOGLE-PLAY-COMPLIANCE.md`, `docs/STORE-COMPLIANCE-CHECKLIST.md` |
 | Diese Checkliste selbst | `docs/UPDATE.md` |
 
 ## Automatisierte Prüfung

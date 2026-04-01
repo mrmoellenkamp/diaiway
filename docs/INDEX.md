@@ -23,6 +23,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **Beitragen (i18n, Stil)** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | **Doku pflegen** | [UPDATE.md](UPDATE.md) |
 | **vNext (Backlog / Prompt-Specs)** | [vNext/README.md](vNext/README.md) |
+| **Google Play (Compliance)** | [GOOGLE-PLAY-COMPLIANCE.md](GOOGLE-PLAY-COMPLIANCE.md) |
 
 ---
 
@@ -63,7 +64,8 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | [MOBILE-BUILD.md](MOBILE-BUILD.md) | Capacitor, `out/`, Android-Signing, App Links |
 | [DEEP-LINKING-SETUP.md](DEEP-LINKING-SETUP.md) | Universal Links, Waymail |
 | [SECURE-FILE-EXCHANGE.md](SECURE-FILE-EXCHANGE.md) | Virenscan, Upload-Limits |
-| [STORE-COMPLIANCE-CHECKLIST.md](STORE-COMPLIANCE-CHECKLIST.md) | Store-Compliance |
+| [STORE-COMPLIANCE-CHECKLIST.md](STORE-COMPLIANCE-CHECKLIST.md) | Store-Compliance (iOS + Android Basis) |
+| [GOOGLE-PLAY-COMPLIANCE.md](GOOGLE-PLAY-COMPLIANCE.md) | Google Play: Console, Data safety, Richtlinien, SDK-Stand |
 | [IOS-APP-STORE-COMPLIANCE.md](IOS-APP-STORE-COMPLIANCE.md) | iOS-spezifisch |
 | [CALL-KEEP-SETUP.md](CALL-KEEP-SETUP.md) | Call-Keep (native) |
 | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) | NEXTAUTH_URL, WebKit |

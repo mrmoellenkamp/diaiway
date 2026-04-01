@@ -107,6 +107,81 @@ export async function shareNative(options: { title: string; text?: string; url?:
   }
 }
 
+function isShareUserCancelError(e: unknown): boolean {
+  const msg =
+    e instanceof Error
+      ? `${e.name} ${e.message}`
+      : typeof e === "object" && e !== null && "message" in e
+        ? String((e as { message: string }).message)
+        : String(e)
+  return /cancel|canceled|cancelled|dismiss|did not share|user.*cancel|abort/i.test(msg)
+}
+
+/**
+ * ICS über System-Share öffnen (Kalender, Dateien, …). WebView-unterstützt.
+ *
+ * Wichtig: Auf Android akzeptiert @capacitor/share nur `file:`-URLs für Dateien.
+ * `Filesystem.getUri()` liefert dort oft `content://` → Share bricht ohne UI ab.
+ * Daher: `writeFile` nutzen und die zurückgegebene `uri` (typisch `file://…`) an
+ * `Share.share({ url })` übergeben (wie in der Capacitor-Doku beim Camera-File).
+ */
+export async function shareBookingIcsViaNativeSheet(options: {
+  blob: Blob
+  fileName: string
+  title: string
+  dialogTitle?: string
+}): Promise<"shared" | "cancelled" | "skipped"> {
+  if (!Capacitor.isNativePlatform()) return "skipped"
+  const safeName = options.fileName.replace(/[/\\?%*:|"<>]/g, "_") || "termin.ics"
+  const subdir = "diaiway-calendar"
+  const path = `${subdir}/${Date.now()}-${safeName}`
+  try {
+    const { Directory, Encoding, Filesystem } = await import("@capacitor/filesystem")
+    const { Share } = await import("@capacitor/share")
+    const data = await options.blob.text()
+    try {
+      await Filesystem.mkdir({
+        path: subdir,
+        directory: Directory.Cache,
+        recursive: true,
+      })
+    } catch {
+      /* exists */
+    }
+    const { uri } = await Filesystem.writeFile({
+      path,
+      directory: Directory.Cache,
+      data,
+      encoding: Encoding.UTF8,
+    })
+    if (!uri?.trim()) return "skipped"
+
+    try {
+      await Share.share({
+        title: options.title,
+        url: uri,
+        dialogTitle: options.dialogTitle,
+      })
+    } catch (e) {
+      if (isShareUserCancelError(e)) throw e
+      try {
+        await Share.share({
+          title: options.title,
+          files: [uri],
+          dialogTitle: options.dialogTitle,
+        })
+      } catch (e2) {
+        if (isShareUserCancelError(e2)) throw e2
+        throw e
+      }
+    }
+    return "shared"
+  } catch (e) {
+    if (isShareUserCancelError(e)) return "cancelled"
+    return "skipped"
+  }
+}
+
 /**
  * Session-Erinnerung planen (5 Min vor Start, Zeitzone Europe/Berlin wie die Buchung).
  * Nur native; bei fehlender Berechtigung oder vergangenem Zeitpunkt no-op.

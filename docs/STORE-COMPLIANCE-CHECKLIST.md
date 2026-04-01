@@ -32,8 +32,12 @@
 | `android.permission.USE_BIOMETRIC` | Biometric auth |
 | `android.permission.USE_FINGERPRINT` | Legacy fingerprint (older devices) |
 | `android.hardware.camera` (required=false) | Camera optional for voice-only |
+| `RECORD_AUDIO` | Microphone for voice sessions |
+| `MODIFY_AUDIO_SETTINGS` | Audio routing in calls |
 
 **App Links:** `autoVerify="true"` for `https://diaiway.com` and `https://www.diaiway.com`.
+
+**Google Play (Detail):** [GOOGLE-PLAY-COMPLIANCE.md](./GOOGLE-PLAY-COMPLIANCE.md) — Data safety, Console-Checkliste, Richtlinien-Schwerpunkte.
 
 ---
 
@@ -102,3 +106,4 @@
 - [ ] Test deep links: `https://diaiway.com/messages?waymail=...`
 - [ ] Verify `CFBundleDisplayName` / `app_name` for store listing
 - [ ] DSGVO: Test Konto löschen (Anonymisierung), im Admin prüfen
+- [ ] **Google Play:** [GOOGLE-PLAY-COMPLIANCE.md](./GOOGLE-PLAY-COMPLIANCE.md) abarbeiten (Data safety, Inhaltsbewertung, `versionCode`)

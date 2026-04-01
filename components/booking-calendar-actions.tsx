@@ -12,6 +12,7 @@ import {
   canOfferCalendarExport,
   type BookingCalendarEligibilityFields,
 } from "@/lib/booking-calendar"
+import { shareBookingIcsViaNativeSheet } from "@/lib/native-utils"
 
 export type BookingCalendarActionsBooking = BookingCalendarEligibilityFields & {
   userName: string
@@ -109,6 +110,16 @@ export function BookingCalendarActions({
         `diaiway-termin-${booking.date.replace(/[^0-9-]/g, "") || "termin"}.ics`
 
       const file = new File([blob], filename, { type: "text/calendar;charset=utf-8" })
+
+      if (Capacitor.isNativePlatform()) {
+        const native = await shareBookingIcsViaNativeSheet({
+          blob,
+          fileName: filename,
+          title: calendarTitle,
+          dialogTitle: t("booking.calendarIcs"),
+        })
+        if (native === "shared" || native === "cancelled") return
+      }
 
       let canShareFile = false
       try {
