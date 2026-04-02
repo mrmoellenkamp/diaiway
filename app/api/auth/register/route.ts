@@ -23,6 +23,7 @@ type AppRoleChoice = "shugyo" | "takumi"
 
 type ConsentBody = {
   agbAndPrivacy?: boolean
+  ageVerification?: boolean
   marketing?: boolean
 }
 
@@ -40,14 +41,14 @@ export async function POST(req: Request) {
 
     const { name, email, password, username: rawUsername, appRole: rawAppRole, consents: rawConsents } = body
 
-    const rlIp = rateLimit(`register:ip:${ip}`, { limit: 5, windowSec: 900 })
+    const rlIp = await rateLimit(`register:ip:${ip}`, { limit: 5, windowSec: 900 })
     if (!rlIp.success) {
       return NextResponse.json(
         { error: `Zu viele Versuche. Bitte warte ${rlIp.retryAfterSec} Sekunden.` },
         { status: 429, headers: { "Retry-After": String(rlIp.retryAfterSec) } }
       )
     }
-    const rlEmail = rateLimit(`register:email:${(email || "").toLowerCase()}`, { limit: 3, windowSec: 3600 })
+    const rlEmail = await rateLimit(`register:email:${(email || "").toLowerCase()}`, { limit: 3, windowSec: 3600 })
     if (!rlEmail.success) {
       return NextResponse.json(
         { error: `Zu viele Versuche fuer diese E-Mail. Bitte warte ${rlEmail.retryAfterSec} Sekunden.` },
@@ -83,6 +84,13 @@ export async function POST(req: Request) {
       rawConsents && typeof rawConsents === "object" ? (rawConsents as ConsentBody) : {}
     if (consents.agbAndPrivacy !== true) {
       return NextResponse.json({ error: "AGB und Datenschutz müssen akzeptiert werden." }, { status: 400 })
+    }
+    // Art. 8 DSGVO: Mindestalter 18 Jahre – serverseitige Pflichtprüfung
+    if (consents.ageVerification !== true) {
+      return NextResponse.json(
+        { error: "Du musst mindestens 18 Jahre alt sein, um diAIway zu nutzen." },
+        { status: 400 }
+      )
     }
 
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })

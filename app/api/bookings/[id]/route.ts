@@ -363,11 +363,17 @@ export async function PATCH(
       if (booking.status !== "pending" && booking.status !== "confirmed") {
         return NextResponse.json({ error: "Safety nur vor Session-Start." }, { status: 409 })
       }
+      const now = new Date()
       await prisma.booking.update({
         where: { id },
         data: isBooker
-          ? { bookerSafetyAcceptedAt: new Date() }
-          : { expertSafetyAcceptedAt: new Date() },
+          ? {
+              bookerSafetyAcceptedAt: now,
+              // snapshotConsentAt dokumentiert explizite Einwilligung zur Snapshot-Verarbeitung
+              // für registrierte Nutzer (Gäste erhalten dies beim Checkout).
+              snapshotConsentAt: now,
+            }
+          : { expertSafetyAcceptedAt: now },
       })
       return NextResponse.json({ success: true })
     }

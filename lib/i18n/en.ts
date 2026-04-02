@@ -323,8 +323,10 @@ const en = {
   "register.consent.newsletterShort": "I’d like DIY tips and news (optional; double opt-in).",
   "register.consent.phase1Footer":
     "We store the document version, consent time, and a hash of your IP (no plain IP). Marketing is never pre-selected.",
+  "register.consent.ageVerification": "I confirm that I am at least 18 years old.",
   "register.consent.paymentProviderName": "Stripe",
   "register.errorConsents": "Please accept the Terms and Privacy Policy.",
+  "register.errorAgeVerification": "You must be at least 18 years old to use diAIway.",
 
   "paymentOnboarding.title": "Payment & session",
   "paymentOnboarding.intro": "Before you start a paid session, we need these two confirmations.",
@@ -495,9 +497,15 @@ const en = {
   "profile.pauseAccountConfirm": "Pause account?",
   "profile.pauseAccountDesc": "Your account will be temporarily deactivated. You can still log in and reactivate your account at any time. All your data will be preserved. As Takumi you will be marked offline immediately.",
   "profile.pauseNow": "Pause now",
+  "profile.exportData": "Download my data (GDPR Art. 20)",
+  "profile.exportSuccess": "Data export started.",
+  "profile.exportError": "Export failed. Please try again.",
+  "profile.unsubscribeMarketing": "Unsubscribe from marketing emails",
+  "profile.unsubscribeSuccess": "Marketing consent revoked.",
+  "profile.unsubscribeError": "Unsubscribe failed.",
   "profile.deleteAccount": "Permanently delete account",
   "profile.deleteAccountConfirm": "Permanently delete account?",
-  "profile.deleteAccountDesc": "This action cannot be undone. All personal data (profile, images, expert profile, availability, reviews) will be permanently deleted in accordance with GDPR. Booking history will be anonymized for tax reasons (§ 147 AO).",
+  "profile.deleteAccountDesc": "This action cannot be undone. Messages, notifications, push tokens, projects/portfolio, profile, images, expert profile, availability, and reviews will be removed in line with GDPR. Booking records are anonymized; records required for tax law (German § 147 AO) remain without personal reference.",
   "profile.deleteAccountConfirmBtn": "Yes, delete account",
   "profile.accountPaused": "Account paused.",
 

@@ -30,7 +30,14 @@ export async function POST(req: NextRequest) {
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { expert: { select: { userId: true } } },
+      select: {
+        userId: true,
+        status: true,
+        bookerSafetyAcceptedAt: true,
+        expertSafetyAcceptedAt: true,
+        snapshotConsentAt: true,
+        expert: { select: { userId: true } },
+      },
     })
 
     if (!booking) {
@@ -43,6 +50,19 @@ export async function POST(req: NextRequest) {
 
     if (!isBooker && !isExpert) {
       return NextResponse.json({ error: "Keine Berechtigung für diese Buchung." }, { status: 403 })
+    }
+
+    // DSGVO Art. 6 Abs. 1 lit. a – Einwilligung zu Snapshot-Verarbeitung prüfen.
+    // Registrierte Nutzer: Safety-Gateway (bookerSafetyAcceptedAt / expertSafetyAcceptedAt)
+    // Gäste: snapshotConsentAt (gesetzt beim Checkout)
+    const consentOk = isBooker
+      ? !!(booking.bookerSafetyAcceptedAt ?? booking.snapshotConsentAt)
+      : !!booking.expertSafetyAcceptedAt
+    if (!consentOk) {
+      return NextResponse.json(
+        { error: "Keine Einwilligung zur Snapshot-Verarbeitung vorhanden." },
+        { status: 403 }
+      )
     }
 
     if (booking.status !== "active") {

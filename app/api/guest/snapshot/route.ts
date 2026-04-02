@@ -21,7 +21,7 @@ export const maxDuration = 15
  */
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
-  const rl = rateLimit(`guest-snapshot:${ip}`, { limit: 30, windowSec: 3600 })
+  const rl = await rateLimit(`guest-snapshot:${ip}`, { limit: 30, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json({ error: "Zu viele Anfragen." }, { status: 429 })
   }

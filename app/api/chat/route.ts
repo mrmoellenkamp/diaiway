@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   }
 
   const ip = getClientIp(req)
-  const rl = rateLimit(`chat:ip:${ip}`, { limit: 30, windowSec: 60 })
+  const rl = await rateLimit(`chat:ip:${ip}`, { limit: 30, windowSec: 60 })
   if (!rl.success) {
     return Response.json(
       { error: "Zu viele Anfragen. Bitte warte kurz." },

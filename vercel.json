@@ -24,6 +24,14 @@
     {
       "path": "/api/cron/session-reminders",
       "schedule": "*/1 * * * *"
+    },
+    {
+      "path": "/api/cron/archive-documents",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/purge-expired-documents",
+      "schedule": "0 2 1 * *"
     }
   ]
 }

@@ -18,7 +18,7 @@ export const runtime = "nodejs"
  */
 export async function GET(req: Request) {
   const ip = getClientIp(req)
-  const rl = rateLimit(`guest-signin:${ip}`, { limit: 10, windowSec: 3600 })
+  const rl = await rateLimit(`guest-signin:${ip}`, { limit: 10, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json({ error: "Zu viele Anfragen." }, { status: 429 })
   }

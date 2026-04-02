@@ -758,6 +758,38 @@ model InvoiceCounter {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * Langzeitarchiv für steuerlich/rechtlich aufbewahrungspflichtige Dokumente.
+ * Aufbewahrungsfristen gem. §§ 147 AO / 257 HGB:
+ *   - Rechnungen, Gutschriften, Stornos, Provisionsrechnungen: 10 Jahre
+ *   - Buchungsbelege allgemein: 6 Jahre (Briefe §§ 257 HGB)
+ * Cron `archive-documents` kopiert PDF-URLs aus Transaction in dieses Modell.
+ * Cron `purge-expired-documents` löscht abgelaufene Einträge inkl. Blob.
+ *
+ * DSGVO-Hinweis: userId/expertId sind zu Archivierungszwecken notwendig
+ * (§ 147 AO Pflicht überwiegt Art. 17 DSGVO). Personenbezogene Freitexte
+ * (Name, E-Mail) werden in der Transaction durch anonymizeUser bereinigt.
+ */
+model DocumentArchive {
+  id              String   @id @default(cuid())
+  transactionId   String?  // Referenz auf Transaction (nullable bei manueller Archivierung)
+  docType         String   // "invoice" | "credit_note" | "commission" | "storno_invoice" | "storno_credit" | "wallet_receipt"
+  docNumber       String   // RE-100001, GS-…, etc.
+  blobUrl         String   // Vercel Blob URL
+  userId          String?  // Shugyo (Zahler) – für spätere Auskunft/Löschprüfung
+  expertId        String?  // Takumi (Empfänger)
+  retentionYears  Int      @default(10)  // Aufbewahrungsfrist in Jahren
+  retainUntil     DateTime // Datum, ab dem Löschung zulässig
+  archivedAt      DateTime @default(now())
+  purgedAt        DateTime? // gesetzt wenn Blob physisch gelöscht
+
+  @@index([userId])
+  @@index([expertId])
+  @@index([retainUntil])
+  @@index([docType])
+  @@index([transactionId])
+}
+
 /// Admin-verwaltbare Textbausteine für manuelle Profil-Entziehung
 model TakumiProfileRevokeSnippet {
   id        String   @id @default(cuid())

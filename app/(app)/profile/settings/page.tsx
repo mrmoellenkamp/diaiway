@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { PauseCircle, Trash2, AlertTriangle, Lock, KeyRound, Loader2 } from "lucide-react"
+import { PauseCircle, Trash2, AlertTriangle, Lock, KeyRound, Loader2, Download, BellOff } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import {
   AlertDialog,
@@ -25,9 +25,55 @@ import { AppSubpageHeader } from "@/components/app-subpage-header"
 
 export default function SettingsPage() {
   const { t } = useI18n()
-  useSession()
+  const { data: session } = useSession()
+  const user = session?.user as { marketingOptIn?: boolean } | undefined
   const [pausing, setPausing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [unsubscribing, setUnsubscribing] = useState(false)
+  const [marketingOptIn, setMarketingOptIn] = useState(user?.marketingOptIn ?? false)
+
+  async function handleUnsubscribeMarketing() {
+    setUnsubscribing(true)
+    try {
+      const res = await fetch("/api/user/marketing", { method: "DELETE" })
+      if (res.ok) {
+        setMarketingOptIn(false)
+        toast.success(t("profile.unsubscribeSuccess"))
+      } else {
+        toast.error(t("profile.unsubscribeError"))
+      }
+    } catch {
+      toast.error(t("profile.unsubscribeError"))
+    } finally {
+      setUnsubscribing(false)
+    }
+  }
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const res = await fetch("/api/user/export")
+      if (!res.ok) {
+        toast.error(t("profile.exportError"))
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `diaiway-datenexport-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success(t("profile.exportSuccess"))
+    } catch {
+      toast.error(t("profile.exportError"))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   async function handlePause() {
     setPausing(true)
@@ -79,6 +125,36 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">{t("settings.accountManagementDesc")}</p>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-sm text-muted-foreground"
+              onClick={() => void handleExport()}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              {t("profile.exportData")}
+            </Button>
+
+            {marketingOptIn && (
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 text-sm text-muted-foreground"
+                onClick={() => void handleUnsubscribeMarketing()}
+                disabled={unsubscribing}
+              >
+                {unsubscribing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <BellOff className="size-4" />
+                )}
+                {t("profile.unsubscribeMarketing")}
+              </Button>
+            )}
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" className="w-full justify-start gap-2 text-sm text-muted-foreground">

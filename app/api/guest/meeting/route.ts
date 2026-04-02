@@ -18,7 +18,7 @@ const DAILY_API_BASE = "https://api.daily.co/v1"
  */
 export async function POST(req: Request) {
   const ip = getClientIp(req)
-  const rl = rateLimit(`guest-meeting:${ip}`, { limit: 20, windowSec: 3600 })
+  const rl = await rateLimit(`guest-meeting:${ip}`, { limit: 20, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json({ error: "Zu viele Anfragen." }, { status: 429 })
   }

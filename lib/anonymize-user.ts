@@ -30,10 +30,13 @@ function isBlobUrl(url: string): boolean {
 }
 
 /**
- * Anonymisiert einen User (DSGVO-konform).
- * - Name, E-Mail, Bild, Passwort, Rechnungsdaten werden ersetzt.
- * - Wallet-Historie bleibt erhalten (User-Record bleibt).
- * - Buchungshistorie wird anonymisiert (§ 147 AO).
+ * Anonymisiert einen User (DSGVO Art. 17 i. V. m. Speicherbegrenzung / Rechtsgrundlagen).
+ * - Identifikatoren, Profil, Chat/Waymail, Projekte, Push, In-App-Benachrichtigungen,
+ *   Buchungsfreitexte und Analytics-Verknüpfung werden entfernt bzw. minimiert.
+ * - Wallet- und Buchungsstammdaten (Beträge, Status, anonymisierte Namen) bleiben,
+ *   soweit Aufbewahrungspflichten (z. B. § 147 AO) entgegenstehen.
+ * - Stripe Connect (Takumi): Konto-ID bleibt bis manuelle Klärung mit Stripe/Aufbewahrung;
+ *   Profil-PII am Expert wird entfernt.
  *
  * @returns { imageUrls: string[] } - Blob-URLs zum physischen Löschen (außerhalb Transaction)
  * @throws niemals – bei Fehler { ok: false, error }
@@ -59,23 +62,115 @@ export async function anonymizeUser(userId: string): Promise<
   if (user.image && isBlobUrl(user.image)) imageUrls.push(user.image)
   if (user.expert?.avatar && isBlobUrl(user.expert.avatar)) imageUrls.push(user.expert.avatar)
   if (user.expert?.imageUrl && isBlobUrl(user.expert.imageUrl)) imageUrls.push(user.expert.imageUrl)
+  for (const url of user.expert?.portfolio ?? []) {
+    if (url && isBlobUrl(url)) imageUrls.push(url)
+  }
+
+  const shugyoProjects = await prisma.shugyoProject.findMany({
+    where: { userId },
+    select: { imageUrl: true },
+  })
+  for (const p of shugyoProjects) {
+    if (p.imageUrl && isBlobUrl(p.imageUrl)) imageUrls.push(p.imageUrl)
+  }
+
+  const takumiPortfolio = await prisma.takumiPortfolioProject.findMany({
+    where: { userId },
+    select: { imageUrl: true },
+  })
+  for (const p of takumiPortfolio) {
+    if (p.imageUrl && isBlobUrl(p.imageUrl)) imageUrls.push(p.imageUrl)
+  }
+
+  const userMessages = await prisma.directMessage.findMany({
+    where: { OR: [{ senderId: userId }, { recipientId: userId }] },
+    select: { attachmentUrl: true, attachmentThumbnailUrl: true },
+  })
+  for (const m of userMessages) {
+    if (m.attachmentUrl && isBlobUrl(m.attachmentUrl)) imageUrls.push(m.attachmentUrl)
+    if (m.attachmentThumbnailUrl && isBlobUrl(m.attachmentThumbnailUrl)) imageUrls.push(m.attachmentThumbnailUrl)
+  }
+
+  // Safety-Incidents: Snapshot-Bilder sammeln (werden nach Transaktion gelöscht)
+  // Nur nicht-laufende Incidents (resolved) → bei laufenden Verfahren bleiben Bilder erhalten.
+  // DSGVO Art. 17 Abs. 3 lit. b: Daten für Rechtsverfolgung dürfen vorübergehend bleiben.
+  const resolvedIncidents = await prisma.safetyIncident.findMany({
+    where: {
+      booking: { OR: [{ userId }, ...(user.expert ? [{ expertId: user.expert.id }] : [])] },
+      resolvedAt: { not: null },
+    },
+    select: { id: true, imageUrl: true },
+  })
+  for (const inc of resolvedIncidents) {
+    if (inc.imageUrl && isBlobUrl(inc.imageUrl)) imageUrls.push(inc.imageUrl)
+  }
+
+  // Transaction-PDFs: Belege haben 10-Jahres-Aufbewahrungspflicht (§§ 147 AO, 257 HGB).
+  // PDF-Blobs werden NICHT gelöscht – sie werden ins DocumentArchive überführt.
+  // Die URL-Verknüpfung in der Transaction bleibt; Personenbezug wird in Schritt 7
+  // ohnehin durch anonymisierten User-Record abgetrennt.
 
   const anonName = ANON_NAME(userId)
   const anonEmail = ANON_EMAIL(userId)
   const randomPassword = await bcrypt.hash(`anon_${userId}_${Date.now()}_${Math.random()}`, 10)
 
   await prisma.$transaction(async (tx) => {
-    // 1. Buchungen: User als Shugyo (Zahler) – userName/userEmail anonymisieren
+    // 0. Kommunikation & Geräte-Tokens (personenbezogene Inhalte / Pseudonyme)
+    await tx.directMessage.deleteMany({
+      where: { OR: [{ senderId: userId }, { recipientId: userId }] },
+    })
+    await tx.notification.deleteMany({ where: { userId } })
+    await tx.pushSubscription.deleteMany({ where: { userId } })
+    await tx.fcmToken.deleteMany({ where: { userId } })
+    await tx.shugyoProject.deleteMany({ where: { userId } })
+    await tx.takumiPortfolioProject.deleteMany({ where: { userId } })
+
+    // Analytics: Verknüpfung zum Konto lösen (Sessions bleiben aggregiert ohne userId)
+    await tx.siteAnalyticsSession.updateMany({
+      where: { userId },
+      data: { userId: null },
+    })
+
+    // 1. Buchungen: User als Shugyo (Zahler) – Namen/E-Mail + Freitexte
     await tx.booking.updateMany({
       where: { userId },
-      data: { userName: anonName, userEmail: anonEmail },
+      data: {
+        userName: anonName,
+        userEmail: anonEmail,
+        note: "",
+        sessionOpenedByUserId: null,
+      },
     })
 
     // 2. Buchungen: User als Takumi (Experte) — über Expert
     if (user.expert) {
       await tx.booking.updateMany({
         where: { expertId: user.expert!.id },
-        data: { expertName: anonName, expertEmail: anonEmail },
+        data: {
+          expertName: anonName,
+          expertEmail: anonEmail,
+          expertReviewText: null,
+          expertRating: null,
+        },
+      })
+    }
+
+    // 2b. SafetyReport: Personenbezug entfernen (reporterId/reportedId → anonymisiert).
+    // Einträge bleiben für Plattformintegrität (Buchungs-Verknüpfung), PII wird minimiert.
+    await tx.safetyReport.updateMany({
+      where: { reporterId: userId },
+      data: { reporterId: `anon_${userId}`, details: "" },
+    })
+    await tx.safetyReport.updateMany({
+      where: { reportedId: userId },
+      data: { reportedId: `anon_${userId}` },
+    })
+
+    // 2c. SafetyIncident: Resolved-Incidents Blob-URL leeren (Bild wird außerhalb TX gelöscht)
+    if (resolvedIncidents.length > 0) {
+      await tx.safetyIncident.updateMany({
+        where: { id: { in: resolvedIncidents.map((i) => i.id) } },
+        data: { imageUrl: "" },
       })
     }
 
@@ -98,6 +193,10 @@ export async function anonymizeUser(userId: string): Promise<
           avatar: "",
           imageUrl: "",
           bio: "",
+          bioLive: "",
+          portfolio: [],
+          socialLinks: {},
+          profileRejectionReason: null,
           isLive: false,
           liveStatus: "offline",
         },
@@ -128,11 +227,31 @@ export async function anonymizeUser(userId: string): Promise<
         image: "",
         resetToken: null,
         resetTokenExpiry: null,
+        emailVerificationToken: null,
+        emailVerificationExpiry: null,
+        customerNumber: null,
+        registrationIpHash: null,
+        phase2BillingConsentIpHash: null,
         invoiceData: Prisma.DbNull,
         favorites: [],
+        skillLevel: null,
+        languages: [],
         status: "paused",
         isVerified: false,
         verificationSource: "NONE",
+        marketingOptIn: false,
+        marketingOptInAt: null,
+        marketingDoubleOptInAt: null,
+        moderationViolationAt: null,
+        // Einwilligungs-Timestamps nullen (Defence-in-Depth, DSGVO Datenminimierung):
+        // Der anonymisierte User-Record bleibt; Timestamps ohne Name/E-Mail sind
+        // nicht mehr re-identifizierbar, aber das Nullen verhindert Profilbildung
+        // aus Verhaltensmustern (z.B. Zeitpunkt der AGB-Akzeptanz).
+        acceptedAgbAt: null,
+        acceptedPrivacyAt: null,
+        earlyPerformanceWaiverAt: null,
+        paymentProcessorConsentAt: null,
+        takumiExpertDeclarationAt: null,
         tokenRevocationTime: Math.floor(Date.now() / 1000), // Alle Sessions ungültig
       },
     })

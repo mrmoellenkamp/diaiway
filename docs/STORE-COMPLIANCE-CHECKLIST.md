@@ -71,8 +71,10 @@
 | Aspekt | Implementierung |
 |--------|------------------|
 | **Kein Hard-Delete** | User-Record bleibt; Name/E-Mail → Platzhalter `user_deleted_xxx@anonymized.local` |
+| **Kommunikation & Geräte** | DirectMessage, Notification, Push/Web-Push, FCM-Token, Shugyo-/Takumi-Projekte werden entfernt; Analytics-Sessions vom Konto getrennt |
+| **Buchungs-Freitexte** | `note`, `expertReviewText`/`expertRating` (Takumi) bereinigt |
 | **Wallet-Historie** | Erhalten (§ 147 AO); `WalletTransaction` weiterhin dem anonymisierten User zugeordnet |
-| **Profilbilder** | Physisch aus Vercel Blob gelöscht (`del()` nach DB-Transaktion) |
+| **Profilbilder** | Physisch aus Vercel Blob gelöscht (`del()` nach DB-Transaktion, inkl. Projekt-/Chat-Anhänge) |
 | **DB-Transaktion** | Alle Schritte in `prisma.$transaction`; Blob-Delete danach |
 | **Admin-Schutz** | Admin-Konten können nicht gelöscht werden (Fehlermeldung) |
 

@@ -45,7 +45,7 @@ export async function POST(
   const token = url.searchParams.get("token") ?? ""
 
   const ip = getClientIp(req)
-  const rl = rateLimit(`pay-link:${ip}`, { limit: 40, windowSec: 3600 })
+  const rl = await rateLimit(`pay-link:${ip}`, { limit: 40, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json(
       { error: "Zu viele Anfragen. Bitte später erneut versuchen.", retryAfterSec: rl.retryAfterSec },
@@ -172,7 +172,7 @@ export async function GET(
   const token = url.searchParams.get("token") ?? ""
 
   const ip = getClientIp(req)
-  const rl = rateLimit(`pay-status:${ip}`, { limit: 120, windowSec: 3600 })
+  const rl = await rateLimit(`pay-status:${ip}`, { limit: 120, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json(
       { error: "Zu viele Anfragen.", retryAfterSec: rl.retryAfterSec },

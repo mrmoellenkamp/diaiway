@@ -243,7 +243,7 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
       ""
     ).toLowerCase()
     if (!shugyoEmail || !shugyoEmail.includes("@")) {
-      console.warn(`[processCompletion] Keine gültige E-Mail für Shugyo (${booking.userName}). Rechnung kann nicht per E-Mail versendet werden. Nutzer-ID: ${booking.userId}`)
+      console.warn(`[processCompletion] Keine gültige Shugyo-E-Mail vorhanden. Rechnung kann nicht versendet werden. bookingId=${booking.id}`)
     }
 
     const invoiceEmailPromise = shugyoEmail && shugyoEmail.includes("@")
@@ -292,17 +292,17 @@ export async function processCompletion(bookingId: string): Promise<{ ok: boolea
     ])
 
     if (invoiceEmail.sent) {
-      console.log(`[processCompletion] Rechnung ${invoiceNumber} per E-Mail an ${shugyoEmail} versendet.`)
+      console.log(`[processCompletion] Rechnung ${invoiceNumber} versendet.`)
     } else {
-      console.warn(`[processCompletion] Rechnungs-E-Mail fehlgeschlagen (${shugyoEmail || "keine"}):`, invoiceEmail.error)
+      console.warn(`[processCompletion] Rechnungs-E-Mail fehlgeschlagen (${shugyoEmail ? "Empfänger vorhanden" : "keine E-Mail"}):`, invoiceEmail.error)
     }
     if (creditEmail.sent) {
-      console.log(`[processCompletion] Gutschrift ${creditNoteNumber} per E-Mail an ${takumiEmail} versendet.`)
+      console.log(`[processCompletion] Gutschrift ${creditNoteNumber} versendet.`)
     } else if (takumiEmail) {
-      console.warn(`[processCompletion] Gutschriften-E-Mail an ${takumiEmail} fehlgeschlagen:`, creditEmail.error)
+      console.warn(`[processCompletion] Gutschriften-E-Mail fehlgeschlagen:`, creditEmail.error)
     }
     if (commissionEmail.sent) {
-      console.log(`[processCompletion] Provisionsrechnung ${commissionInvoiceNumber} per E-Mail an ${takumiEmail} versendet.`)
+      console.log(`[processCompletion] Provisionsrechnung ${commissionInvoiceNumber} versendet.`)
     }
 
     await prisma.transaction.update({

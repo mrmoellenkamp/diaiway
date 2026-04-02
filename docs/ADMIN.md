@@ -146,15 +146,22 @@ Stripe-Aufrufe bleiben extern; Fehler werden geloggt, die App stürzt nicht ab.
 ### Ablauf (`anonymizeUser`)
 
 1. **Admin-Check**: `role === "admin"` → Fehlermeldung, kein Anonymisieren
-2. **DB-Transaktion** (atomar):
-   - Buchungen (Shugyo): `userName`, `userEmail` → Platzhalter
-   - Buchungen (Takumi): `expertName`, `expertEmail` → Platzhalter
+2. **Blob-URLs sammeln** (vor Transaktion): User/Expert-Bilder, Expert-`portfolio`, Shugyo-/Takumi-Projektbilder, Chat-Anhänge (DirectMessage)
+3. **DB-Transaktion** (atomar):
+   - **DirectMessage** (Sender oder Empfänger): löschen
+   - **Notification**, **PushSubscription**, **FcmToken**: löschen
+   - **ShugyoProject**, **TakumiPortfolioProject**: löschen
+   - **SiteAnalyticsSession**: `userId → null` (Verknüpfung zum Konto entfernen)
+   - Buchungen (Shugyo): `userName`, `userEmail` → Platzhalter; `note` leeren; `sessionOpenedByUserId` → null
+   - Buchungen (Takumi): `expertName`, `expertEmail` → Platzhalter; `expertReviewText` / `expertRating` → null
    - Reviews (von User + über Expert) löschen
    - Availability löschen
-   - Expert anonymisieren: `name`, `email`, `avatar`, `imageUrl`, `bio`, `isLive`, `liveStatus`
+   - Expert anonymisieren: u. a. `name`, `email`, `avatar`, `imageUrl`, `bio`, `bioLive`, `portfolio` → `[]`, `socialLinks` → `{}`, `profileRejectionReason` → null, `isLive`, `liveStatus`
    - **WalletTransactions**: `referenceId → null`, `metadata → null` (DSGVO Art. 5 Abs. 1 lit. c – Datenminimierung; `amountCents` + `type` bleiben für § 147 AO)
-   - User anonymisieren: `name`, `email`, `password` (random hash), `image`, `resetToken`, `invoiceData`, `favorites`, `status`, `tokenRevocationTime` (alle Sessions ungültig)
-3. **Blob-Löschung** (nach Transaktion): `del()` für User.image, Expert.avatar, Expert.imageUrl (nur Vercel-Blob-URLs)
+   - User anonymisieren: u. a. `name`, `email`, `password` (random hash), `image`, Tokens, `invoiceData`, `customerNumber`, `registrationIpHash`, `phase2BillingConsentIpHash`, Marketing-Felder, `skillLevel`/`languages`, `favorites`, `status`, `tokenRevocationTime` (alle Sessions ungültig)
+4. **Blob-Löschung** (nach Transaktion): `del()` für alle gesammelten Vercel-Blob-URLs
+
+**Hinweis:** Stripe Connect (`stripeConnectAccountId`) bleibt am Expert bis gesonderte Abstimmung mit Stripe/Aufbewahrung; Profil-PII am Expert wird entfernt.
 
 ### Platzhalter-Format
 

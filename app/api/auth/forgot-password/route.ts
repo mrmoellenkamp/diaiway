@@ -21,13 +21,13 @@ export async function POST(req: Request) {
 
     // ── Rate limiting ─────────────────────────────────────────────────────────
     // 3 requests per IP per hour
-    const rlIp = rateLimit(`forgot:ip:${ip}`, { limit: 3, windowSec: 3600 })
+    const rlIp = await rateLimit(`forgot:ip:${ip}`, { limit: 3, windowSec: 3600 })
     if (!rlIp.success) {
       // Return fake success to not reveal rate limit to attackers
       return NextResponse.json({ success: true, message: SUCCESS_MSG })
     }
     // 2 requests per email per hour
-    const rlEmail = rateLimit(`forgot:email:${email.toLowerCase().trim()}`, { limit: 2, windowSec: 3600 })
+    const rlEmail = await rateLimit(`forgot:email:${email.toLowerCase().trim()}`, { limit: 2, windowSec: 3600 })
     if (!rlEmail.success) {
       return NextResponse.json({ success: true, message: SUCCESS_MSG })
     }

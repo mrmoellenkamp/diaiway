@@ -26,7 +26,7 @@ export async function POST() {
     return NextResponse.json({ error: "Session ungültig." }, { status: 401 })
   }
 
-  const rl = rateLimit(`resend-verify:${userId}`, { limit: 1, windowSec: RESEND_COOLDOWN_SEC })
+  const rl = await rateLimit(`resend-verify:${userId}`, { limit: 1, windowSec: RESEND_COOLDOWN_SEC })
   if (!rl.success) {
     return NextResponse.json(
       {

@@ -331,10 +331,12 @@ const de = {
   "register.consent.linkPrivacy": "Datenschutzerklärung",
   "register.consent.agbPrivacySuffixShort": ".",
   "register.consent.newsletterShort": "Ich möchte DIY-Tipps und News erhalten (freiwillig; Double-Opt-In).",
+  "register.consent.ageVerification": "Ich bestätige, dass ich mindestens 18 Jahre alt bin.",
   "register.consent.phase1Footer":
     "Wir speichern die Dokumentenversion und den Zeitpunkt sowie einen Hash deiner IP (keine Klartext-IP). Marketing nie vorausgewählt.",
   "register.consent.paymentProviderName": "Stripe",
   "register.errorConsents": "Bitte AGB und Datenschutz akzeptieren.",
+  "register.errorAgeVerification": "Du musst mindestens 18 Jahre alt sein, um diAIway zu nutzen.",
 
   "paymentOnboarding.title": "Zahlung & Session",
   "paymentOnboarding.intro":
@@ -501,9 +503,15 @@ const de = {
   "profile.pauseAccountConfirm": "Konto pausieren?",
   "profile.pauseAccountDesc": "Dein Konto wird vorübergehend deaktiviert. Du kannst dich weiterhin einloggen und dein Konto jederzeit reaktivieren. Alle deine Daten bleiben erhalten. Als Takumi wirst du sofort als offline markiert.",
   "profile.pauseNow": "Jetzt pausieren",
+  "profile.exportData": "Meine Daten herunterladen (Art. 20 DSGVO)",
+  "profile.exportSuccess": "Datenexport gestartet.",
+  "profile.exportError": "Export fehlgeschlagen. Bitte erneut versuchen.",
+  "profile.unsubscribeMarketing": "Marketing-E-Mails abbestellen",
+  "profile.unsubscribeSuccess": "Marketing-Einwilligung widerrufen.",
+  "profile.unsubscribeError": "Abmeldung fehlgeschlagen.",
   "profile.deleteAccount": "Konto dauerhaft löschen",
   "profile.deleteAccountConfirm": "Konto unwiderruflich löschen?",
-  "profile.deleteAccountDesc": "Diese Aktion kann nicht rückgängig gemacht werden. Alle persönlichen Daten (Profil, Bilder, Experten-Profil, Verfügbarkeit, Bewertungen) werden gemäß DSGVO dauerhaft gelöscht. Buchungshistorie wird aus steuerrechtlichen Gründen (§ 147 AO) anonymisiert aufbewahrt.",
+  "profile.deleteAccountDesc": "Diese Aktion kann nicht rückgängig gemacht werden. Nachrichten, Benachrichtigungen, Push-Tokens, Projekte/Portfolio, Profil, Bilder, Experten-Profil, Verfügbarkeit und Bewertungen werden gemäß DSGVO entfernt. Buchungsstammdaten werden anonymisiert; steuerrechtlich erforderliche Aufzeichnungen (§ 147 AO) bleiben ohne Personenbezug.",
   "profile.deleteAccountConfirmBtn": "Ja, Konto löschen",
   "profile.accountPaused": "Konto pausiert.",
 

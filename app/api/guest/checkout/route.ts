@@ -27,7 +27,7 @@ export const runtime = "nodejs"
  */
 export async function POST(req: Request) {
   const ip = getClientIp(req)
-  const rl = rateLimit(`guest-checkout:${ip}`, { limit: 20, windowSec: 3600 })
+  const rl = await rateLimit(`guest-checkout:${ip}`, { limit: 20, windowSec: 3600 })
   if (!rl.success) {
     const loc = localeFromRequest(req)
     return NextResponse.json(
@@ -228,7 +228,7 @@ export async function GET(req: Request) {
   }
 
   const ip = getClientIp(req)
-  const rl = rateLimit(`guest-info:${ip}`, { limit: 60, windowSec: 3600 })
+  const rl = await rateLimit(`guest-info:${ip}`, { limit: 60, windowSec: 3600 })
   if (!rl.success) {
     return NextResponse.json({ error: serverT(locale, "guestApi.rateLimitShort") }, { status: 429 })
   }

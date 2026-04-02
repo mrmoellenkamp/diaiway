@@ -58,7 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Rate limit: 10 failed attempts per email per 15 min
-          const rl = rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
+          const rl = await rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
           if (!rl.success) {
             throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
           }

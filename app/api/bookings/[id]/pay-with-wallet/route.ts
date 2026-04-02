@@ -23,7 +23,7 @@ export async function POST(
   }
 
   const ip = getClientIp(req)
-  const rl = rateLimitAll(
+  const rl = await rateLimitAll(
     [`wallet-pay:user:${session.user.id}`, `wallet-pay:ip:${ip}`],
     { limit: 25, windowSec: 3600 }
   )

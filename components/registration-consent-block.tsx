@@ -6,14 +6,16 @@ import { Label } from "@/components/ui/label"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-/** Phase 1 Registrierung: nur AGB/Datenschutz + optionales Marketing */
+/** Phase 1 Registrierung: AGB/Datenschutz + Altersverifikation (Pflicht) + optionales Marketing */
 export type RegistrationConsentState = {
   agbPrivacy: boolean
+  ageVerification: boolean
   marketing: boolean
 }
 
 export const initialRegistrationConsents: RegistrationConsentState = {
   agbPrivacy: false,
+  ageVerification: false,
   marketing: false,
 }
 
@@ -24,7 +26,7 @@ type Props = {
 }
 
 export function registrationConsentsComplete(c: RegistrationConsentState): boolean {
-  return c.agbPrivacy === true
+  return c.agbPrivacy === true && c.ageVerification === true
 }
 
 export function RegistrationConsentBlock({ value, onChange, disabled }: Props) {
@@ -86,6 +88,14 @@ export function RegistrationConsentBlock({ value, onChange, disabled }: Props) {
             </Link>
             {t("register.consent.agbPrivacySuffixShort")}
           </>,
+          true,
+        )}
+
+        {row(
+          "consent-age-verification",
+          value.ageVerification,
+          (v) => onChange({ ...value, ageVerification: v }),
+          t("register.consent.ageVerification"),
           true,
         )}
 

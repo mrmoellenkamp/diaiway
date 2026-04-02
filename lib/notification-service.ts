@@ -160,7 +160,7 @@ export async function notifyAfterPayment(bookingId: string): Promise<{
         })).catch(() => {})
       }
     } else {
-      console.warn("[notification-service] Expert ohne userId:", booking.expertEmail)
+      console.warn("[notification-service] Expert ohne userId (bookingId:", booking.id, ")")
     }
 
     return { ok: true, emailSent, notificationCreated }

@@ -184,10 +184,13 @@ export default function DatenschutzPage() {
 
                 <SubHeading>2.8 KI-Assistent (AI Guide)</SubHeading>
                 <p>
-                  Eingaben im KI-Assistenten werden zur Verarbeitung und Beantwortung an unseren
-                  KI-Dienst weitergeleitet. Es erfolgt keine dauerhafte personenbezogene Speicherung
-                  der Konversationsinhalte über die Sitzung hinaus, sofern dies nicht zur Bereitstellung
-                  der Funktion technisch notwendig ist.
+                  Eingaben im KI-Assistenten werden zur Verarbeitung und Beantwortung an{" "}
+                  <strong className="text-foreground">Google Generative AI</strong> (Google LLC, USA) übermittelt.
+                  Es erfolgt keine dauerhafte personenbezogene Speicherung der Konversationsinhalte
+                  über die Sitzung hinaus. Bitte geben Sie keine besonders sensiblen Daten (Gesundheit,
+                  Zahlungsdaten o. Ä.) im KI-Assistenten ein. Datenübermittlung in die USA auf Basis
+                  von Standardvertragsklauseln (SCC) gem. Art. 46 DSGVO.{" "}
+                  <ExternalLink href="https://policies.google.com/privacy">policies.google.com/privacy</ExternalLink>
                 </p>
                 <p className="mt-2">
                   <strong className="text-foreground">Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO.
@@ -197,10 +200,14 @@ export default function DatenschutzPage() {
                 <p>
                   Im Rahmen unseres Safety-Systems können bei begründetem Verdacht auf Richtlinienverstöße
                   während einer laufenden Video-Session stichprobenartige Snapshots erstellt werden.
-                  Nutzer werden vor Session-Start auf diese Möglichkeit hingewiesen und müssen ihr zustimmen
-                  (Einwilligung per Checkbox).
-                  Snapshot-Bilder werden in Vercel Blob gespeichert und nach Abschluss der Prüfung gelöscht.
-                  Safety-Reports (Meldungen durch andere Nutzer) werden inkl. Kategorie und Freitext gespeichert.
+                  Nutzer werden vor Session-Start auf diese Möglichkeit hingewiesen und müssen ihr zustimmen.
+                  Die Einwilligung ist Voraussetzung für den Start der Session; ohne Einwilligung werden
+                  keine Snapshots erstellt.
+                  Snapshot-Bilder werden in Vercel Blob (EU-Region) gespeichert. Bilder ohne laufendes
+                  Prüfverfahren werden nach 48 Stunden automatisch gelöscht. Bei laufenden Verfahren
+                  (Safety-Incident) werden Bilder bis zur abschließenden Klärung aufbewahrt und
+                  danach gelöscht. Safety-Reports (Meldungen durch Nutzer) werden inkl. Kategorie
+                  gespeichert; Freitexte werden bei Kontolöschung des Meldenden anonymisiert.
                 </p>
                 <p className="mt-2">
                   <strong className="text-foreground">Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO
@@ -208,14 +215,25 @@ export default function DatenschutzPage() {
                   an Plattformsicherheit).
                 </p>
 
-                <SubHeading>2.10 Nutzungsanalyse (Web)</SubHeading>
+                <SubHeading>2.10 Nutzungsanalyse (Web &amp; App)</SubHeading>
                 <p>
-                  Wir betreiben eine eigene, datenschutzfreundliche Nutzungsanalyse ohne Einsatz von
-                  Drittanbieter-Tracking-Tools. Dabei wird eine anonyme Besucher-ID (im LocalStorage des Browsers)
-                  gespeichert. Erhoben werden: aufgerufene Seiten, Sitzungsdauer, Einstiegsseite, Referrer (vorherige
-                  Website) sowie User-Agent. Es werden keine personenbezogenen Daten ohne Einwilligung an
-                  Drittanbieter übermittelt.
+                  Wir nutzen zwei Analyse-Dienste:
                 </p>
+                <ul className="list-disc pl-5 mt-1 space-y-1">
+                  <li>
+                    <strong className="text-foreground">Eigene First-Party-Analyse:</strong> Eine anonyme
+                    Besucher-ID (LocalStorage) ohne Personenbezug. Erhoben werden aufgerufene Seiten,
+                    Sitzungsdauer, Einstiegsseite, Referrer und User-Agent. Keine Weitergabe an Dritte.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Vercel Analytics:</strong> Vercel, Inc., 340 S Lemon
+                    Ave #4133, Walnut, CA 91789, USA – ein datenschutzfreundlicher Analysedienst, der
+                    aggregierte Nutzungsmetriken (Seitenaufrufe, Web Vitals) ohne individuelle
+                    Nutzer-Identifikation erhebt. Es werden keine Cookies gesetzt. Datenübermittlung in
+                    die USA auf Basis von SCC.{" "}
+                    <ExternalLink href="https://vercel.com/legal/privacy-policy">vercel.com/legal/privacy-policy</ExternalLink>
+                  </li>
+                </ul>
                 <p className="mt-2">
                   <strong className="text-foreground">Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO
                   (berechtigtes Interesse an der Verbesserung des Angebots).
@@ -348,24 +366,34 @@ export default function DatenschutzPage() {
                 <SectionHeading>5. Datenspeicherung &amp; Löschung</SectionHeading>
                 <ul className="list-disc space-y-2 pl-5">
                   <li>
-                    <strong className="text-foreground">Kontodaten:</strong> Bis zur Löschung des Nutzerkontos
-                    auf Anfrage; sofern keine gesetzliche Aufbewahrungspflicht entgegensteht.
+                    <strong className="text-foreground">Kontodaten, Profil, Nachrichten, Projekte:</strong>{" "}
+                    Bis zur Kontolöschung. Bei Löschung werden Name, E-Mail, Bild und alle Freitextinhalte
+                    sofort entfernt oder anonymisiert. Ein anonymisierter Datensatz bleibt aus
+                    Aufbewahrungsgründen erhalten (s. u.).
                   </li>
                   <li>
-                    <strong className="text-foreground">Rechnungen &amp; Transaktionsdaten:</strong> 10 Jahre
-                    (§§ 147 AO, 257 HGB).
+                    <strong className="text-foreground">Rechnungen, Gutschriften &amp; Transaktionsdaten:</strong>{" "}
+                    10 Jahre (§§ 147 AO, 257 HGB). PDF-Belege werden automatisch archiviert und
+                    nach Ablauf der Frist gelöscht. Die Buchungsdaten werden anonymisiert aufbewahrt.
                   </li>
                   <li>
-                    <strong className="text-foreground">Sicherheits-Snapshots:</strong> Werden nach Abschluss
-                    der Prüfung gelöscht; bei laufenden Verfahren bis zur Klärung aufbewahrt.
+                    <strong className="text-foreground">Sicherheits-Snapshots:</strong> Ohne laufendes
+                    Verfahren: automatische Löschung nach 48 Stunden. Bei laufendem Safety-Incident:
+                    Aufbewahrung bis zur abschließenden Klärung, danach sofortige Löschung.
+                    Bei Kontolöschung des Betroffenen: abgeschlossene Incident-Bilder werden gelöscht;
+                    laufende Verfahren bleiben bis zur Klärung (Art. 17 Abs. 3 lit. b DSGVO).
                   </li>
                   <li>
-                    <strong className="text-foreground">Push-Tokens:</strong> Werden bei Abmeldung oder
-                    Kontolöschung automatisch entfernt.
+                    <strong className="text-foreground">Push-Tokens &amp; Benachrichtigungen:</strong>{" "}
+                    Werden bei Abmeldung oder Kontolöschung automatisch entfernt.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Marketing-Einwilligung:</strong> Bis zum Widerruf;
+                    jederzeit widerrufbar in den Kontoeinstellungen (Profil → Einstellungen → Marketing abbestellen).
                   </li>
                   <li>
                     <strong className="text-foreground">Nutzungsanalyse:</strong> Anonyme Daten ohne
-                    Personenbezug; keine gesetzliche Löschfrist.
+                    Personenbezug. Bei Kontolöschung wird die Verbindung zum Nutzerkonto getrennt.
                   </li>
                 </ul>
               </div>
@@ -397,7 +425,11 @@ export default function DatenschutzPage() {
                   <li><strong className="text-foreground">Berichtigung</strong> unrichtiger Daten (Art. 16 DSGVO).</li>
                   <li><strong className="text-foreground">Löschung</strong> (Recht auf Vergessenwerden, Art. 17 DSGVO).</li>
                   <li><strong className="text-foreground">Einschränkung</strong> der Verarbeitung (Art. 18 DSGVO).</li>
-                  <li><strong className="text-foreground">Datenübertragbarkeit</strong> (Art. 20 DSGVO).</li>
+                  <li>
+                    <strong className="text-foreground">Datenübertragbarkeit</strong> (Art. 20 DSGVO) –
+                    maschinenlesbarer Export aller Ihrer personenbezogenen Daten als JSON-Datei,
+                    abrufbar unter <em>Profil → Einstellungen → Meine Daten herunterladen</em>.
+                  </li>
                   <li><strong className="text-foreground">Widerspruch</strong> gegen die Verarbeitung (Art. 21 DSGVO).</li>
                   <li>
                     <strong className="text-foreground">Widerruf</strong> einer erteilten Einwilligung

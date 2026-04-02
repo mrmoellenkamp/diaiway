@@ -199,6 +199,7 @@ function RegisterForm() {
           appRole: selectedRole,
           consents: {
             agbAndPrivacy: consents.agbPrivacy,
+            ageVerification: consents.ageVerification,
             marketing: consents.marketing,
           },
           // Honeypot value — empty for real users

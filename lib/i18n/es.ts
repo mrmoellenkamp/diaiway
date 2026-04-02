@@ -323,8 +323,10 @@ const es = {
   "register.consent.newsletterShort": "Quiero consejos DIY y noticias (opcional; doble opt-in).",
   "register.consent.phase1Footer":
     "Guardamos la versión del documento, la hora del consentimiento y un hash de tu IP (sin IP en claro). Marketing nunca preseleccionado.",
+  "register.consent.ageVerification": "Confirmo que tengo al menos 18 años.",
   "register.consent.paymentProviderName": "Stripe",
   "register.errorConsents": "Acepta los Términos y la Política de privacidad.",
+  "register.errorAgeVerification": "Debes tener al menos 18 años para usar diAIway.",
 
   "paymentOnboarding.title": "Pago y sesión",
   "paymentOnboarding.intro": "Antes de una sesión de pago necesitamos estas dos confirmaciones.",
@@ -495,9 +497,15 @@ const es = {
   "profile.pauseAccountConfirm": "¿Pausar cuenta?",
   "profile.pauseAccountDesc": "Tu cuenta se desactivará temporalmente. Puedes iniciar sesión y reactivar tu cuenta en cualquier momento. Todos tus datos se conservarán. Como Takumi serás marcado como desconectado de inmediato.",
   "profile.pauseNow": "Pausar ahora",
+  "profile.exportData": "Descargar mis datos (RGPD Art. 20)",
+  "profile.exportSuccess": "Exportación de datos iniciada.",
+  "profile.exportError": "La exportación falló. Inténtalo de nuevo.",
+  "profile.unsubscribeMarketing": "Cancelar suscripción a correos de marketing",
+  "profile.unsubscribeSuccess": "Consentimiento de marketing revocado.",
+  "profile.unsubscribeError": "La cancelación falló.",
   "profile.deleteAccount": "Eliminar cuenta permanentemente",
   "profile.deleteAccountConfirm": "¿Eliminar cuenta permanentemente?",
-  "profile.deleteAccountDesc": "Esta acción no se puede deshacer. Todos los datos personales (perfil, imágenes, perfil de experto, disponibilidad, reseñas) se eliminarán permanentemente según el RGPD. El historial de reservas se anonimizará por razones fiscales (§ 147 AO).",
+  "profile.deleteAccountDesc": "Esta acción no se puede deshacer. Mensajes, notificaciones, tokens push, proyectos/portafolio, perfil, imágenes, perfil de experto, disponibilidad y reseñas se eliminan conforme al RGPD. Los datos de reserva se anonimizan; los registros exigidos fiscalmente (§ 147 AO alemán) permanecen sin referencia personal.",
   "profile.deleteAccountConfirmBtn": "Sí, eliminar cuenta",
   "profile.accountPaused": "Cuenta pausada.",
 
