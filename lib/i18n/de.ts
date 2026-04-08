@@ -1317,6 +1317,8 @@ const de = {
   "wallet.checkoutError": "Checkout konnte nicht gestartet werden.",
   "wallet.iosHint": "Guthaben kann auf diaiway.com aufgeladen werden.",
   "wallet.iosHintAction": "Im Browser öffnen",
+  "wallet.nativeHint": "Guthaben kann auf diaiway.com aufgeladen werden.",
+  "wallet.nativeHintAction": "Im Browser öffnen",
   "instant.requestWantsConnect": "{name} möchte mit dir verbinden.",
   "instant.knockError": "Fehler beim Anklopfen",
   "instant.connectNow": "Instant Connect",

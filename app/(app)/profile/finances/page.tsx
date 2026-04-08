@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Wallet, FileText, Download, Loader2, Receipt, Plus, ShieldCheck, ExternalLink, BadgeCheck, AlertTriangle, Clock } from "lucide-react"
+import { openExternalBrowser } from "@/lib/native-browser"
 import { useI18n } from "@/lib/i18n"
 import { toast } from "sonner"
 import { useWalletTopup } from "@/lib/wallet-topup-context"
@@ -191,10 +192,10 @@ export default function FinancesPage() {
                           size="sm"
                           variant="ghost"
                           className="h-8 gap-1 shrink-0 text-primary hover:bg-[rgba(6,78,59,0.1)] hover:text-primary"
-                          onClick={() => window.open("https://diaiway.com/profile/finances", "_blank")}
+                          onClick={() => void openExternalBrowser("https://diaiway.com/profile/finances")}
                         >
                           <ExternalLink className="size-3.5" />
-                          <span className="text-xs">{t("wallet.iosHintAction")}</span>
+                          <span className="text-xs">{t("wallet.nativeHintAction")}</span>
                         </Button>
                       ) : (
                         <Button

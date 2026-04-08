@@ -1303,6 +1303,8 @@ const es = {
   "wallet.checkoutError": "No se pudo iniciar el checkout.",
   "wallet.iosHint": "El saldo se puede recargar en diaiway.com.",
   "wallet.iosHintAction": "Abrir en el navegador",
+  "wallet.nativeHint": "El saldo se puede recargar en diaiway.com.",
+  "wallet.nativeHintAction": "Abrir en el navegador",
   "instant.requestWantsConnect": "{name} quiere conectar contigo.",
   "instant.knockError": "Error al llamar",
   "instant.connectNow": "Instant Connect",

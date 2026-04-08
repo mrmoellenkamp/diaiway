@@ -1304,6 +1304,8 @@ const en = {
   "wallet.checkoutError": "Checkout could not be started.",
   "wallet.iosHint": "Credit balance can be topped up at diaiway.com.",
   "wallet.iosHintAction": "Open in browser",
+  "wallet.nativeHint": "Credit balance can be topped up at diaiway.com.",
+  "wallet.nativeHintAction": "Open in browser",
   "instant.requestWantsConnect": "{name} wants to connect with you.",
   "instant.knockError": "Error while knocking",
   "instant.connectNow": "Instant Connect",

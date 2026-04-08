@@ -17,6 +17,7 @@ import type { Stripe } from "@stripe/stripe-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Wallet, ExternalLink } from "lucide-react"
+import { openExternalBrowser } from "@/lib/native-browser"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n"
 import { createStripeBrowserPromise } from "@/lib/stripe-client"
@@ -155,7 +156,7 @@ export function WalletTopupModal({
           <DialogTitle>{t("wallet.title")}</DialogTitle>
         </DialogHeader>
         <div className="relative min-h-[200px]">
-          {/* iOS: Aufladung nur über Web möglich */}
+          {/* Native (iOS/Android): Aufladung nur über externen Browser möglich */}
           {isNative ? (
             <div className="flex flex-col items-center gap-5 py-6 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(6,78,59,0.1)]">
@@ -163,17 +164,17 @@ export function WalletTopupModal({
               </div>
               <div className="flex flex-col gap-1.5">
                 <p className="text-sm font-medium text-foreground">{t("wallet.title")}</p>
-                <p className="text-sm text-muted-foreground">{t("wallet.iosHint")}</p>
+                <p className="text-sm text-muted-foreground">{t("wallet.nativeHint")}</p>
               </div>
               <Button
                 className="gap-2"
                 onClick={() => {
                   onOpenChange(false)
-                  window.open("https://diaiway.com/profile/finances", "_blank")
+                  void openExternalBrowser("https://diaiway.com/profile/finances")
                 }}
               >
                 <ExternalLink className="size-4" />
-                {t("wallet.iosHintAction")}
+                {t("wallet.nativeHintAction")}
               </Button>
             </div>
           ) : null}

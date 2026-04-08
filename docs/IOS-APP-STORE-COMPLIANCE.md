@@ -137,17 +137,31 @@ Apple erwartet, dass Icons nicht 1:1 wie SF Symbols wirken. Lucide-Icons (Home, 
 
 ---
 
-## 6. Guthaben (Wallet), IAP und Marktplatz-Zahlung (Apple)
+## 6. Guthaben (Wallet), IAP und Marktplatz-Zahlung (Apple & Google)
 
-**Kontext:** Apple **Guideline 3.1.1** verbietet typischerweise den Kauf digitaler Güter/Leistungen **in der App** über Zahlungsmethoden außerhalb von In-App Purchase. **Guideline 3.1.3(d)** erlaubt für **Peer-to-Peer-Dienste** (reale Dienstleistungen zwischen Personen) die Abwicklung **außerhalb** von IAP.
+**Kontext:**
+- **Apple Guideline 3.1.1** verbietet den Kauf digitaler Güter in der App außerhalb von IAP. **Guideline 3.1.3(d)** erlaubt für **Peer-to-Peer-Dienste** (reale Dienstleistungen zwischen Personen) die Abwicklung außerhalb von IAP.
+- **Google Play Guideline 4.8** verbietet externe Zahlungen für digitale Güter, wenn sie innerhalb der App initiiert werden. **User Choice Billing** (2023) und die **EU-DMA-Ausnahme** (2024) erlauben für Marktplatz-Apps externe Zahlungsflüsse.
 
-**Umsetzung im Projekt (technisch, Stand Doku):**
+**Umsetzung im Projekt (technisch):**
 
 | Thema | Verhalten |
 |-------|-----------|
-| **Guthaben aufladen** | Auf **nativer iOS** wird die **in-App-Aufladung** des Guthabens über externe Zahlung **nicht** angeboten; Nutzer werden auf die **Website** verwiesen (siehe Booking/Wallet-UI, `Capacitor.isNativePlatform()`). |
-| **Guthaben **verbrauchen**** | Wenn bereits Guthaben besteht, kann die **Buchungszahlung** mit Wallet in der App erfolgen — Kontext: reale Dienstleistung Takumi↔Shugyo, nicht Kauf virtueller Währung als Produkt. |
-| **Neue Zahlung für Buchung** | Native Flow nutzt Stripe wie dokumentiert; Einhaltung 3.1.3(d) obliegt der finalen **App-Review**-Argumentation (Marktplatz, physische/reale Dienstleistung). |
+| **Guthaben aufladen – iOS** | Kein nativer Checkout. Nutzer wird per **SFSafariViewController** (`@capacitor/browser`) auf `https://diaiway.com/profile/finances` weitergeleitet. Zahlung findet außerhalb der App statt. |
+| **Guthaben aufladen – Android** | Identisch: Kein nativer Checkout. Nutzer wird per **Chrome Custom Tabs** (`@capacitor/browser`) auf `https://diaiway.com/profile/finances` weitergeleitet. Zahlung findet außerhalb der App-WebView statt. |
+| **Guthaben verbrauchen** | Buchungszahlung mit bestehendem Guthaben in der App erlaubt – Kontext: reale Dienstleistung Takumi↔Shugyo, kein Kauf virtueller Währung. |
+| **Neue Stripe-Zahlung für Buchung** | iOS: In-App-Browser (`SFSafariViewController`). Android: direkt in der WebView (`window.location.assign`). Einhaltung von 3.1.3(d) / Guideline 4.8 obliegt der finalen App-Review-Argumentation. |
+
+**Technische Umsetzung:**
+- Zentrale Hilfsfunktion: `lib/native-browser.ts` → `openExternalBrowser(url)`
+  - Intern: `Capacitor.isNativePlatform()` → `Browser.open({ url })` (Capacitor Browser Plugin)
+  - Web-Fallback: `window.open(url, "_blank")`
+- Verwendet in: `components/wallet-topup-modal.tsx`, `app/(app)/profile/finances/page.tsx`
+
+**Argumentationslinie für App-Review (iOS & Android):**
+1. Wallet-Aufladung findet vollständig im **externen System-Browser** statt (separater Prozess, nicht App-WebView)
+2. Guthaben wird für **reale Peer-to-Peer-Dienstleistungen** eingesetzt (Live-Beratung Takumi↔Shugyo)
+3. Entspricht dem Modell von Uber, Airbnb, Fiverr – anerkannte Marktplatz-Ausnahme
 
 Ausführliche Beleg- und Zahlungsarchitektur: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md).
 
