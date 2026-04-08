@@ -26,6 +26,9 @@ android/.idea/
 android/keystore.properties
 android/app/*.jks
 android/app/*.keystore
+# Firebase config — enthält API-Key, niemals committen
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
 ios/App/Pods/
 ios/App/build/
 ios/DerivedData/
