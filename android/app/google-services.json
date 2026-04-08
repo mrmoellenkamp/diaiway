@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "25414145268",
+    "project_id": "diaiway-c53c1",
+    "storage_bucket": "diaiway-c53c1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25414145268:android:a92833d92e596d141fbaa1",
+        "android_client_info": {
+          "package_name": "com.diaiway.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXUaMs1FuuDnIVNtCRFtEEXFtll-6dM0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

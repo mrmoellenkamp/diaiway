@@ -179,23 +179,31 @@ export function BookingCalendarActions({
     window.open(googleCalendarUrl, "_blank", "noopener,noreferrer")
   }
 
+  const isNative = Capacitor.isNativePlatform()
+
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
       <Button
         type="button"
         size="sm"
         variant="outline"
-        className="h-9 border-border"
+        className={cn("h-8 border-border gap-1.5", isNative ? "px-2.5 text-xs" : "h-9")}
         disabled={icsBusy}
         onClick={() => void handleDownloadIcs()}
       >
         {icsBusy ? (
-          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+          <Loader2 className="size-3.5 animate-spin shrink-0" />
         ) : (
-          <CalendarPlus className="mr-1.5 size-3.5" />
+          <CalendarPlus className="size-3.5 shrink-0" />
         )}
-        <span className="hidden sm:inline">{t("booking.calendarIcs")}</span>
-        <span className="sm:hidden">.ics</span>
+        {isNative ? (
+          <span>.ics</span>
+        ) : (
+          <>
+            <span className="hidden sm:inline">{t("booking.calendarIcs")}</span>
+            <span className="sm:hidden">.ics</span>
+          </>
+        )}
       </Button>
       {googleCalendarUrl ? (
         openGoogleInBrowser ? (
@@ -203,19 +211,36 @@ export function BookingCalendarActions({
             type="button"
             size="sm"
             variant="outline"
-            className="h-9 border-border"
+            className={cn("h-8 border-border gap-1.5", isNative ? "px-2.5 text-xs" : "h-9")}
             onClick={() => void handleOpenGoogle()}
           >
-            <Calendar className="mr-1.5 size-3.5" />
-            <span className="hidden sm:inline">{t("booking.calendarGoogle")}</span>
-            <span className="sm:hidden">G</span>
+            <Calendar className="size-3.5 shrink-0" />
+            {isNative ? (
+              <span>Google</span>
+            ) : (
+              <>
+                <span className="hidden sm:inline">{t("booking.calendarGoogle")}</span>
+                <span className="sm:hidden">G</span>
+              </>
+            )}
           </Button>
         ) : (
-          <Button size="sm" variant="outline" className="h-9 border-border" asChild>
+          <Button
+            size="sm"
+            variant="outline"
+            className={cn("h-8 border-border gap-1.5", isNative ? "px-2.5 text-xs" : "h-9")}
+            asChild
+          >
             <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
-              <Calendar className="mr-1.5 size-3.5" />
-              <span className="hidden sm:inline">{t("booking.calendarGoogle")}</span>
-              <span className="sm:hidden">G</span>
+              <Calendar className="size-3.5 shrink-0" />
+              {isNative ? (
+                <span>Google</span>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">{t("booking.calendarGoogle")}</span>
+                  <span className="sm:hidden">G</span>
+                </>
+              )}
             </a>
           </Button>
         )

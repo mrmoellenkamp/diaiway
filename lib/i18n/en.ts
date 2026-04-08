@@ -378,11 +378,11 @@ const en = {
   "home.greeting": "Hello,",
   "home.searchPlaceholder": "Search for experts, categories...",
   "home.introLong":
-    "This is your home. Here you’ll see the latest diAiway news and who’s online. Browse categories or chat with Hisho (秘書), our AI that helps with your project or finds the right Takumi (expert).",
+    "This is your home. Here you’ll see the latest diAiway news and who’s online. Browse categories or chat with Hisho, our AI that helps with your project or finds the right Takumi (expert).",
   "home.newsTitle": "News",
   "home.newsLoading": "Loading news…",
   "home.newsReadMore": "Read more",
-  "home.aiGuideDesc": "Chat with Hisho (秘書) - project check, planning, find experts",
+  "home.aiGuideDesc": "Chat with Hisho - project check, planning, find experts",
   "home.nowLive": "Live Now",
   "home.online": "online",
   "home.noExpertsOnline": "No experts online right now.",
@@ -474,8 +474,8 @@ const en = {
   "categories.areas": "areas",
   "categories.mentorTitle": "Hisho (秘書) - Intelligence & categories",
   "categories.mentorDesc":
-    "Use Hisho (秘書) for questions, photos, and planning - below, browse categories to find Takumi (experts) for your topic.",
-  "categories.collapsibleDesc": "Chat with Hisho (秘書): project check, planning, find experts.",
+    "Use Hisho for questions, photos, and planning - below, browse categories to find Takumi (experts) for your topic.",
+  "categories.collapsibleDesc": "Chat with Hisho: project check, planning, find experts.",
 
   // Category Detail
   "categoryDetail.expertsFound": "{count} experts found",
@@ -696,7 +696,7 @@ const en = {
   "aria.showPassword": "Show password",
   "aria.hidePassword": "Hide password",
 
-  // Mentor / Hisho (秘書) - diAiway Intelligence
+  // Mentor / Hisho - diAiway Intelligence
   "mentor.hishoName": "Hisho (秘書)",
   "mentor.intelligenceSuffix": "Intelligence",
   "mentor.open": "Open Hisho (秘書)",
@@ -710,7 +710,7 @@ const en = {
   "mentor.headerDescFloating": "Your AI assistant on diAiway",
   "mentor.online": "Online",
   "mentor.welcome":
-    "Hi, I’m Hisho (秘書), your AI on diAiway. Describe your project or upload a photo - I’ll help or find the right Takumi.",
+    "Hi, I’m Hisho, your AI on diAiway. Describe your project or upload a photo - I’ll help or find the right Takumi.",
   "mentor.photoUploadMessage": "I have uploaded a photo of my problem. Please analyze it and give me an assessment.",
   "mentor.imageAttachTitle": "Send image",
   "mentor.imageCaptionHint":
@@ -968,9 +968,9 @@ const en = {
   // AI Guide
   "aiGuide.pageHeading": "Hisho (秘書) - diAiway - Intelligence",
   "aiGuide.introText":
-    "Hisho (秘書) is your AI assistant: project checks, photos with context, and help finding a Takumi. Describe what you need or use the home page for news and live experts.",
+    "Hisho is your AI assistant: project checks, photos with context, and help finding a Takumi. Describe what you need or use the home page for news and live experts.",
   "aiGuide.welcome":
-    "Konichiwa! I'm Hisho (秘書), your AI on diAiway. Describe your problem or upload a photo - I'll find the right expert for you!",
+    "Konichiwa! I'm Hisho, your AI on diAiway. Describe your problem or upload a photo - I'll find the right expert for you!",
   "aiGuide.foundExperts": "I found {count} matching experts for you:",
   "aiGuide.noExpertsYet": "No experts are registered yet. Check back soon!",
   "aiGuide.noExactMatch": "I couldn't find an exact match, but here are our best experts:",

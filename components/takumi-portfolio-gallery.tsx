@@ -116,8 +116,13 @@ export function TakumiPortfolioGallery({
                 <p className="line-clamp-1 text-xs font-semibold text-foreground">
                   {p.title}
                 </p>
+                {p.description && (
+                  <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground leading-snug">
+                    {p.description}
+                  </p>
+                )}
                 {p.category && (
-                  <p className="text-[10px] text-muted-foreground">{p.category}</p>
+                  <p className="mt-0.5 text-[10px] text-primary/70">{p.category}</p>
                 )}
               </div>
             </button>

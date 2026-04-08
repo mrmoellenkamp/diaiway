@@ -17,7 +17,6 @@ import {
   Shield,
   CheckCircle,
   Star,
-  FlaskConical,
   Sparkles,
   BadgeCheck,
   Handshake,
@@ -227,18 +226,6 @@ export default function LandingPage() {
           />
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary to-transparent pointer-events-none" />
 
-          {/* Störer: runder Beta-Knopf auf dem Hero-Bild (nicht in der Text-Navigation) */}
-          <Link
-            href={`/beta/${locale}`}
-            aria-label={t("landing.betaButton")}
-            title={t("landing.betaButton")}
-            className="absolute bottom-3 right-3 z-20 flex size-[5.25rem] sm:size-[5.75rem] flex-col items-center justify-center gap-1 rounded-full border-2 border-[rgba(240,253,244,0.9)] bg-accent text-accent-foreground shadow-[0_4px_24px_rgba(0,0,0,0.35)] ring-4 ring-[rgba(6,78,59,0.35)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(240,253,244)]"
-          >
-            <FlaskConical className="size-[1.125rem] sm:size-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
-            <span className="max-w-[4.25rem] text-center text-[8px] font-extrabold leading-[1.05] tracking-wide sm:max-w-none sm:text-[9px]">
-              {t("landing.betaCircleLabel")}
-            </span>
-          </Link>
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 pb-10 pt-2 text-center sm:px-6">
