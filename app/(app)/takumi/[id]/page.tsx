@@ -26,6 +26,7 @@ import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/component
 import { UserChatBox } from "@/components/user-chat-box"
 import { VerifiedBadge } from "@/components/verified-badge"
 import { takumiPublicLabel } from "@/lib/communication-display"
+import { LanguageFlagSticker } from "@/components/language-flag-sticker"
 import {
   Drawer,
   DrawerContent,
@@ -233,14 +234,28 @@ export default function TakumiProfilePage({ params }: { params: Promise<{ id: st
                 <h1 className="text-xl font-bold text-foreground">{commLabel}</h1>
                 {takumi.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-jp text-sm text-[rgba(6,78,59,0.6)]">匠</span>
-                {takumi.isPro && (
-                  <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
+              <div className="mt-1 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary text-[10px]"
+                  >
+                    Takumi <span className="font-jp ml-0.5">匠</span>
+                  </Badge>
+                  {takumi.isPro && (
+                    <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
+                  )}
+                  {takumi.isLive && <LiveBadge size="md" />}
+                </div>
+                {takumi.languages && takumi.languages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {takumi.languages.map((lang) => (
+                      <LanguageFlagSticker key={lang} lang={lang} showLabel="flagOnly" size="sm" />
+                    ))}
+                  </div>
                 )}
-                {takumi.isLive && <LiveBadge size="md" />}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-1">
                 {takumi.categoryName} &middot; {takumi.subcategory}
               </p>
             </div>

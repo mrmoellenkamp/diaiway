@@ -8,7 +8,7 @@ import { RefreshCw } from "lucide-react"
 const PULL_THRESHOLD = 80
 const RESISTANCE = 0.5
 
-/** Pfade ohne Pull-to-Refresh (z.B. Checkout, Auth) */
+/** Pfade ohne Pull-to-Refresh (z.B. Checkout, Auth). enabled erst nach mount — Hydration #418 vermeiden. */
 const SKIP_PATHS = ["/pay", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email"]
 
 export function PullToRefresh() {
@@ -16,15 +16,19 @@ export function PullToRefresh() {
   const pathname = usePathname()
   const [pullY, setPullY] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
+  const [enabled, setEnabled] = useState(false)
   const startY = useRef(0)
   const currentPullY = useRef(0)
 
   const shouldSkip = SKIP_PATHS.some((p) => pathname?.startsWith(p))
-  const isNative = Capacitor.isNativePlatform()
-  const isStandalone = typeof window !== "undefined" && (window.navigator as { standalone?: boolean }).standalone
-  const isPWA = typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches
-  const isTouchMobile = typeof window !== "undefined" && "ontouchstart" in window
-  const enabled = isNative || (isTouchMobile && (isStandalone || isPWA))
+
+  useEffect(() => {
+    const isNative = Capacitor.isNativePlatform()
+    const isStandalone = (window.navigator as { standalone?: boolean }).standalone
+    const isPWA = window.matchMedia("(display-mode: standalone)").matches
+    const isTouchMobile = "ontouchstart" in window
+    setEnabled(isNative || (isTouchMobile && (!!isStandalone || isPWA)))
+  }, [])
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true)

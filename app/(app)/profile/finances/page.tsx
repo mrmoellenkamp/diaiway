@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Capacitor } from "@capacitor/core"
+import { useIsNativeCapacitor } from "@/hooks/use-is-native-capacitor"
 import { PageContainer } from "@/components/page-container"
 import { AppSubpageHeader } from "@/components/app-subpage-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +43,7 @@ type TxItem = {
 
 export default function FinancesPage() {
   const { t } = useI18n()
+  const isNative = useIsNativeCapacitor()
   const { openWalletTopup } = useWalletTopup()
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<TxItem[]>([])
@@ -187,7 +188,7 @@ export default function FinancesPage() {
                       <p className="text-xl font-bold text-foreground">
                         {wallet ? formatCents(wallet.balance) : "€0,00"}
                       </p>
-                      {Capacitor.isNativePlatform() ? (
+                      {isNative ? (
                         <Button
                           size="sm"
                           variant="ghost"

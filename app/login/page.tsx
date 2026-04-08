@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/language-switcher"
-import { Capacitor } from "@capacitor/core"
+import { useIsNativeCapacitor } from "@/hooks/use-is-native-capacitor"
 import {
   checkBiometricAvailable,
   verifyBiometric,
@@ -76,7 +76,7 @@ function LoginContent() {
   const reasonTimeout = searchParams.get("reason") === "timeout"
   const { setIsLoggedIn } = useApp()
   const { t } = useI18n()
-  const isNative = Capacitor.isNativePlatform()
+  const isNative = useIsNativeCapacitor()
 
   // ── Sign out stale client session on timeout redirect
   useEffect(() => {

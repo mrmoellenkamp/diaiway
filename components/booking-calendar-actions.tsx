@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Calendar, CalendarPlus, Loader2 } from "lucide-react"
 import { Capacitor } from "@capacitor/core"
+import { useIsNativeCapacitor } from "@/hooks/use-is-native-capacitor"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -49,6 +50,7 @@ export function BookingCalendarActions({
   className?: string
 }) {
   const { t } = useI18n()
+  const isNative = useIsNativeCapacitor()
   const [origin, setOrigin] = useState("")
   const [icsBusy, setIcsBusy] = useState(false)
 
@@ -162,8 +164,7 @@ export function BookingCalendarActions({
 
   if (!show || !bookingId) return null
 
-  const openGoogleInBrowser =
-    Capacitor.isNativePlatform() && typeof window !== "undefined" && googleCalendarUrl
+  const openGoogleInBrowser = isNative && typeof window !== "undefined" && googleCalendarUrl
 
   async function handleOpenGoogle() {
     if (!googleCalendarUrl) return
@@ -178,8 +179,6 @@ export function BookingCalendarActions({
     }
     window.open(googleCalendarUrl, "_blank", "noopener,noreferrer")
   }
-
-  const isNative = Capacitor.isNativePlatform()
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>

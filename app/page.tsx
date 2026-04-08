@@ -186,23 +186,41 @@ export default function LandingPage() {
   const { t, locale } = useI18n()
   const showLoggedInCta = ctaHydrationSafe && isLoggedIn
 
+  /**
+   * Native Landing: stay-preference nur **einmal pro WebView-Lebensdauer** anwenden.
+   * Sonst: Nach Login erneut `/` (Logo „Start“) → bei stay=false sofort wieder signOut → Bootloop-Gefühl.
+   * Neuer App-Prozess = leeres sessionStorage → Cold-Start-Verhalten bleibt wie gewünscht.
+   */
+  const NATIVE_LANDING_GATE = "diaiway_native_landing_stay_handled"
+
   // Native: "stay yes" → redirect to profile; "stay no" → sign out and show login; null → normal landing
   useEffect(() => {
     if (status !== "authenticated" || !session?.user || !Capacitor.isNativePlatform()) return
+    let cancelled = false
     ;(async () => {
-      const stay = await getStayLoggedIn()
-      if (stay === true) {
-        const role = (session.user as { role?: string })?.role ?? "user"
-        const appRole = (session.user as { appRole?: string })?.appRole ?? "shugyo"
-        const target = role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
-        window.location.replace(target)
-      } else if (stay === false) {
-        // User chose "always show login" → sign out so they see login page with Face ID
-        await signOut({ redirect: false })
-        window.location.replace("/login")
+      try {
+        if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(NATIVE_LANDING_GATE)) return
+        const stay = await getStayLoggedIn()
+        if (cancelled) return
+        if (stay === true) {
+          if (typeof sessionStorage !== "undefined") sessionStorage.setItem(NATIVE_LANDING_GATE, "1")
+          const role = (session.user as { role?: string })?.role ?? "user"
+          const appRole = (session.user as { appRole?: string })?.appRole ?? "shugyo"
+          const target = role === "admin" ? "/admin" : appRole === "takumi" ? "/profile" : "/categories"
+          window.location.replace(target)
+        } else if (stay === false) {
+          if (typeof sessionStorage !== "undefined") sessionStorage.setItem(NATIVE_LANDING_GATE, "1")
+          // User chose "always show login" → sign out so they see login page with Face ID
+          await signOut({ redirect: false })
+          if (!cancelled) window.location.replace("/login")
+        }
+      } catch {
+        /* Preferences fehlgeschlagen — normale Landing anzeigen */
       }
-      // stay === null: never chosen, show landing page normally
     })()
+    return () => {
+      cancelled = true
+    }
   }, [status, session?.user])
 
   useEffect(() => {

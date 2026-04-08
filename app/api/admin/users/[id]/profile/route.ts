@@ -259,6 +259,10 @@ export async function PATCH(
         for (const k of allowed) {
           if (body.expert![k] !== undefined) data[k] = body.expert![k]
         }
+        // Admin-Änderungen an bio werden sofort als bioLive übernommen
+        if (body.expert!.bio !== undefined) {
+          data.bioLive = body.expert!.bio
+        }
         if (Object.keys(data).length > 0) {
           await tx.expert.update({ where: { id: expertRow.id }, data })
         }

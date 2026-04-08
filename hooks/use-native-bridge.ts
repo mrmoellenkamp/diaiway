@@ -241,7 +241,7 @@ export async function getStayLoggedIn(): Promise<boolean | null> {
   try {
     const { Preferences } = await import("@capacitor/preferences")
     const { value } = await Preferences.get({ key: STAY_LOGGED_IN_KEY })
-    if (value === undefined || value === null) return null
+    if (value === undefined || value === null || value === "") return null
     return value === "1"
   } catch {
     return null

@@ -60,6 +60,7 @@ export interface Takumi {
   imageUrl?: string
   socialLinks?: SocialLinks
   cancelPolicy?: CancelPolicy
+  languages?: string[]
 }
 
 export interface CategorySpecialtyRef {

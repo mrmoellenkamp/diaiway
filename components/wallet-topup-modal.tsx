@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Capacitor } from "@capacitor/core"
+import { useIsNativeCapacitor } from "@/hooks/use-is-native-capacitor"
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,7 @@ export function WalletTopupModal({
 }: WalletTopupModalProps) {
   const { t } = useI18n()
   const router = useRouter()
+  const isNative = useIsNativeCapacitor()
   const [step, setStep] = useState<"amount" | "checkout">("amount")
   const [amountEur, setAmountEur] = useState(20)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -146,8 +147,6 @@ export function WalletTopupModal({
       setLoading(false)
     }
   }
-
-  const isNative = Capacitor.isNativePlatform()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

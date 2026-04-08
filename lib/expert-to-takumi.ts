@@ -6,7 +6,7 @@ import { expertPublicBio } from "@/lib/expert-public-bio"
 export const TAKUMI_ONLINE_PRESENCE_MS = 30 * 1000
 
 type ExpertWithTaxonomy = Expert & {
-  user: { appRole: string; isVerified: boolean; username: string | null; image: string | null } | null
+  user: { appRole: string; isVerified: boolean; username: string | null; image: string | null; languages: string[] } | null
   categoryAssignments: { category: Pick<TaxonomyCategory, "slug" | "name"> }[]
   specialtyAssignments: { specialty: Pick<TaxonomySpecialty, "name"> }[]
   primaryCategory: Pick<TaxonomyCategory, "slug" | "name"> | null
@@ -74,11 +74,12 @@ export function expertRowToTakumi(e: ExpertWithTaxonomy): Takumi {
     imageUrl: (e.imageUrl || e.user?.image || "").trim() || undefined,
     socialLinks: (e.socialLinks ?? {}) as Takumi["socialLinks"],
     cancelPolicy: (e.cancelPolicy as unknown as CancelPolicy) ?? { freeHours: 24, feePercent: 0 },
+    languages: e.user?.languages ?? [],
   }
 }
 
 export const expertTaxonomyInclude = {
-  user: { select: { appRole: true, isVerified: true, username: true, image: true } },
+  user: { select: { appRole: true, isVerified: true, username: true, image: true, languages: true } },
   categoryAssignments: {
     include: { category: { select: { slug: true, name: true } } },
   },
