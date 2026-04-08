@@ -50,6 +50,44 @@ Release builds **must not** store keystore passwords in Git.
 
 If you ever had default passwords in `build.gradle` in the repo, **rotate** the signing key in Play Console and treat the old key as compromised.
 
+## iOS Release Build & Upload
+
+1. **Sync** zuerst:
+   ```bash
+   npm run mobile:sync
+   ```
+2. **Xcode** öffnen: `ios/App/App.xcworkspace`
+3. **Scheme** auf `App` + Ziel auf `Any iOS Device (arm64)` setzen
+4. **Archive**: `Product → Archive`
+5. **Distribute**: `Distribute App → App Store Connect → Upload`
+6. In **App Store Connect** das Binary unter dem App-Eintrag auswählen und zur Review einreichen.
+
+**Voraussetzungen:**
+- Apple Developer Account mit aktivem App-Eintrag (Bundle ID: `com.diaiway.app`)
+- Distribution Certificate + App Store Provisioning Profile in Xcode Signing & Capabilities hinterlegt
+- Version / Build-Nummer in `ios/App/App.xcodeproj/project.pbxproj` aktualisiert (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`)
+
+---
+
+## Android Release Build & Upload
+
+1. **Sync** zuerst:
+   ```bash
+   npm run mobile:sync
+   ```
+2. **Android Studio** öffnen: `android/`
+3. `Build → Generate Signed Bundle / APK → Android App Bundle (AAB)`
+4. Keystore auswählen (siehe unten), Build Variant `release` wählen
+5. AAB in **Google Play Console** unter `Production → Releases` hochladen
+
+**Version aktualisieren** in `android/app/build.gradle`:
+```gradle
+versionCode 1        // bei jedem Upload erhöhen
+versionName "1.0.0"
+```
+
+---
+
 ## Android App Links
 
 `AndroidManifest.xml` declares `https` App Links for `diaiway.com` / `www.diaiway.com`. For **autoVerify** to succeed, host **Digital Asset Links** at:

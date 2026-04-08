@@ -1,6 +1,6 @@
 # diAIway Dokumentation – Index
 
-**Stand:** März 2026  
+**Stand:** April 2026  
 
 Zentrale Einstiege und **alle** referenzierten Dokumente.
 
@@ -24,6 +24,10 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | **Doku pflegen** | [UPDATE.md](UPDATE.md) |
 | **vNext (Backlog / Prompt-Specs)** | [vNext/README.md](vNext/README.md) |
 | **Google Play (Compliance)** | [GOOGLE-PLAY-COMPLIANCE.md](GOOGLE-PLAY-COMPLIANCE.md) |
+| **Launch-Checkliste (interaktiv)** | `/admin/launch` (im Browser) |
+| **Store-Texte Deutsch** | [APP-STORE-TEXTS-DE.md](APP-STORE-TEXTS-DE.md) |
+| **Store-Texte Englisch** | [APP-STORE-TEXTS-EN.md](APP-STORE-TEXTS-EN.md) |
+| **Store-Texte Spanisch** | [APP-STORE-TEXTS-ES.md](APP-STORE-TEXTS-ES.md) |
 
 ---
 
@@ -67,6 +71,10 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | [STORE-COMPLIANCE-CHECKLIST.md](STORE-COMPLIANCE-CHECKLIST.md) | Store-Compliance (iOS + Android Basis) |
 | [GOOGLE-PLAY-COMPLIANCE.md](GOOGLE-PLAY-COMPLIANCE.md) | Google Play: Console, Data safety, Richtlinien, SDK-Stand |
 | [IOS-APP-STORE-COMPLIANCE.md](IOS-APP-STORE-COMPLIANCE.md) | iOS-spezifisch |
+| [APP-STORE-TEXTS-DE.md](APP-STORE-TEXTS-DE.md) | Store-Texte DE: Name, Beschreibung, Keywords, URLs |
+| Launch-Checkliste | `/admin/launch` – interaktive Checkliste für iOS + Android Submit (komponente: `components/launch-checklist.tsx`) |
+| [APP-STORE-TEXTS-EN.md](APP-STORE-TEXTS-EN.md) | Store-Texte EN: Name, Description, Keywords, URLs |
+| [APP-STORE-TEXTS-ES.md](APP-STORE-TEXTS-ES.md) | Store-Texte ES: Nombre, Descripción, Palabras clave, URLs |
 | [CALL-KEEP-SETUP.md](CALL-KEEP-SETUP.md) | Call-Keep (native) |
 | [DEPLOYMENT-AUTH.md](DEPLOYMENT-AUTH.md) | NEXTAUTH_URL, WebKit |
 | [EMAIL-VERIFICATION-MIGRATION.md](EMAIL-VERIFICATION-MIGRATION.md) | E-Mail-Verifizierung |
@@ -88,10 +96,10 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | Admin | `/api/admin/stats`, `/api/admin/analytics`, `/api/admin/users`, `/api/admin/finance/*`, `/api/admin/invoice-branding/*`, `/api/admin/home-news`, `/api/admin/taxonomy/*`, `/api/admin/guest-bookings`, `/api/admin/takumi-profile-reviews`, `/api/admin/takumi-profile-revocations`, … |
 | Öffentlich | `/api/home-news`, `/api/taxonomy/categories`, `/api/takumis` |
 | Analytics | `POST /api/analytics/beacon` (öffentlich, kein `/admin`-Tracking) |
-| Cron | `/api/cron/release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders` (Header `CRON_SECRET`) |
+| Cron | `/api/cron/release-wallet`, `experts-offline`, `instant-request-cleanup`, `cleanup-safety-data`, `session-reminders`, `archive-documents`, `purge-expired-documents` (Header `CRON_SECRET`) |
 | Safety | `/api/safety/pre-check`, `snapshot`; Gäste: `POST /api/guest/snapshot` |
 | Dateien | `/api/files/secure-upload` |
 
 ---
 
-*Letzte Aktualisierung: März 2026*
+*Letzte Aktualisierung: April 2026*
