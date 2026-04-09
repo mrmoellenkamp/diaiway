@@ -43,7 +43,7 @@ import {
 } from "lucide-react"
 import { VerifiedBadge } from "@/components/verified-badge"
 import { TakumiStatusCard } from "@/components/takumi-status-card"
-import { LanguageFlagSticker } from "@/components/language-flag-sticker"
+import { ProfileRoleAndLanguages } from "@/components/profile-role-and-languages"
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -532,29 +532,11 @@ export default function ProfilePage() {
                 </button>
               )}
               <p className="text-xs text-muted-foreground">{userEmail}</p>
-              <div className="mt-1 flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="border-[rgba(6,78,59,0.3)] bg-[rgba(6,78,59,0.05)] text-primary text-[10px]"
-                  >
-                    {isTakumi ? "Takumi" : "Shugyo"}{" "}
-                    <span className="font-jp ml-0.5">{isTakumi ? "匠" : "修行"}</span>
-                  </Badge>
-                  {(session?.user as { role?: string })?.role === "admin" && (
-                    <Badge variant="outline" className="border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] text-destructive text-[10px]">
-                      Admin
-                    </Badge>
-                  )}
-                </div>
-                {languages.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {languages.map((lang) => (
-                      <LanguageFlagSticker key={lang} lang={lang} showLabel="flagOnly" size="sm" />
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProfileRoleAndLanguages
+                variant={isTakumi ? "takumi" : "shugyo"}
+                languages={languages}
+                isAdmin={(session?.user as { role?: string })?.role === "admin"}
+              />
             </div>
           </div>
 

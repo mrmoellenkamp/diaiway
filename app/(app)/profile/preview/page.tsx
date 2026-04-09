@@ -12,6 +12,7 @@ import { ReviewStars } from "@/components/review-stars"
 import { ReviewCard } from "@/components/review-card"
 import { PageContainer } from "@/components/page-container"
 import { VerifiedBadge } from "@/components/verified-badge"
+import { ProfileRoleAndLanguages } from "@/components/profile-role-and-languages"
 import { TakumiPortfolioGallery, type TakumiPortfolioProject } from "@/components/takumi-portfolio-gallery"
 import { useI18n } from "@/lib/i18n"
 import { useApp } from "@/lib/app-context"
@@ -141,6 +142,7 @@ type UserData = {
   name: string
   image: string
   createdAt: string
+  languages?: string[]
   shugyo?: ShugyoData
   takumi: TakumiData | null
 }
@@ -255,6 +257,11 @@ export default function ProfilePreviewPage() {
                   {t("profile.memberSince").replace("{date}", memberSince)}
                 </p>
               )}
+              <ProfileRoleAndLanguages
+                variant="shugyo"
+                languages={user.languages ?? []}
+                isAdmin={(session?.user as { role?: string })?.role === "admin"}
+              />
             </div>
 
             {(shugyo?.skillLevel || (shugyo?.projects && shugyo.projects.length > 0)) && (
@@ -419,14 +426,20 @@ export default function ProfilePreviewPage() {
                 <h1 className="text-xl font-bold text-foreground">{tk.name}</h1>
                 {tk.verified && <VerifiedBadge size="md" className="text-accent" />}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-jp text-sm text-[rgba(6,78,59,0.6)]">匠</span>
-                {tk.isPro && (
-                  <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
-                )}
-                {tk.liveStatus === "available" && <LiveBadge size="md" />}
-              </div>
-              <p className="text-sm text-muted-foreground">
+              <ProfileRoleAndLanguages
+                variant="takumi"
+                languages={user.languages ?? []}
+                isAdmin={(session?.user as { role?: string })?.role === "admin"}
+                trailing={
+                  <>
+                    {tk.isPro && (
+                      <Badge variant="secondary" className="text-[10px] bg-[rgba(6,78,59,0.1)] text-primary border-none">PRO</Badge>
+                    )}
+                    {tk.liveStatus === "available" && <LiveBadge size="md" />}
+                  </>
+                }
+              />
+              <p className="text-sm text-muted-foreground mt-1">
                 {tk.categoryName} &middot; {tk.subcategory}
               </p>
             </div>

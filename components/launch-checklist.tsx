@@ -31,8 +31,9 @@ const INITIAL_SECTIONS: Section[] = [
     items: [
       { id: "sc1", label: "iOS 6,7\" Screenshots (1290×2796 px)", detail: "iPhone 15 Pro Max – mindestens 3, ideal 10 Screens", done: false },
       { id: "sc2", label: "iOS 5,5\" Screenshots (1242×2208 px)", detail: "iPhone 8 Plus – optional, aber empfohlen", done: false },
-      { id: "sc3", label: "Android Screenshots (1080×1920 px min.)", detail: "16:9 oder 9:16, mindestens 2", done: false },
-      { id: "sc4", label: "Screenshots geframed / aufbereitet", detail: "Mit Geräterahmen + Titel-Text z.B. via appscreens.io", done: false },
+      { id: "sc3", label: "Android Smartphone-Screenshots (1080×1920)", detail: "Play Console „Telefon“, Hochformat 9:16, mindestens 2", done: false },
+      { id: "sc3tab", label: "Android Tablet-Screenshots (Pflicht)", detail: "Play Console „Tablet“: min. 2, kurze Kante ≥1080 px; Ziel z. B. 1920×1200 Landscape – node scripts/frame-play-store-tablet-screenshots.mjs → assets/play-store-screenshots-tablet/", done: false },
+      { id: "sc4", label: "Screenshots geframed / aufbereitet", detail: "Phone: frame-play-store-screenshots.mjs · Tablet: frame-play-store-tablet-screenshots.mjs (ideal: Aufnahmen vom Tablet-Layout)", done: false },
     ],
   },
   {
@@ -66,7 +67,8 @@ const INITIAL_SECTIONS: Section[] = [
       { id: "and2", label: "Store-Texte DE eingefügt", detail: "docs/APP-STORE-TEXTS-DE.md", done: false },
       { id: "and3", label: "Store-Texte EN eingefügt", detail: "docs/APP-STORE-TEXTS-EN.md", done: false },
       { id: "and4", label: "Store-Texte ES eingefügt", detail: "docs/APP-STORE-TEXTS-ES.md", done: false },
-      { id: "and5", label: "Screenshots hochgeladen", done: false },
+      { id: "and5", label: "Smartphone-Screenshots hochgeladen (Telefon)", detail: "Mindestens 2, korrekte Sektion in der Play Console", done: false },
+      { id: "and5tab", label: "Tablet-Screenshots hochgeladen (Tablet)", detail: "Pflicht bei Large-Screen-/Tablet-Support – eigene Sektion, nicht mit Phone verwechseln", done: false },
       { id: "and6", label: "App-Icon 512×512 hochgeladen", done: false },
       { id: "and7", label: "Feature Graphic 1024×500 hochgeladen", done: false },
       { id: "and8", label: "Data Safety Fragebogen ausgefüllt", detail: "docs/GOOGLE-PLAY-COMPLIANCE.md", done: false },

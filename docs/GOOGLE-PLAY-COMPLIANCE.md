@@ -46,7 +46,7 @@ Berechtigungen in `android/app/src/main/AndroidManifest.xml` müssen zu **tatsä
 
 - [ ] **Entwicklerkonto** inkl. ggf. Organisationsverifizierung
 - [ ] **App erstellen** (Produktion / geschlossener Test / offener Test)
-- [ ] **Store-Eintrag:** Kurz-/Langbeschreibung, Grafiken (Phone + ggf. Tablet), Symbol, Feature-Grafik falls gefordert
+- [ ] **Store-Eintrag:** Kurz-/Langbeschreibung, **Smartphone- + Tablet-Screenshots** (Tablet ist Pflicht, sobald die App Tablets / große Bildschirme unterstützt – eigene „Tablet“-Sektion in der Console), Symbol, Feature-Grafik
 - [ ] **Datenschutzerklärung-URL** (öffentlich erreichbar, Sprache passend)
 - [ ] **Kontaktdaten** (E-Mail, ggf. Website)
 - [ ] **Inhaltsbewertung** (IARC-Fragebogen)
@@ -55,6 +55,17 @@ Berechtigungen in `android/app/src/main/AndroidManifest.xml` müssen zu **tatsä
 - [ ] **Datensicherheit (Data safety):** Formular vollständig; muss mit [Abschnitt 4](#4-datensicherheit-data-safety--orientierung) und der echten Datenverarbeitung übereinstimmen
 - [ ] **App-Zugriff:** Testzugänge bereitstellen, falls Login nötig (Review)
 - [ ] **Ads:** korrekt, ob die App Werbung zeigt (Vercel Analytics ≠ In-App-Werbung – trotzdem konsistent erklären)
+
+### 3.1 Screenshots (Telefon vs. Tablet)
+
+Google Play unterscheidet **zwei Upload-Bereiche**. Sobald die App **Tablets oder große Bildschirme** unterstützt, sind **Tablet-Screenshots Pflicht** (eigene „Tablet“-Sektion) – nicht nur die Smartphone-Grafiken duplizieren.
+
+| Bereich | Typische Größe / Hinweis | Repo-Hilfe |
+|---------|-------------------------|------------|
+| **Telefon** | Hochformat, z. B. 1080×1920 (9:16), mindestens 2 | `node scripts/frame-play-store-screenshots.mjs` → `assets/play-store-screenshots/` |
+| **Tablet** | z. B. **1920×1200** Landscape; kurze Kante ≥1080 px (Details siehe [Play-Hilfe](https://support.google.com/googleplay/android-developer/answer/9866151)), mindestens 2 | `node scripts/frame-play-store-tablet-screenshots.mjs` → `assets/play-store-screenshots-tablet/` |
+
+Für überzeugende Tablet-Listings **Screenshots im Tablet-Layout** (Emulator/Gerät) verwenden; reine Phone-Aufnahmen werden im Tablet-Skript nur zentriert beschnitten.
 
 ---
 

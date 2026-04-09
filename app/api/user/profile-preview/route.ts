@@ -28,6 +28,7 @@ export async function GET() {
         createdAt: true,
         appRole: true,
         skillLevel: true,
+        languages: true,
       },
     })
     if (!user) return NextResponse.json({ error: "Nutzer nicht gefunden." }, { status: 404 })
@@ -146,6 +147,7 @@ export async function GET() {
       username: (user as { username?: string | null }).username ?? null,
       image: user.image || "",
       createdAt: user.createdAt,
+      languages: user.languages ?? [],
       shugyo,
       takumi,
     })

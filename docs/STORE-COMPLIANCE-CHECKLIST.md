@@ -50,6 +50,7 @@
 ### Android
 - **Icons:** `mipmap-*/ic_launcher*.png` – full set (ldpi–xxxhdpi)
 - **Splash:** Via `@capacitor/core` splash screen (runtime)
+- **Play Store screenshots:** Smartphone → `scripts/frame-play-store-screenshots.mjs` (`assets/play-store-screenshots/`). **Tablet** (Pflicht bei Tablet-/Large-Screen-Support): `scripts/frame-play-store-tablet-screenshots.mjs` → `assets/play-store-screenshots-tablet/` — [GOOGLE-PLAY-COMPLIANCE.md](./GOOGLE-PLAY-COMPLIANCE.md) §3.1.
 
 **Note:** Replace Capacitor defaults with brand assets before store submission. Use `npx @capacitor/assets generate` with your logo/splash source.
 
