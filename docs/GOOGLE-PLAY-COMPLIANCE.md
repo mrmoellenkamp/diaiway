@@ -34,7 +34,7 @@ Berechtigungen in `android/app/src/main/AndroidManifest.xml` müssen zu **tatsä
 | `MODIFY_AUDIO_SETTINGS` | Audio-Routing in Calls |
 | `READ_MEDIA_IMAGES` / `READ_EXTERNAL_STORAGE` (≤32) | Bild-Upload (Profil, Projekte, Mentor-Chat) |
 | `POST_NOTIFICATIONS` | Push (Android 13+) |
-| `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` | Lokale Termin-/Session-Erinnerungen |
+| `SCHEDULE_EXACT_ALARM` | Lokale Termin-/Session-Erinnerungen (kein `USE_EXACT_ALARM` — laut Play nur für Wecker-/Kalender-Apps) |
 | `USE_BIOMETRIC` | Optional: Biometric Login |
 | `android.hardware.camera` `required=false` | Voice-only ohne Kamera möglich |
 

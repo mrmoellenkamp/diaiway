@@ -52,10 +52,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Android 12 (API 31–32): Nutzer muss in Einstellungen → Apps → Sonderberechtigungen → Alarme & Erinnerungen freigeben -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
-    <!-- Android 13+ (API 33+): Wird automatisch gewährt für Timer-/Alarm-Apps, kein Nutzer-Dialog nötig -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Termin-Erinnerungen (Local Notifications): exakte Zeiten nur mit SCHEDULE_EXACT_ALARM.
+         USE_EXACT_ALARM ist laut Play nur für Wecker-/Kalender-Apps — nicht für diAiway. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

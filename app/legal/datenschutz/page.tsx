@@ -289,9 +289,9 @@ export default function DatenschutzPage() {
 
                 <SubHeading>3.6 Exakte Alarme / Erinnerungen (Android)</SubHeading>
                 <p>
-                  SCHEDULE_EXACT_ALARM (bis Android 12) / USE_EXACT_ALARM (Android 13+) –
-                  für pünktliche Session-Erinnerungen. Es werden keine personenbezogenen Daten an Dritte
-                  übermittelt.
+                  SCHEDULE_EXACT_ALARM (ab Android 12 / API 31) für pünktliche Session-Erinnerungen.
+                  Es wird kein USE_EXACT_ALARM verwendet (laut Google Play nur für Wecker- bzw. Kalender-Apps).
+                  Es werden keine personenbezogenen Daten an Dritte übermittelt.
                 </p>
 
                 <p className="mt-4 italic">
