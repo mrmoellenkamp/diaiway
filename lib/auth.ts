@@ -177,6 +177,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      // 2b. Nach jedem Session-Update: E-Mail-Bestätigung aus DB (JWT kann hinter der DB hängen).
+      if (trigger === "update") {
+        const uid = (token.id as string) ?? (token.sub as string)
+        if (uid) {
+          try {
+            const row = await withDbRetry(() =>
+              prisma.user.findUnique({
+                where: { id: uid },
+                select: { emailConfirmedAt: true },
+              })
+            )
+            token.emailConfirmedAt = row?.emailConfirmedAt ? row.emailConfirmedAt.getTime() : null
+          } catch (err) {
+            if (!isTransientDbError(err)) {
+              console.error("[auth] JWT update emailConfirmedAt sync:", err)
+            }
+          }
+        }
+      }
+
       // 3. DB-Sync: Revocation-Check + Rollen-Sync (Admin-Änderungen greifen sofort)
       // Nur alle 5 Minuten, nicht bei jeder Session-Anfrage – schützt vor DB-Überlastung
       const DB_SYNC_INTERVAL_SEC = 5 * 60

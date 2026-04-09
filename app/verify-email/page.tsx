@@ -15,7 +15,7 @@ function VerifyEmailContent() {
   const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const [resending, setResending] = useState(false)
   const [cooldown, setCooldown] = useState(0)
 
@@ -25,9 +25,33 @@ function VerifyEmailContent() {
     if (status !== "authenticated" || !session?.user) return
     const emailConfirmedAt = (session.user as { emailConfirmedAt?: number | null }).emailConfirmedAt
     if (emailConfirmedAt) {
-      router.replace("/home")
+      router.replace("/onboarding")
     }
   }, [status, session, router])
+
+  /** Session-JWT kann noch „unbestätigt“ sein, obwohl die DB nach Klick auf den Mail-Link schon passt. */
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return
+    const emailConfirmedAt = (session.user as { emailConfirmedAt?: number | null }).emailConfirmedAt
+    if (emailConfirmedAt) return
+
+    const sync = () => {
+      void update({})
+    }
+    sync()
+    const onVisible = () => {
+      if (document.visibilityState === "visible") sync()
+    }
+    window.addEventListener("focus", sync)
+    document.addEventListener("visibilitychange", onVisible)
+    const interval = setInterval(sync, 4000)
+
+    return () => {
+      window.removeEventListener("focus", sync)
+      document.removeEventListener("visibilitychange", onVisible)
+      clearInterval(interval)
+    }
+  }, [status, session?.user, update])
 
   useEffect(() => {
     if (cooldown <= 0) return

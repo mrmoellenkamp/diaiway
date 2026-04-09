@@ -23,7 +23,8 @@ export default function VerifyEmailSuccessPage() {
     }
 
     setUpdating(true)
-    updateSession({ emailConfirmedAt: Date.now() })
+    // Leeres Update triggert JWT-Callback: emailConfirmedAt wird aus DB gelesen (nicht nur Client-Zeitstempel).
+    updateSession({})
       .then(() => {
         router.replace("/onboarding")
       })
