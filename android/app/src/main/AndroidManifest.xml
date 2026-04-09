@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -52,9 +53,10 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Termin-Erinnerungen (Local Notifications): exakte Zeiten nur mit SCHEDULE_EXACT_ALARM.
-         USE_EXACT_ALARM ist laut Play nur für Wecker-/Kalender-Apps — nicht für diAiway. -->
+    <!-- Termin-Erinnerungen: SCHEDULE_EXACT_ALARM (Nutzer kann „Wecker & Erinnerungen“ erlauben). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Falls eine Dependency USE_EXACT_ALARM merged: explizit entfernen (Play: nur Wecker-/Kalender-Apps). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>
