@@ -22,6 +22,11 @@ export default authMiddleware((req) => {
   }
 
   const { pathname } = req.nextUrl
+
+  // Android App Links: /.well-known/assetlinks.json muss anonym & ohne Auth-Redirects erreichbar sein (auch unter www).
+  if (pathname.startsWith("/.well-known")) {
+    return NextResponse.next()
+  }
   const token = req.auth
   const isLoggedIn = !!token?.user
   const role   = (token?.user as { role?: string })?.role   || "user"

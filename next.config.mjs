@@ -67,10 +67,12 @@ const nextConfig = {
     return [
       { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },
       // Kanonische Produkt-URL: Apex (ohne www) — verhindert doppelte Hosts + Session-Cookie-Probleme (Safari/WebKit)
+      // Ausnahme: /.well-known/* nicht umleiten — Google Play / Android App Links verlangen
+      // https://www…/.well-known/assetlinks.json ohne Redirect (Digital Asset Links).
       {
-        source: "/:path*",
+        source: "/:path((?!\\.well-known).*)",
         has: [{ type: "host", value: "www.diaiway.com" }],
-        destination: "https://diaiway.com/:path*",
+        destination: "https://diaiway.com/:path",
         permanent: true,
       },
     ]
