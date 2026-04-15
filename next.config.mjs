@@ -66,15 +66,8 @@ const nextConfig = {
   async redirects() {
     return [
       { source: "/dashboard/availability", destination: "/profile/availability", permanent: true },
-      // Kanonische Produkt-URL: Apex (ohne www) — verhindert doppelte Hosts + Session-Cookie-Probleme (Safari/WebKit)
-      // Ausnahme: /.well-known/* nicht umleiten — Google Play / Android App Links verlangen
-      // https://www…/.well-known/assetlinks.json ohne Redirect (Digital Asset Links).
-      {
-        source: "/:path((?!\\.well-known).*)",
-        has: [{ type: "host", value: "www.diaiway.com" }],
-        destination: "https://diaiway.com/:path",
-        permanent: true,
-      },
+      // www → Apex: NICHT hier (next.config redirects laufen auf Vercel VOR Middleware und würden
+      // /.well-known/assetlinks.json mit umleiten → App Links für www scheitern). Siehe middleware.ts.
     ]
   },
   typescript: {

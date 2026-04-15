@@ -23,10 +23,20 @@ export default authMiddleware((req) => {
 
   const { pathname } = req.nextUrl
 
-  // Android App Links: /.well-known/assetlinks.json muss anonym & ohne Auth-Redirects erreichbar sein (auch unter www).
+  // Android App Links: /.well-known/* muss unter www ohne Redirect erreichbar sein (Vercel wendet
+  // next.config redirects vor Middleware an — daher www→Apex nur hier, nach dieser Ausnahme).
   if (pathname.startsWith("/.well-known")) {
     return NextResponse.next()
   }
+
+  const hostname = req.nextUrl.hostname.toLowerCase()
+  if (hostname === "www.diaiway.com") {
+    const apex = req.nextUrl.clone()
+    apex.hostname = "diaiway.com"
+    apex.protocol = "https:"
+    return NextResponse.redirect(apex, 308)
+  }
+
   const token = req.auth
   const isLoggedIn = !!token?.user
   const role   = (token?.user as { role?: string })?.role   || "user"
@@ -192,6 +202,8 @@ export default authMiddleware((req) => {
 
 export const config = {
   matcher: [
+    // Immer vor Auth: Digital Asset Links (auch www ohne Redirect)
+    "/.well-known/:path*",
     "/admin/:path*",
     "/profile/:path*",
     "/dashboard/:path*",
