@@ -1,11 +1,14 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.diaiway.app",
       "sha256_cert_fingerprints": [
-        "AB:FD:31:66:FE:26:D2:6B:FA:60:D1:65:3C:DA:8E:11:6B:53:D8:2A:06:8A:14:64:57:F9:3B:7B:D2:E6:C4:63"
+        "AB:FD:31:66:FE:26:D2:6B:FA:60:D1:65:3C:DA:8E:11:6B:53:D8:2A:06:8A:14:64:57:F9:3B:7B:D2:E6:C4:63",
+        "FA:B0:70:61:F1:C4:52:33:A4:09:19:F8:55:0E:1F:51:AE:1D:EB:5E:54:61:6A:BA:FD:5E:18:C5:40:F6:79:25"
       ]
     }
   }
