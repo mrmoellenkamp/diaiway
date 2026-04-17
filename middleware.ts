@@ -15,19 +15,6 @@ function isLocalDevHost(hostname: string): boolean {
   )
 }
 
-/**
- * Edge-safe nonce generator.
- * Node's crypto ist in der Edge-Runtime nicht garantiert verfügbar — deshalb
- * Web Crypto API (globalThis.crypto). Base64-encoded 16 Bytes.
- */
-function generateNonce(): string {
-  const bytes = new Uint8Array(16)
-  globalThis.crypto.getRandomValues(bytes)
-  let binary = ""
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!)
-  return btoa(binary)
-}
-
 export default authMiddleware((req) => {
   // CORS: OPTIONS (Preflight) darf nicht mit 307 redirected werden – sonst Fehler "Preflight response is not successful"
   if (req.method === "OPTIONS") {
@@ -164,35 +151,21 @@ export default authMiddleware((req) => {
     }
   }
 
-  // ── CSP Nonce (pro Request) ────────────────────────────────────────────────
-  // 16 Bytes Zufallsdaten → base64. Wird via Request-Header an Pages durchgereicht,
-  // damit `next/headers` in Server-Components auf die aktuelle Nonce zugreifen kann
-  // (Doku: https://nextjs.org/docs/app/guides/content-security-policy).
-  //
-  // WICHTIG: Der CSP-Header muss sowohl auf die Request-Header (damit Next.js
-  // die Nonce erkennt und automatisch an seine eigenen <script>-Tags hängt)
-  // als auch auf die Response-Header (damit der Browser sie durchsetzt) gesetzt
-  // werden. Fehlt der Request-Header, setzt Next.js kein nonce="…"-Attribut
-  // an alle generierten Tags (je nach Version/Pfad).
-  //
-  // KEIN 'strict-dynamic': Mit CSP Level 3 ignorieren Browser unter
-  // strict-dynamic die Host-Allowliste und 'self' für klassische
-  // <script src="…">-Tags ohne nonce. Next.js 16 lädt viele Chunks unter
-  // /_next/static/chunks/*.js ohne nonce-Attribut → Safari/WebKit blockiert
-  // sie alle („does not appear in the script-src directive“) → Sanduhr.
-  // Stattdessen: 'self' + explizite Hosts + Nonce (für Inline/Next, wo
-  // unterstützt) — weiterhin ohne 'unsafe-eval'.
-  const nonce = generateNonce()
-
+  // ── Content-Security-Policy (nur Response) ─────────────────────────────────
+  // Kein 'nonce-…' in script-src: Steht ein Nonce in der Policy, ignorieren
+  // moderne Browser 'unsafe-inline' für Inline-Skripte (CSP Level 2/3).
+  // Next.js 16 legt weiterhin Inline-Bootstrap/RSC-Skripte ohne nonce="…" ein
+  // → „hash, nonce, or unsafe-inline“-Fehler und hängende Hydration.
+  // Kein 'strict-dynamic': würde 'self' für chunk-<script src> ohne Nonce
+  // ignorieren (siehe frühere Safari-Fehler zu /_next/static/chunks).
+  // Trade-off: 'unsafe-inline' erlaubt alle Inline-Skripte derselben Origin;
+  // XSS-Härtung bleibt über keine user-controlled Inline-Skripte, kein
+  // 'unsafe-eval', restriktive connect-src/frame-src, usw.
   const isApi = pathname.startsWith("/api/")
-  // CSP: Nonce (für Inline / wo Next.js mitsetzt), 'self' für Chunk-Skripte,
-  // explizite Drittanbieter-Hosts, kein 'unsafe-eval'.
-  // 'unsafe-inline' bleibt als Fallback für sehr alte Browser; Browser mit
-  // Nonce-Unterstützung ignorieren 'unsafe-inline' für script (spec-konform).
   const csp =
     `default-src 'self'; ` +
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
-    `script-src-elem 'self' 'nonce-${nonce}' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `script-src 'self' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `script-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; ` +
     `img-src 'self' data: blob: https:; ` +
     `connect-src 'self' https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.daily.co wss://*.daily.co https://vercel.live https://*.vercel.app wss:; ` +
@@ -205,16 +178,7 @@ export default authMiddleware((req) => {
     `object-src 'none'; ` +
     `frame-ancestors 'none';`
 
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set("x-nonce", nonce)
-  // Request-Header: Signal an Next.js, dass eine CSP mit Nonce aktiv ist →
-  // Next.js hängt das nonce-Attribut automatisch an seine generierten Scripts.
-  // Für API-Routen irrelevant (Browser werten CSP auf JSON-Antworten nicht aus).
-  if (!isApi) {
-    requestHeaders.set("Content-Security-Policy", csp)
-  }
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  const response = NextResponse.next()
 
   // Update lastActivity cookie on each valid request (keeps 15-min timer alive)
   if (isLoggedIn) {

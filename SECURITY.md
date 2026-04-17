@@ -69,21 +69,20 @@ Angreifer­profile, gegen die explizit gehärtet wird:
 
 Gesetzt in `middleware.ts`:
 
-- **CSP** mit per Request generiertem **Nonce**, **`'self'`** und expliziten
-  Skript‑Hosts (Stripe, Vercel Live/Preview); **`'strict-dynamic'` wird
-  absichtlich nicht verwendet** — unter CSP Level 3 ignorieren Browser
-  mit `'strict-dynamic'` die Host‑Allowliste und `'self'` für klassische
-  `<script src="…">` ohne `nonce`. Next.js 16 lädt viele Chunks unter
-  `/_next/static/chunks/*.js` **ohne** `nonce`‑Attribut; mit
-  `'strict-dynamic'` blockieren Safari/WebKit diese URLs (Sanduhr).
-  `'unsafe-eval'` ist **entfernt**. `'unsafe-inline'` bleibt als Fallback
-  für sehr alte Browser; Browser mit Nonce‑Unterstützung ignorieren
-  `'unsafe-inline'` für Skripte (spec‑konform).
-  Der CSP‑Header wird in `middleware.ts` sowohl auf die **Request‑Header**
-  als auch auf die **Response‑Header** gesetzt, damit Next.js die aktive
-  CSP erkennt und `nonce` setzen kann, wo das Framework es unterstützt.
-  Auf `/api/*` wird die CSP bewusst **nicht** gesetzt (Browser werten CSP
-  auf JSON‑Antworten ohnehin nicht aus).
+- **CSP** nur auf **HTML‑Responses** (`Content-Security-Policy` in
+  `middleware.ts`), **ohne** `'nonce-…'` in `script-src` / `script-src-elem`:
+  Steht ein Nonce in der Policy, ignorieren moderne Browser `'unsafe-inline'`
+  für Inline‑Skripte; Next.js 16 setzt aber weiterhin Inline‑Bootstrap‑ und
+  RSC‑Skripte **ohne** `nonce`‑Attribut → Fehler „hash, nonce, or
+  `'unsafe-inline'`“ und blockierte Hydration. **`'strict-dynamic'`** wird
+  ebenfalls nicht verwendet (würde `'self'` für viele Chunk‑`<script src>`
+  ohne Nonce ignorieren). Stattdessen: **`'self'`**, **`'unsafe-inline'`**,
+  **`blob:`** und explizite Skript‑Hosts (Stripe, Vercel Live/Preview);
+  **`'unsafe-eval'`** ist **entfernt**. Trade‑off: `'unsafe-inline'`
+  erlaubt alle Inline‑Skripte derselben Origin — zusätzliche Absicherung
+  über strikte Ausgabe‑Escaping, keine nutzerkontrollierten
+  `dangerouslySetInnerHTML`‑Skripte, restriktive `connect-src` / `frame-src`.
+  Auf `/api/*` wird die CSP **nicht** gesetzt.
 - **`X-Frame-Options: DENY`** und **`X-Content-Type-Options: nosniff`**.
 - **`X-XSS-Protection: 0`** – der veraltete Header ist absichtlich auf
   `0`, da er in älteren Browsern neue XSS‑Vektoren eröffnen kann.

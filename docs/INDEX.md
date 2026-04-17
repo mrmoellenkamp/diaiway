@@ -57,7 +57,7 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 | Datei | Inhalt |
 |-------|--------|
 | [README.md](../README.md) | Setup, Features, Tech-Stack, Deployment, Projektstruktur |
-| [SECURITY.md](../SECURITY.md) | Security-Policy: Responsible Disclosure, Bedrohungsmodell, Rate-Limits pro Route, CSP-Nonce, signierte Blob-URLs, Secret-Rotation |
+| [SECURITY.md](../SECURITY.md) | Security-Policy: Responsible Disclosure, Bedrohungsmodell, Rate-Limits pro Route, CSP (Next.js-kompatibel), signierte Blob-URLs, Secret-Rotation |
 | [GITHUB.md](GITHUB.md) | GitHub Actions, .gitignore-Semantik, Secrets, PR-Checkliste |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Datenflüsse, Taxonomie, API-Hinweise, Geschäftsregeln |
 | [HIDDEN-MECHANICS.md](HIDDEN-MECHANICS.md) | Idempotenz, Revocation, UI, Safety, Admin-Stats 200/degraded, Site-Analytics |
@@ -104,4 +104,4 @@ Zentrale Einstiege und **alle** referenzierten Dokumente.
 
 ---
 
-*Letzte Aktualisierung: April 2026 – Security-Hardening (Rate-Limits, CSP-Nonce, signierte Blob-URLs, Upstash-Guest-Store); siehe [SECURITY.md](../SECURITY.md)*
+*Letzte Aktualisierung: April 2026 – Security-Hardening (Rate-Limits, CSP ohne Nonce, signierte Blob-URLs, Upstash-Guest-Store); siehe [SECURITY.md](../SECURITY.md)*

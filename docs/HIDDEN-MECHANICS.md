@@ -537,7 +537,7 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | Site-Analytics Beacon | `app/api/analytics/beacon/route.ts`, `components/site-analytics-tracker.tsx` |
 | Mobile `out/` Redirect | `scripts/prepare-mobile-webdir.mjs` |
 | API-Rate-Limiting (User + IP) | `lib/api-rate-limit.ts`, `lib/rate-limit.ts` (Upstash + In-Memory-Fallback) |
-| CSP-Nonce (ohne `strict-dynamic`, Next.js‑Chunks) | `middleware.ts` (`x-nonce`, Request+Response `Content-Security-Policy`) |
+| CSP ohne Nonce (`'self'` + `'unsafe-inline'` + Hosts, kein `strict-dynamic`) | `middleware.ts` (nur Response `Content-Security-Policy`) |
 | Signierte Blob-Proxy-URLs | `lib/signed-url.ts`, `app/api/files/signed/route.ts`, `app/api/files/secure-upload/route.ts` |
 | Gast-Checkout-Store (Upstash TTL) | `lib/guest-checkout-store.ts`, `app/api/guest/checkout/route.ts`, `app/api/webhooks/stripe/route.ts` |
 | Secret-Redaktion in Logs | `lib/log-redact.ts` (`logSecureError`, `logSecureWarn`) |
@@ -678,18 +678,17 @@ Bei Überschreitung wird direkt `NextResponse.json({ error }, { status: 429, hea
 
 **Konvention für neue Routen:** Jeder `POST`/`PATCH`/`DELETE` bekommt einen Bucket-Namen (`"bookings:create"`, `"messages:send"`, …). Aktuelle Limits siehe `SECURITY.md` Abschnitt 4.6.
 
-### 17.2 CSP mit Nonce (ohne `strict-dynamic`)
+### 17.2 CSP ohne Nonce (Next.js‑kompatibel)
 
-`middleware.ts` erzeugt pro Request einen 16-Byte-Nonce (base64) und hängt ihn an:
+`middleware.ts` setzt `Content-Security-Policy` **nur auf die Response** (kein `x-nonce`, kein Request‑CSP).
 
-- Request-Header `x-nonce` (damit `next/headers` in Server-Components den Nonce lesen kann)
-- **Request-Header** und **Response-Header** `Content-Security-Policy` mit identischem Wert — Next.js erkennt damit eine aktive CSP und kann `nonce` setzen, wo das Framework es unterstützt; der Browser setzt die Policy auf HTML-Antworten durch.
+**Warum kein `'nonce-…'` in `script-src`:** Sobald ein Nonce in der Policy steht, wenden Browser CSP Level 2/3 an und **behandeln `'unsafe-inline'` nicht mehr** als Freigabe für nonce‑lose Inline‑Skripte. Next.js 16 injiziert weiterhin Inline‑Skripte ohne `nonce="…"` (Bootstrap/RSC) → Konsole: „hash, nonce, or `'unsafe-inline'`“ und abgebrochene Hydration.
 
-**Warum kein `'strict-dynamic'`:** Unter CSP Level 3 ignorieren Browser mit `'strict-dynamic'` die Host-Allowliste und `'self'` für klassische `<script src="https://…/_next/static/chunks/….js">` **ohne** `nonce`-Attribut. Next.js 16 emittiert viele solcher Chunk-Tags ohne `nonce` → Safari/WebKit meldet „does not appear in the script-src directive“ und blockiert Hydration (Sanduhr). Ohne `'strict-dynamic'` greifen **`'self'`** und die expliziten Hosts wieder für diese Skripte; Nonce + `'unsafe-inline'`-Fallback bleiben für ältere Browser sinnvoll.
+**Warum kein `'strict-dynamic'`:** Wie oben: `'self'` würde für viele `/_next/static/chunks/*.js` ohne Nonce nicht mehr gelten.
 
-Drittanbieter (Stripe, Daily, Vercel Analytics) laufen aus demselben App-Bundle oder über die explizit gelisteten Skript-/Connect-Hosts in `script-src` / `connect-src`.
+**Aktuelle Policy:** `script-src` / `script-src-elem`: `'self' 'unsafe-inline' blob:` plus explizite Hosts (Stripe, Vercel Live/Preview); kein `'unsafe-eval'`. Drittanbieter (Stripe, Daily, Vercel Analytics) über Bundle oder gelistete Hosts in `connect-src` / `frame-src`.
 
-Auf `/api/*` wird die CSP **nicht** gesetzt (Browser werten CSP bei JSON-Antworten nicht aus). `'unsafe-eval'` ist entfernt. `'unsafe-inline'` bleibt als Legacy-Fallback – moderne Browser ignorieren es bei vorhandenem Nonce (spec-konform). Außerdem setzt die Middleware explizit `X-XSS-Protection: 0`, weil der Header in älteren Browsern neue Reflection-Vektoren öffnen kann.
+Auf `/api/*` wird die CSP **nicht** gesetzt. Außerdem setzt die Middleware `X-XSS-Protection: 0`.
 
 ### 17.3 Signierte Proxy-URLs für private Blobs (`lib/signed-url.ts`)
 
@@ -754,4 +753,4 @@ Alle Mutations-Routen parsen `req.json()` mit diesen Schemas. `ZodError` wird im
 
 ---
 
-*Letzte Aktualisierung: April 2026 – Security-Layer (Rate-Limits, CSP-Nonce, signierte Blob-URLs, Guest-Checkout-Store, Log-Redaktion, Magic-Bytes). Benachrichtigungen (Instant, Status-Links, Session, Zahlung, Wallet-Topup, pushType, Waymail-Dedup); Abrechnungs- und Belegdoku: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md)*
+*Letzte Aktualisierung: April 2026 – Security-Layer (Rate-Limits, CSP ohne Nonce/strict-dynamic, signierte Blob-URLs, Guest-Checkout-Store, Log-Redaktion, Magic-Bytes). Benachrichtigungen (Instant, Status-Links, Session, Zahlung, Wallet-Topup, pushType, Waymail-Dedup); Abrechnungs- und Belegdoku: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md)*
