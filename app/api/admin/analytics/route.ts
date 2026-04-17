@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { requireAdmin } from "@/lib/api-auth"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
-function assertAdmin(session: { user?: unknown } | null) {
-  const u = session?.user as { id?: string; role?: string } | undefined
-  if (!u?.id || u.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
-  return null
-}
-
 /** Admin: aggregierte Nutzungsstatistik (Besucher, Verweildauer, Pfade) */
 export async function GET(req: Request) {
-  const session = await auth()
-  const err = assertAdmin(session)
-  if (err) return err
+  const auth = await requireAdmin()
+  if (auth.response) return auth.response
 
   const { searchParams } = new URL(req.url)
   const days = Math.min(90, Math.max(1, Number(searchParams.get("days")) || 14))
@@ -136,7 +128,7 @@ export async function GET(req: Request) {
         topPaths: [] as { path: string; views: number; sessions: number }[],
       })
     }
-    console.error("[admin/analytics]", e)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    logSecureError("admin/analytics", e)
+    return NextResponse.json({ error: "Ein Fehler ist aufgetreten." }, { status: 500 })
   }
 }

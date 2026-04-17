@@ -2,8 +2,9 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
-import { rateLimit } from "@/lib/rate-limit"
+import { rateLimit, getClientIp } from "@/lib/rate-limit"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
+import { logSecureError, logSecureWarn } from "@/lib/log-redact"
 
 const TRANSIENT_DB_ERROR_CODES = new Set(["P1001", "P1002", "P2024", "P2037"])
 
@@ -51,16 +52,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "E-Mail", type: "email" },
         password: { label: "Passwort", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null
 
         const email = (credentials.email as string).toLowerCase().trim()
 
         try {
-          // Rate limit: 10 failed attempts per email per 15 min
-          const rl = await rateLimit(`login:${email}`, { limit: 10, windowSec: 900 })
-          if (!rl.success) {
-            throw new Error(`TOO_MANY_ATTEMPTS:${rl.retryAfterSec}`)
+          // Zwei Rate-Limit-Buckets:
+          //  1) pro E-Mail (Schutz einzelner Accounts)
+          //  2) pro IP    (Schutz gegen Credential Stuffing über viele E-Mails)
+          // Wird der IP-Bucket ausgelöst, blockiert das auch Enumeration-Angriffe.
+          const rlEmail = await rateLimit(`login:email:${email}`, { limit: 10, windowSec: 900 })
+          if (!rlEmail.success) {
+            throw new Error(`TOO_MANY_ATTEMPTS:${rlEmail.retryAfterSec}`)
+          }
+          const ip = request ? getClientIp(request as unknown as Request) : "unknown"
+          const rlIp = await rateLimit(`login:ip:${ip}`, { limit: 30, windowSec: 900 })
+          if (!rlIp.success) {
+            logSecureWarn("auth.login", "IP rate-limit hit", { ip })
+            throw new Error(`TOO_MANY_ATTEMPTS:${rlIp.retryAfterSec}`)
           }
 
           const user = await withDbRetry(() =>
@@ -94,7 +104,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw err
           }
           // DB-Verbindungsfehler (z.B. Prisma P1001) → Nutzer NICHT ausloggen/sperren
-          console.error("[auth] authorize DB-Error:", err)
+          logSecureError("auth.authorize", err)
           throw new Error("DB_ERROR")
         }
       },
@@ -167,7 +177,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               token.appRole = "takumi"
             } else {
               token.appRole = "shugyo"
-              console.warn("[auth] Privilege-Escalation blockiert: userId=%s versuchte appRole=takumi ohne Expert-Record", userId)
+              logSecureWarn(
+                "auth.jwt.privilege-escalation",
+                `userId=${userId} versuchte appRole=takumi ohne Expert-Record`
+              )
             }
           } else {
             token.appRole = "shugyo"
@@ -191,7 +204,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.emailConfirmedAt = row?.emailConfirmedAt ? row.emailConfirmedAt.getTime() : null
           } catch (err) {
             if (!isTransientDbError(err)) {
-              console.error("[auth] JWT update emailConfirmedAt sync:", err)
+              logSecureError("auth.jwt.emailConfirmedAt-sync", err)
             }
           }
         }
@@ -236,9 +249,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch (err) {
           // Transiente DB-Ausfälle: kurze Warnung statt vollem Stack (sonst Log-Spam bei P1001 / Neon-Pooler)
           if (isTransientDbError(err)) {
-            console.warn("[auth] DB-Sync übersprungen (Datenbank vorübergehend nicht erreichbar)")
+            logSecureWarn("auth.jwt.db-sync", "Datenbank vorübergehend nicht erreichbar")
           } else {
-            console.error("[auth] DB-Sync-Error:", err)
+            logSecureError("auth.jwt.db-sync", err)
           }
           // Bei DB-Fehler: bestehende Token-Daten beibehalten, kein sync-Timestamp setzen
           // → nächster Request versucht es erneut

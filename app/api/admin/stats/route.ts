@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
 import type { Prisma } from "@prisma/client"
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { requireAdmin } from "@/lib/api-auth"
 import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 import {
   getAdminStatsDegradedMessage,
   withPrismaConnectivityRetries,
 } from "@/lib/prisma-connectivity"
+import { logSecureError } from "@/lib/log-redact"
 
 export const maxDuration = 60
 
@@ -122,27 +123,13 @@ async function syncTakumiExpertsWithUsers(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error("[admin/stats] Takumi-Expert-Sync übersprungen:", err)
+    logSecureError("admin/stats.takumi-sync", err)
   }
 }
 
 export async function GET() {
-  const session = await auth()
-  const userId = session?.user?.id
-  if (!userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
-  // JWT kann kurz hinter der DB liegen — primär Rolle aus DB; bei DB-Ausfall JWT (wie Admin-Layout Cold Start)
-  let isAdmin = false
-  try {
-    const row = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-    isAdmin = row?.role === "admin"
-  } catch {
-    isAdmin = (session.user as { role?: string }).role === "admin"
-  }
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const auth = await requireAdmin()
+  if (auth.response) return auth.response
 
   void runBookingListHousekeeping().catch(() => {})
 
@@ -241,7 +228,7 @@ export async function GET() {
     ])
     )
   } catch (err: unknown) {
-    console.error("[admin/stats] Aggregation fehlgeschlagen:", err)
+    logSecureError("admin/stats.aggregation", err)
     return NextResponse.json(emptyStatsPayload(getAdminStatsDegradedMessage(err)))
   }
 

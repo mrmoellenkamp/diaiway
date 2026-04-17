@@ -1,6 +1,8 @@
 import { list, del } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { assertCronAuthorized } from "@/lib/cron-auth"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -21,15 +23,8 @@ export const maxDuration = 60
  * Nicht für Verfahren benötigte Aufnahmen werden nach 48h gelöscht.
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron/cleanup-safety-data] CRON_SECRET not configured")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "cleanup-safety-data")
+  if (authErr) return authErr
 
   try {
     // 1. Schutzliste: alle Blob-URLs aktiver/offener SafetyIncidents
@@ -82,9 +77,9 @@ export async function GET(req: NextRequest) {
       protectedCount: protectedUrls.size,
     })
   } catch (err) {
-    console.error("[Cron/cleanup-safety-data] Error:", err)
+    logSecureError("cron.cleanup-safety-data", err)
     return NextResponse.json(
-      { error: (err as Error).message ?? "Cleanup fehlgeschlagen." },
+      { error: "Cleanup fehlgeschlagen." },
       { status: 500 }
     )
   }

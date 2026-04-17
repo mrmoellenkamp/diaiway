@@ -9,6 +9,7 @@ import { requireAuth } from "@/lib/api-auth"
 import { apiHandler } from "@/lib/api-handler"
 import { communicationUsername, waymailSenderLabel } from "@/lib/communication-display"
 import { validateNoContactLeak } from "@/lib/contact-leak-validation"
+import { assertRateLimit } from "@/lib/api-rate-limit"
 
 export const runtime = "nodejs"
 
@@ -301,6 +302,14 @@ export const POST = apiHandler(async (req) => {
   const authResult = await requireAuth()
   if (authResult.response) return authResult.response
   const session = authResult.session
+
+  // Anti-Spam: 60 Nachrichten/10 min pro Nutzer, plus IP-Limit.
+  // Deutlich über normaler Chat-Nutzung, blockiert aber Flood-Bots.
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "messages:create", limit: 60, windowSec: 600 }
+  )
+  if (rl) return rl
 
   const rawBody = await req.json().catch(() => ({}))
   const body = MessagePostSchema.parse(rawBody)

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { terminateSessionForBooking } from "@/lib/session-terminate"
 import crypto from "crypto"
+import { logSecureError, logSecureWarn } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -12,11 +13,23 @@ function extractBookingId(room: string): string | null {
   return room.slice(ROOM_PREFIX.length).trim() || null
 }
 
+/**
+ * HMAC-SHA256 Signaturprüfung für Daily-Webhooks.
+ *
+ * Wichtig:
+ *  - Beide Buffers müssen exakt gleiche Länge haben, sonst wirft
+ *    `crypto.timingSafeEqual` einen TypeError. Deshalb expliziter Längencheck
+ *    vor dem Vergleich — bei Nicht-Übereinstimmung abbrechen (konstante Zeit).
+ *  - base64-Output, wie von Daily dokumentiert.
+ */
 function verifyWebhook(body: string, signature: string | null, secret: string): boolean {
   if (!secret?.trim() || !signature) return false
   try {
     const expected = crypto.createHmac("sha256", secret).update(body).digest("base64")
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    const receivedBuf = Buffer.from(signature)
+    const expectedBuf = Buffer.from(expected)
+    if (receivedBuf.length !== expectedBuf.length) return false
+    return crypto.timingSafeEqual(receivedBuf, expectedBuf)
   } catch {
     return false
   }
@@ -33,12 +46,12 @@ export async function POST(req: Request) {
   const secret = process.env.DAILY_WEBHOOK_SECRET
 
   if (!secret?.trim()) {
-    console.error("[Daily Webhook] DAILY_WEBHOOK_SECRET not configured – refusing in production")
+    logSecureError("daily-webhook", "DAILY_WEBHOOK_SECRET not configured")
     if (process.env.NODE_ENV === "production") {
       return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
     }
   } else if (!verifyWebhook(body, signature, secret)) {
-    console.warn("[Daily Webhook] Invalid signature")
+    logSecureWarn("daily-webhook", "Invalid signature")
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
   }
 
@@ -66,7 +79,7 @@ export async function POST(req: Request) {
         },
       })
     } catch (e) {
-      console.error("[Daily Webhook] participant.left create:", e)
+      logSecureError("daily-webhook.participant.left", e)
     }
   } else if (type === "participant.joined") {
     try {
@@ -80,7 +93,7 @@ export async function POST(req: Request) {
         data: { cancelledAt: new Date() },
       })
     } catch (e) {
-      console.error("[Daily Webhook] participant.joined update:", e)
+      logSecureError("daily-webhook.participant.joined", e)
     }
   } else if (type === "meeting.ended") {
     const bookingId = extractBookingId(room)
@@ -88,7 +101,7 @@ export async function POST(req: Request) {
       try {
         await terminateSessionForBooking(bookingId)
       } catch (e) {
-        console.error("[Daily Webhook] meeting.ended terminate:", e)
+        logSecureError("daily-webhook.meeting.ended", e)
       }
     }
   }

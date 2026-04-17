@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { terminateSessionForBooking } from "@/lib/session-terminate"
+import { assertCronAuthorized } from "@/lib/cron-auth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -19,15 +20,8 @@ function extractBookingId(room: string): string | null {
  * Optional: CRON_SECRET oder DAILY_GHOST_SECRET zur Absicherung.
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET ?? process.env.DAILY_GHOST_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron] daily-ghost: No CRON_SECRET or DAILY_GHOST_SECRET – refusing")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "daily-ghost-sessions", ["DAILY_GHOST_SECRET"])
+  if (authErr) return authErr
 
   const cutoff = new Date(Date.now() - GHOST_WAIT_SEC * 1000)
 

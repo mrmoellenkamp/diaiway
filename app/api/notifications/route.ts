@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { translateError } from "@/lib/api-handler"
+import { assertRateLimit } from "@/lib/api-rate-limit"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 const NOTIFICATION_RETENTION_DAYS = 7
@@ -62,23 +64,40 @@ export async function GET() {
       totalInboxUnread,
     })
   } catch (err) {
-    console.error("[api/notifications] GET", err)
+    logSecureError("notifications.GET", err)
     return translateError(err)
   }
 }
 
+function sanitizeIds(ids: unknown): string[] | null {
+  if (!Array.isArray(ids)) return null
+  if (ids.length === 0 || ids.length > 200) return null
+  const safe: string[] = []
+  for (const id of ids) {
+    if (typeof id !== "string" || id.length === 0 || id.length > 100) return null
+    safe.push(id)
+  }
+  return safe
+}
+
 /** PATCH — mark notifications as read (ids or all) */
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
 
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "notifications:patch", limit: 120, windowSec: 600 }
+  )
+  if (rl) return rl
+
   try {
     const body = await req.json().catch(() => ({}))
-    const { ids } = body as { ids?: string[] }
+    const ids = sanitizeIds((body as { ids?: unknown }).ids)
 
-    if (ids && Array.isArray(ids) && ids.length > 0) {
+    if (ids && ids.length > 0) {
       await prisma.notification.updateMany({
         where: { id: { in: ids }, userId: session.user.id },
         data: { read: true },
@@ -91,23 +110,29 @@ export async function PATCH(req: Request) {
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error("[api/notifications] PATCH", err)
+    logSecureError("notifications.PATCH", err)
     return translateError(err)
   }
 }
 
 /** DELETE — remove notifications (ids or all) */
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
 
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "notifications:delete", limit: 60, windowSec: 600 }
+  )
+  if (rl) return rl
+
   try {
     const body = await req.json().catch(() => ({}))
-    const { ids } = body as { ids?: string[] }
+    const ids = sanitizeIds((body as { ids?: unknown }).ids)
 
-    if (ids && Array.isArray(ids) && ids.length > 0) {
+    if (ids && ids.length > 0) {
       await prisma.notification.deleteMany({
         where: { id: { in: ids }, userId: session.user.id },
       })
@@ -118,7 +143,7 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error("[api/notifications] DELETE", err)
+    logSecureError("notifications.DELETE", err)
     return translateError(err)
   }
 }

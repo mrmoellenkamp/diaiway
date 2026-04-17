@@ -6,6 +6,8 @@ import { validateInvoiceDataForPayment } from "@/lib/invoice-requirements"
 import { parseBerlinDateTime } from "@/lib/date-utils"
 import { localeFromRequest } from "@/lib/i18n/request-locale"
 import { serverT } from "@/lib/i18n/server-t"
+import { putGuestCheckoutData } from "@/lib/guest-checkout-store"
+import { logSecureError } from "@/lib/log-redact"
 
 // Payment window: opens 5 min before call, closes 5 min after call end
 const PAY_OPEN_MIN_BEFORE  = 5
@@ -189,9 +191,25 @@ export async function POST(req: Request) {
       ? sessionData.payment_intent
       : sessionData.payment_intent?.id ?? null
 
-  // Store legal consent timestamps, invoice data and optional password hash
-  // Password hashing is deferred to the webhook (Etappe 3) where full account creation happens.
-  // Here we store the raw (encrypted at rest by DB) password temporarily in a dedicated field.
+  // SECURITY: Sensible Daten (Passwort im Klartext, Rechnungsdaten) werden NICHT
+  // mehr in der DB in `booking.note` abgelegt, sondern nur kurzzeitig in Upstash
+  // Redis (TTL 30 min). Der Stripe-Webhook holt sie einmalig via GETDEL ab.
+  try {
+    await putGuestCheckoutData(booking.id, {
+      guestPassword: typeof password === "string" && password.length > 0 ? password : null,
+      invoiceData,
+      consentWithdrawal: true,
+      consentSnapshot: true,
+      consentTimestamp: Date.now(),
+    })
+  } catch (err) {
+    logSecureError("guest.checkout.store", err, { bookingId: booking.id })
+    return NextResponse.json(
+      { error: serverT(locale, "guestApi.rateLimit") || "Service temporarily unavailable." },
+      { status: 503 }
+    )
+  }
+
   await prisma.booking.update({
     where: { id: booking.id },
     data: {
@@ -200,14 +218,7 @@ export async function POST(req: Request) {
       paymentStatus: "pending",
       snapshotConsentAt: new Date(),
       bookerSafetyAcceptedAt: new Date(),
-      // Store guest invoice + onboarding data as JSON in the note field for webhook pickup
-      // (will be migrated to dedicated fields in Etappe 3)
-      note: JSON.stringify({
-        invoiceData,
-        guestPassword: password || null,
-        consentWithdrawal: true,
-        consentSnapshot: true,
-      }),
+      // note bleibt leer — sensible Daten liegen in Upstash, nicht mehr in DB.
     },
   })
 

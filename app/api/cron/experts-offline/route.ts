@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { TAKUMI_STALE_OFFLINE_SEC } from "@/lib/session-activity"
+import { assertCronAuthorized } from "@/lib/cron-auth"
 
 const STALE_MS = TAKUMI_STALE_OFFLINE_SEC * 1000
 
@@ -28,15 +29,8 @@ async function runExpertsOffline() {
 }
 
 export async function GET(req: Request) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron] experts-offline: CRON_SECRET not configured")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "experts-offline")
+  if (authErr) return authErr
   const result = await runExpertsOffline()
   await prisma.cronRunLog.upsert({
     where: { cronName: "experts-offline" },
@@ -47,15 +41,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron] experts-offline: CRON_SECRET not configured")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "experts-offline")
+  if (authErr) return authErr
   const result = await runExpertsOffline()
   await prisma.cronRunLog.upsert({
     where: { cronName: "experts-offline" },

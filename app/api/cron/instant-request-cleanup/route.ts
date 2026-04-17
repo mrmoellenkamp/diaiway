@@ -5,6 +5,7 @@ import { pushT } from "@/lib/push-strings"
 import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { createSystemWaymail } from "@/lib/system-waymail"
 import { releaseExpiredInstantPayment } from "@/lib/instant-expired-release"
+import { assertCronAuthorized } from "@/lib/cron-auth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -19,15 +20,8 @@ const INSTANT_EXPIRY_SEC = 60
  * Idempotent: uses atomic updateMany so concurrent accepts are not overwritten.
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron] instant-request-cleanup: No CRON_SECRET")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "instant-request-cleanup")
+  if (authErr) return authErr
 
   const cutoff = new Date(Date.now() - INSTANT_EXPIRY_SEC * 1000)
 

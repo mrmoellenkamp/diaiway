@@ -3,6 +3,7 @@ import crypto from "crypto"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
       message: "Dein Passwort wurde erfolgreich geaendert. Du kannst dich jetzt anmelden.",
     })
   } catch (err: unknown) {
-    console.error("[diAiway] reset-password error:", err)
+    logSecureError("reset-password", err)
     return NextResponse.json({ error: "Interner Fehler." }, { status: 500 })
   }
 }

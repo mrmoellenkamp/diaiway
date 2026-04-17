@@ -1,17 +1,25 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { LAST_ACTIVITY_COOKIE, INACTIVITY_TIMEOUT_SEC } from "@/lib/session-activity"
+import { assertRateLimit } from "@/lib/api-rate-limit"
 
 /**
  * GET /api/auth/heartbeat
  * Resets the 15-min inactivity timer. Only for authenticated shugyo/takumi.
  * Used by Video-Call (useHeartbeat) and SessionTimeoutWarning ("Sitzung verlängern").
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 })
   }
+
+  // 180/Minute pro Nutzer ist bei 1-Hz-Heartbeat weit ausreichend; DDoS-sicher.
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "auth:heartbeat", limit: 180, windowSec: 60 }
+  )
+  if (rl) return rl
 
   const appRole = (session.user as { appRole?: string })?.appRole
   if (appRole !== "shugyo" && appRole !== "takumi") {

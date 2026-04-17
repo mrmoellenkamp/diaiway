@@ -1,6 +1,8 @@
 import { del } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { assertCronAuthorized } from "@/lib/cron-auth"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -20,13 +22,8 @@ export const maxDuration = 60
  * gesetzlich vorgeschriebenen Aufbewahrungsfrist.
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "purge-expired-documents")
+  if (authErr) return authErr
 
   const now = new Date()
 
@@ -56,7 +53,7 @@ export async function GET(req: NextRequest) {
       })
       purged += batch.length
     } catch (err) {
-      console.error("[Cron/purge-expired-documents] Batch error:", err)
+      logSecureError("cron.purge-expired-documents.batch", err)
       errors += batch.length
     }
   }

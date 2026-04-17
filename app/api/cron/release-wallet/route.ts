@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { processPendingCompletions } from "@/app/actions/process-completion"
+import { assertCronAuthorized } from "@/lib/cron-auth"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -11,15 +13,8 @@ export const maxDuration = 60
  * Optional: CRON_SECRET zur Absicherung.
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    console.error("[Cron] CRON_SECRET not configured – refusing to run")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "release-wallet")
+  if (authErr) return authErr
 
   try {
     const results = await processPendingCompletions()
@@ -36,7 +31,7 @@ export async function GET(req: NextRequest) {
       details: results,
     })
   } catch (err) {
-    console.error("[Cron] release-wallet error:", err)
+    logSecureError("cron.release-wallet", err)
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 }

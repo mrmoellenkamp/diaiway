@@ -15,6 +15,9 @@ import { apiHandler } from "@/lib/api-handler"
 import { runBookingListHousekeeping } from "@/lib/booking-housekeeping"
 import { communicationUsername } from "@/lib/communication-display"
 import { assertBookerPaymentVerified } from "@/lib/shugyo-payment-gate"
+import { assertRateLimit } from "@/lib/api-rate-limit"
+import { createBookingSchema } from "@/lib/schemas/bookings"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -116,6 +119,14 @@ export const POST = apiHandler(async (req) => {
   if (authResult.response) return authResult.response
   const { session } = authResult
 
+  // Rate-Limit: 30 Buchungen/Stunde pro Nutzer + IP.
+  // Gängige "Normal-User" buchen weit darunter; Bots werden so gebremst.
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "bookings:create", limit: 30, windowSec: 3600 }
+  )
+  if (rl) return rl
+
   const appRole = (session.user as { appRole?: string }).appRole
   if (appRole === "shugyo") {
     const gate = await assertBookerPaymentVerified(session.user.id)
@@ -138,19 +149,11 @@ export const POST = apiHandler(async (req) => {
     }
   }
 
-  const body = await req.json()
-  const { takumiId, date, startTime, endTime, callType, totalPrice, price, note, deferNotification } = body
-
-  if (callType != null && callType !== "VIDEO" && callType !== "VOICE") {
-    return NextResponse.json({
-      error: "callType muss 'VIDEO' oder 'VOICE' sein.",
-    }, { status: 400 })
-  }
-  const effectiveCallType = callType === "VIDEO" || callType === "VOICE" ? callType : "VIDEO"
-
-  if (!takumiId || !date || !startTime || !endTime) {
-    return NextResponse.json({ error: "Pflichtfelder fehlen." }, { status: 400 })
-  }
+  // Eingaben strikt validieren (ZodError → 400 via apiHandler).
+  const raw = await req.json()
+  const parsed = createBookingSchema.parse(raw)
+  const { takumiId, date, startTime, endTime, callType, note, deferNotification } = parsed
+  const effectiveCallType = callType ?? "VIDEO"
 
   const [sh, sm] = startTime.split(":").map(Number)
   const [eh, em] = endTime.split(":").map(Number)
@@ -194,14 +197,24 @@ export const POST = apiHandler(async (req) => {
     await prisma.expert.update({ where: { id: expert.id }, data: { email: expertEmail } })
   }
 
-  const effectiveTotalPrice = totalPrice != null && totalPrice >= 1
-    ? totalPrice
-    : (price ?? (Number(expert.priceVideo15Min) || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)) * (durationMin / 15))
+  // SECURITY: Preis wird AUSSCHLIESSLICH serverseitig berechnet.
+  // Client-Werte `totalPrice`/`price` aus dem Request werden ignoriert
+  // (Schutz gegen Preis-Manipulation via DevTools / manipuliertem Client).
+  const perQuarterPriceCents = (() => {
+    const video = Number(expert.priceVideo15Min || 0)
+    const voice = Number(expert.priceVoice15Min || 0)
+    if (effectiveCallType === "VOICE" && voice > 0) return voice
+    if (effectiveCallType === "VIDEO" && video > 0) return video
+    return video || voice || (expert.pricePerSession ? expert.pricePerSession / 2 : 0)
+  })()
+  const quarters = Math.max(1, Math.round(durationMin / 15))
+  const serverTotalPrice = Math.max(0, Number(perQuarterPriceCents) * quarters)
+  const serverPrice = Math.round(serverTotalPrice)
 
   const statusToken = randomBytes(32).toString("hex")
 
   await ensureCustomerNumber(session.user.id).catch((err) =>
-    console.error("[bookings POST] ensureCustomerNumber:", err)
+    logSecureError("bookings.POST.ensureCustomerNumber", err)
   )
 
   const booking = await prisma.$transaction(
@@ -230,8 +243,8 @@ export const POST = apiHandler(async (req) => {
           startTime,
           endTime,
           callType: effectiveCallType,
-          totalPrice: effectiveTotalPrice,
-          price: price ?? Math.round(effectiveTotalPrice),
+          totalPrice: serverTotalPrice,
+          price: serverPrice,
           note: note || "",
           statusToken,
           idempotencyKey: idempotencyKey || undefined,
@@ -266,7 +279,7 @@ export const POST = apiHandler(async (req) => {
         dashboardUrl: `${baseUrl}/sessions`,
       })
     } catch (emailErr) {
-      console.error("[Ionos SMTP] Failed to send booking request email:", emailErr)
+      logSecureError("bookings.POST.email", emailErr)
     }
 
     if (expert.userId) {

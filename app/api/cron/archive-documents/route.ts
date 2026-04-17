@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { assertCronAuthorized } from "@/lib/cron-auth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -17,13 +18,8 @@ export const maxDuration = 60
  * nicht erneut angelegt (upsert-Logik via unique check).
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) {
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "archive-documents")
+  if (authErr) return authErr
 
   const now = new Date()
   let archived = 0

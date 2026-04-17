@@ -15,6 +15,19 @@ function isLocalDevHost(hostname: string): boolean {
   )
 }
 
+/**
+ * Edge-safe nonce generator.
+ * Node's crypto ist in der Edge-Runtime nicht garantiert verfügbar — deshalb
+ * Web Crypto API (globalThis.crypto). Base64-encoded 16 Bytes.
+ */
+function generateNonce(): string {
+  const bytes = new Uint8Array(16)
+  globalThis.crypto.getRandomValues(bytes)
+  let binary = ""
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!)
+  return btoa(binary)
+}
+
 export default authMiddleware((req) => {
   // CORS: OPTIONS (Preflight) darf nicht mit 307 redirected werden – sonst Fehler "Preflight response is not successful"
   if (req.method === "OPTIONS") {
@@ -151,7 +164,16 @@ export default authMiddleware((req) => {
     }
   }
 
-  const response = NextResponse.next()
+  // ── CSP Nonce (pro Request) ────────────────────────────────────────────────
+  // 16 Bytes Zufallsdaten → base64. Wird via Request-Header an Pages durchgereicht,
+  // damit `next/headers` in Server-Components auf die aktuelle Nonce zugreifen kann
+  // (Doku: https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy)
+  const nonce = generateNonce()
+
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set("x-nonce", nonce)
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
 
   // Update lastActivity cookie on each valid request (keeps 15-min timer alive)
   if (isLoggedIn) {
@@ -179,10 +201,16 @@ export default authMiddleware((req) => {
   response.headers.set("X-Frame-Options", isInvoicePdfPreviewApi ? "SAMEORIGIN" : "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
-  response.headers.set("X-XSS-Protection", "1; mode=block")
+  // X-XSS-Protection ist veraltet und kann in manchen Browsern XSS-Lücken öffnen;
+  // moderne Browser setzen ausschließlich auf CSP. Deshalb explizit deaktivieren.
+  response.headers.set("X-XSS-Protection", "0")
+  // CSP mit Nonce + strict-dynamic (CSP Level 3):
+  //  - 'unsafe-eval' entfernt (XSS-Härtung).
+  //  - 'unsafe-inline' bleibt als Fallback für ältere Browser, wird aber von
+  //    Browsern mit nonce/strict-dynamic ignoriert (spec-konform).
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://diaiway.com https://www.diaiway.com https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; style-src 'self' 'unsafe-inline' https://diaiway.com https://www.diaiway.com https://fonts.googleapis.com https://*.vercel.app; img-src 'self' data: blob: https:; connect-src 'self' https://diaiway.com https://www.diaiway.com https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://vercel.live https://*.vercel.app wss:; frame-src 'self' https://diaiway.com https://www.diaiway.com https://js.stripe.com https://connect-js.stripe.com https://checkout.stripe.com https://*.stripe.com https://vercel.live https://*.vercel.app; font-src 'self' https://diaiway.com https://www.diaiway.com https://fonts.gstatic.com https://*.vercel.app;"
+    `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.daily.co wss://*.daily.co https://vercel.live https://*.vercel.app wss:; frame-src 'self' https://js.stripe.com https://connect-js.stripe.com https://checkout.stripe.com https://*.stripe.com https://*.daily.co https://vercel.live https://*.vercel.app; font-src 'self' data: https://fonts.gstatic.com https://*.vercel.app; media-src 'self' blob: https://*.daily.co; worker-src 'self' blob:; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'; frame-ancestors 'none';`
   )
   response.headers.set(
     "Permissions-Policy",

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import {
@@ -6,6 +6,8 @@ import {
   isValidAnalyticsVisitorId,
   sanitizeAnalyticsPath,
 } from "@/lib/site-analytics"
+import { assertIpRateLimit } from "@/lib/api-rate-limit"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -40,7 +42,16 @@ async function resolveUserId(): Promise<string | null> {
   return typeof id === "string" ? id : null
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Anti-Flood: 600 Beacons/10 min pro IP. Normale Nutzung (init + page + pulse alle 15 s)
+  // bleibt deutlich darunter; Bots/Skripte werden gedeckelt.
+  const rl = await assertIpRateLimit(req, {
+    bucket: "analytics:beacon",
+    limit: 600,
+    windowSec: 600,
+  })
+  if (rl) return rl
+
   let body: Body
   try {
     body = (await req.json()) as Body
@@ -182,7 +193,7 @@ export async function POST(req: Request) {
     if (/does not exist|Unknown model|SiteAnalyticsSession/i.test(msg)) {
       return NextResponse.json({ ok: true, degraded: true })
     }
-    console.error("[analytics/beacon]", e)
+    logSecureError("analytics.beacon", e)
     return NextResponse.json({ error: "server" }, { status: 500 })
   }
 }

@@ -7,6 +7,7 @@ import { sendVerificationEmail } from "@/lib/email"
 import { sendWelcomeWaymail } from "@/lib/onboarding"
 import { getLegalConsentVersion } from "@/lib/legal-consent-version"
 import { hashRegistrationIp } from "@/lib/registration-ip-hash"
+import { logSecureError } from "@/lib/log-redact"
 
 const baseUrl = process.env.NEXTAUTH_URL || "https://diaiway.com"
 
@@ -188,7 +189,7 @@ export async function POST(req: Request) {
 
     const verifyUrl = `${baseUrl}/api/auth/verify-email/${token}`
     sendVerificationEmail({ to: normalizedEmail, name: username, verifyUrl }).catch((err) =>
-      console.error("[register] Verification email failed:", err)
+      logSecureError("register.verifyEmail", err)
     )
     sendWelcomeWaymail(user.id).catch(() => {})
 
@@ -197,8 +198,7 @@ export async function POST(req: Request) {
       { status: 201 }
     )
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Registrierungsfehler"
-    console.error("[diAiway] Register error:", message)
+    logSecureError("register", err)
     const { sanitizeErrorForClient } = await import("@/lib/security")
     return NextResponse.json({ error: sanitizeErrorForClient(err) }, { status: 500 })
   }

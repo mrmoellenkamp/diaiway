@@ -6,6 +6,9 @@ import Busboy from "busboy"
 import { Readable } from "stream"
 import { randomUUID } from "crypto"
 import { compressImageToMaxSize } from "@/lib/image-compress"
+import { assertRateLimit } from "@/lib/api-rate-limit"
+import { signBlobProxyUrl } from "@/lib/signed-url"
+import { logSecureError, logSecureWarn } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -32,8 +35,13 @@ const BLOCKED_EXTENSIONS = new Set([
 // ─── Response Interfaces ────────────────────────────────────────────────────
 
 interface SuccessResponse {
+  /** Legacy direct blob URL — Backwards-Compat für bestehende Konsumenten.
+   *  Neue Clients sollten `signedUrl` nutzen. */
   url: string
+  /** HMAC-signierte Proxy-URL (1h TTL, an userId gebunden). */
+  signedUrl: string
   thumbnailUrl: string | null
+  thumbnailSignedUrl: string | null
   filename: string
 }
 
@@ -52,7 +60,7 @@ interface CloudmersiveResult {
 async function scanWithCloudmersive(buffer: Buffer): Promise<{ clean: boolean }> {
   const apiKey = process.env.CLOUDMERSIVE_API_KEY
   if (!apiKey) {
-    console.warn("[secure-upload] CLOUDMERSIVE_API_KEY not set – skipping virus scan")
+    logSecureWarn("secure-upload", "CLOUDMERSIVE_API_KEY not set – skipping virus scan")
     return { clean: true }
   }
 
@@ -73,8 +81,7 @@ async function scanWithCloudmersive(buffer: Buffer): Promise<{ clean: boolean }>
     clearTimeout(timeoutId)
 
     if (!res.ok) {
-      const err = await res.text()
-      console.error("[secure-upload] Cloudmersive API error:", res.status, err)
+      logSecureError("secure-upload.cloudmersive", `status=${res.status}`)
       throw new Error("API_TIMEOUT")
     }
 
@@ -239,6 +246,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nicht angemeldet.", code: "UPLOAD_FAILED" } satisfies ErrorResponse, { status: 401 })
     }
 
+    // Rate-Limit: 20 Uploads/Stunde pro Nutzer (und pro IP). Virus-Scan kostet Geld
+    // + Vercel-Blob-Storage: ohne Limit leicht missbrauchbar.
+    const rl = await assertRateLimit(
+      { req: request, userId: session.user.id },
+      { bucket: "secure-upload", limit: 20, windowSec: 3600 }
+    )
+    if (rl) return rl
+
     const parsed = await parseMultipartStream(request)
 
     if (!parsed) {
@@ -365,16 +380,28 @@ export async function POST(request: NextRequest) {
 
     const safeDisplayName = originalFilename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100)
 
+    // Signierte Proxy-URLs: 1h TTL, gebunden an ownerUserId.  Geleakte Vercel-
+    // Blob-URLs sind damit nach kurzer Zeit wertlos.
+    const signedUrl = signBlobProxyUrl(mainBlob.url, {
+      ownerUserId: session.user.id,
+      ttlSec: 60 * 60,
+    })
+    const thumbnailSignedUrl = thumbnailUrl
+      ? signBlobProxyUrl(thumbnailUrl, { ownerUserId: session.user.id, ttlSec: 60 * 60 })
+      : null
+
     const successResponse: SuccessResponse = {
       url: mainBlob.url,
+      signedUrl,
       thumbnailUrl,
+      thumbnailSignedUrl,
       filename: safeDisplayName,
     }
 
     return NextResponse.json(successResponse)
   } catch (err) {
     const msg = (err as Error)?.message ?? ""
-    console.error("[secure-upload] error:", msg)
+    logSecureError("secure-upload", err)
 
     if (msg === "FILE_TOO_LARGE") {
       return jsonError(

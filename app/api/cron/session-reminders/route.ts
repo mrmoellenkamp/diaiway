@@ -5,6 +5,7 @@ import { sendPushToUser } from "@/lib/push"
 import { pushT } from "@/lib/push-strings"
 import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
 import { communicationUsername } from "@/lib/communication-display"
+import { assertCronAuthorized } from "@/lib/cron-auth"
 
 export const runtime = "nodejs"
 
@@ -123,26 +124,14 @@ async function runSessionReminders() {
   return { ok: true, candidates: candidates.length, sent, skipped }
 }
 
-function isAuthorized(req: Request): boolean {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret?.trim()) return false
-  return req.headers.get("authorization") === `Bearer ${cronSecret}`
-}
-
 export async function GET(req: Request) {
-  if (!process.env.CRON_SECRET?.trim()) {
-    console.error("[Cron] session-reminders: CRON_SECRET not configured")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authErr = assertCronAuthorized(req, "session-reminders")
+  if (authErr) return authErr
   return NextResponse.json(await runSessionReminders())
 }
 
 export async function POST(req: Request) {
-  if (!process.env.CRON_SECRET?.trim()) {
-    console.error("[Cron] session-reminders: CRON_SECRET not configured")
-    return NextResponse.json({ error: "Cron not configured" }, { status: 503 })
-  }
-  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authErr = assertCronAuthorized(req, "session-reminders")
+  if (authErr) return authErr
   return NextResponse.json(await runSessionReminders())
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { validateNoContactLeak } from "@/lib/contact-leak-validation"
+import { assertRateLimit } from "@/lib/api-rate-limit"
+import { imageUrlSchema } from "@/lib/schemas/common"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -48,16 +51,23 @@ export async function GET(req: NextRequest) {
     })
     return NextResponse.json({ projects })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    logSecureError("takumi.portfolio.GET", err)
+    return NextResponse.json({ error: "Serverfehler." }, { status: 500 })
   }
 }
 
 /** POST — create portfolio project (Takumi only) */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
+
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "takumi:portfolio:create", limit: 30, windowSec: 3600 }
+  )
+  if (rl) return rl
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -70,36 +80,54 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const title = typeof body.title === "string" ? body.title.trim() : ""
-    if (!title || title.length < 2) {
-      return NextResponse.json({ error: "Titel muss mindestens 2 Zeichen haben." }, { status: 400 })
+    if (!title || title.length < 2 || title.length > 200) {
+      return NextResponse.json({ error: "Titel: 2–200 Zeichen." }, { status: 400 })
     }
 
-    const completionDate = body.completionDate
-      ? new Date(body.completionDate)
-      : null
+    const completionDate = body.completionDate ? new Date(body.completionDate) : null
+    if (completionDate && Number.isNaN(completionDate.getTime())) {
+      return NextResponse.json({ error: "Ungültiges Datum." }, { status: 400 })
+    }
 
     const desc = typeof body.description === "string" ? body.description.trim() : ""
+    if (desc.length > 5000) {
+      return NextResponse.json({ error: "Beschreibung zu lang." }, { status: 400 })
+    }
     const titleLeak = validateNoContactLeak(title, "Titel")
     if (!titleLeak.ok) return NextResponse.json({ error: titleLeak.message }, { status: 400 })
     const descLeak = validateNoContactLeak(desc, "Beschreibung")
     if (!descLeak.ok) return NextResponse.json({ error: descLeak.message }, { status: 400 })
 
     const category = typeof body.category === "string" ? body.category.trim() : ""
+    if (category.length > 100) {
+      return NextResponse.json({ error: "Kategorie zu lang." }, { status: 400 })
+    }
     const catLeak = validateNoContactLeak(category, "Kategorie")
     if (!catLeak.ok) return NextResponse.json({ error: catLeak.message }, { status: 400 })
+
+    // Nur Vercel-Blob oder signierte Proxy-URLs erlauben.
+    let imageUrl = ""
+    if (typeof body.imageUrl === "string" && body.imageUrl.length > 0) {
+      const parsed = imageUrlSchema.safeParse(body.imageUrl)
+      if (!parsed.success) {
+        return NextResponse.json({ error: "Ungültige Bild-URL." }, { status: 400 })
+      }
+      imageUrl = parsed.data
+    }
 
     const project = await prisma.takumiPortfolioProject.create({
       data: {
         userId: session.user.id,
         title,
         description: desc,
-        imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : "",
+        imageUrl,
         category,
         completionDate,
       },
     })
     return NextResponse.json({ project })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    logSecureError("takumi.portfolio.POST", err)
+    return NextResponse.json({ error: "Serverfehler." }, { status: 500 })
   }
 }

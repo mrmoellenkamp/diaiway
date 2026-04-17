@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { emailSalutationFromUser } from "@/lib/communication-display"
 import { rateLimit, getClientIp } from "@/lib/rate-limit"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 
@@ -58,14 +59,13 @@ export async function POST(req: Request) {
           `${baseUrl}/reset-password/${rawToken}`,
         )
       } catch (emailErr) {
-        console.error("[diAiway] forgot-password email error:", emailErr)
+        logSecureError("forgot-password.email", emailErr)
       }
     }
 
-    // Always return the same message to prevent email enumeration
     return NextResponse.json({ success: true, message: SUCCESS_MSG })
   } catch (err: unknown) {
-    console.error("[diAiway] forgot-password error:", err)
+    logSecureError("forgot-password", err)
     return NextResponse.json({ error: "Interner Fehler." }, { status: 500 })
   }
 }

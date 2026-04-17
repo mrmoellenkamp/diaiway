@@ -9,6 +9,8 @@ import { createGuestShugyoAccount } from "@/lib/guest-onboarding"
 import { sendPushToUser } from "@/lib/push"
 import { pushT } from "@/lib/push-strings"
 import { getUserPreferredLocale } from "@/lib/user-preferred-locale"
+import { takeGuestCheckoutData } from "@/lib/guest-checkout-store"
+import { logSecureError, logSecureWarn } from "@/lib/log-redact"
 import type Stripe from "stripe"
 
 export const runtime = "nodejs"
@@ -29,7 +31,7 @@ export async function POST(req: Request) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret?.trim()) {
-    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET not configured – refusing to process")
+    logSecureError("stripe-webhook", "STRIPE_WEBHOOK_SECRET not configured")
     return NextResponse.json(
       { error: "Webhook not configured" },
       { status: 503 }
@@ -40,8 +42,7 @@ export async function POST(req: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error"
-    console.error("[Stripe Webhook] Signature verification failed:", errorMessage)
+    logSecureWarn("stripe-webhook.signature", err)
     return NextResponse.json(
       { error: "Webhook-Signatur ungültig." },
       { status: 400 }
@@ -93,8 +94,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true })
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error"
-    console.error("[Stripe Webhook] Error processing event:", errorMessage)
+    logSecureError("stripe-webhook.event", err)
     return NextResponse.json({ error: "Verarbeitung fehlgeschlagen." }, { status: 500 })
   }
 }
@@ -110,15 +110,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     const userId = session.metadata?.userId
     if (!userId) {
-      console.error("[Stripe Webhook] wallet_topup: missing userId")
+      logSecureError("stripe-webhook.wallet_topup", "missing userId")
       return
     }
     const amountTotal = session.amount_total ?? 0
     try {
       await creditWalletTopup(userId, amountTotal, session.id)
-      console.log(`[Stripe Webhook] Wallet topup: ${amountTotal / 100} € für User ${userId}`)
     } catch (err) {
-      console.error("[Stripe Webhook] creditWalletTopup failed:", err)
+      logSecureError("stripe-webhook.creditWalletTopup", err, { userId })
     }
 
     // In-App + Push: Guthaben aufgeladen
@@ -138,7 +137,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const bookingId = session.metadata?.bookingId
   if (!bookingId) {
-    console.error("[Stripe Webhook] No bookingId in session metadata")
+    logSecureError("stripe-webhook", "No bookingId in session metadata")
     return
   }
 
@@ -163,10 +162,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     existing?.userId &&
     !validateInvoiceDataForPayment(existing.user?.invoiceData ?? null).ok
   ) {
-    console.error(
-      "[Stripe Webhook] AUDIT: booking_payment completed at Stripe but Shugyo invoice profile incomplete bookingId=%s userId=%s (Zahlung wird trotzdem gebucht — manuell prüfen)",
-      bookingId,
-      existing.userId
+    logSecureError(
+      "stripe-webhook.audit",
+      "booking_payment completed at Stripe but Shugyo invoice profile incomplete",
+      { bookingId, userId: existing.userId }
     )
   }
 
@@ -187,14 +186,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   try {
     await onPaymentReceived(bookingId, amountTotal)
   } catch (walletErr) {
-    console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
+    logSecureError("stripe-webhook.onPaymentReceived", walletErr, { bookingId })
   }
 
   if (paymentType === "booking_payment") {
     try {
       await notifyTakumiAfterPayment(bookingId)
     } catch (notifyErr) {
-      console.error("[Stripe Webhook] Booking notification failed:", notifyErr)
+      logSecureError("stripe-webhook.notifyTakumi", notifyErr, { bookingId })
     }
   }
 }
@@ -208,10 +207,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 async function handleGuestCallPayment(session: Stripe.Checkout.Session, bookingId: string) {
   const existing = await prisma.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true, guestEmail: true, note: true, isGuestCall: true },
+    select: { paymentStatus: true, guestEmail: true, isGuestCall: true },
   })
   if (!existing || !existing.isGuestCall) {
-    console.error("[Stripe Webhook] guest_call_payment: booking not found or not a guest call", bookingId)
+    logSecureError("stripe-webhook.guest", "booking not found or not a guest call", { bookingId })
     return
   }
   if (existing.paymentStatus === "paid") return // Idempotenz
@@ -219,20 +218,12 @@ async function handleGuestCallPayment(session: Stripe.Checkout.Session, bookingI
   const amountTotal = session.amount_total ?? 0
   const now = new Date()
 
-  // Parse the note field where we stored invoice + password data at checkout
-  let invoiceData: unknown = null
-  let guestPassword: string | null = null
-  try {
-    if (existing.note) {
-      const parsed = JSON.parse(existing.note) as Record<string, unknown>
-      invoiceData = parsed.invoiceData ?? null
-      guestPassword = typeof parsed.guestPassword === "string" ? parsed.guestPassword : null
-    }
-  } catch {
-    console.warn("[Stripe Webhook] guest_call_payment: could not parse note field for bookingId", bookingId)
-  }
+  // SECURITY: Sensible Daten kommen aus Upstash (GETDEL, nur einmalig nutzbar).
+  // Fallback auf leeres Objekt, wenn Webhook doppelt feuert oder TTL abgelaufen ist.
+  const checkoutData = await takeGuestCheckoutData(bookingId)
+  const invoiceData = checkoutData?.invoiceData ?? null
+  const guestPassword = checkoutData?.guestPassword ?? null
 
-  // Mark booking as paid
   await prisma.booking.update({
     where: { id: bookingId },
     data: {
@@ -240,8 +231,6 @@ async function handleGuestCallPayment(session: Stripe.Checkout.Session, bookingI
       stripePaymentIntentId: session.payment_intent as string,
       paidAt: now,
       paidAmount: amountTotal,
-      // Clear the note field (it held temporary checkout data)
-      note: "",
     },
   })
 
@@ -256,25 +245,20 @@ async function handleGuestCallPayment(session: Stripe.Checkout.Session, bookingI
       })
 
       if (result) {
-        // Link the booking to the new (or existing) user account
         await prisma.booking.update({
           where: { id: bookingId },
           data: { userId: result.userId },
         })
-        console.log(
-          `[Stripe Webhook] Guest onboarding: ${result.isNew ? "created" : "linked existing"} account ${result.userId} for booking ${bookingId}`
-        )
       }
     } catch (err) {
-      console.error("[Stripe Webhook] Guest onboarding failed (non-fatal):", err)
+      logSecureError("stripe-webhook.guest-onboarding", err, { bookingId })
     }
   }
 
-  // Notify Takumi that payment was received
   try {
     await notifyTakumiAfterPayment(bookingId)
   } catch (notifyErr) {
-    console.error("[Stripe Webhook] Guest call notification failed:", notifyErr)
+    logSecureError("stripe-webhook.guest-notify", notifyErr, { bookingId })
   }
 }
 
@@ -300,10 +284,10 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
     booking.userId &&
     !validateInvoiceDataForPayment(booking.user?.invoiceData ?? null).ok
   ) {
-    console.error(
-      "[Stripe Webhook] AUDIT: payment_intent capturable but invoice incomplete bookingId=%s userId=%s",
-      bookingId,
-      booking.userId
+    logSecureError(
+      "stripe-webhook.audit",
+      "payment_intent capturable but invoice incomplete",
+      { bookingId, userId: booking.userId }
     )
   }
 
@@ -321,14 +305,14 @@ async function handleAmountCapturableUpdated(pi: Stripe.PaymentIntent) {
   try {
     await onPaymentReceived(bookingId, amountTotal)
   } catch (walletErr) {
-    console.error("[Stripe Webhook] Wallet onPaymentReceived failed:", walletErr)
+    logSecureError("stripe-webhook.onPaymentReceived", walletErr, { bookingId })
   }
 
   if (pi.metadata?.type === "booking_payment") {
     try {
       await notifyTakumiAfterPayment(bookingId)
     } catch (notifyErr) {
-      console.error("[Stripe Webhook] Booking notification failed:", notifyErr)
+      logSecureError("stripe-webhook.notifyTakumi", notifyErr, { bookingId })
     }
   }
 }
@@ -392,8 +376,7 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
       },
     })
 
-    console.log(`[Stripe Connect] Account ${account.id} für Expert ${expertId}: ${status}`)
   } catch (err) {
-    console.error("[Stripe Connect] handleConnectAccountUpdated:", err)
+    logSecureError("stripe-connect.accountUpdated", err, { expertId })
   }
 }

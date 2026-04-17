@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { communicationUsername } from "@/lib/communication-display"
+import { assertIpRateLimit, assertRateLimit } from "@/lib/api-rate-limit"
 
 /**
  * GET /api/users/[id]
@@ -10,7 +11,7 @@ import { communicationUsername } from "@/lib/communication-display"
  * IDs sind CUIDs – ohne Link nicht erratbar.
  */
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -18,6 +19,15 @@ export async function GET(
 
   try {
     const session = await auth()
+
+    // Gegen Enumeration/Scraping: pro-IP Limit; bei Auth zusätzlich pro-User.
+    const rl = session?.user?.id
+      ? await assertRateLimit(
+          { req, userId: session.user.id },
+          { bucket: "users:get", limit: 120, windowSec: 60 }
+        )
+      : await assertIpRateLimit(req, { bucket: "users:get:anon", limit: 60, windowSec: 60 })
+    if (rl) return rl
 
     const user = await prisma.user.findUnique({
       where: { id },

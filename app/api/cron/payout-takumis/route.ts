@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { stripe } from "@/lib/stripe"
+import { assertCronAuthorized } from "@/lib/cron-auth"
+import { logSecureError } from "@/lib/log-redact"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -16,10 +18,8 @@ const MIN_PAYOUT_CENTS = 500 // Mindestbetrag: 5 €
  * Geplante Calls mit Stripe Connect werden direkt von Stripe ausgezahlt (kein Eintrag hier).
  */
 export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const authErr = assertCronAuthorized(req, "payout-takumis")
+  if (authErr) return authErr
 
   const experts = await prisma.expert.findMany({
     where: {
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
       console.log(`[payout-takumis] ${expert.user.name}: ${amountCents / 100} € ausgezahlt`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Stripe-Fehler"
-      console.error(`[payout-takumis] ${expert.user.name} fehlgeschlagen:`, msg)
+      logSecureError("cron.payout-takumis.item", err, { expertId: expert.id })
       results.push({ expertId: expert.id, ok: false, error: msg })
     }
   }

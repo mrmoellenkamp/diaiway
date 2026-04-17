@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { apiHandler, type RouteContext } from "@/lib/api-handler"
 import { isAppLocale } from "@/lib/i18n/types"
+import { assertRateLimit } from "@/lib/api-rate-limit"
+import { imageUrlSchema } from "@/lib/schemas/common"
 
 export const runtime = "nodejs"
 
@@ -70,6 +72,13 @@ async function patchProfile(req: Request, _context: RouteContext) {
     return NextResponse.json({ error: "Nicht eingeloggt." }, { status: 401 })
   }
 
+  // Rate-Limit: Profil-Änderungen sind selten; 30/Stunde ist großzügig.
+  const rl = await assertRateLimit(
+    { req, userId: session.user.id },
+    { bucket: "user-profile:patch", limit: 30, windowSec: 3600 }
+  )
+  if (rl) return rl
+
   const body = await req.json()
   const data: Record<string, string | object | string[] | null> = {}
 
@@ -110,7 +119,28 @@ async function patchProfile(req: Request, _context: RouteContext) {
       data.username = val
     }
   }
-  if (body.image !== undefined) data.image = body.image
+  if (body.image !== undefined) {
+    // SECURITY: Nur Vercel-Blob-Storage oder leerer String zulässig. Verhindert,
+    // dass ein Angreifer `image` auf eine fremde URL (SSRF via Profilanzeige,
+    // Privacy-Leak via Tracking-Pixel) setzt.
+    const rawImage = typeof body.image === "string" ? body.image.trim() : ""
+    if (rawImage === "") {
+      data.image = ""
+    } else {
+      const parsed = imageUrlSchema.safeParse(rawImage)
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            error: "Validierungsfehler",
+            field: "image",
+            message: "Bild-URL nicht erlaubt (nur Vercel-Blob-Storage).",
+          },
+          { status: 400 }
+        )
+      }
+      data.image = parsed.data
+    }
+  }
   if (body.appRole !== undefined) {
     if (!["shugyo", "takumi"].includes(body.appRole)) {
       return NextResponse.json({ error: "Ungueltige Rolle." }, { status: 400 })
