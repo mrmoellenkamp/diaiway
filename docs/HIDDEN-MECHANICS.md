@@ -682,10 +682,15 @@ Bei Überschreitung wird direkt `NextResponse.json({ error }, { status: 429, hea
 
 `middleware.ts` erzeugt pro Request einen 16-Byte-Nonce (base64) und hängt ihn an:
 
-- Response-Header `x-nonce` (damit `app/layout.tsx` den Nonce bei `<Script>`-Tags setzen kann)
-- `Content-Security-Policy`-Header mit `'nonce-<…>'` und `'strict-dynamic'` für `script-src` / `script-src-elem`
+- Request-Header `x-nonce` (damit `next/headers` in Server-Components den Nonce lesen kann)
+- **Request-Header** `Content-Security-Policy` mit `'nonce-<…>'` und `'strict-dynamic'` – das ist das Signal, an dem Next.js (seit 13.4.20) erkennt, dass eine CSP mit Nonce aktiv ist, und **automatisch** ein `nonce="…"`-Attribut an seine eigenen `<script>`-Tags hängt.
+- **Response-Header** `Content-Security-Policy` mit identischem Wert (Browser-Durchsetzung)
 
-`'unsafe-eval'` ist entfernt. `'unsafe-inline'` bleibt als Legacy-Fallback im Header – moderne Browser ignorieren es dank `'strict-dynamic'`. Außerdem setzt die Middleware explizit `X-XSS-Protection: 0`, weil der Header in älteren Browsern neue Reflection-Vektoren öffnen kann.
+> **Fallstrick:** Fehlt der *Request*-Header, setzt Next.js kein `nonce`-Attribut an seine generierten Scripts. `'strict-dynamic'` ignoriert dann Host-Allowlists und blockiert *alle* Scripts → weiße Seite / Dauer-Sanduhr. Beide Header müssen gesetzt sein.
+
+Drittanbieter-Bundles (Stripe `@stripe/stripe-js`, `@stripe/connect-js`, Daily `@daily-co/daily-js`, Vercel Analytics) werden als npm-Pakete **dynamisch aus unseren eigenen genonceten Bundles** nachgeladen und fallen damit automatisch unter `'strict-dynamic'` – keine zusätzlichen Nonces oder Hashes nötig. Die `https://…`-Host-Allowlists im CSP-Header bleiben als CSP-Level-2-Fallback für ältere Browser, werden aber von modernen Browsern mit `'strict-dynamic'` überstimmt.
+
+Auf `/api/*` wird die CSP **nicht** gesetzt (Browser werten CSP bei JSON-Antworten nicht aus). `'unsafe-eval'` ist entfernt. `'unsafe-inline'` bleibt als Legacy-Fallback – moderne Browser ignorieren es dank Nonce/`'strict-dynamic'`. Außerdem setzt die Middleware explizit `X-XSS-Protection: 0`, weil der Header in älteren Browsern neue Reflection-Vektoren öffnen kann.
 
 ### 17.3 Signierte Proxy-URLs für private Blobs (`lib/signed-url.ts`)
 

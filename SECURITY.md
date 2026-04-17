@@ -72,6 +72,13 @@ Gesetzt in `middleware.ts`:
 - **CSP** mit per Request generiertem **Nonce** und `'strict-dynamic'`;
   `'unsafe-eval'` ist **entfernt**. `'unsafe-inline'` bleibt als Fallback
   für ältere Browser, wird aber durch `'strict-dynamic'` ignoriert.
+  Der CSP‑Header wird in `middleware.ts` sowohl auf die **Request‑Header**
+  als auch auf die **Response‑Header** gesetzt — nur dann erkennt Next.js
+  die aktive CSP und hängt das `nonce`‑Attribut automatisch an seine
+  eigenen `<script>`‑Tags. Ohne Request‑Header würde `'strict-dynamic'`
+  alle Scripts blockieren (weiße Seite / Dauer‑Sanduhr).
+  Auf `/api/*` wird die CSP bewusst **nicht** gesetzt (Browser werten CSP
+  auf JSON‑Antworten ohnehin nicht aus).
 - **`X-Frame-Options: DENY`** und **`X-Content-Type-Options: nosniff`**.
 - **`X-XSS-Protection: 0`** – der veraltete Header ist absichtlich auf
   `0`, da er in älteren Browsern neue XSS‑Vektoren eröffnen kann.

@@ -167,11 +167,46 @@ export default authMiddleware((req) => {
   // ── CSP Nonce (pro Request) ────────────────────────────────────────────────
   // 16 Bytes Zufallsdaten → base64. Wird via Request-Header an Pages durchgereicht,
   // damit `next/headers` in Server-Components auf die aktuelle Nonce zugreifen kann
-  // (Doku: https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy)
+  // (Doku: https://nextjs.org/docs/app/guides/content-security-policy).
+  //
+  // WICHTIG: Der CSP-Header muss sowohl auf die Request-Header (damit Next.js
+  // die Nonce erkennt und automatisch an seine eigenen <script>-Tags hängt)
+  // als auch auf die Response-Header (damit der Browser sie durchsetzt) gesetzt
+  // werden. Fehlt der Request-Header, setzt Next.js kein nonce="…"-Attribut
+  // und `strict-dynamic` blockiert alle Scripts → weiße Seite / Sanduhr.
   const nonce = generateNonce()
+
+  const isApi = pathname.startsWith("/api/")
+  // CSP mit Nonce + strict-dynamic (CSP Level 3):
+  //  - 'unsafe-eval' entfernt (XSS-Härtung).
+  //  - 'unsafe-inline' bleibt als Fallback für ältere Browser, wird aber von
+  //    Browsern mit nonce/strict-dynamic ignoriert (spec-konform).
+  //  - Host-Allowlists bleiben als CSP-Level-2-Fallback, werden von
+  //    strict-dynamic in modernen Browsern überstimmt.
+  const csp =
+    `default-src 'self'; ` +
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; ` +
+    `img-src 'self' data: blob: https:; ` +
+    `connect-src 'self' https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.daily.co wss://*.daily.co https://vercel.live https://*.vercel.app wss:; ` +
+    `frame-src 'self' https://js.stripe.com https://connect-js.stripe.com https://checkout.stripe.com https://*.stripe.com https://*.daily.co https://vercel.live https://*.vercel.app; ` +
+    `font-src 'self' data: https://fonts.gstatic.com https://*.vercel.app; ` +
+    `media-src 'self' blob: https://*.daily.co; ` +
+    `worker-src 'self' blob:; ` +
+    `base-uri 'self'; ` +
+    `form-action 'self' https://checkout.stripe.com; ` +
+    `object-src 'none'; ` +
+    `frame-ancestors 'none';`
 
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set("x-nonce", nonce)
+  // Request-Header: Signal an Next.js, dass eine CSP mit Nonce aktiv ist →
+  // Next.js hängt das nonce-Attribut automatisch an seine generierten Scripts.
+  // Für API-Routen irrelevant (Browser werten CSP auf JSON-Antworten nicht aus).
+  if (!isApi) {
+    requestHeaders.set("Content-Security-Policy", csp)
+  }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })
 
@@ -204,14 +239,11 @@ export default authMiddleware((req) => {
   // X-XSS-Protection ist veraltet und kann in manchen Browsern XSS-Lücken öffnen;
   // moderne Browser setzen ausschließlich auf CSP. Deshalb explizit deaktivieren.
   response.headers.set("X-XSS-Protection", "0")
-  // CSP mit Nonce + strict-dynamic (CSP Level 3):
-  //  - 'unsafe-eval' entfernt (XSS-Härtung).
-  //  - 'unsafe-inline' bleibt als Fallback für ältere Browser, wird aber von
-  //    Browsern mit nonce/strict-dynamic ignoriert (spec-konform).
-  response.headers.set(
-    "Content-Security-Policy",
-    `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.daily.co wss://*.daily.co https://vercel.live https://*.vercel.app wss:; frame-src 'self' https://js.stripe.com https://connect-js.stripe.com https://checkout.stripe.com https://*.stripe.com https://*.daily.co https://vercel.live https://*.vercel.app; font-src 'self' data: https://fonts.gstatic.com https://*.vercel.app; media-src 'self' blob: https://*.daily.co; worker-src 'self' blob:; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'; frame-ancestors 'none';`
-  )
+  // CSP auf Response-Header setzen (Browser-Durchsetzung). API-Routen werden
+  // übersprungen, weil Browser CSP auf JSON-Antworten ohnehin ignorieren.
+  if (!isApi) {
+    response.headers.set("Content-Security-Policy", csp)
+  }
   response.headers.set(
     "Permissions-Policy",
     "camera=(self), microphone=(self), geolocation=(), payment=(self)"
