@@ -173,20 +173,26 @@ export default authMiddleware((req) => {
   // die Nonce erkennt und automatisch an seine eigenen <script>-Tags hängt)
   // als auch auf die Response-Header (damit der Browser sie durchsetzt) gesetzt
   // werden. Fehlt der Request-Header, setzt Next.js kein nonce="…"-Attribut
-  // und `strict-dynamic` blockiert alle Scripts → weiße Seite / Sanduhr.
+  // an alle generierten Tags (je nach Version/Pfad).
+  //
+  // KEIN 'strict-dynamic': Mit CSP Level 3 ignorieren Browser unter
+  // strict-dynamic die Host-Allowliste und 'self' für klassische
+  // <script src="…">-Tags ohne nonce. Next.js 16 lädt viele Chunks unter
+  // /_next/static/chunks/*.js ohne nonce-Attribut → Safari/WebKit blockiert
+  // sie alle („does not appear in the script-src directive“) → Sanduhr.
+  // Stattdessen: 'self' + explizite Hosts + Nonce (für Inline/Next, wo
+  // unterstützt) — weiterhin ohne 'unsafe-eval'.
   const nonce = generateNonce()
 
   const isApi = pathname.startsWith("/api/")
-  // CSP mit Nonce + strict-dynamic (CSP Level 3):
-  //  - 'unsafe-eval' entfernt (XSS-Härtung).
-  //  - 'unsafe-inline' bleibt als Fallback für ältere Browser, wird aber von
-  //    Browsern mit nonce/strict-dynamic ignoriert (spec-konform).
-  //  - Host-Allowlists bleiben als CSP-Level-2-Fallback, werden von
-  //    strict-dynamic in modernen Browsern überstimmt.
+  // CSP: Nonce (für Inline / wo Next.js mitsetzt), 'self' für Chunk-Skripte,
+  // explizite Drittanbieter-Hosts, kein 'unsafe-eval'.
+  // 'unsafe-inline' bleibt als Fallback für sehr alte Browser; Browser mit
+  // Nonce-Unterstützung ignorieren 'unsafe-inline' für script (spec-konform).
   const csp =
     `default-src 'self'; ` +
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
-    `script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' blob: https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
+    `script-src-elem 'self' 'nonce-${nonce}' 'unsafe-inline' https://js.stripe.com https://connect-js.stripe.com https://vercel.live https://*.vercel.app; ` +
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.app; ` +
     `img-src 'self' data: blob: https:; ` +
     `connect-src 'self' https://api.stripe.com https://*.stripe.com https://connect-js.stripe.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.daily.co wss://*.daily.co https://vercel.live https://*.vercel.app wss:; ` +

@@ -69,14 +69,19 @@ Angreifer­profile, gegen die explizit gehärtet wird:
 
 Gesetzt in `middleware.ts`:
 
-- **CSP** mit per Request generiertem **Nonce** und `'strict-dynamic'`;
+- **CSP** mit per Request generiertem **Nonce**, **`'self'`** und expliziten
+  Skript‑Hosts (Stripe, Vercel Live/Preview); **`'strict-dynamic'` wird
+  absichtlich nicht verwendet** — unter CSP Level 3 ignorieren Browser
+  mit `'strict-dynamic'` die Host‑Allowliste und `'self'` für klassische
+  `<script src="…">` ohne `nonce`. Next.js 16 lädt viele Chunks unter
+  `/_next/static/chunks/*.js` **ohne** `nonce`‑Attribut; mit
+  `'strict-dynamic'` blockieren Safari/WebKit diese URLs (Sanduhr).
   `'unsafe-eval'` ist **entfernt**. `'unsafe-inline'` bleibt als Fallback
-  für ältere Browser, wird aber durch `'strict-dynamic'` ignoriert.
+  für sehr alte Browser; Browser mit Nonce‑Unterstützung ignorieren
+  `'unsafe-inline'` für Skripte (spec‑konform).
   Der CSP‑Header wird in `middleware.ts` sowohl auf die **Request‑Header**
-  als auch auf die **Response‑Header** gesetzt — nur dann erkennt Next.js
-  die aktive CSP und hängt das `nonce`‑Attribut automatisch an seine
-  eigenen `<script>`‑Tags. Ohne Request‑Header würde `'strict-dynamic'`
-  alle Scripts blockieren (weiße Seite / Dauer‑Sanduhr).
+  als auch auf die **Response‑Header** gesetzt, damit Next.js die aktive
+  CSP erkennt und `nonce` setzen kann, wo das Framework es unterstützt.
   Auf `/api/*` wird die CSP bewusst **nicht** gesetzt (Browser werten CSP
   auf JSON‑Antworten ohnehin nicht aus).
 - **`X-Frame-Options: DENY`** und **`X-Content-Type-Options: nosniff`**.
