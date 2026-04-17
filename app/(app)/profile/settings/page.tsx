@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -100,8 +101,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/user/account", { method: "DELETE" })
       if (res.ok) {
         toast.success(t("profile.accountDeleted"))
-        await signOut({ redirect: false })
-        window.location.replace("/")
+        await hardSignOut("/")
       } else {
         toast.error(t("profile.deleteError"))
       }

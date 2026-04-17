@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import { Button } from "@/components/ui/button"
 import { PauseCircle, Loader2, LogOut } from "lucide-react"
 import { toast } from "sonner"
@@ -48,7 +48,9 @@ export default function PausedPage() {
         <Button
           variant="ghost"
           className="h-11 gap-2 text-muted-foreground"
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => {
+            void hardSignOut("/")
+          }}
         >
           <LogOut className="size-4" />
           Abmelden

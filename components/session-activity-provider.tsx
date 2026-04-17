@@ -10,7 +10,8 @@ import {
   type ReactNode,
 } from "react"
 import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import {
   INACTIVITY_TIMEOUT_SEC,
   INACTIVITY_WARNING_SEC,
@@ -37,6 +38,8 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
   const [showWarning, setShowWarning] = useState(false)
   const resetAtRef = useRef(Date.now())
   const callActiveRef = useRef(false)
+  /** Letzter pathname, für den wir den Inaktivitäts-Timer gesetzt haben (nicht bei jedem Session-Refetch). */
+  const lastResetPathnameRef = useRef<string>("")
 
   const setCallActive = useCallback((active: boolean) => {
     callActiveRef.current = active
@@ -52,13 +55,22 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
     fetch("/api/auth/heartbeat", { credentials: "include" }).catch(() => {})
   }, [])
 
-  // Reset countdown on route change (navigation = activity)
+  // Nur bei echter Navigation den Timer zurücksetzen — nicht bei jedem
+  // useSession()-Wechsel loading → authenticated (z. B. refetchOnWindowFocus),
+  // sonst läuft die automatische Abmeldung faktisch nie ab.
+  // Bei `unauthenticated` Ref leeren, damit nach erneutem Login auf derselben
+  // URL der Timer wieder startet.
   useEffect(() => {
-    if (status === "authenticated") {
-      resetAtRef.current = Date.now()
-      setSecondsLeft(INACTIVITY_TIMEOUT_SEC)
-      setShowWarning(false)
+    if (status === "unauthenticated") {
+      lastResetPathnameRef.current = ""
+      return
     }
+    if (status !== "authenticated") return
+    if (lastResetPathnameRef.current === pathname) return
+    lastResetPathnameRef.current = pathname
+    resetAtRef.current = Date.now()
+    setSecondsLeft(INACTIVITY_TIMEOUT_SEC)
+    setShowWarning(false)
   }, [pathname, status])
 
   // Countdown for authenticated users
@@ -80,15 +92,7 @@ export function SessionActivityProvider({ children }: { children: ReactNode }) {
         setShowWarning(true)
       } else if (remaining <= 0) {
         setShowWarning(false)
-        // Tatsächliches Ausloggen: Session invalidieren, dann hard-replace verhindert Zurück-Button
-        signOut({ redirect: false })
-          .catch(() => {})
-          .finally(() => {
-            // Cookies zusätzlich client-seitig löschen (defense in depth)
-            document.cookie = "authjs.session-token=; max-age=0; path=/"
-            document.cookie = "__Secure-authjs.session-token=; max-age=0; path=/"
-            window.location.replace("/login?reason=timeout")
-          })
+        void hardSignOut("/login?reason=timeout")
       }
     }, COUNTDOWN_INTERVAL_MS)
 

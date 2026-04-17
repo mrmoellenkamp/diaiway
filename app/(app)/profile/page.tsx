@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import { PageContainer } from "@/components/page-container"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -428,9 +429,8 @@ export default function ProfilePage() {
 
   async function handleLogout() {
     setIsLoggedIn(false)
-    await signOut({ redirect: false })
     toast.success(t("profile.loggedOut"))
-    window.location.replace("/")
+    await hardSignOut("/")
   }
 
   const showLoading = (session && !profileData && appProfileLoading) || (profileData && profileLoading)

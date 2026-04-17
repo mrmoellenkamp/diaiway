@@ -1,6 +1,7 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import Link from "next/link"
 import Image from "next/image"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -141,9 +142,8 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
           </Link>
         )}
         <button
-          onClick={async () => {
-            await signOut({ redirect: false })
-            window.location.replace("/")
+          onClick={() => {
+            void hardSignOut("/")
           }}
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-[rgba(239,68,68,0.1)]"
         >
@@ -213,9 +213,8 @@ export function UserNav({ variant = "default" }: { variant?: "default" | "landin
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={async () => {
-            await signOut({ redirect: false })
-            window.location.replace("/")
+          onClick={() => {
+            void hardSignOut("/")
           }}
           className="flex items-center gap-2 text-destructive focus:text-destructive"
         >

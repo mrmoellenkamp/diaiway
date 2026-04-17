@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import Image from "next/image"
 import { Capacitor } from "@capacitor/core"
 import { getStayLoggedIn } from "@/hooks/use-native-bridge"
@@ -211,8 +212,7 @@ export default function LandingPage() {
         } else if (stay === false) {
           if (typeof sessionStorage !== "undefined") sessionStorage.setItem(NATIVE_LANDING_GATE, "1")
           // User chose "always show login" → sign out so they see login page with Face ID
-          await signOut({ redirect: false })
-          if (!cancelled) window.location.replace("/login")
+          if (!cancelled) await hardSignOut("/login")
         }
       } catch {
         /* Preferences fehlgeschlagen — normale Landing anzeigen */

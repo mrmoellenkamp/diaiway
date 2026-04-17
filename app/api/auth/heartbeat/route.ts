@@ -5,7 +5,9 @@ import { assertRateLimit } from "@/lib/api-rate-limit"
 
 /**
  * GET /api/auth/heartbeat
- * Resets the 15-min inactivity timer. Only for authenticated shugyo/takumi.
+ * Resets the 15-min inactivity cookie (middleware). Alle eingeloggten Rollen —
+ * Admins brauchen dasselbe für „Sitzung verlängern“, sonst bleibt der Cookie
+ * unverändert und nur Shugyo/Takumi könnten die Warnung sinnvoll quittieren.
  * Used by Video-Call (useHeartbeat) and SessionTimeoutWarning ("Sitzung verlängern").
  */
 export async function GET(req: NextRequest) {
@@ -20,11 +22,6 @@ export async function GET(req: NextRequest) {
     { bucket: "auth:heartbeat", limit: 180, windowSec: 60 }
   )
   if (rl) return rl
-
-  const appRole = (session.user as { appRole?: string })?.appRole
-  if (appRole !== "shugyo" && appRole !== "takumi") {
-    return NextResponse.json({ error: "Heartbeat nur für Shugyo/Takumi." }, { status: 403 })
-  }
 
   const now = Math.floor(Date.now() / 1000).toString()
   const response = NextResponse.json({ ok: true })

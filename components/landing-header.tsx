@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import { Menu, X, User, Mail, FolderOpen, LogOut } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { UserNav } from "@/components/user-nav"
@@ -122,10 +123,9 @@ export function LandingHeader() {
                 {t("nav.menuDiAiway")}
               </Link>
               <button
-                onClick={async () => {
+                onClick={() => {
                   setMobileMenuOpen(false)
-                  await signOut({ redirect: false })
-                  window.location.replace("/")
+                  void hardSignOut("/")
                 }}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-[rgba(239,68,68,0.1)]"
               >

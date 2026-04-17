@@ -1,7 +1,8 @@
 "use client"
 
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
-import { signOut, signIn, getSession } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
+import { revokeSessionCookiesOnly } from "@/lib/hard-sign-out-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -78,9 +79,9 @@ function LoginContent() {
   const { t } = useI18n()
   const isNative = useIsNativeCapacitor()
 
-  // ── Sign out stale client session on timeout redirect
+  // ── Stale Session + Cookies bereinigen (Middleware-Timeout), ohne Reload-Schleife
   useEffect(() => {
-    if (reasonTimeout) signOut({ redirect: false })
+    if (reasonTimeout) void revokeSessionCookiesOnly()
   }, [reasonTimeout])
 
   // ── Form state

@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { hardSignOut } from "@/lib/hard-sign-out-client"
 import { Mail, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -140,7 +141,9 @@ function VerifyEmailContent() {
               <Button
                 variant="ghost"
                 className="w-full rounded-xl"
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => {
+                  void hardSignOut("/login")
+                }}
               >
                 Abmelden
               </Button>
