@@ -1267,6 +1267,8 @@ const es = {
   "toast.messageSent": "Mensaje enviado",
   "toast.sessionEnded": "Sesión terminada.",
   "toast.balanceLow": "Aviso: ¡Tu saldo se está agotando!",
+  "toast.scheduledSlotEndingSoon":
+    "Tu sesión reservada termina en un minuto. La llamada finalizará automáticamente después.",
   "toast.noConnection": "Sin conexión a internet. Verifica tu conexión e inténtalo de nuevo.",
   "toast.pleaseFillRequired": "Por favor completa todos los campos obligatorios.",
   "toast.enterTimeRange": "Por favor introduce el rango de fechas.",

@@ -4,6 +4,7 @@
  *
  * Ausführung (macOS, Arial in Supplemental): node scripts/generate-diaiway-logo-svg.cjs
  */
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS CLI, kein ESM */
 const fs = require("node:fs")
 const path = require("node:path")
 const opentype = require("opentype.js")

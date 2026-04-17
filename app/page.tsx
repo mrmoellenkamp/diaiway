@@ -183,7 +183,7 @@ export default function LandingPage() {
   const [ctaHydrationSafe, setCtaHydrationSafe] = useState(false)
   const [showTakumis, setShowTakumis] = useState(false)
   const categories = useCategories()
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const showLoggedInCta = ctaHydrationSafe && isLoggedIn
 
   /**

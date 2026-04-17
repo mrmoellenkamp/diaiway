@@ -25,7 +25,7 @@ const SECRET_PATTERNS: Array<[RegExp, string]> = [
   // Generic long bearer-ish tokens in URLs
   [/([?&](?:token|apikey|key|secret)=)[^&#\s]+/gi, "$1***"],
   // JWT (three base64url segments)
-  [/\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+/g, "eyJ***.***.***"],
+  [/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "eyJ***.***.***"],
 ]
 
 const MAX_LOG_STRING = 2_000
@@ -73,11 +73,9 @@ export function logSecureError(context: string, err: unknown, extra?: Record<str
       if (typeof v === "string") safeExtra[k] = redactString(v)
       else safeExtra[k] = v
     }
-    // eslint-disable-next-line no-console
     console.error(`[${context}]`, redacted, safeExtra)
     return
   }
-  // eslint-disable-next-line no-console
   console.error(`[${context}]`, redacted)
 }
 
@@ -91,10 +89,8 @@ export function logSecureWarn(context: string, err: unknown, extra?: Record<stri
       if (typeof v === "string") safeExtra[k] = redactString(v)
       else safeExtra[k] = v
     }
-    // eslint-disable-next-line no-console
     console.warn(`[${context}]`, redacted, safeExtra)
     return
   }
-  // eslint-disable-next-line no-console
   console.warn(`[${context}]`, redacted)
 }
