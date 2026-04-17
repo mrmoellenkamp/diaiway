@@ -75,7 +75,17 @@ Werden für Admin-Scanner und als **Fallback für Safety** genutzt, wenn `GOOGLE
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token. Wird verwendet für: Profilbilder, Safety-Incident-Alerts. |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token. Wird verwendet für: Profilbilder, Safety-Incident-Alerts, Secure-Upload. |
+| `FILE_SIGNING_SECRET` | Optional. HMAC-Secret für signierte Proxy-URLs auf private Blobs (`lib/signed-url.ts` + `/api/files/signed`). **Fallback:** `NEXTAUTH_SECRET`. Rotation invalidiert alle Alt-Links. |
+
+## Upstash Redis (Rate-Limits & Gast-Checkout-Store)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST-Endpoint. Wird genutzt für globale Rate-Limit-Buckets (`lib/rate-limit.ts`, `lib/api-rate-limit.ts`) und den kurzlebigen Gast-Checkout-Store (`lib/guest-checkout-store.ts`). |
+| `UPSTASH_REDIS_REST_TOKEN` | REST-Token dazu. **Ohne** beide Variablen fällt Rate-Limiting auf einen In-Memory-Fallback pro Serverless-Instanz zurück (funktional, aber pro Instanz separat – für Production nicht empfohlen). |
+
+Hintergrund: Pro Route begrenzen wir gleichzeitig pro `userId` und pro IP. Details und aktuelle Bucket-Limits in [SECURITY.md](../SECURITY.md) Abschnitt 4.6.
 
 ## Admin
 
@@ -117,8 +127,8 @@ VAPID-Keys generieren: `node -e "const w=require('web-push');const v=w.generateV
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `CRON_SECRET` | Schützt Cron-Endpoints. Aufruf: `Authorization: Bearer <CRON_SECRET>`. Routen u. a.: `/api/cron/release-wallet`, `/api/cron/experts-offline`, `/api/cron/instant-request-cleanup`, `/api/cron/cleanup-safety-data`, `/api/cron/session-reminders`, `/api/cron/daily-ghost-sessions` (siehe `vercel.json`) |
-| `DAILY_GHOST_SECRET` | Alternative zu CRON_SECRET nur für `/api/cron/daily-ghost-sessions` |
+| `CRON_SECRET` | Schützt Cron-Endpoints. Aufruf: `Authorization: Bearer <CRON_SECRET>`. Routen u. a.: `/api/cron/release-wallet`, `/api/cron/experts-offline`, `/api/cron/instant-request-cleanup`, `/api/cron/cleanup-safety-data`, `/api/cron/session-reminders`, `/api/cron/daily-ghost-sessions`, `/api/cron/purge-expired-documents`, `/api/cron/archive-documents`, `/api/cron/payout-takumis` (siehe `vercel.json`). Vergleich ist **timing-safe** (`lib/cron-auth.ts` + `lib/timing-safe.ts`). |
+| `DAILY_GHOST_SECRET` | Alternative zu `CRON_SECRET` nur für `/api/cron/daily-ghost-sessions`. `assertCronAuthorized` akzeptiert pro Route zusätzliche ENV-Namen. |
 | `TZ` | Timezone (z.B. `Europe/Berlin` für CET/CEST) |
 
 ---

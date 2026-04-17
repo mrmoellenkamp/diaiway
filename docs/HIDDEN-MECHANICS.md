@@ -536,6 +536,15 @@ Bei Datenbank-Aussetzern (P1001, Cold Start) schlägt `prisma.user.findUnique()`
 | Admin-Stats degraded (200) | `app/api/admin/stats/route.ts` → `emptyStatsPayload` |
 | Site-Analytics Beacon | `app/api/analytics/beacon/route.ts`, `components/site-analytics-tracker.tsx` |
 | Mobile `out/` Redirect | `scripts/prepare-mobile-webdir.mjs` |
+| API-Rate-Limiting (User + IP) | `lib/api-rate-limit.ts`, `lib/rate-limit.ts` (Upstash + In-Memory-Fallback) |
+| CSP-Nonce + `strict-dynamic` | `middleware.ts` (Header `x-nonce`) |
+| Signierte Blob-Proxy-URLs | `lib/signed-url.ts`, `app/api/files/signed/route.ts`, `app/api/files/secure-upload/route.ts` |
+| Gast-Checkout-Store (Upstash TTL) | `lib/guest-checkout-store.ts`, `app/api/guest/checkout/route.ts`, `app/api/webhooks/stripe/route.ts` |
+| Secret-Redaktion in Logs | `lib/log-redact.ts` (`logSecureError`, `logSecureWarn`) |
+| Timing-safe Secret-Vergleiche | `lib/timing-safe.ts`, `lib/cron-auth.ts`, `app/api/auth/seed-admin/route.ts`, `app/api/webhooks/daily/route.ts` |
+| Zod-Schemas (Input-Validierung) | `lib/schemas/{common,bookings,profile,messages,upload}.ts` |
+| Serverseitige Preisberechnung | `app/api/bookings/route.ts` (ignoriert Client-`totalPrice`/`price`) |
+| Magic-Byte-Prüfung beim Upload | `app/api/upload/route.ts` (`sharp().metadata()`) |
 
 ---
 
@@ -607,12 +616,15 @@ Keine echten Keys in dieser Dokumentation. Relevante Platzhalter:
 | Variable | Verwendung |
 |----------|------------|
 | `DATABASE_URL` | Prisma, PostgreSQL |
-| `NEXTAUTH_SECRET` | JWT-Signatur |
+| `NEXTAUTH_SECRET` | JWT-Signatur, Fallback für `FILE_SIGNING_SECRET` |
 | `NEXTAUTH_URL` | Auth-Redirects, E-Mail-Links |
 | `STRIPE_*` | Zahlungen |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob (Bilder) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob (Bilder, Dokumente) |
+| `FILE_SIGNING_SECRET` | HMAC-Key für signierte Blob-Proxy-URLs (Rotation invalidiert Alt-Links) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Rate-Limits + Gast-Checkout-Store |
+| `CRON_SECRET`, `DAILY_GHOST_SECRET` | Timing-safer Schutz der Cron-Routen |
 
-Details: [docs/ENV.md](./ENV.md)
+Details: [docs/ENV.md](./ENV.md) · Policy: [SECURITY.md](../SECURITY.md)
 
 ---
 
@@ -647,4 +659,95 @@ Der Buchungsflow setzt immer `deferNotification: true` — Takumi-Benachrichtigu
 
 ---
 
-*Letzte Aktualisierung: März 2026 – Benachrichtigungen (Instant, Status-Links, Session, Zahlung, Wallet-Topup, pushType, Waymail-Dedup); Abrechnungs- und Belegdoku: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md)*
+---
+
+## 17. Security-Layer (Rate-Limits, CSP, signierte Blobs, Log-Redaktion)
+
+Die vollständige Security-Policy steht in [`SECURITY.md`](../SECURITY.md). Dieser Abschnitt erklärt die *verborgenen* Mechanismen, die im Code leben und für Entwickler:innen relevant sind.
+
+### 17.1 Zentrales Rate-Limiting (`lib/api-rate-limit.ts`)
+
+Jede Mutations- oder scrapinggefährdete API nutzt den Helper `assertRateLimit({ req, userId }, { bucket, limit, windowSec })`. Er limitiert **gleichzeitig**:
+
+- pro `userId` (verhindert, dass ein kompromittierter Account per IP-Hopping unbegrenzt requestet)
+- pro IP (`getClientIp`, Fallback auf `unknown`)
+
+Storage: **Upstash Redis** (global, instanzübergreifend). Fehlt die Konfiguration, fällt der Helper transparent auf einen In-Memory-Sliding-Window-Zähler zurück.
+
+Bei Überschreitung wird direkt `NextResponse.json({ error }, { status: 429, headers: { "Retry-After": ... } })` zurückgegeben – der Aufrufer muss nur `if (rl) return rl` schreiben.
+
+**Konvention für neue Routen:** Jeder `POST`/`PATCH`/`DELETE` bekommt einen Bucket-Namen (`"bookings:create"`, `"messages:send"`, …). Aktuelle Limits siehe `SECURITY.md` Abschnitt 4.6.
+
+### 17.2 CSP mit Nonce und `strict-dynamic`
+
+`middleware.ts` erzeugt pro Request einen 16-Byte-Nonce (base64) und hängt ihn an:
+
+- Response-Header `x-nonce` (damit `app/layout.tsx` den Nonce bei `<Script>`-Tags setzen kann)
+- `Content-Security-Policy`-Header mit `'nonce-<…>'` und `'strict-dynamic'` für `script-src` / `script-src-elem`
+
+`'unsafe-eval'` ist entfernt. `'unsafe-inline'` bleibt als Legacy-Fallback im Header – moderne Browser ignorieren es dank `'strict-dynamic'`. Außerdem setzt die Middleware explizit `X-XSS-Protection: 0`, weil der Header in älteren Browsern neue Reflection-Vektoren öffnen kann.
+
+### 17.3 Signierte Proxy-URLs für private Blobs (`lib/signed-url.ts`)
+
+Sensible Dokumente (Ausweise, Safety-Reports) sollen nicht über permanente `blob.vercel-storage.com`-URLs erreichbar sein – ein einmaliger Leak im Log oder Waymail-Forward wäre dauerhaft.
+
+- `signBlobProxyUrl(blobUrl, { ownerUserId, ttlSec })` liefert eine URL der Form  
+  `/api/files/signed?u=<base64url>&e=<expiry>&uid=<ownerUserId>&s=<hmac>`  
+- `verifyBlobProxyParams` (in `/api/files/signed/route.ts`) prüft:
+  1. HMAC mit `FILE_SIGNING_SECRET` (Fallback `NEXTAUTH_SECRET`) – konstante Zeit.
+  2. Ablaufzeit (`e > now`).
+  3. Owner (`uid` muss zum eingeloggten Nutzer passen, sofern gesetzt).
+  4. Zielhost muss eine Vercel-Blob-Domain sein (kein offener Redirect).
+- Bei Erfolg: `302` zum echten Blob. Sonst: `403` + `logSecureWarn`.
+
+Clients bekommen von `POST /api/files/secure-upload` statt der rohen Blob-URL ein `signedUrl`- und `thumbnailSignedUrl`-Feld (TTL 1 h, gebunden an `session.user.id`). Rotation von `FILE_SIGNING_SECRET` entzieht alle Alt-Links.
+
+### 17.4 Gast-Checkout-Store (`lib/guest-checkout-store.ts`)
+
+Gast-Call-Checkouts können ein temporäres Passwort und Rechnungsdaten tragen, die nach Zahlung einen echten Account erzeugen. Diese sensiblen Felder werden **nicht** in `booking.note` geschrieben, sondern via Upstash Redis in einem Schlüssel `guest:checkout:<bookingId>` mit kurzer TTL abgelegt.
+
+- **Zugriffsprimitiven:** `putGuestCheckoutData`, `takeGuestCheckoutData` (atomar: lesen + löschen), `peekGuestCheckoutData`, `deleteGuestCheckoutData`.
+- Der Stripe-Webhook (`app/api/webhooks/stripe/route.ts` → `handleGuestCallPayment`) holt die Daten **ausschließlich** per `takeGuestCheckoutData`. Dadurch sind die Secrets nach Account-Anlage weder in der DB noch in Redis.
+- Fallback, wenn Upstash nicht konfiguriert ist: In-Memory-Map (nur lokal/Dev sinnvoll).
+
+### 17.5 Secret-Redaktion beim Logging (`lib/log-redact.ts`)
+
+Statt `console.error(err)` benutzen alle Routen `logSecureError(context, err, extra?)` und `logSecureWarn(context, message, extra?)`. Die Funktion:
+
+- serialisiert den Fehler (inkl. Stack),
+- maskiert DB-Connection-Strings, `Bearer …`-Tokens, `sk_live_…`/`whsec_…`-Secrets, JWTs und `password=…`-Parameter per Regex,
+- kürzt sehr lange Strings.
+
+Dadurch erscheinen in Vercel-Logs nie echte Secrets – auch nicht, wenn Prisma-Fehler die komplette `DATABASE_URL` enthalten würden.
+
+### 17.6 Timing-safe Secret-Vergleiche (`lib/timing-safe.ts`)
+
+Überall, wo ein serverseitiger String-Secret-Check stattfindet, wird `safeBearerCompare` / `safeStringCompare` verwendet (intern `crypto.timingSafeEqual` mit Längen-Guard):
+
+- **Cron-Authz** (`assertCronAuthorized`) für `Authorization: Bearer <CRON_SECRET>` (und Alt-ENV wie `DAILY_GHOST_SECRET`)
+- **Admin-Seed** (`app/api/auth/seed-admin/route.ts`) – `ADMIN_PASSWORD`
+- **Daily-Webhook** (`app/api/webhooks/daily/route.ts`) – HMAC, mit explizitem `Buffer`-Längen-Check, damit `crypto.timingSafeEqual` keinen `TypeError` wirft
+
+### 17.7 Upload-Härtung (`POST /api/upload`)
+
+- **Magic-Byte-Prüfung** via `sharp().metadata()`. Der vom Client geschickte `file.type` wird *nicht* vertraut – eine `.exe`, die sich als `image/png` ausgibt, scheitert am echten Header.
+- **Zielordner** nur aus `uploadFolderSchema`-Allowlist.
+- **Rate-Limit** 40 / Stunde pro User+IP.
+- Bild-Optimierung (EXIF-Strip, max. 2048 px, JPEG) bleibt zusätzlich aktiv.
+
+### 17.8 Serverseitige Preise (`POST /api/bookings`)
+
+Der Client schickt `totalPrice`/`price` nicht (bzw. seine Werte werden ignoriert). Die Route liest `expert.priceVideo15Min` / `priceVoice15Min` bzw. `pricePerSession` und berechnet den Preis aus der tatsächlichen Slot-Dauer (Vielfache von 15 min). Damit kann DevTools-Manipulation keine Rabatt-Requests erzwingen.
+
+### 17.9 Zod-Schemas zentral (`lib/schemas/`)
+
+Input-Validierung lebt in `lib/schemas/`:
+
+- `common.ts` – `imageUrlSchema` (Allowlist Vercel-Blob + signierte Proxy-URLs), `cuidSchema`, `isoDateSchema`, `hhmmSchema`.
+- `bookings.ts`, `profile.ts`, `messages.ts`, `upload.ts` – pro Endpoint.
+
+Alle Mutations-Routen parsen `req.json()` mit diesen Schemas. `ZodError` wird im `apiHandler` zu 400 mit lokalisierter Meldung.
+
+---
+
+*Letzte Aktualisierung: April 2026 – Security-Layer (Rate-Limits, CSP-Nonce, signierte Blob-URLs, Guest-Checkout-Store, Log-Redaktion, Magic-Bytes). Benachrichtigungen (Instant, Status-Links, Session, Zahlung, Wallet-Topup, pushType, Waymail-Dedup); Abrechnungs- und Belegdoku: [BILLING-DOCUMENTS-AND-PAYMENTS.md](./BILLING-DOCUMENTS-AND-PAYMENTS.md)*

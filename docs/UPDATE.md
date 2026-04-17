@@ -27,6 +27,7 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 | Dokumentations-Index | `docs/INDEX.md` |
 | iOS Wallet/IAP vs. Marktplatz-Zahlung | `docs/IOS-APP-STORE-COMPLIANCE.md`, `docs/STORE-COMPLIANCE-CHECKLIST.md` |
 | Google Play Einreichung / Data safety | `docs/GOOGLE-PLAY-COMPLIANCE.md`, `docs/STORE-COMPLIANCE-CHECKLIST.md` |
+| Security-Änderungen (Rate-Limits, CSP, signierte Blobs, Secret-Handling, neue Security-relevante ENV-Vars) | `SECURITY.md`, `docs/HIDDEN-MECHANICS.md` (§17), `docs/ENV.md`, `.env.example`, `docs/SECURE-FILE-EXCHANGE.md` |
 | Diese Checkliste selbst | `docs/UPDATE.md` |
 
 ## Automatisierte Prüfung
@@ -41,14 +42,15 @@ Anleitung, damit **README**, **GitHub-Doku** und Fach-Docs zusammenbleiben.
 
 - [ ] `README.md`: Admin-Tabs, Beta, Analytics, lokaler Port **3001**, neue Modelle, Gast-Calls, Takumi-Moderation
 - [ ] `docs/INDEX.md` + `docs/GITHUB.md`: neue Docs verlinkt
-- [ ] `docs/ENV.md` + `.env.example`: vollständig
+- [ ] `docs/ENV.md` + `.env.example`: vollständig (inkl. `UPSTASH_*`, `FILE_SIGNING_SECRET`, ggf. `DAILY_GHOST_SECRET`)
 - [ ] `docs/ARCHITECTURE.md`: neue öffentliche/admin APIs
 - [ ] `docs/ADMIN.md`: Tab-Anzahl, Deep-Links (`?tab=analytics`), Unterseiten
-- [ ] `docs/HIDDEN-MECHANICS.md`: neue „verborgene“ Verhaltensweisen
+- [ ] `docs/HIDDEN-MECHANICS.md`: neue „verborgene“ Verhaltensweisen, Security-Layer (§17)
+- [ ] `SECURITY.md`: neue Rate-Limit-Buckets, neue kritische Endpoints
 - [ ] `docs/MOBILE-BUILD.md`: falls native Konfiguration geändert
 - [ ] `npm run docs:check` und `npm run check` lokal grün
 - [ ] „Letzte Aktualisierung“ in stark geänderten Docs anpassen
 
 ---
 
-*Letzte Aktualisierung: März 2026*
+*Letzte Aktualisierung: April 2026 – Security-Zeile + Security-Checkliste ergänzt*

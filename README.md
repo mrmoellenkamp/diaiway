@@ -77,7 +77,7 @@ diAIway verbindet Nutzer (Shugyo) mit Experten (Takumi) für Live-Beratung. Die 
 - **Push**: Web Push (VAPID) + Firebase Admin (FCM) für native; **Kategorien** (`pushType`) für Android-Kanäle / iOS-Categories; Quick Actions (ACCEPT/DECLINE) bei Instant Connect
 - **Safety**: Google Vision API (Pre-Check + Live-Monitoring); bei Verstoß **sofortige Verbindungstrennung**; Cloudmersive (Virenscan bei Upload); manueller Report-Button im Call
 - **E2EE**: Video-Calls end-to-end verschlüsselt (P2P-Modus via `sfu_switchover: 2`); Medien fließen direkt zwischen Geräten, Daily.co sieht keine Klartext-Streams
-- **Sicherheit**: Rate-Limiting, Honeypot, bcrypt, Security-Headers; **Cache-Control: no-store** für geschützte Seiten (kein BFCache); **LogoutBackGuard** verhindert Zurück-Button-Cache nach Logout
+- **Sicherheit**: API-weit Rate-Limits pro User **und** IP (Upstash mit In-Memory-Fallback), Honeypot, bcrypt, strikte CSP mit Nonce + `strict-dynamic` (kein `unsafe-eval`), Zod-Schemas für alle Mutations-Routen, timing-safe Secret-Vergleiche, serverseitige Preisberechnung, HMAC-signierte Proxy-URLs für sensible Blobs, Magic-Byte-Prüfung bei Bild-Uploads, Log-Redaktion für Secrets; **Cache-Control: no-store** für geschützte Seiten (kein BFCache); **LogoutBackGuard** verhindert Zurück-Button-Cache nach Logout. Details: [SECURITY.md](SECURITY.md)
 - **Auth-Resilienz**: DB-Verbindungsfehler (P1001) → `DB_ERROR` statt „falsches Passwort“; JWT-DB-Sync alle 5 Min (throttled)
 - **Secure File Upload**: `/api/files/secure-upload` mit Cloudmersive-Virenscan, Busboy-Streaming (max 2,5 MB)
 - **Session-Terminierung**: `/api/sessions/[id]/terminate` für 5-Min-Handshake (Case A) oder Capture (Case B)
@@ -222,6 +222,8 @@ npx cap open ios
 | `NEXTAUTH_SECRET`, `NEXTAUTH_URL` | NextAuth |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
+| `FILE_SIGNING_SECRET` | Optional; HMAC-Key für signierte Blob-Proxy-URLs (Fallback: `NEXTAUTH_SECRET`) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Rate-Limits + Gast-Checkout-Store (Fallback: In-Memory pro Instanz) |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push (optional) |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | FCM für native Push (optional) |
 | `EMAIL_*` | SMTP (EMAIL_SERVER_HOST, PORT, USER, PASSWORD, EMAIL_FROM) |
@@ -229,7 +231,7 @@ npx cap open ios
 | `GOOGLE_CLOUD_VISION_API_KEY` | Vision API (Safety, Live-Monitoring) |
 | `CLOUDMERSIVE_API_KEY` | Virenscan bei Secure-Upload (optional) |
 | `DAILY_API_KEY` | Daily.co (Video-Sessions) |
-| `CRON_SECRET` | Cron-Routes (instant-request-cleanup, release-wallet, etc.) |
+| `CRON_SECRET`, `DAILY_GHOST_SECRET` | Cron-Routes (timing-safe verglichen) |
 
 Details: [docs/ENV.md](docs/ENV.md)
 
@@ -291,6 +293,7 @@ npx prisma studio
 | Datei | Inhalt |
 |-------|--------|
 | [docs/INDEX.md](docs/INDEX.md) | **Dokumentations-Index** – alle Docs auf einen Blick |
+| [SECURITY.md](SECURITY.md) | **Security-Policy:** Responsible Disclosure, Bedrohungsmodell, Rate-Limits je Route, CSP, signierte Blob-URLs, Secret-Rotation |
 | [docs/GITHUB.md](docs/GITHUB.md) | **GitHub**: Workflows, Secrets vs. Repo, PR-Checkliste, was nicht committen |
 | [README.md](README.md) | Übersicht, Setup, Features |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architektur, Datenflüsse, API-Übersicht |
@@ -345,4 +348,4 @@ Proprietär. Alle Rechte vorbehalten.
 
 ---
 
-*Letzte Aktualisierung: März 2026*
+*Letzte Aktualisierung: April 2026 – Security-Hardening (Rate-Limits, CSP-Nonce, signierte Blob-URLs, Upstash-Guest-Store); siehe [SECURITY.md](SECURITY.md)*
