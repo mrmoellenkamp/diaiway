@@ -160,8 +160,8 @@ export async function POST(
 }
 
 /**
- * GET /api/pay/[bookingId]/status?token=...
- * Prüft den Zahlungsstatus ohne NextAuth-Session.
+ * GET /api/pay/[bookingId]?token=...
+ * Prüft den Zahlungsstatus ohne NextAuth-Session (kein zusätzliches `/status`-Segment).
  */
 export async function GET(
   req: Request,
