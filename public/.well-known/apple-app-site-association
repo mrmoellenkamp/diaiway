@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAMID.com.diaiway.app",
+        "appID": "7LT96AXQ8Y.com.diaiway.app",
         "paths": ["/takumi/*", "/sessions", "/sessions/*", "/messages", "/messages/*", "/booking/*", "/home", "/categories", "/categories/*"]
       }
     ]
